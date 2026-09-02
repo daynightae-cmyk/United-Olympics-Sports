@@ -1,7 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { AdminLayout } from '../layouts/AdminLayout';
 import { PlayerLayout } from '../layouts/PlayerLayout';
-import { PublicSite } from '../pages/public/PublicSite';
+import { PublicExperienceLayout } from '../layouts/PublicExperienceLayout';
 
 export function AppRouter() {
   return (
@@ -9,7 +9,7 @@ export function AppRouter() {
       <Routes>
         <Route path="/admin/*" element={<AdminLayout />} />
         <Route path="/player/*" element={<PlayerLayout />} />
-        <Route path="*" element={<PublicSite />} />
+        <Route path="*" element={<PublicExperienceLayout />} />
       </Routes>
     </BrowserRouter>
   );
