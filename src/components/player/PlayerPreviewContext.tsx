@@ -16,7 +16,8 @@ const PlayerPreviewContext = createContext<PlayerPreviewValue | null>(null);
 export function PlayerPreviewProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   const value = useMemo<PlayerPreviewValue>(() => {
-    const developerId = import.meta.env.DEV ? new URLSearchParams(location.search).get('previewPlayer') : null;
+    const isLocalPreviewHost = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    const developerId = isLocalPreviewHost ? new URLSearchParams(location.search).get('previewPlayer') : null;
     const requestedId = developerId || DEFAULT_PLAYER_PREVIEW_ID;
     const player = getPlayer(requestedId);
     return {
