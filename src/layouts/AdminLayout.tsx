@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { AdminBreadcrumbs } from '../components/admin/AdminBreadcrumbs';
 import { AdminSidebar } from '../components/admin/AdminSidebar';
@@ -10,8 +10,10 @@ import { AdminFutureModulePage } from '../pages/admin/AdminFutureModulePage';
 import { AdminGroupDetailPage } from '../pages/admin/AdminGroupDetailPage';
 import { AdminPlayerDetailPage } from '../pages/admin/AdminPlayerDetailPage';
 import { AdminPlayersPage } from '../pages/admin/AdminPlayersPage';
+import { AdminSettingsPage } from '../pages/admin/AdminSettingsPage';
 import { AdminSportDetailPage } from '../pages/admin/AdminSportDetailPage';
 import { AdminSportsPage } from '../pages/admin/AdminSportsPage';
+import { useUiSettings } from '../ui/theme/useUiSettings';
 import '../styles/admin.css';
 
 const routeLabels: Record<string, { en: string; ar: string }> = {
@@ -21,7 +23,8 @@ const routeLabels: Record<string, { en: string; ar: string }> = {
 function usePageTitle() {
   const location = useLocation();
   return useMemo(() => {
-    const segments = location.pathname.split('/').filter(Boolean).slice(1); const last = segments.at(-1);
+    const segments = location.pathname.split('/').filter(Boolean).slice(1);
+    const last = segments.at(-1);
     if (!last) return bi('Dashboard', 'لوحة التحكم');
     const player = getPlayer(last); if (player) return { en: player.nameEn, ar: player.nameAr };
     const sport = getSport(last); if (sport) return sport.name;
@@ -31,10 +34,22 @@ function usePageTitle() {
 }
 
 export function AdminLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false); const [collapsed, setCollapsed] = useState(false); const title = usePageTitle();
-  return <div className={`admin-shell ${collapsed ? 'sidebar-collapsed' : ''}`}>
-    <AdminSidebar open={sidebarOpen} collapsed={collapsed} onClose={() => setSidebarOpen(false)} onCollapse={() => setCollapsed(!collapsed)} />
-    {sidebarOpen && <button className="admin-sidebar-overlay" onClick={() => setSidebarOpen(false)} aria-label="Close navigation | إغلاق القائمة" />}
+  const { sidebarDefault, setSetting, density, fontScale } = useUiSettings();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(sidebarDefault === 'collapsed');
+  const title = usePageTitle();
+
+  useEffect(() => { setCollapsed(sidebarDefault === 'collapsed'); }, [sidebarDefault]);
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setSidebarOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [sidebarOpen]);
+
+  return <div className={`admin-shell ${collapsed ? 'sidebar-collapsed' : ''} density-${density} font-${fontScale}`}>
+    <AdminSidebar open={sidebarOpen} collapsed={collapsed} onClose={() => setSidebarOpen(false)} onCollapse={() => { const nextCollapsed = !collapsed; setCollapsed(nextCollapsed); setSetting('sidebarDefault', nextCollapsed ? 'collapsed' : 'expanded'); }} />
+    {sidebarOpen && <button type="button" className="admin-sidebar-overlay" onClick={() => setSidebarOpen(false)} aria-label="Close navigation | إغلاق القائمة" />}
     <div className="admin-workspace"><AdminTopbar title={title} onMenu={() => setSidebarOpen(true)} /><main className="admin-main"><AdminBreadcrumbs /><Routes>
       <Route index element={<AdminDashboardPage />} />
       <Route path="sports" element={<AdminSportsPage />} />
@@ -43,7 +58,8 @@ export function AdminLayout() {
       <Route path="sports/:sportId" element={<AdminSportDetailPage />} />
       <Route path="players" element={<AdminPlayersPage />} />
       <Route path="players/:playerId" element={<AdminPlayerDetailPage />} />
-      {Object.keys(routeLabels).filter(path => !['sports', 'players'].includes(path)).map(path => <Route key={path} path={path} element={<AdminFutureModulePage />} />)}
+      <Route path="settings" element={<AdminSettingsPage />} />
+      {Object.keys(routeLabels).filter((path) => !['sports','players','settings'].includes(path)).map((path) => <Route key={path} path={path} element={<AdminFutureModulePage />} />)}
       <Route path="*" element={<Navigate to="/admin" replace />} />
     </Routes></main></div>
   </div>;

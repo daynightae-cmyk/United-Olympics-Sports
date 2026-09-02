@@ -1,0 +1,42 @@
+import {
+  Activity,
+  CalendarDays,
+  ClipboardCheck,
+  ClipboardList,
+  CreditCard,
+  FileBarChart,
+  FileText,
+  Globe2,
+  Layers3,
+  LayoutDashboard,
+  MapPinned,
+  Medal,
+  Settings2,
+  ShieldCheck,
+  Trophy,
+  UsersRound,
+  type LucideIcon,
+} from 'lucide-react';
+
+export type AdminIconKey = 'dashboard' | 'sports' | 'groups' | 'players' | 'parents' | 'coaches' | 'programs' | 'schedules' | 'attendance' | 'performance' | 'countries' | 'branches' | 'subscriptions' | 'payments' | 'reports' | 'content' | 'users' | 'settings';
+
+export const adminIconRegistry: Record<AdminIconKey, LucideIcon> = {
+  dashboard: LayoutDashboard,
+  sports: Trophy,
+  groups: UsersRound,
+  players: Medal,
+  parents: UsersRound,
+  coaches: ClipboardList,
+  programs: Layers3,
+  schedules: CalendarDays,
+  attendance: ClipboardCheck,
+  performance: Activity,
+  countries: Globe2,
+  branches: MapPinned,
+  subscriptions: FileText,
+  payments: CreditCard,
+  reports: FileBarChart,
+  content: FileText,
+  users: ShieldCheck,
+  settings: Settings2,
+};

@@ -2,18 +2,19 @@ import { ArrowLeft, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { BilingualText as BilingualValue } from '../../domain/contracts';
 import { BilingualText, bi } from '../bilingual/BilingualText';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 export function PreviewBadge({ label = bi('Preview Experience', 'تجربة تجريبية') }: { label?: BilingualValue }) {
   return <span className="od-preview-badge"><span aria-hidden="true" /><BilingualText value={label} /></span>;
 }
 
 export function PreviewAvatar({ id, large = false }: { id: string; large?: boolean }) {
-  return <div className={`od-avatar ${large ? 'large' : ''}`} aria-label={`Preview athlete avatar ${id} | صورة رياضي تجريبية ${id}`}><UserRound /><span>{id.slice(-3)}</span></div>;
+  return <div className={`od-avatar ${large ? 'large' : ''}`} aria-label={`Preview athlete avatar ${id} | صورة رياضي تجريبية ${id}`}><UserRound aria-hidden="true" /><span>{id.slice(-3)}</span></div>;
 }
 
 export function MetricRing({ value, label }: { value: number; label: BilingualValue }) {
   const safeValue = Math.max(0, Math.min(100, value));
-  return <div className="od-metric-ring" style={{ background: `conic-gradient(#d7b45a ${safeValue * 3.6}deg, rgba(255,255,255,.08) 0deg)` }}><div><strong>{safeValue}</strong><small>/100</small><BilingualText value={label} /></div></div>;
+  return <div className="od-metric-ring" style={{ '--metric-progress': `${safeValue * 3.6}deg` } as React.CSSProperties}><div><strong>{safeValue}</strong><small>/100</small><BilingualText value={label} /></div></div>;
 }
 
 export function SportConceptVisual({ sportId, compact = false }: { sportId: string; compact?: boolean }) {
@@ -27,5 +28,9 @@ export function SportConceptVisual({ sportId, compact = false }: { sportId: stri
 }
 
 export function ProductPreviewHeader({ product }: { product: BilingualValue }) {
-  return <header className="od-product-header"><Link to="/" className="od-product-brand"><img src="/brand/united-olympics-sports-logo.png" alt="United Olympics Sports | يونايتد أوليمبيكس سبورت" /><span><strong>United Olympics Sports</strong><small lang="ar" dir="rtl">يونايتد أوليمبيكس سبورت</small></span></Link><div className="od-product-title"><BilingualText value={product} /><PreviewBadge /></div><Link className="od-public-return" to="/"><ArrowLeft /><BilingualText value={bi('Public Website', 'الموقع العام')} /></Link></header>;
+  return <header className="od-product-header">
+    <Link to="/" className="od-product-brand"><img src="/brand/united-olympics-sports-logo.png" alt="United Olympics Sports | يونايتد أوليمبيكس سبورت" /><span><strong>United Olympics Sports</strong><small lang="ar" dir="rtl">يونايتد أوليمبيكس سبورت</small></span></Link>
+    <div className="od-product-title"><BilingualText value={product} /><PreviewBadge /></div>
+    <div className="od-product-header-actions"><ThemeToggle compact /><Link className="od-public-return" to="/"><ArrowLeft aria-hidden="true" /><BilingualText value={bi('Public Website', 'الموقع العام')} /></Link></div>
+  </header>;
 }

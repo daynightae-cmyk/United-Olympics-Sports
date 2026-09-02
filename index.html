@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" dir="ltr" class="dark">
+<html lang="en" dir="ltr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,13 +9,39 @@
     <meta property="og:description" content="A thoughtful sports development environment for structured training, discipline and progress. | بيئة متكاملة للتطوير الرياضي والتدريب المنظم والانضباط والتقدم." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Cinzel:wght@600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#f6f1e6" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Cinzel:wght@600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <script>
+      (() => {
+        const defaults = { appearance: 'system', bilingualOrder: 'en-first', density: 'comfortable', motion: 'system', fontScale: 'default', sidebarDefault: 'expanded' };
+        const allowed = {
+          appearance: ['light','dark','system'], bilingualOrder: ['en-first','ar-first'], density: ['comfortable','compact'], motion: ['system','reduced'], fontScale: ['default','large'], sidebarDefault: ['expanded','collapsed']
+        };
+        let settings = defaults;
+        try {
+          const raw = localStorage.getItem('uos:ui-settings:v1');
+          const candidate = raw ? JSON.parse(raw) : null;
+          if (candidate && Object.keys(allowed).every((key) => allowed[key].includes(candidate[key]))) settings = candidate;
+        } catch { settings = defaults; }
+        const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
+        const mode = settings.appearance === 'system' ? (prefersDark ? 'dark' : 'light') : settings.appearance;
+        const root = document.documentElement;
+        root.dataset.theme = mode;
+        root.dataset.appearance = settings.appearance;
+        root.dataset.bilingualOrder = settings.bilingualOrder;
+        root.dataset.density = settings.density;
+        root.dataset.motion = settings.motion;
+        root.dataset.fontScale = settings.fontScale;
+        root.dataset.sidebarDefault = settings.sidebarDefault;
+        root.style.colorScheme = mode;
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', mode === 'dark' ? '#07080b' : '#f6f1e6');
+      })();
+    </script>
   </head>
-  <body class="bg-[#08080a] text-zinc-100 font-sans antialiased selection:bg-amber-500/30 selection:text-amber-200 overflow-x-hidden">
+  <body class="font-sans antialiased overflow-x-hidden">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-
