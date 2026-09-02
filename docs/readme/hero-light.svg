@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 680" role="img" aria-labelledby="title description">
+  <title id="title">United Olympics Sports light architectural hero</title>
+  <desc id="description">A frost-white blueprint composition with deep navy typography, gold accents, sport geometry and five connected portal nodes.</desc>
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1600" y2="680" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="0.52" stop-color="#F5F8FC"/>
+      <stop offset="1" stop-color="#EAF1F8"/>
+    </linearGradient>
+    <linearGradient id="goldRule" x1="480" y1="0" x2="1120" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B8911C" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#B8911C"/>
+      <stop offset="1" stop-color="#B8911C" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="focus" cx="0" cy="0" r="1" gradientTransform="translate(800 290) rotate(90) scale(310 650)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D4AF37" stop-opacity="0.09"/>
+      <stop offset="1" stop-color="#D4AF37" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="minorGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M20 0H0V20" fill="none" stroke="#0B2A4A" stroke-opacity="0.025" stroke-width="1"/>
+    </pattern>
+    <pattern id="majorGrid" width="100" height="100" patternUnits="userSpaceOnUse">
+      <rect width="100" height="100" fill="url(#minorGrid)"/>
+      <path d="M100 0H0V100" fill="none" stroke="#0B2A4A" stroke-opacity="0.06"/>
+    </pattern>
+  </defs>
+
+  <rect width="1600" height="680" rx="22" fill="url(#paper)"/>
+  <rect width="1600" height="680" rx="22" fill="url(#focus)"/>
+  <rect x="1" y="1" width="1598" height="678" rx="21" fill="none" stroke="#0B2A4A" stroke-opacity="0.17"/>
+  <rect x="25" y="25" width="1550" height="630" rx="14" fill="url(#majorGrid)"/>
+
+  <!-- Football plan -->
+  <g fill="none" stroke="#0B2A4A" stroke-opacity="0.11">
+    <rect x="60" y="104" width="390" height="470" rx="7"/>
+    <line x1="255" y1="104" x2="255" y2="574"/>
+    <circle cx="255" cy="339" r="60"/>
+    <circle cx="255" cy="339" r="4" fill="#0B2A4A"/>
+    <rect x="60" y="228" width="82" height="222"/>
+    <path d="M142 276a72 72 0 0 1 0 126"/>
+  </g>
+
+  <!-- Swimming lane notation -->
+  <g fill="none" stroke="#207FB9" stroke-opacity="0.15" stroke-width="2">
+    <path d="M1150 104c80 22 160-22 240 0s160-22 240 0"/>
+    <path d="M1150 132c80 22 160-22 240 0s160-22 240 0"/>
+    <path d="M1150 160c80 22 160-22 240 0s160-22 240 0"/>
+    <path d="M1150 188c80 22 160-22 240 0s160-22 240 0"/>
+  </g>
+
+  <!-- Court plans -->
+  <g fill="none">
+    <path d="M1260 610a240 240 0 0 1 240-240M1320 610a180 180 0 0 1 180-180" stroke="#B8911C" stroke-opacity="0.18"/>
+    <path d="M1060 520h470M1295 430v180M1060 565h470" stroke="#0B2A4A" stroke-opacity="0.095"/>
+    <circle cx="1295" cy="520" r="5" fill="#0B2A4A" fill-opacity="0.14"/>
+    <path d="M160 70Q800-54 1440 70M245 78Q800-22 1355 78" stroke="#B8911C" stroke-opacity="0.15"/>
+    <path d="M190 604Q800 742 1410 604" stroke="#207FB9" stroke-opacity="0.14"/>
+  </g>
+
+  <!-- Connected surface blueprint -->
+  <g stroke="#0B2A4A" stroke-opacity="0.35" fill="none">
+    <path d="M800 454V491M800 491H440M800 491H1160"/>
+    <circle cx="800" cy="454" r="7" fill="#B8911C" stroke="#B8911C"/>
+    <circle cx="440" cy="491" r="5" fill="#207FB9"/>
+    <circle cx="620" cy="491" r="5" fill="#B8911C"/>
+    <circle cx="800" cy="491" r="5" fill="#207FB9"/>
+    <circle cx="980" cy="491" r="5" fill="#B8911C"/>
+    <circle cx="1160" cy="491" r="5" fill="#207FB9"/>
+  </g>
+
+  <rect x="480" y="116" width="640" height="2" fill="url(#goldRule)"/>
+  <text x="800" y="215" text-anchor="middle" fill="#071B31" font-family="Arial, Helvetica, sans-serif" font-size="72" font-weight="800" letter-spacing="8">UNITED OLYMPICS SPORTS</text>
+  <text x="800" y="270" text-anchor="middle" fill="#A98212" font-family="Arial, 'Noto Sans Arabic', sans-serif" font-size="30" font-weight="600" direction="rtl" unicode-bidi="plaintext">يونايتد أوليمبيكس سبورت</text>
+  <rect x="590" y="298" width="420" height="1.5" fill="url(#goldRule)"/>
+  <text x="800" y="352" text-anchor="middle" fill="#0B2A4A" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="700" letter-spacing="4">MULTI-SPORT DIGITAL OPERATING SYSTEM</text>
+  <text x="800" y="394" text-anchor="middle" fill="#34536F" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="600" letter-spacing="3">BILINGUAL · MULTI-PORTAL · ORGANIZATION-READY</text>
+  <text x="800" y="428" text-anchor="middle" fill="#3E5B74" font-family="Arial, 'Noto Sans Arabic', sans-serif" font-size="16" direction="rtl" unicode-bidi="plaintext">نظام رياضي رقمي · ثنائي اللغة · متعدد البوابات · جاهز لهيكل المؤسسة</text>
+
+  <g fill="#34536F" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" letter-spacing="1.6" text-anchor="middle">
+    <text x="440" y="524">PUBLIC</text>
+    <text x="620" y="524">ADMIN</text>
+    <text x="800" y="524">PLAYER</text>
+    <text x="980" y="524">PARENT</text>
+    <text x="1160" y="524">COACH</text>
+  </g>
+  <text x="440" y="547" text-anchor="middle" fill="#58748D" font-family="Arial, 'Noto Sans Arabic', sans-serif" font-size="12" direction="rtl" unicode-bidi="plaintext">الموقع العام</text>
+  <text x="620" y="547" text-anchor="middle" fill="#58748D" font-family="Arial, 'Noto Sans Arabic', sans-serif" font-size="12" direction="rtl" unicode-bidi="plaintext">الإدارة الرئيسية</text>
+  <text x="800" y="547" text-anchor="middle" fill="#58748D" font-family="Arial, 'Noto Sans Arabic', sans-serif" font-size="12" direction="rtl" unicode-bidi="plaintext">بوابة اللاعب</text>
+  <text x="980" y="547" text-anchor="middle" fill="#58748D" font-family="Arial, 'Noto Sans Arabic', sans-serif" font-size="12" direction="rtl" unicode-bidi="plaintext">بوابة ولي الأمر</text>
+  <text x="1160" y="547" text-anchor="middle" fill="#58748D" font-family="Arial, 'Noto Sans Arabic', sans-serif" font-size="12" direction="rtl" unicode-bidi="plaintext">بوابة المدرب</text>
+  <text x="800" y="583" text-anchor="middle" fill="#486782" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="600" letter-spacing="2">REACT 19 · TYPESCRIPT · VITE 6 · RESPONSIVE DAY / NIGHT EXPERIENCE</text>
+  <text x="800" y="618" text-anchor="middle" fill="#526C83" font-family="Arial, 'Noto Sans Arabic', sans-serif" font-size="14" direction="rtl" unicode-bidi="plaintext">تجربة متجاوبة بنمطين نهاري وليلي</text>
+
+  <g stroke="#A98212" stroke-opacity="0.52" fill="none">
+    <path d="M42 64V42H64M1536 42h22v22M42 616v22h22M1536 638h22v-22"/>
+  </g>
+</svg>
