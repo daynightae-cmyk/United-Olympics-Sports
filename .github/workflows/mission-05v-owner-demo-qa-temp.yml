@@ -1,0 +1,125 @@
+name: Mission 05V Temporary Owner Demo QA
+
+on:
+  push:
+    branches:
+      - work/owner-demo-visual-completion
+    paths:
+      - .github/workflows/mission-05v-owner-demo-qa-temp.yml
+
+permissions:
+  contents: read
+
+jobs:
+  owner-demo-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install and build gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run lint
+          npm run build
+          test "$(find public/media/sports/football -maxdepth 1 -name '*.webp' | wc -l)" -eq 10
+          test "$(find public/media/sports/swimming -maxdepth 1 -name '*.webp' | wc -l)" -eq 10
+          test "$(find public/media/sports/basketball -maxdepth 1 -name '*.webp' | wc -l)" -eq 10
+          if grep -RInE 'United Olympics Sports Academy|United Olympic Sports Academy|United Olympics Academy|United Olympic Academy|أكاديمية يونايتد أوليمبيكس سبورت|أكاديمية يونايتد أوليمبيكس' src index.html metadata.json; then exit 1; fi
+          if grep -RInE 'Foundation shell ready|ready for the next mission|Future Module|implementation remains scheduled|Coach profiles are being prepared|Details available after verification|deep implementation remains' src/pages/public src/pages/product-preview src/pages/admin/AdminFutureModulePage.tsx; then exit 1; fi
+          if grep -RInEi 'unsplash|pexels|randomcdn' src; then exit 1; fi
+          if grep -RInE 'AED[[:space:]]*[0-9]|[0-9][[:space:]]*AED' src/pages/public src/pages/product-preview src/pages/admin/AdminFutureModulePage.tsx; then exit 1; fi
+          echo SOURCE_AUDIT=PASS
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start Vite
+        shell: bash
+        run: |
+          npm run dev > /tmp/uos-vite.log 2>&1 &
+          for i in {1..45}; do
+            if curl --fail --silent http://127.0.0.1:3000/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/uos-vite.log
+          exit 1
+      - name: Browser acceptance and screenshots
+        shell: bash
+        run: |
+          mkdir -p qa05v/screenshots
+          node --input-type=module <<'JS'
+          import { chromium } from 'playwright';
+          import fs from 'node:fs';
+          const base='http://127.0.0.1:3000';
+          const report={routes:{},screens:{},filters:{},responsive:{},bilingual:{},images:{},reducedMotion:{},placeholders:{},admin:{},consoleErrors:[],status:'RUNNING'};
+          const browser=await chromium.launch({headless:true});
+          const assert=(v,m)=>{if(!v)throw new Error(m)};
+          const bodyText=async p=>(await p.locator('body').innerText()).trim();
+          const checkOverflow=async(p,key)=>{const d=await p.evaluate(()=>({scrollWidth:document.documentElement.scrollWidth,clientWidth:document.documentElement.clientWidth}));report.responsive[key]=d;assert(d.scrollWidth<=d.clientWidth+1,`Overflow ${key}: ${d.scrollWidth}/${d.clientWidth}`)};
+          const checkBilingual=async(p,key)=>{const broken=await p.locator('.bi').evaluateAll(nodes=>nodes.filter(n=>!n.querySelector('.bi-en')||!n.querySelector('.bi-ar')).length);report.bilingual[key]={broken};assert(broken===0,`Broken bilingual components ${key}: ${broken}`)};
+          const checkImages=async(p,key)=>{const broken=await p.locator('img').evaluateAll(imgs=>imgs.filter(img=>!img.complete||img.naturalWidth===0).map(img=>img.getAttribute('src')));report.images[key]=broken;assert(broken.length===0,`Broken images ${key}: ${broken.join(',')}`)};
+          try{
+            const ctx=await browser.newContext({viewport:{width:1600,height:900}});
+            await ctx.addInitScript(()=>sessionStorage.setItem('uos:splash-seen','1'));
+            const page=await ctx.newPage();
+            page.on('console',m=>{if(m.type()==='error')report.consoleErrors.push(m.text())});
+            const publicRoutes=['/','/about','/sports','/sports/football','/sports/swimming','/sports/basketball','/sports/tennis','/sports/gymnastics','/sports/martial-arts','/programs','/programs/football-foundations','/programs/swimming-progressive','/programs/basketball-team-performance','/programs/tennis-individual-skills','/coaches','/contact','/player','/parent','/coach'];
+            const adminRoutes=['/admin','/admin/sports','/admin/players','/admin/groups','/admin/parents','/admin/coaches','/admin/programs','/admin/schedules','/admin/attendance','/admin/performance','/admin/countries','/admin/branches','/admin/subscriptions','/admin/payments','/admin/reports','/admin/content','/admin/users','/admin/settings'];
+            for(const route of [...publicRoutes,...adminRoutes]){
+              await page.goto(base+route,{waitUntil:'networkidle'});
+              const text=await bodyText(page); assert(text.length>90,`Route too sparse ${route}`);
+              assert(!/Foundation shell ready|ready for the next mission|Future Module|Coach profiles are being prepared|Details available after verification/.test(text),`Owner placeholder visible ${route}`);
+              report.routes[route]={textLength:text.length,url:page.url()};
+              await checkOverflow(page,`${route}@1600`); await checkBilingual(page,route); await checkImages(page,route);
+            }
+            report.placeholders={visibleTechnicalPlaceholders:0,pass:true};
+            for(const route of adminRoutes.filter(r=>r!=='/admin'&&r!=='/admin/sports'&&r!=='/admin/players')){
+              await page.goto(base+route,{waitUntil:'networkidle'}); assert(await page.locator('.amp-preview-banner').count()===1,`Admin contextual preview missing ${route}`); assert(await page.locator('.future-panel').count()===0,`Generic future panel visible ${route}`);
+            }
+            report.admin={contextualPreviewRoutes:15,pass:true};
+            await page.goto(base+'/programs',{waitUntil:'networkidle'});
+            assert(await page.locator('.od-program-card').count()===4,'All programme cards not rendered');
+            await page.screenshot({path:'qa05v/screenshots/programs-all-1600.png',fullPage:true});
+            for(const [name,key] of [['Football','football'],['Swimming','swimming'],['Basketball','basketball'],['Tennis','tennis']]){
+              await page.getByRole('button',{name:new RegExp(name,'i')}).click();
+              await page.waitForTimeout(80);
+              const count=await page.locator('.od-program-card').count(); const featured=await page.locator('.od-program-grid.is-featured').count();
+              const box=await page.locator('.od-program-card').boundingBox();
+              assert(count===1&&featured===1,`Featured filter failed ${name}`); assert((box?.width??0)>1000,`Featured programme too narrow ${name}: ${box?.width}`);
+              report.filters[key]={count,featured,width:box?.width};
+              if(key==='football')await page.screenshot({path:'qa05v/screenshots/programs-football-1600.png',fullPage:true});
+            }
+            await page.goto(base+'/parent',{waitUntil:'networkidle'});assert(await page.locator('.od-parent-grid article').count()>=6,'Parent modules missing');assert(await page.locator('.od-child-switcher button').count()>=2,'Parent child switcher missing');await page.screenshot({path:'qa05v/screenshots/parent-1600.png',fullPage:true});
+            await page.goto(base+'/player',{waitUntil:'networkidle'});assert(await page.locator('.od-phone-frame').count()===1,'Player device mockup missing');await page.screenshot({path:'qa05v/screenshots/player-1600.png',fullPage:true});
+            await page.goto(base+'/coach',{waitUntil:'networkidle'});assert(await page.locator('.od-session-timeline').count()===1&&await page.locator('.od-roster').count()===1,'Coach workflow missing');await page.screenshot({path:'qa05v/screenshots/coach-1600.png',fullPage:true});
+            await page.goto(base+'/coaches',{waitUntil:'networkidle'});assert(await page.locator('.od-coach-role-grid article').count()===3,'Public coaching role cards missing');await page.screenshot({path:'qa05v/screenshots/public-coaches-1600.png',fullPage:true});
+            await page.goto(base+'/sports',{waitUntil:'networkidle'});assert(await page.locator('.sport-card').count()===6,'Sports cards missing');assert(await page.locator('.od-sport-concept').count()===3,'Concept sport visuals missing');await page.screenshot({path:'qa05v/screenshots/sports-1600.png',fullPage:true});
+            await page.goto(base+'/admin/groups',{waitUntil:'networkidle'});await page.screenshot({path:'qa05v/screenshots/admin-groups-1600.png',fullPage:true});
+            await page.goto(base+'/admin/payments',{waitUntil:'networkidle'});assert(!(await bodyText(page)).match(/AED\s*\d|\d\s*AED/),'Payment amount invented');await page.screenshot({path:'qa05v/screenshots/admin-payments-1600.png',fullPage:true});
+            const representative=['/programs','/parent','/player','/coach','/sports','/admin/groups'];
+            for(const [width,height] of [[1440,900],[1280,800],[768,1024],[430,932],[390,844]]){
+              await page.setViewportSize({width,height});
+              for(const route of representative){await page.goto(base+route,{waitUntil:'networkidle'});await checkOverflow(page,`${route}@${width}`)}
+              if(width===390){for(const route of ['/programs','/parent','/player','/coach']){await page.goto(base+route,{waitUntil:'networkidle'});await page.screenshot({path:`qa05v/screenshots/${route.slice(1)}-390.png`,fullPage:true})}}
+              if(width===768){for(const route of ['/programs','/parent']){await page.goto(base+route,{waitUntil:'networkidle'});await page.screenshot({path:`qa05v/screenshots/${route.slice(1)}-768.png`,fullPage:true})}}
+            }
+            assert(report.consoleErrors.length===0,`Console errors: ${report.consoleErrors.join(' | ')}`);
+            await ctx.close();
+            const rctx=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});const rp=await rctx.newPage();
+            await rp.goto(base+'/',{waitUntil:'domcontentloaded'});assert(await rp.locator('.splash').count()===1,'Reduced Splash missing');assert(await rp.locator('.splash').getAttribute('data-reduced-motion')==='true','Reduced mode not synchronous');assert(await rp.locator('.splash .official-logo').count()===1,'Reduced logo count incorrect');const decorations=await rp.locator('.splash-particles,.splash-shield-outline,.splash-energy-ring,.gold-orbit').count();assert(decorations===0,'Reduced decorations rendered');const opacity=Number(await rp.locator('.splash-copy').evaluate(el=>getComputedStyle(el).opacity));assert(opacity>.9,'Reduced bilingual copy not immediately visible');const start=Date.now();await rp.locator('.splash').waitFor({state:'detached',timeout:1000});const visibleRemainder=Date.now()-start;const seen=await rp.evaluate(()=>sessionStorage.getItem('uos:splash-seen'));assert(seen==='1','Splash session key missing');await rp.goto(base+'/sports',{waitUntil:'networkidle'});await rp.goto(base+'/',{waitUntil:'networkidle'});const replay=await rp.locator('.splash').count();assert(replay===0,'Splash replayed in same session');report.reducedMotion={visibleRemainderMs:visibleRemainder,decorations,copyOpacity:opacity,sessionKey:seen,replay,pass:true};await rctx.close();
+            report.status='PASS';
+          }catch(error){report.status='FAIL';report.error=error instanceof Error?(error.stack||error.message):String(error);throw error;}finally{await browser.close();fs.writeFileSync('qa05v/report.json',JSON.stringify(report,null,2));console.log('MISSION_05V_REPORT='+JSON.stringify(report));}
+          JS
+      - name: Upload visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mission-05v-owner-demo-qa
+          path: qa05v
+          if-no-files-found: error
+          retention-days: 7
