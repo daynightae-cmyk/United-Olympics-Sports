@@ -1,0 +1,76 @@
+name: Mission 07R Temporary UI QA
+
+on:
+  push:
+    branches:
+      - traycer/final-ui-theme-settings-closure
+
+jobs:
+  browser-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Production gate
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+      - name: Source audits
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(node -p "require('./package.json').name")" = "united-olympics-sports"
+          test "$(node -p "require('./package-lock.json').name")" = "united-olympics-sports"
+          test "$(node -p "require('./package-lock.json').packages[''].name")" = "united-olympics-sports"
+          test "$(find public/media/sports/football -maxdepth 1 -name '*.webp' | wc -l)" -eq 10
+          test "$(find public/media/sports/swimming -maxdepth 1 -name '*.webp' | wc -l)" -eq 10
+          test "$(find public/media/sports/basketball -maxdepth 1 -name '*.webp' | wc -l)" -eq 10
+          if grep -RInE 'United Olympics Sports Academy|United Olympic Sports Academy|United Olympics Academy|United Olympic Academy|أكاديمية يونايتد أوليمبيكس سبورت|أكاديمية يونايتد أوليمبيكس' src index.html metadata.json; then exit 1; fi
+          if grep -RInEi 'unsplash|pexels' src; then exit 1; fi
+          if grep -RInE 'AED[[:space:]]*[0-9]|[0-9][[:space:]]*AED' src/pages src/components; then exit 1; fi
+          echo MISSION_07R_SOURCE_AUDIT=PASS
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start Vite
+        shell: bash
+        run: |
+          npm run dev > /tmp/uos-vite.log 2>&1 &
+          for i in {1..45}; do
+            if curl --fail --silent http://127.0.0.1:3000/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/uos-vite.log
+          exit 1
+      - name: Browser acceptance
+        run: node scripts/mission-07r-ui-qa.mjs
+      - name: Capture major Day and Night screenshots
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p qa07r/screenshots
+          node --input-type=module <<'NODE'
+          import { chromium } from 'playwright';
+          const browser=await chromium.launch({headless:true});
+          for(const theme of ['light','dark']){
+            const context=await browser.newContext({viewport:{width:1600,height:900},colorScheme:theme});
+            const page=await context.newPage();
+            await page.addInitScript(({theme})=>{localStorage.setItem('uos:ui-settings:v1',JSON.stringify({appearance:theme,bilingualOrder:'en-first',density:'comfortable',motion:'system',fontScale:'default',sidebarDefault:'expanded'}));sessionStorage.setItem('uos:splash-seen','1')},{theme});
+            for(const [route,name] of [['/','home'],['/programs','programs'],['/sports/football','football'],['/parent','parent'],['/coach','coach'],['/admin','admin'],['/admin/players','players'],['/admin/settings','settings']]){await page.goto('http://127.0.0.1:3000'+route,{waitUntil:'domcontentloaded'});await page.screenshot({path:`qa07r/screenshots/${name}-${theme}-1600.png`,fullPage:true});}
+            await context.close();
+          }
+          const mobile=await browser.newContext({viewport:{width:390,height:844},colorScheme:'light'});const p=await mobile.newPage();await p.addInitScript(()=>{localStorage.setItem('uos:ui-settings:v1',JSON.stringify({appearance:'light',bilingualOrder:'en-first',density:'comfortable',motion:'system',fontScale:'default',sidebarDefault:'expanded'}));sessionStorage.setItem('uos:splash-seen','1')});for(const [route,name] of [['/programs','programs-mobile'],['/parent','parent-mobile'],['/admin/settings','settings-mobile']]){await p.goto('http://127.0.0.1:3000'+route,{waitUntil:'domcontentloaded'});await p.screenshot({path:`qa07r/screenshots/${name}-390.png`,fullPage:true});}await mobile.close();await browser.close();
+          NODE
+      - name: Upload QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mission-07r-ui-qa
+          path: qa07r
+          if-no-files-found: warn
+          retention-days: 7
