@@ -1,7 +1,5 @@
-import { HeartHandshake } from 'lucide-react';
+import { HeartHandshake, Users, CalendarClock, TrendingUp, Award, CreditCard, FileText, MessageSquare, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { PageHeader } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
-
-export function ParentPortalOverviewPage() {
-  return <div className="admin-page"><PageHeader eyebrow={bi('Parent Portal', 'بوابة ولي الأمر')} title={bi('Overview', 'نظرة عامة')} description={bi('Parent portal full architecture preview.', 'معاينة الهيكل الكامل لبوابة ولي الأمر.')} /><div className="admin-preview-card"><HeartHandshake size={32} /><h3><BilingualText value={bi('Parent Portal Overview', 'نظرة عامة بوابة ولي الأمر')} /></h3></div></div>;
-}
+export function ParentPortalOverviewPage() { return <div className="admin-page"><PageHeader eyebrow={bi('Parent Portal', 'بوابة ولي الأمر')} title={bi('Overview', 'نظرة عامة')} description={bi('Parent portal architecture.', 'هيكل بوابة ولي الأمر.')} /><div className="admin-grid-cards"><section className="admin-preview-card"><Users size={24} /><h3><BilingualText value={bi('Children', 'الأطفال')} /></h3></section><section className="admin-preview-card"><CalendarClock size={24} /><h3><BilingualText value={bi('Schedule', 'الجدول')} /></h3></section><section className="admin-preview-card"><Award size={24} /><h3><BilingualText value={bi('Performance', 'الأداء')} /></h3></section><section className="admin-preview-card"><CreditCard size={24} /><h3><BilingualText value={bi('Subscriptions', 'الاشتراكات')} /></h3></section></div></div>; }

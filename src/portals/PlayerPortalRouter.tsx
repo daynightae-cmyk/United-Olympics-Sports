@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
-import { PlayerPortalOverviewPage } from '../pages/admin/PlayerPortalOverviewPage';
+import { PlayerPortalOverviewPage } from '../pages/portal/PlayerPortalOverviewPage';
 import { PlayerPortalSchedulePage } from '../pages/admin/PlayerPortalSchedulePage';
 import { PlayerPortalPerformancePage } from '../pages/admin/PlayerPortalPerformancePage';
 import { PlayerPortalFeedbackPage } from '../pages/admin/PlayerPortalFeedbackPage';
