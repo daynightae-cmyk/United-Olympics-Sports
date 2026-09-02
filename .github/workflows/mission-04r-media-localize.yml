@@ -8,7 +8,7 @@ on:
       - .github/workflows/mission-04r-media-localize.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   localize-media:
@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -25,84 +27,91 @@ jobs:
       - name: Install Pillow
         run: python -m pip install --disable-pip-version-check pillow
 
-      - name: Download and optimize verified sport media
+      - name: Download, optimize and stage verified sport media
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p media-out/football media-out/swimming media-out/basketball
+          mkdir -p .mission-media/football .mission-media/swimming .mission-media/basketball
+          mkdir -p public/media/sports/football public/media/sports/swimming public/media/sports/basketball
 
           download() {
-            local url="$1"
-            local out="$2"
+            local url="$1"; local out="$2"
             curl --fail --location --retry 3 --retry-delay 2 --silent --show-error "$url" --output "$out"
             test -s "$out"
           }
 
-          download 'https://i.postimg.cc/FRTDnSyk/file-000000000cdc81f4af7961b5ee8eebfb.png' media-out/football/football-01.png
-          download 'https://i.postimg.cc/8c3wTVnk/file-000000000fd081f498b4e3832113a313.png' media-out/football/football-02.png
-          download 'https://i.postimg.cc/8knZRhkq/file-00000000198c81f4812ad79ce4e1c885.png' media-out/football/football-03.png
-          download 'https://i.postimg.cc/T1hC8PQd/file-000000003c608210b99126102e9bfc17.png' media-out/football/football-04.png
-          download 'https://i.postimg.cc/28b22VVw/file-0000000045d8821096e2f70cb90f0eec.png' media-out/football/football-05.png
-          download 'https://i.postimg.cc/jqkMHzq9/file-0000000056c881f4a657ae0bac0c4aec.png' media-out/football/football-06.png
-          download 'https://i.postimg.cc/mZ6mYQ22/file-00000000780882108770f1e8ba290652.png' media-out/football/football-07.png
-          download 'https://i.postimg.cc/hvhpFGMF/file-000000008158824399b411965efbf335.png' media-out/football/football-08.png
-          download 'https://i.postimg.cc/QCV0LMSD/file-000000009ea482109ca8877f6850fb51.png' media-out/football/football-09.png
-          download 'https://i.postimg.cc/RFSgRdHJ/file-00000000bb4482108153ee7b7df7f609.png' media-out/football/football-10.png
+          download 'https://i.postimg.cc/FRTDnSyk/file-000000000cdc81f4af7961b5ee8eebfb.png' .mission-media/football/01.png
+          download 'https://i.postimg.cc/8c3wTVnk/file-000000000fd081f498b4e3832113a313.png' .mission-media/football/02.png
+          download 'https://i.postimg.cc/8knZRhkq/file-00000000198c81f4812ad79ce4e1c885.png' .mission-media/football/03.png
+          download 'https://i.postimg.cc/T1hC8PQd/file-000000003c608210b99126102e9bfc17.png' .mission-media/football/04.png
+          download 'https://i.postimg.cc/28b22VVw/file-0000000045d8821096e2f70cb90f0eec.png' .mission-media/football/05.png
+          download 'https://i.postimg.cc/jqkMHzq9/file-0000000056c881f4a657ae0bac0c4aec.png' .mission-media/football/06.png
+          download 'https://i.postimg.cc/mZ6mYQ22/file-00000000780882108770f1e8ba290652.png' .mission-media/football/07.png
+          download 'https://i.postimg.cc/hvhpFGMF/file-000000008158824399b411965efbf335.png' .mission-media/football/08.png
+          download 'https://i.postimg.cc/QCV0LMSD/file-000000009ea482109ca8877f6850fb51.png' .mission-media/football/09.png
+          download 'https://i.postimg.cc/RFSgRdHJ/file-00000000bb4482108153ee7b7df7f609.png' .mission-media/football/10.png
 
-          download 'https://i.postimg.cc/3wPNTf3Z/file-000000002e4c8210bc270687b3e54e6e.png' media-out/swimming/swimming-01.png
-          download 'https://i.postimg.cc/pd9r3MMR/file-0000000042c8820aa782ce718fe663f1.png' media-out/swimming/swimming-02.png
-          download 'https://i.postimg.cc/9QQrtqxP/file-00000000815c82108dbd0069797d5a5f.png' media-out/swimming/swimming-03.png
-          download 'https://i.postimg.cc/YSJ0HDt8/file-0000000095988210b8533654fe70289c.png' media-out/swimming/swimming-04.png
-          download 'https://i.postimg.cc/s2txrH3c/file-00000000a5bc820aac5bd3cce6f2db3b.png' media-out/swimming/swimming-05.png
-          download 'https://i.postimg.cc/Zq9nXzzT/file-00000000a62c821083b02e7abf5c1f86.png' media-out/swimming/swimming-06.png
-          download 'https://i.postimg.cc/zf9vr2qL/file-00000000d0a48210b72b864e2b44d83e.png' media-out/swimming/swimming-07.png
-          download 'https://i.postimg.cc/9f40sHHy/file-00000000e67c820ab3b2607e75a74391.png' media-out/swimming/swimming-08.png
-          download 'https://i.postimg.cc/SKXRHbb4/file-00000000fac4820ab5e06b7d005f09bd.png' media-out/swimming/swimming-09.png
-          download 'https://i.postimg.cc/DzW0R33F/file-00000000fb64820aa076669ea5be9a08.png' media-out/swimming/swimming-10.png
+          download 'https://i.postimg.cc/3wPNTf3Z/file-000000002e4c8210bc270687b3e54e6e.png' .mission-media/swimming/01.png
+          download 'https://i.postimg.cc/pd9r3MMR/file-0000000042c8820aa782ce718fe663f1.png' .mission-media/swimming/02.png
+          download 'https://i.postimg.cc/9QQrtqxP/file-00000000815c82108dbd0069797d5a5f.png' .mission-media/swimming/03.png
+          download 'https://i.postimg.cc/YSJ0HDt8/file-0000000095988210b8533654fe70289c.png' .mission-media/swimming/04.png
+          download 'https://i.postimg.cc/s2txrH3c/file-00000000a5bc820aac5bd3cce6f2db3b.png' .mission-media/swimming/05.png
+          download 'https://i.postimg.cc/Zq9nXzzT/file-00000000a62c821083b02e7abf5c1f86.png' .mission-media/swimming/06.png
+          download 'https://i.postimg.cc/zf9vr2qL/file-00000000d0a48210b72b864e2b44d83e.png' .mission-media/swimming/07.png
+          download 'https://i.postimg.cc/9f40sHHy/file-00000000e67c820ab3b2607e75a74391.png' .mission-media/swimming/08.png
+          download 'https://i.postimg.cc/SKXRHbb4/file-00000000fac4820ab5e06b7d005f09bd.png' .mission-media/swimming/09.png
+          download 'https://i.postimg.cc/DzW0R33F/file-00000000fb64820aa076669ea5be9a08.png' .mission-media/swimming/10.png
 
-          download 'https://i.postimg.cc/NfLBbqhR/file-0000000003888210b529401cc0f731f4.png' media-out/basketball/basketball-01.png
-          download 'https://i.postimg.cc/d0cFqh7t/file-00000000101c82108bf86e1e46bd0d4e.png' media-out/basketball/basketball-02.png
-          download 'https://i.postimg.cc/nrrbd7Wc/file-00000000281481f489dd8e60508bd60d.png' media-out/basketball/basketball-03.png
-          download 'https://i.postimg.cc/wMrKnM8z/file-000000002ab48210a65537c278c7c7f3.png' media-out/basketball/basketball-04.png
-          download 'https://i.postimg.cc/7hh8B7RC/file-00000000342082109f138351dc5b7181.png' media-out/basketball/basketball-05.png
-          download 'https://i.postimg.cc/mZmTQZnF/file-000000003cbc8210a0b4b7f69a9f0ba1.png' media-out/basketball/basketball-06.png
-          download 'https://i.postimg.cc/Xv6WVrZY/file-0000000049d081f49492688bf1046237.png' media-out/basketball/basketball-07.png
-          download 'https://i.postimg.cc/hG8BhKxJ/file-000000006ab8820aa0e730a05c0104b6.png' media-out/basketball/basketball-08.png
-          download 'https://i.postimg.cc/50xMCDqp/file-00000000853481f4bde43bb46a9f6bb4.png' media-out/basketball/basketball-09.png
-          download 'https://i.postimg.cc/PrchR3Td/file-00000000ab28821092d0aa408dac845c.png' media-out/basketball/basketball-10.png
+          download 'https://i.postimg.cc/NfLBbqhR/file-0000000003888210b529401cc0f731f4.png' .mission-media/basketball/01.png
+          download 'https://i.postimg.cc/d0cFqh7t/file-00000000101c82108bf86e1e46bd0d4e.png' .mission-media/basketball/02.png
+          download 'https://i.postimg.cc/nrrbd7Wc/file-00000000281481f489dd8e60508bd60d.png' .mission-media/basketball/03.png
+          download 'https://i.postimg.cc/wMrKnM8z/file-000000002ab48210a65537c278c7c7f3.png' .mission-media/basketball/04.png
+          download 'https://i.postimg.cc/7hh8B7RC/file-00000000342082109f138351dc5b7181.png' .mission-media/basketball/05.png
+          download 'https://i.postimg.cc/mZmTQZnF/file-000000003cbc8210a0b4b7f69a9f0ba1.png' .mission-media/basketball/06.png
+          download 'https://i.postimg.cc/Xv6WVrZY/file-0000000049d081f49492688bf1046237.png' .mission-media/basketball/07.png
+          download 'https://i.postimg.cc/hG8BhKxJ/file-000000006ab8820aa0e730a05c0104b6.png' .mission-media/basketball/08.png
+          download 'https://i.postimg.cc/50xMCDqp/file-00000000853481f4bde43bb46a9f6bb4.png' .mission-media/basketball/09.png
+          download 'https://i.postimg.cc/PrchR3Td/file-00000000ab28821092d0aa408dac845c.png' .mission-media/basketball/10.png
 
           python - <<'PY'
           from pathlib import Path
           from PIL import Image
-          import hashlib, json
 
-          records=[]
-          for png in sorted(Path('media-out').glob('*/*.png')):
-              with Image.open(png) as im:
-                  rgb = im.convert('RGB')
-                  webp = png.with_suffix('.webp')
-                  rgb.save(webp, 'WEBP', quality=88, method=6)
-                  records.append({
-                      'sport': png.parent.name,
-                      'source_file': png.name,
-                      'webp_file': webp.name,
-                      'width': im.width,
-                      'height': im.height,
-                      'source_bytes': png.stat().st_size,
-                      'webp_bytes': webp.stat().st_size,
-                      'sha256': hashlib.sha256(webp.read_bytes()).hexdigest(),
-                  })
-          Path('media-out/manifest.json').write_text(json.dumps(records, indent=2), encoding='utf-8')
-          assert len(records) == 30, len(records)
+          mapping = {
+            'football': [
+              'football-01-hero.webp','football-02-training.webp','football-03-brand.webp','football-04-technique.webp','football-05-teamwork.webp',
+              'football-06-coach-child.webp','football-07-youth.webp','football-08-match.webp','football-09-goalkeeper.webp','football-10-coaching.webp'],
+            'swimming': [
+              'swimming-01-coach-child.webp','swimming-02-performance.webp','swimming-03-technique.webp','swimming-04-women.webp','swimming-05-youth-boys.webp',
+              'swimming-06-hero.webp','swimming-07-children.webp','swimming-08-underwater.webp','swimming-09-group.webp','swimming-10-youth-girls.webp'],
+            'basketball': [
+              'basketball-01-shooting-technique.webp','basketball-02-coach-team-brand.webp','basketball-03-children-dribbling.webp','basketball-04-girls-coaching.webp','basketball-05-youth-dribbling.webp',
+              'basketball-06-coach-child-dribbling.webp','basketball-07-group-training.webp','basketball-08-match-action.webp','basketball-09-cone-drills.webp','basketball-10-girls-defence.webp'],
+          }
+          count = 0
+          for sport, names in mapping.items():
+              for index, name in enumerate(names, 1):
+                  src = Path('.mission-media') / sport / f'{index:02d}.png'
+                  dst = Path('public/media/sports') / sport / name
+                  with Image.open(src) as im:
+                      im.convert('RGB').save(dst, 'WEBP', quality=88, method=6)
+                  assert dst.stat().st_size > 0
+                  count += 1
+          assert count == 30
           PY
 
-          find media-out -type f -maxdepth 2 -print | sort
+          test "$(find public/media/sports/football -name '*.webp' | wc -l)" -eq 10
+          test "$(find public/media/sports/swimming -name '*.webp' | wc -l)" -eq 10
+          test "$(find public/media/sports/basketball -name '*.webp' | wc -l)" -eq 10
+          file public/media/sports/*/*.webp
 
-      - name: Upload localized media artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: mission-04r-localized-media
-          path: media-out
-          if-no-files-found: error
-          compression-level: 0
-          retention-days: 7
+      - name: Commit localized WebP assets to recovery branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/media/sports/football public/media/sports/swimming public/media/sports/basketball
+          git diff --cached --quiet && exit 0
+          git commit -m 'feat: localize verified Football, Swimming and Basketball media'
+          git push origin HEAD:${GITHUB_REF_NAME}
