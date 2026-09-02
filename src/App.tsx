@@ -1,120 +1,73 @@
-import React, { useState } from 'react';
-import { AnimatePresence } from 'motion/react';
-import { CinematicSplash } from './components/brand/CinematicSplash';
-import { HeaderNav } from './components/common/HeaderNav';
-import { Footer } from './components/common/Footer';
-import { PublicShowcaseView } from './components/public/PublicShowcaseView';
-import { PlayerPassportView } from './components/player/PlayerPassportView';
-import { ParentPortalView } from './components/parent/ParentPortalView';
-import { CoachPortalView } from './components/coach/CoachPortalView';
-import { SuperAdminView } from './components/admin/SuperAdminView';
-import {
-  DEMO_PROFILES,
-  DEMO_PROGRAMS,
-  DEMO_BRANCHES,
-  DEMO_PLAYERS,
-  DEMO_TRAINING_SESSIONS,
-  DEMO_MATCHES,
-  DEMO_INVOICES,
-  DEMO_DRILLS,
-} from './data/demoData';
-import { PortalType, UserProfile } from './types';
+import { useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import { BrowserRouter, Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import { ArrowLeft, ArrowRight, Check, ChevronDown, Dumbbell, Menu, MessageCircle, Send, ShieldCheck, Sparkles, Trophy, Users, X } from 'lucide-react';
+import './index.css';
 
-export function App() {
-  const [showSplash, setShowSplash] = useState<boolean>(true);
-  const [currentPortal, setCurrentPortal] = useState<PortalType>('public');
-  const [currentUser, setCurrentUser] = useState<UserProfile>(DEMO_PROFILES[0]);
+type Bilingual = { en: string; ar: string };
+type Sport = Bilingual & { id: string; description: Bilingual; ages: Bilingual; focus: Bilingual };
+type Program = Bilingual & { sport: Bilingual; age: Bilingual; level: Bilingual; focus: Bilingual };
 
-  // Handle switching portals
-  const handleSelectPortal = (portal: PortalType) => {
-    setCurrentPortal(portal);
-    // Automatically match the persona if switching to specific product
-    const matchingProfile = DEMO_PROFILES.find((p) => p.portal === portal);
-    if (matchingProfile) {
-      setCurrentUser(matchingProfile);
-    }
-  };
+const brand = 'United Olympics Sports';
+const brandAr = 'يونايتد أوليمبيكس سبورت';
 
-  const handleSelectUser = (user: UserProfile) => {
-    setCurrentUser(user);
-    setCurrentPortal(user.portal);
-  };
+const sports: Sport[] = [
+  { id: 'football', en: 'Football', ar: 'كرة القدم', description: { en: 'Structured team training built around technique, awareness and collaboration.', ar: 'تدريب جماعي منظم يركز على المهارة والوعي والتعاون.' }, ages: { en: 'Youth groups', ar: 'فئات الناشئين' }, focus: { en: 'Technical foundations', ar: 'الأساسيات الفنية' } },
+  { id: 'swimming', en: 'Swimming', ar: 'السباحة', description: { en: 'Progressive sessions that develop water confidence, technique and endurance.', ar: 'حصص متدرجة تطور الثقة في الماء والتقنية والتحمل.' }, ages: { en: 'Youth groups', ar: 'فئات الناشئين' }, focus: { en: 'Technique and endurance', ar: 'التقنية والتحمل' } },
+  { id: 'basketball', en: 'Basketball', ar: 'كرة السلة', description: { en: 'A team environment for movement, decision-making and disciplined play.', ar: 'بيئة جماعية للحركة واتخاذ القرار واللعب المنضبط.' }, ages: { en: 'Youth groups', ar: 'فئات الناشئين' }, focus: { en: 'Movement and teamwork', ar: 'الحركة والعمل الجماعي' } },
+  { id: 'tennis', en: 'Tennis', ar: 'التنس', description: { en: 'Individual coaching pathways combining repetition, focus and match awareness.', ar: 'مسارات تدريب فردية تجمع بين التكرار والتركيز ووعي المباراة.' }, ages: { en: 'Youth groups', ar: 'فئات الناشئين' }, focus: { en: 'Control and consistency', ar: 'التحكم والثبات' } },
+  { id: 'gymnastics', en: 'Gymnastics', ar: 'الجمباز', description: { en: 'Foundational movement practice for balance, flexibility and confidence.', ar: 'تدريب حركي أساسي للتوازن والمرونة والثقة.' }, ages: { en: 'Youth groups', ar: 'فئات الناشئين' }, focus: { en: 'Balance and mobility', ar: 'التوازن والحركة' } },
+  { id: 'martial-arts', en: 'Martial Arts', ar: 'الفنون القتالية', description: { en: 'A respectful training culture centred on control, discipline and progress.', ar: 'ثقافة تدريبية محترمة تتمحور حول التحكم والانضباط والتقدم.' }, ages: { en: 'Youth groups', ar: 'فئات الناشئين' }, focus: { en: 'Control and discipline', ar: 'التحكم والانضباط' } },
+];
 
-  const handleReplaySplash = () => {
-    setShowSplash(true);
-  };
+const programs: Program[] = [
+  { en: 'Foundations Programme', ar: 'برنامج الأساسيات', sport: { en: 'Football', ar: 'كرة القدم' }, age: { en: '6–9 years', ar: '6–9 سنوات' }, level: { en: 'Foundation', ar: 'تأسيسي' }, focus: { en: 'Movement, coordination and confidence', ar: 'الحركة والتناسق والثقة' } },
+  { en: 'Progressive Swim Track', ar: 'المسار المتدرج للسباحة', sport: { en: 'Swimming', ar: 'السباحة' }, age: { en: '8–12 years', ar: '8–12 سنة' }, level: { en: 'Development', ar: 'تطويري' }, focus: { en: 'Technique, breathing and endurance', ar: 'التقنية والتنفس والتحمل' } },
+  { en: 'Team Performance Lab', ar: 'مختبر أداء الفرق', sport: { en: 'Basketball', ar: 'كرة السلة' }, age: { en: '10–14 years', ar: '10–14 سنة' }, level: { en: 'Development', ar: 'تطويري' }, focus: { en: 'Decision-making and teamwork', ar: 'اتخاذ القرار والعمل الجماعي' } },
+  { en: 'Individual Skills Studio', ar: 'استوديو المهارات الفردية', sport: { en: 'Tennis', ar: 'التنس' }, age: { en: '8–15 years', ar: '8–15 سنة' }, level: { en: 'All levels', ar: 'جميع المستويات' }, focus: { en: 'Control, repetition and focus', ar: 'التحكم والتكرار والتركيز' } },
+];
 
-  // Filter children for parent portal (Talia Hassan and Adam Hassan)
-  const parentChildren = DEMO_PLAYERS.filter(
-    (p) => p.id === 'athlete-103' || p.id === 'athlete-105'
-  );
-
-  return (
-    <div className="min-h-screen flex flex-col bg-[#08080a] text-zinc-100 selection:bg-amber-500/30 selection:text-amber-200">
-      {/* Cinematic Splash Staged Reveal */}
-      <AnimatePresence>
-        {showSplash && (
-          <CinematicSplash onComplete={() => setShowSplash(false)} />
-        )}
-      </AnimatePresence>
-
-      {/* Main Application Shell */}
-      <HeaderNav
-        currentPortal={currentPortal}
-        onSelectPortal={handleSelectPortal}
-        currentUser={currentUser}
-        onSelectUser={handleSelectUser}
-        userProfiles={DEMO_PROFILES}
-        onReplaySplash={handleReplaySplash}
-      />
-
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 pt-6">
-        {currentPortal === 'public' && (
-          <PublicShowcaseView
-            programs={DEMO_PROGRAMS}
-            branches={DEMO_BRANCHES}
-            matches={DEMO_MATCHES}
-            onOpenEnrollment={() => {}}
-          />
-        )}
-
-        {currentPortal === 'player' && (
-          <PlayerPassportView
-            player={DEMO_PLAYERS[0]}
-            drills={DEMO_DRILLS}
-            upcomingSessions={DEMO_TRAINING_SESSIONS}
-          />
-        )}
-
-        {currentPortal === 'parent' && (
-          <ParentPortalView
-            childrenPlayers={parentChildren}
-            invoices={DEMO_INVOICES}
-            sessions={DEMO_TRAINING_SESSIONS}
-          />
-        )}
-
-        {currentPortal === 'coach' && (
-          <CoachPortalView
-            squad={DEMO_PLAYERS}
-            sessions={DEMO_TRAINING_SESSIONS}
-            drills={DEMO_DRILLS}
-          />
-        )}
-
-        {currentPortal === 'admin' && (
-          <SuperAdminView
-            programs={DEMO_PROGRAMS}
-            branches={DEMO_BRANCHES}
-            invoices={DEMO_INVOICES}
-            players={DEMO_PLAYERS}
-          />
-        )}
-      </main>
-
-      <Footer />
-    </div>
-  );
+function Bilingual({ value, className = '' }: { value: Bilingual; className?: string }) {
+  return <span className={className}><span className="en">{value.en}</span><span className="ar">{value.ar}</span></span>;
 }
 
+function OfficialLogo({ compact = false }: { compact?: boolean }) {
+  return <img className={compact ? 'official-logo compact' : 'official-logo'} src="/brand/united-olympics-sports-logo.png" alt={`${brand} | ${brandAr}`} />;
+}
+
+function Splash({ onComplete }: { onComplete: () => void }) {
+  useEffect(() => { const timer = window.setTimeout(onComplete, 3200); return () => window.clearTimeout(timer); }, [onComplete]);
+  return <motion.div className="splash" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: .6 }}>
+    <div className="gold-orbit" /><div className="splash-logo-wrap"><OfficialLogo /></div>
+    <div className="splash-copy"><Bilingual value={{ en: brand, ar: brandAr }} /><Bilingual value={{ en: 'From Childhood, We Build Champions', ar: 'من الطفولة نصنع الأبطال' }} /></div>
+  </motion.div>;
+}
+
+function PublicHeader() {
+  const [open, setOpen] = useState(false);
+  const nav = [{ to: '/', value: { en: 'Home', ar: 'الرئيسية' } }, { to: '/about', value: { en: 'About', ar: 'من نحن' } }, { to: '/sports', value: { en: 'Sports', ar: 'الرياضات' } }, { to: '/programs', value: { en: 'Programs', ar: 'البرامج' } }, { to: '/coaches', value: { en: 'Coaches', ar: 'المدربون' } }, { to: '/contact', value: { en: 'Contact', ar: 'تواصل معنا' } }];
+  return <header className="site-header"><Link to="/" className="brand-lockup"><OfficialLogo compact /><span><strong>{brand}</strong><small>{brandAr}</small></span></Link><button className="menu-button" onClick={() => setOpen(!open)} aria-label="Open navigation | فتح القائمة">{open ? <X /> : <Menu />}</button><nav className={open ? 'public-nav open' : 'public-nav'}>{nav.map(item => <NavLink key={item.to} to={item.to} end={item.to === '/'} onClick={() => setOpen(false)}><Bilingual value={item.value} /></NavLink>)}<div className="portal-access"><span className="portal-label"><Bilingual value={{ en: 'Portals', ar: 'البوابات' }} /></span><div className="portal-links">{[['/player','Player','اللاعب'],['/parent','Parent','ولي الأمر'],['/coach','Coach','المدرب'],['/admin','Admin','الإدارة']].map(([to,en,ar]) => <Link key={to} to={to} onClick={() => setOpen(false)}><Bilingual value={{ en, ar }} /></Link>)}</div></div></nav></header>;
+}
+
+function Footer() { return <footer className="site-footer"><div><Link to="/" className="brand-lockup"><OfficialLogo compact /><span><strong>{brand}</strong><small>{brandAr}</small></span></Link><p><Bilingual value={{ en: 'A thoughtful foundation for athletic development.', ar: 'أساس متكامل لتطوير الرياضيين.' }} /></p></div><div className="footer-links"><Bilingual value={{ en: 'Explore', ar: 'استكشف' }} /> <Link to="/sports"><Bilingual value={{ en: 'Sports', ar: 'الرياضات' }} /></Link><Link to="/programs"><Bilingual value={{ en: 'Programs', ar: 'البرامج' }} /></Link><Link to="/contact"><Bilingual value={{ en: 'Contact', ar: 'تواصل معنا' }} /></Link></div><div className="knoux"><span><Bilingual value={{ en: 'Crafted by KNOuX', ar: 'صُمم وطُوّر بواسطة KNOuX' }} /></span><strong>Eng. Sadek Elgazar | م. صادق الجزار</strong><a href="https://wa.me/971503281920?text=Hello%20Eng.%20Sadek%20Elgazar%2C%20I%20would%20like%20to%20start%20a%20new%20project%20with%20KNOuX.%20%7C%20%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%20%D9%85.%20%D8%B5%D8%A7%D8%AF%D9%82%20%D8%A7%D9%84%D8%AC%D8%B2%D8%A7%D8%B1%D8%8C%20%D8%A3%D9%88%D8%AF%20%D8%A7%D9%84%D8%A8%D8%AF%D8%A1%20%D9%81%D9%8A%20%D9%85%D8%B4%D8%B1%D9%88%D8%B9%20%D8%AC%D8%AF%D9%8A%D8%AF%20%D9%85%D8%B9%20KNOuX."><Bilingual value={{ en: 'Start a New Project', ar: 'ابدأ مشروعًا جديدًا' }} /></a><small>0503281920 · +971 50 328 1920</small></div></footer>; }
+
+function PublicLayout() { return <><PublicHeader /><main className="public-main"><Routes><Route path="/" element={<Home />} /><Route path="/about" element={<About />} /><Route path="/sports" element={<Sports />} /><Route path="/programs" element={<Programs />} /><Route path="/coaches" element={<Coaches />} /><Route path="/contact" element={<Contact />} /></Routes></main><Footer /></>; }
+
+function PageIntro({ eyebrow, title, text }: { eyebrow: Bilingual; title: Bilingual; text: Bilingual }) { return <section className="page-intro"><span className="eyebrow"><Sparkles size={15} /> <Bilingual value={eyebrow} /></span><h1><Bilingual value={title} /></h1><p><Bilingual value={text} /></p></section>; }
+function SectionHeading({ title, text }: { title: Bilingual; text?: Bilingual }) { return <div className="section-heading"><h2><Bilingual value={title} /></h2>{text && <p><Bilingual value={text} /></p>}</div>; }
+
+function Home() { return <div className="page home"><section className="hero"><div className="hero-content"><span className="eyebrow"><Trophy size={15} /> <Bilingual value={{ en: 'Athletic development, thoughtfully built', ar: 'تطوير رياضي بمنهج متكامل' }} /></span><h1><Bilingual value={{ en: 'From Childhood, We Build Champions', ar: 'من الطفولة نصنع الأبطال' }} /></h1><p><Bilingual value={{ en: 'A premium, structured environment where young athletes develop skills, discipline and confidence through purposeful sport.', ar: 'بيئة احترافية ومنظمة يطور فيها الرياضيون الصغار المهارات والانضباط والثقة من خلال ممارسة هادفة.' }} /></p><div className="hero-actions"><Link className="button primary" to="/sports"><Bilingual value={{ en: 'Explore Sports', ar: 'استكشف الرياضات' }} /><ArrowRight /></Link><Link className="button secondary" to="/programs"><Bilingual value={{ en: 'View Programs', ar: 'عرض البرامج' }} /><ArrowRight /></Link></div></div><div className="hero-art"><div className="hero-ring ring-one" /><div className="hero-ring ring-two" /><OfficialLogo /><span className="hero-tag"><Bilingual value={{ en: 'Train · Grow · Perform', ar: 'تدرب · تطور · أبدع' }} /></span></div></section><section className="section"><SectionHeading title={{ en: 'A clear path for every athlete', ar: 'مسار واضح لكل رياضي' }} text={{ en: 'United Olympics Sports connects purposeful coaching with a culture of progress.', ar: 'يربط يونايتد أوليمبيكس سبورت بين التدريب الهادف وثقافة التقدم.' }} /><div className="feature-grid">{[{ icon: <Dumbbell />, title: { en: 'Training', ar: 'التدريب' }, text: { en: 'Build strong foundations through consistent practice.', ar: 'ابنِ أساسًا قويًا من خلال الممارسة المستمرة.' } }, { icon: <ShieldCheck />, title: { en: 'Discipline', ar: 'الانضباط' }, text: { en: 'Create habits that support long-term development.', ar: 'كوّن عادات تدعم التطور على المدى الطويل.' } }, { icon: <Trophy />, title: { en: 'Performance', ar: 'الأداء' }, text: { en: 'Turn preparation into confident performance.', ar: 'حوّل الاستعداد إلى أداء واثق.' } }].map(item => <article className="feature-card" key={item.title.en}>{item.icon}<h3><Bilingual value={item.title} /></h3><p><Bilingual value={item.text} /></p></article>)}</div></section><section className="section tinted"><SectionHeading title={{ en: 'Explore our sports', ar: 'استكشف رياضاتنا' }} text={{ en: 'Categories designed to support different interests, strengths and stages of development.', ar: 'فئات مصممة لدعم الاهتمامات والقدرات ومراحل التطور المختلفة.' }} /><div className="card-grid">{sports.slice(0, 3).map(sport => <SportCard sport={sport} />)}</div><Link className="text-link" to="/sports"><Bilingual value={{ en: 'See all sports', ar: 'عرض جميع الرياضات' }} /><ArrowRight size={17} /></Link></section><section className="cta-band"><div><span className="eyebrow"><MessageCircle size={15} /> <Bilingual value={{ en: 'Start a conversation', ar: 'ابدأ حوارًا' }} /></span><h2><Bilingual value={{ en: 'Build the next chapter with purpose.', ar: 'ابنِ الفصل القادم بهدف واضح.' }} /></h2></div><Link className="button primary" to="/contact"><Bilingual value={{ en: 'Contact Us', ar: 'تواصل معنا' }} /><ArrowRight /></Link></section></div>; }
+
+function About() { return <div className="page"><PageIntro eyebrow={{ en: 'Who we are', ar: 'من نحن' }} title={{ en: 'A purposeful approach to athletic growth.', ar: 'منهج هادف للنمو الرياضي.' }} text={{ en: 'United Olympics Sports is a sports development brand focused on creating a disciplined, supportive and progressive environment for young athletes.', ar: 'يونايتد أوليمبيكس سبورت علامة متخصصة في التطوير الرياضي، وتركز على بناء بيئة منضبطة وداعمة ومتقدمة للرياضيين الصغار.' }} /><section className="section about-grid"><div className="statement"><span className="big-number">01</span><h2><Bilingual value={{ en: 'Development over shortcuts', ar: 'التطور قبل الاختصارات' }} /></h2><p><Bilingual value={{ en: 'We value consistency, thoughtful coaching and measurable progress. Every training experience should help an athlete understand where they are and what to practise next.', ar: 'نقدر الاستمرارية والتدريب الواعي والتقدم القابل للملاحظة. يجب أن تساعد كل تجربة تدريبية الرياضي على فهم مستواه وما ينبغي أن يتدرب عليه لاحقًا.' }} /></p></div><div className="values-list">{[['Vision','رؤيتنا','Create a lasting culture of confident participation and performance.','بناء ثقافة مستدامة للمشاركة والأداء بثقة.'],['Mission','رسالتنا','Guide athletes through structured training and human support.','توجيه الرياضيين عبر تدريب منظم ودعم إنساني.'],['Values','قيمنا','Respect, discipline, teamwork and progress in every step.','الاحترام والانضباط والعمل الجماعي والتقدم في كل خطوة.']].map(([en,ar,te,ta]) => <div className="value-row" key={en}><h3><Bilingual value={{ en, ar }} /></h3><p><Bilingual value={{ en: te, ar: ta }} /></p></div>)}</div></section></div>; }
+function SportCard({ sport }: { sport: Sport }) { return <article className="sport-card"><div className="sport-icon">{sport.id === 'swimming' ? <Sparkles /> : sport.id === 'basketball' ? <Trophy /> : <Dumbbell />}</div><h3><Bilingual value={{ en: sport.en, ar: sport.ar }} /></h3><p><Bilingual value={sport.description} /></p><div className="card-meta"><span><Bilingual value={{ en: 'Age groups', ar: 'الفئات العمرية' }} /></span><strong><Bilingual value={sport.ages} /></strong></div><Link className="text-link" to="/programs"><Bilingual value={{ en: 'Learn More', ar: 'اعرف المزيد' }} /><ArrowRight size={16} /></Link></article>; }
+function Sports() { return <div className="page"><PageIntro eyebrow={{ en: 'Sports', ar: 'الرياضات' }} title={{ en: 'Find the discipline that moves you.', ar: 'اكتشف الرياضة التي تحرك شغفك.' }} text={{ en: 'Our sport categories are designed as a flexible foundation for future teams, players, coaches, programs and performance journeys.', ar: 'صممت فئاتنا الرياضية لتكون أساسًا مرنًا للفرق واللاعبين والمدربين والبرامج ومسارات الأداء مستقبلًا.' }} /><section className="section"><div className="card-grid sports-grid">{sports.map(sport => <SportCard sport={sport} />)}</div></section></div>; }
+function Programs() { const [filter, setFilter] = useState('All'); const filtered = useMemo(() => filter === 'All' ? programs : programs.filter(p => p.sport.en === filter), [filter]); return <div className="page"><PageIntro eyebrow={{ en: 'Programs', ar: 'البرامج' }} title={{ en: 'Structured practice, made meaningful.', ar: 'تدريب منظم، بمعنى واضح.' }} text={{ en: 'Browse a growing catalogue of training experiences. Details will be expanded as verified programme information becomes available.', ar: 'تصفح كتالوجًا متناميًا من التجارب التدريبية. ستتم إضافة التفاصيل عند توفر معلومات موثقة عن البرامج.' }} /><section className="section"><div className="filters"><span><Bilingual value={{ en: 'Filter by sport', ar: 'التصفية حسب الرياضة' }} /></span>{['All', ...sports.slice(0, 4).map(s => s.en)].map(item => <button className={filter === item ? 'filter active' : 'filter'} key={item} onClick={() => setFilter(item)}><Bilingual value={item === 'All' ? { en: 'All', ar: 'الكل' } : { en: item, ar: sports.find(s => s.en === item)?.ar || item }} /></button>)}</div><div className="program-grid">{filtered.map(program => <article className="program-card" key={program.en}><span className="program-kicker"><Bilingual value={program.sport} /></span><h3><Bilingual value={{ en: program.en, ar: program.ar }} /></h3><div className="program-details"><span><Bilingual value={{ en: 'Age group', ar: 'الفئة العمرية' }} /><strong><Bilingual value={program.age} /></strong></span><span><Bilingual value={{ en: 'Level', ar: 'المستوى' }} /><strong><Bilingual value={program.level} /></strong></span><span><Bilingual value={{ en: 'Training focus', ar: 'محور التدريب' }} /><strong><Bilingual value={program.focus} /></strong></span></div><span className="available"><Check size={15} /><Bilingual value={{ en: 'Details available soon', ar: 'التفاصيل ستضاف قريبًا' }} /></span></article>)}</div></section></div>; }
+function Coaches() { return <div className="page"><PageIntro eyebrow={{ en: 'Coaches', ar: 'المدربون' }} title={{ en: 'Guidance that makes progress visible.', ar: 'توجيه يجعل التقدم واضحًا.' }} text={{ en: 'Our coaching architecture is prepared to connect expertise, sport, programmes and athlete development as the organisation grows.', ar: 'بنيت منظومة التدريب لتربط الخبرة بالرياضة والبرامج وتطوير الرياضيين مع نمو المؤسسة.' }} /><section className="section empty-coaches"><div className="coach-symbol"><Users /></div><h2><Bilingual value={{ en: 'Coach profiles are being prepared.', ar: 'ملفات المدربين قيد الإعداد.' }} /></h2><p><Bilingual value={{ en: 'Verified coach information will appear here when it is ready to be shared.', ar: 'ستظهر معلومات المدربين الموثقة هنا عند جاهزيتها للنشر.' }} /></p></section></div>; }
+function Contact() { const [sent, setSent] = useState(false); return <div className="page"><PageIntro eyebrow={{ en: 'Contact', ar: 'تواصل معنا' }} title={{ en: 'Let’s start with a thoughtful conversation.', ar: 'لنبدأ بحوار هادف.' }} text={{ en: 'Use the form below to share an enquiry. This interface does not submit to a backend yet.', ar: 'استخدم النموذج أدناه لمشاركة استفسارك. هذه الواجهة لا ترسل البيانات إلى خادم بعد.' }} /><section className="section contact-layout"><form className="contact-form" onSubmit={e => { e.preventDefault(); setSent(true); }}><label><Bilingual value={{ en: 'Name', ar: 'الاسم' }} /><input required placeholder="Your name | اسمك" /></label><label><Bilingual value={{ en: 'Email', ar: 'البريد الإلكتروني' }} /><input required type="email" placeholder="you@example.com | بريدك الإلكتروني" /></label><label><Bilingual value={{ en: 'Subject', ar: 'الموضوع' }} /><input required placeholder="How can we help? | كيف يمكننا مساعدتك؟" /></label><label><Bilingual value={{ en: 'Message', ar: 'الرسالة' }} /><textarea required rows={5} placeholder="Write your message | اكتب رسالتك" /></label><button className="button primary" type="submit"><Bilingual value={{ en: 'Send Message', ar: 'إرسال الرسالة' }} /><Send size={17} /></button>{sent && <p className="form-note"><Bilingual value={{ en: 'Thank you. Your message is ready for the next verified contact workflow.', ar: 'شكرًا لك. رسالتك جاهزة لخطوة التواصل الموثقة التالية.' }} /></p>}</form><aside className="contact-note"><MessageCircle /><h3><Bilingual value={{ en: 'Verified details first', ar: 'التفاصيل الموثقة أولًا' }} /></h3><p><Bilingual value={{ en: 'Public contact details will be added after verification. Until then, this neutral form keeps the experience honest.', ar: 'ستتم إضافة بيانات التواصل العامة بعد التحقق منها. وحتى ذلك الحين يحافظ هذا النموذج المحايد على صدق التجربة.' }} /></p></aside></section></div>; }
+
+function PortalLayout({ type, title }: { type: string; title: Bilingual }) { return <div className="portal-shell"><header className="portal-header"><Link to="/" className="brand-lockup"><OfficialLogo compact /><span><strong>{brand}</strong><small>{brandAr}</small></span></Link><Link className="return-link" to="/"><ArrowLeft size={16} /><Bilingual value={{ en: 'Public website', ar: 'الموقع العام' }} /></Link></header><main className="portal-main"><span className="eyebrow"><ShieldCheck size={15} /> <Bilingual value={{ en: 'Product entry', ar: 'مدخل المنتج' }} /></span><h1><Bilingual value={title} /></h1><p><Bilingual value={{ en: `The ${type} product surface is ready for the next mission.`, ar: `واجهة ${title.ar} جاهزة للمهمة التالية.` }} /></p><div className="portal-placeholder"><Sparkles /><h2><Bilingual value={{ en: 'Foundation shell ready', ar: 'الهيكل الأساسي جاهز' }} /></h2><p><Bilingual value={{ en: 'This distinct product entry is intentionally limited to architecture and navigation in this mission.', ar: 'يقتصر مدخل المنتج المستقل في هذه المهمة على البنية والتنقل كما هو مطلوب.' }} /></p></div></main></div>; }
+
+function AppRoutes() { const [showSplash, setShowSplash] = useState(true); const location = useLocation(); useEffect(() => { setShowSplash(location.pathname === '/'); }, [location.pathname]); return <><AnimatePresence>{showSplash && location.pathname === '/' && <Splash onComplete={() => setShowSplash(false)} />}</AnimatePresence><Routes><Route path="/player" element={<PortalLayout type="Player" title={{ en: 'Player', ar: 'اللاعب' }} />} /><Route path="/parent" element={<PortalLayout type="Parent" title={{ en: 'Parent', ar: 'ولي الأمر' }} />} /><Route path="/coach" element={<PortalLayout type="Coach" title={{ en: 'Coach', ar: 'المدرب' }} />} /><Route path="/admin" element={<PortalLayout type="Admin" title={{ en: 'Admin', ar: 'الإدارة' }} />} /><Route path="*" element={<PublicLayout />} /></Routes></>; }
+
+export function App() { return <BrowserRouter><AppRoutes /></BrowserRouter>; }
 export default App;

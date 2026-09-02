@@ -1,6 +1,6 @@
 {
   "name": "United Olympics Sports | يونايتد أوليمبيكس سبورت",
-  "description": "The official 5-product Olympic sports ecosystem: Showcase Website, Player Passport & Performance, Parent Portal, Coach Tactical HQ, and Super Admin Management with Cinematic Reveal.",
+  "description": "A thoughtful sports development environment for structured training, discipline and progress. | بيئة متكاملة للتطوير الرياضي والتدريب المنظم والانضباط والتقدم.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
