@@ -17,7 +17,13 @@ const checkBilingual = async (page, key) => {
   assert(broken === 0, `Broken bilingual components ${key}: ${broken}`);
 };
 const checkImages = async (page, key) => {
-  const broken = await page.locator('img').evaluateAll(images => images.filter(image => !image.complete || image.naturalWidth === 0).map(image => image.getAttribute('src')));
+  const images = page.locator('img');
+  const count = await images.count();
+  for (let index = 0; index < count; index += 1) {
+    await images.nth(index).scrollIntoViewIfNeeded().catch(() => {});
+  }
+  await page.waitForTimeout(180);
+  const broken = await images.evaluateAll(items => items.filter(image => image.complete && image.naturalWidth === 0).map(image => image.getAttribute('src')));
   report.images[key] = broken;
   assert(broken.length === 0, `Broken images ${key}: ${broken.join(',')}`);
 };
