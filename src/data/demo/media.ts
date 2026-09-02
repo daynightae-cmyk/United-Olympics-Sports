@@ -1,5 +1,5 @@
 import type { SportMediaAsset } from '../../domain/contracts';
-import { swimmingMediaAssets } from '../media/swimming';
+import { sportMediaAssets } from '../media';
 
-export const demoSportMediaAssets: SportMediaAsset[] = [...swimmingMediaAssets];
-export { swimmingMediaAssets };
+export const demoSportMediaAssets: SportMediaAsset[] = [...sportMediaAssets];
+export { footballMediaAssets, sportMediaAssets, swimmingMediaAssets } from '../media';
