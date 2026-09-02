@@ -4,8 +4,8 @@ export const demoSports: Sport[] = [
   {
     id: 'football',
     name: { en: 'Football', ar: 'كرة القدم' },
-    description: { en: 'Preview structure for team technique, awareness and movement.', ar: 'هيكل تجريبي لتقنية الفريق والوعي والحركة.' },
-    ageGroups: [{ en: 'Under 12', ar: 'تحت 12 سنة' }, { en: 'Under 15', ar: 'تحت 15 سنة' }],
+    description: { en: 'Preview structure for progressive team technique, awareness and movement.', ar: 'هيكل تجريبي متدرج لتقنية الفريق والوعي والحركة.' },
+    ageGroups: [{ en: 'Children', ar: 'أطفال' }, { en: 'Youth', ar: 'ناشئون' }],
     programIds: ['program-demo-football-foundation'], icon: 'football', status: 'active',
   },
   {
@@ -19,7 +19,7 @@ export const demoSports: Sport[] = [
     id: 'basketball',
     name: { en: 'Basketball', ar: 'كرة السلة' },
     description: { en: 'Preview structure for movement, decisions and team play.', ar: 'هيكل تجريبي للحركة والقرارات واللعب الجماعي.' },
-    ageGroups: [{ en: 'Under 14', ar: 'تحت 14 سنة' }],
+    ageGroups: [{ en: 'Youth', ar: 'ناشئون' }],
     programIds: ['program-demo-basketball-team'], icon: 'basketball', status: 'active',
   },
   {
