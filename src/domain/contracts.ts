@@ -6,14 +6,20 @@ export type Sport = {
   description: BilingualText;
   ageGroups: BilingualText[];
   programIds: string[];
+  icon: string;
+  status: EntityStatus;
 };
 
 export type TrainingGroup = {
   id: string;
   sportId: string;
   name: BilingualText;
+  ageGroup: BilingualText;
+  level: BilingualText;
   playerIds: string[];
   coachIds: string[];
+  programIds: string[];
+  status: EntityStatus;
 };
 
 export type Player = {
@@ -35,6 +41,7 @@ export type Player = {
   performanceHistory: PerformanceRecord[];
   coachFeedback: CoachFeedback[];
   achievements: BilingualText[];
+  attendanceRecords: AttendanceRecord[];
 };
 
 export type MetricDefinition = {
@@ -58,19 +65,44 @@ export type CoachFeedback = {
   id: string;
   playerId: string;
   coachId: string;
+  sportId: string;
+  groupId: string;
   summary: BilingualText;
+  strengths: BilingualText[];
+  focusAreas: BilingualText[];
+  metricChanges: MetricChange[];
   createdAt: string;
 };
 
 export type AttendanceSummary = { attended: number; scheduled: number };
+export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
+export type AttendanceRecord = { id: string; date: string; status: AttendanceStatus };
 export type Session = { id: string; sportId: string; groupId: string; startsAt: string; status: BilingualText };
-export type CoachEvaluation = { id: string; coachId: string; playerId: string; metrics: PerformanceRecord[]; feedback: CoachFeedback };
+export type MetricChange = { metricId: string; previousValue: number; currentValue: number };
+export type CoachEvaluation = {
+  id: string;
+  playerId: string;
+  coachId: string;
+  sportId: string;
+  groupId: string;
+  createdAt: string;
+  summaryEn: string;
+  summaryAr: string;
+  strengths: BilingualText[];
+  focusAreas: BilingualText[];
+  metricRecords: PerformanceRecord[];
+};
 
-export const metricDefinitions: MetricDefinition[] = [
-  ...['Speed|السرعة', 'Passing|التمرير', 'Shooting|التسديد', 'Positioning|التمركز', 'Fitness|اللياقة'].map((label, i) => { const [en, ar] = label.split('|'); return { id: `football-${i}`, sportId: 'football', name: { en, ar } }; }),
-  ...['Time|الزمن', 'Technique|التقنية', 'Speed|السرعة', 'Endurance|التحمل'].map((label, i) => { const [en, ar] = label.split('|'); return { id: `swimming-${i}`, sportId: 'swimming', name: { en, ar } }; }),
-  ...['Technique|التقنية', 'Flexibility|المرونة', 'Balance|التوازن', 'Strength|القوة'].map((label, i) => { const [en, ar] = label.split('|'); return { id: `gymnastics-${i}`, sportId: 'gymnastics', name: { en, ar } }; }),
-  ...['Shooting|التصويب', 'Passing|التمرير', 'Speed|السرعة', 'Endurance|التحمل'].map((label, i) => { const [en, ar] = label.split('|'); return { id: `basketball-${i}`, sportId: 'basketball', name: { en, ar } }; }),
-];
+export type EntityStatus = 'active' | 'inactive';
+export type SportMediaUsage = 'hero' | 'training' | 'children' | 'youth' | 'women' | 'coach' | 'technique' | 'group' | 'performance' | 'gallery';
+export type SportMediaAsset = {
+  id: string;
+  sportId: string;
+  url: string;
+  altEn: string;
+  altAr: string;
+  usage: SportMediaUsage;
+  order: number;
+};
 
 export type ProductPortal = 'player' | 'parent' | 'coach' | 'admin';
