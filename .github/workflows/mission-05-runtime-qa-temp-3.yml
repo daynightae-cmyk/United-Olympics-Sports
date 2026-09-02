@@ -1,0 +1,123 @@
+name: Mission 05 Temporary Runtime QA Final
+
+on:
+  push:
+    branches:
+      - work/player-app-core-phase-a
+    paths:
+      - .github/workflows/mission-05-runtime-qa-temp-3.yml
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install and validate
+        shell: bash
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+          if grep -RInE 'United Olympics Sports Academy|United Olympic Sports Academy|United Olympics Academy|United Olympic Academy|أكاديمية يونايتد أوليمبيكس سبورت|أكاديمية يونايتد أوليمبيكس' src index.html package.json; then exit 1; fi
+          if grep -RInE 'fake login|fake password|OTP success|realtime sync active|Coach just sent this|Backend connected' src/pages/player src/components/player src/layouts/PlayerLayout.tsx; then exit 1; fi
+          test ! -e .env && test ! -e .env.local
+          echo SOURCE_AND_BUILD_AUDIT=PASS
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start runtime
+        shell: bash
+        run: |
+          npm run dev > /tmp/uos-vite.log 2>&1 &
+          for i in {1..45}; do curl --fail --silent http://127.0.0.1:3000/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/uos-vite.log; exit 1
+      - name: Runtime and visual acceptance
+        shell: bash
+        run: |
+          mkdir -p final-qa/screenshots
+          node --input-type=module <<'JS'
+          import { chromium } from 'playwright';
+          import fs from 'node:fs';
+          const base='http://127.0.0.1:3000';
+          const report={reducedMotion:{},normalSplash:{},skipIntro:{},routes:{},responsive:{},sportAware:{},shellIsolation:{},regressions:{},accessibility:{},consoleErrors:[],status:'RUNNING'};
+          const browser=await chromium.launch({headless:true});
+          const assert=(v,m)=>{if(!v)throw new Error(m)};
+          const body=async p=>(await p.locator('body').innerText()).trim();
+          const dimensions=async p=>p.evaluate(()=>({scrollWidth:document.documentElement.scrollWidth,clientWidth:document.documentElement.clientWidth}));
+          try {
+            // Reduced-motion visual session: logo + bilingual copy visible, no decorative motion.
+            const rvctx=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});
+            const rvp=await rvctx.newPage();
+            await rvp.goto(base+'/',{waitUntil:'domcontentloaded'});
+            const splash=rvp.locator('.splash');
+            assert(await splash.count()===1,'Reduced Splash missing');
+            assert(await splash.getAttribute('data-reduced-motion')==='true','Reduced mode was not active on first render');
+            assert(await splash.locator('.official-logo').count()===1,'Reduced Splash official logo count must be one');
+            const copy=await splash.locator('.splash-copy').evaluate(el=>({opacity:getComputedStyle(el).opacity,display:getComputedStyle(el).display,visibility:getComputedStyle(el).visibility}));
+            assert(Number(copy.opacity)>.9&&copy.display!=='none'&&copy.visibility!=='hidden',`Reduced bilingual copy not visibly rendered: ${JSON.stringify(copy)}`);
+            const splashText=await splash.innerText();
+            assert(splashText.includes('United Olympics Sports')&&splashText.includes('يونايتد أوليمبيكس سبورت'),'Canonical bilingual Splash brand missing');
+            const decorations=await splash.locator('.splash-particles,.splash-shield-outline,.splash-energy-ring,.gold-orbit').count();
+            assert(decorations===0,`Reduced decorative elements rendered: ${decorations}`);
+            await rvp.screenshot({path:'final-qa/screenshots/reduced-splash.png'});
+            await rvctx.close();
+
+            // Reduced-motion timing session: measure from first observable Splash to detach.
+            const rtctx=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});
+            const rtp=await rtctx.newPage();
+            await rtp.goto(base+'/',{waitUntil:'domcontentloaded'});
+            await rtp.locator('.splash').waitFor({state:'visible',timeout:500});
+            const visibleStart=Date.now();
+            await rtp.locator('.splash').waitFor({state:'detached',timeout:1000});
+            const visibleMs=Date.now()-visibleStart;
+            const seen=await rtp.evaluate(()=>sessionStorage.getItem('uos:splash-seen'));
+            assert(visibleMs<=1000,`Reduced visible duration exceeded 1000ms: ${visibleMs}`);
+            assert(seen==='1',`Reduced session key incorrect: ${seen}`);
+            await rtp.goto(base+'/sports',{waitUntil:'networkidle'}); await rtp.goto(base+'/',{waitUntil:'networkidle'});
+            const replay=await rtp.locator('.splash').count(); assert(replay===0,'Splash replayed in same reduced-motion session');
+            report.reducedMotion={observedVisibleMs:visibleMs,decorationsRendered:0,copyVisible:true,officialLogoCount:1,sessionKey:seen,replayAfterReturn:replay,pass:true};
+            await rtctx.close();
+
+            // Normal cinematic session.
+            const nctx=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'no-preference'}); const np=await nctx.newPage();
+            await np.goto(base+'/',{waitUntil:'domcontentloaded'}); await np.locator('.splash').waitFor({state:'visible'}); const normalStart=Date.now();
+            assert(await np.locator('.splash .official-logo').count()===1,'Normal Splash logo count must be one'); assert(await np.locator('.splash-particles').count()===1,'Normal particles missing');
+            await np.screenshot({path:'final-qa/screenshots/normal-splash.png'}); await np.waitForTimeout(1000); assert(await np.locator('.splash').count()===1,'Normal Splash ended too early');
+            await np.locator('.splash').waitFor({state:'detached',timeout:3500}); report.normalSplash={observedVisibleMs:Date.now()-normalStart,officialLogoCount:1,decorations:true,pass:true}; await nctx.close();
+
+            // Skip Intro session.
+            const skctx=await browser.newContext({viewport:{width:390,height:844}}); const skp=await skctx.newPage(); await skp.goto(base+'/',{waitUntil:'domcontentloaded'});
+            const skip=skp.getByRole('button',{name:/Skip Intro|تخطي المقدمة/i}); assert(await skip.count()===1,'Skip Intro missing'); const skipStart=Date.now(); await skip.click(); await skp.locator('.splash').waitFor({state:'detached',timeout:1000}); const skipSeen=await skp.evaluate(()=>sessionStorage.getItem('uos:splash-seen')); assert(skipSeen==='1','Skip session key failed'); report.skipIntro={observedMs:Date.now()-skipStart,sessionKey:skipSeen,pass:true}; await skctx.close();
+
+            // App routes and regressions without Splash masking underlying UI.
+            const ctx=await browser.newContext({viewport:{width:1280,height:900}}); await ctx.addInitScript(()=>sessionStorage.setItem('uos:splash-seen','1')); const page=await ctx.newPage();
+            page.on('console',m=>{if(m.type()==='error')report.consoleErrors.push(m.text())});
+            const publicRoutes=['/','/sports','/sports/football','/sports/swimming','/sports/basketball']; const adminRoutes=['/admin','/admin/players','/admin/players/player-demo-001']; const playerRoutes=['/player','/player/id','/player/progress','/player/performance','/player/attendance','/player/feedback'];
+            for(const route of [...publicRoutes,...adminRoutes,...playerRoutes]){await page.goto(base+route,{waitUntil:'networkidle'});const t=await body(page);assert(t.length>40,`Route empty: ${route}`);report.routes[route]={url:page.url(),textLength:t.length};if(route.startsWith('/player')){assert(await page.locator('.player-shell').count()===1,`Player shell missing ${route}`);assert(await page.locator('.site-header').count()===0,`Public header leaked ${route}`);assert(await page.locator('.site-footer').count()===0,`Public footer leaked ${route}`);await page.reload({waitUntil:'networkidle'});assert(page.url().includes(route),`Direct refresh lost ${route}`);}}
+            report.shellIsolation={playerShell:true,noPublicHeader:true,noPublicFooter:true,directRefresh:true};
+            for(const width of [320,360,390,430,768]){await page.setViewportSize({width,height:width<768?900:1024});for(const route of playerRoutes){await page.goto(base+route,{waitUntil:'networkidle'});const d=await dimensions(page);report.responsive[`${route}@${width}`]=d;assert(d.scrollWidth<=d.clientWidth+1,`Overflow ${route}@${width}: ${d.scrollWidth}/${d.clientWidth}`);assert(await page.locator('.player-bottom-nav').count()===1,`Player nav missing ${route}@${width}`);}await page.goto(base+'/player',{waitUntil:'networkidle'});await page.screenshot({path:`final-qa/screenshots/player-dashboard-${width}.png`,fullPage:true});}
+            await page.setViewportSize({width:390,height:900}); for(const [route,name] of [['/player/id','id'],['/player/progress','progress'],['/player/performance','performance'],['/player/attendance','attendance'],['/player/feedback','feedback']]){await page.goto(base+route,{waitUntil:'networkidle'});await page.screenshot({path:`final-qa/screenshots/player-${name}-390.png`,fullPage:true});}
+            for(const [id,sport,labels] of [['player-demo-001','Football',['Speed','Passing','Shooting']],['player-demo-003','Swimming',['Time','Technique','Endurance']],['player-demo-005','Basketball',['Shooting','Decision Making','Endurance']]]){await page.goto(`${base}/player/performance?previewPlayer=${id}`,{waitUntil:'networkidle'});const t=await body(page);assert(await page.locator(`[data-preview-player="${id}"]`).count()===1,`Fixture override failed ${id}`);assert(t.includes(sport),`${sport} name missing`);for(const label of labels)assert(t.includes(label),`${sport} metric ${label} missing`);report.sportAware[id]={sport,labels,pass:true};}
+            await page.goto(base+'/player?previewPlayer=missing-preview-player',{waitUntil:'networkidle'});const missing=await body(page);assert(missing.includes('Preview Player Not Found')&&missing.includes('اللاعب التجريبي غير موجود'),'Bilingual player error state failed');
+            await page.setViewportSize({width:1280,height:900});for(const route of [...publicRoutes,...adminRoutes]){await page.goto(base+route,{waitUntil:'networkidle'});const d=await dimensions(page);assert(d.scrollWidth<=d.clientWidth+1,`Regression overflow ${route}`);}report.regressions={publicSports:'PASS',admin:'PASS'};
+            await page.goto(base+'/player',{waitUntil:'networkidle'});const home=page.locator('.player-bottom-nav a').first();assert(await page.locator('nav.player-bottom-nav').count()===1,'Semantic player nav missing');assert(await home.getAttribute('aria-current')==='page','aria-current missing');await page.keyboard.press('Tab');assert(await page.evaluate(()=>document.activeElement!==document.body),'Keyboard focus failed');report.accessibility={semanticNav:true,ariaCurrent:true,keyboardFocus:true};
+            assert(report.consoleErrors.length===0,`Console errors: ${report.consoleErrors.join(' | ')}`);await ctx.close();report.status='PASS';
+          } catch(error){report.status='FAIL';report.error=error instanceof Error?(error.stack||error.message):String(error);throw error;}
+          finally{await browser.close();fs.writeFileSync('final-qa/runtime-qa.json',JSON.stringify(report,null,2));console.log('MISSION_05_FINAL_QA='+JSON.stringify(report));}
+          JS
+      - name: Upload final evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mission-05-final-runtime-qa
+          path: final-qa
+          if-no-files-found: error
+          retention-days: 7
