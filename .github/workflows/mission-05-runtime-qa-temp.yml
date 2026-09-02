@@ -1,0 +1,240 @@
+name: Mission 05 Temporary Runtime QA
+
+on:
+  push:
+    branches:
+      - work/player-app-core-phase-a
+    paths:
+      - .github/workflows/mission-05-runtime-qa-temp.yml
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install application
+        run: npm ci
+
+      - name: Source truth audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RInE 'United Olympics Sports Academy|United Olympic Sports Academy|United Olympics Academy|United Olympic Academy|أكاديمية يونايتد أوليمبيكس سبورت|أكاديمية يونايتد أوليمبيكس' src index.html package.json; then
+            echo 'Forbidden Academy brand string found.' >&2
+            exit 1
+          fi
+          if grep -RInE 'fake login|fake password|OTP success|realtime sync active|Coach just sent this|Backend connected' src/pages/player src/components/player src/layouts/PlayerLayout.tsx; then
+            echo 'Forbidden fake auth/backend/realtime claim found.' >&2
+            exit 1
+          fi
+          test ! -e .env
+          test ! -e .env.local
+          echo 'SOURCE_AUDIT=PASS'
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start Vite
+        shell: bash
+        run: |
+          npm run dev > /tmp/uos-vite.log 2>&1 &
+          for i in {1..45}; do
+            if curl --fail --silent http://127.0.0.1:3000/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/uos-vite.log
+          exit 1
+
+      - name: Browser and visual QA
+        shell: bash
+        run: |
+          mkdir -p qa-artifacts/screenshots
+          node --input-type=module <<'JS'
+          import { chromium } from 'playwright';
+          import fs from 'node:fs';
+
+          const base = 'http://127.0.0.1:3000';
+          const report = {
+            routes: {}, responsive: {}, sportAware: {}, reducedMotion: {}, normalSplash: {}, skipIntro: {},
+            shellIsolation: {}, directRefresh: {}, regressions: {}, consoleErrors: [], accessibility: {}, status: 'running'
+          };
+          const browser = await chromium.launch({ headless: true });
+          const fail = (message) => { throw new Error(message); };
+          const assert = (condition, message) => { if (!condition) fail(message); };
+          const bodyText = async page => (await page.locator('body').innerText()).trim();
+          const noOverflow = async (page, label) => {
+            const dims = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth }));
+            report.responsive[label] = dims;
+            assert(dims.scrollWidth <= dims.clientWidth + 1, `Horizontal overflow ${label}: ${dims.scrollWidth}/${dims.clientWidth}`);
+          };
+
+          try {
+            const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+            const page = await context.newPage();
+            page.on('console', msg => { if (msg.type() === 'error') report.consoleErrors.push(msg.text()); });
+
+            const publicRoutes = ['/', '/sports', '/sports/football', '/sports/swimming', '/sports/basketball'];
+            const adminRoutes = ['/admin', '/admin/players', '/admin/players/player-demo-001'];
+            const playerRoutes = ['/player', '/player/id', '/player/progress', '/player/performance', '/player/attendance', '/player/feedback'];
+
+            for (const route of [...publicRoutes, ...adminRoutes, ...playerRoutes]) {
+              await page.goto(base + route, { waitUntil: 'networkidle' });
+              const text = await bodyText(page);
+              report.routes[route] = { textLength: text.length, url: page.url() };
+              assert(text.length > 40, `Insufficient rendered content: ${route}`);
+              if (route.startsWith('/player')) {
+                assert(await page.locator('.player-shell').count() === 1, `Player shell missing: ${route}`);
+                assert(await page.locator('.site-header').count() === 0, `Public header leaked into Player: ${route}`);
+                assert(await page.locator('.site-footer').count() === 0, `Public footer leaked into Player: ${route}`);
+              }
+            }
+            report.shellIsolation = { playerShell: true, noPublicHeader: true, noPublicFooter: true };
+
+            for (const route of playerRoutes) {
+              await page.goto(base + route, { waitUntil: 'networkidle' });
+              await page.reload({ waitUntil: 'networkidle' });
+              assert(page.url().includes(route), `Direct refresh lost route ${route}`);
+              assert((await bodyText(page)).length > 40, `Direct refresh empty ${route}`);
+            }
+            report.directRefresh = { playerRoutes: 'PASS' };
+
+            const widths = [320, 360, 390, 430, 768];
+            for (const width of widths) {
+              await page.setViewportSize({ width, height: width < 768 ? 900 : 1024 });
+              for (const route of playerRoutes) {
+                await page.goto(base + route, { waitUntil: 'networkidle' });
+                await noOverflow(page, `${route}@${width}`);
+                assert(await page.locator('.player-bottom-nav').count() === 1, `Player nav missing ${route}@${width}`);
+              }
+              await page.goto(base + '/player', { waitUntil: 'networkidle' });
+              if ([320, 360, 390, 430, 768].includes(width)) await page.screenshot({ path: `qa-artifacts/screenshots/player-dashboard-${width}.png`, fullPage: true });
+            }
+
+            await page.setViewportSize({ width: 390, height: 900 });
+            for (const [route, name] of [['/player/id','id'],['/player/progress','progress'],['/player/performance','performance'],['/player/attendance','attendance'],['/player/feedback','feedback']]) {
+              await page.goto(base + route, { waitUntil: 'networkidle' });
+              await page.screenshot({ path: `qa-artifacts/screenshots/player-${name}-390.png`, fullPage: true });
+            }
+
+            const sportChecks = [
+              ['player-demo-001', 'Football', ['Speed', 'Passing', 'Shooting']],
+              ['player-demo-003', 'Swimming', ['Time', 'Technique', 'Endurance']],
+              ['player-demo-005', 'Basketball', ['Shooting', 'Decision Making', 'Endurance']],
+            ];
+            for (const [id, sport, labels] of sportChecks) {
+              await page.goto(`${base}/player/performance?previewPlayer=${id}`, { waitUntil: 'networkidle' });
+              const text = await bodyText(page);
+              assert(await page.locator(`[data-preview-player="${id}"]`).count() === 1, `Preview fixture override failed for ${id}`);
+              assert(text.includes(sport), `${sport} name missing for ${id}`);
+              for (const label of labels) assert(text.includes(label), `${sport} metric ${label} missing for ${id}`);
+              report.sportAware[id] = { sport, labels, pass: true };
+            }
+
+            await page.goto(`${base}/player?previewPlayer=missing-preview-player`, { waitUntil: 'networkidle' });
+            const errorText = await bodyText(page);
+            assert(errorText.includes('Preview Player Not Found') && errorText.includes('اللاعب التجريبي غير موجود'), 'Professional bilingual missing-player state failed');
+
+            await page.setViewportSize({ width: 1280, height: 900 });
+            for (const route of publicRoutes) {
+              await page.goto(base + route, { waitUntil: 'networkidle' });
+              await noOverflow(page, `${route}@1280`);
+            }
+            for (const route of adminRoutes) {
+              await page.goto(base + route, { waitUntil: 'networkidle' });
+              await noOverflow(page, `${route}@1280`);
+            }
+            report.regressions = { publicRoutes: 'PASS', adminRoutes: 'PASS' };
+
+            await page.goto(base + '/player', { waitUntil: 'networkidle' });
+            assert(await page.locator('nav.player-bottom-nav').count() === 1, 'Semantic Player nav missing');
+            const firstNav = page.locator('.player-bottom-nav a').first();
+            assert((await firstNav.getAttribute('href')) === '/player', 'Home navigation href incorrect');
+            assert((await firstNav.getAttribute('aria-current')) === 'page', 'aria-current missing on active Player nav');
+            await page.keyboard.press('Tab');
+            const focusVisible = await page.evaluate(() => document.activeElement !== document.body);
+            assert(focusVisible, 'Keyboard focus did not move to an interactive element');
+            report.accessibility = { semanticNav: true, ariaCurrent: true, keyboardFocus: true };
+            await context.close();
+
+            const reduced = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+            const reducedPage = await reduced.newPage();
+            const started = Date.now();
+            await reducedPage.goto(base + '/', { waitUntil: 'domcontentloaded' });
+            assert(await reducedPage.locator('.splash').count() === 1, 'Reduced-motion Splash did not appear');
+            assert(await reducedPage.locator('.splash .official-logo').count() === 1, 'Reduced-motion official logo count is not exactly one');
+            const splashText = await reducedPage.locator('.splash').innerText();
+            assert(splashText.includes('United Olympics Sports') && splashText.includes('يونايتد أوليمبيكس سبورت'), 'Reduced-motion bilingual brand missing');
+            const decorations = await reducedPage.locator('.splash-particles,.splash-shield-outline,.splash-energy-ring,.gold-orbit').count();
+            assert(decorations === 0, `Decorative reduced-motion elements rendered: ${decorations}`);
+            await reducedPage.locator('.splash').waitFor({ state: 'detached', timeout: 1000 });
+            const elapsed = Date.now() - started;
+            const seen = await reducedPage.evaluate(() => sessionStorage.getItem('uos:splash-seen'));
+            assert(elapsed <= 1000, `Reduced-motion Splash exceeded 1000ms: ${elapsed}ms`);
+            assert(seen === '1', `Reduced-motion session key incorrect: ${seen}`);
+            await reducedPage.goto(base + '/sports', { waitUntil: 'networkidle' });
+            await reducedPage.goto(base + '/', { waitUntil: 'networkidle' });
+            const replay = await reducedPage.locator('.splash').count();
+            assert(replay === 0, 'Reduced-motion Splash replayed in the same session');
+            report.reducedMotion = { elapsedMs: elapsed, decorationsRendered: decorations, officialLogoCount: 1, sessionKey: seen, replayAfterReturn: replay, pass: true };
+            await reduced.close();
+
+            const normal = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'no-preference' });
+            const normalPage = await normal.newPage();
+            const normalStart = Date.now();
+            await normalPage.goto(base + '/', { waitUntil: 'domcontentloaded' });
+            assert(await normalPage.locator('.splash').count() === 1, 'Normal Splash missing');
+            assert(await normalPage.locator('.splash .official-logo').count() === 1, 'Normal Splash official logo count is not one');
+            assert(await normalPage.locator('.splash-particles').count() === 1, 'Normal Splash decorative particles missing');
+            await normalPage.waitForTimeout(1000);
+            assert(await normalPage.locator('.splash').count() === 1, 'Normal cinematic Splash ended too early');
+            await normalPage.locator('.splash').waitFor({ state: 'detached', timeout: 3500 });
+            report.normalSplash = { elapsedMs: Date.now() - normalStart, decorativeParticles: true, officialLogoCount: 1, pass: true };
+            await normal.close();
+
+            const skipContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+            const skipPage = await skipContext.newPage();
+            await skipPage.goto(base + '/', { waitUntil: 'domcontentloaded' });
+            const skip = skipPage.getByRole('button', { name: /Skip Intro|تخطي المقدمة/i });
+            assert(await skip.count() === 1, 'Skip Intro missing');
+            const skipStart = Date.now();
+            await skip.click();
+            await skipPage.locator('.splash').waitFor({ state: 'detached', timeout: 1000 });
+            const skipSeen = await skipPage.evaluate(() => sessionStorage.getItem('uos:splash-seen'));
+            report.skipIntro = { elapsedMs: Date.now() - skipStart, sessionKey: skipSeen, pass: skipSeen === '1' };
+            assert(skipSeen === '1', 'Skip Intro did not set session key');
+            await skipContext.close();
+
+            assert(report.consoleErrors.length === 0, `Console errors: ${report.consoleErrors.join(' | ')}`);
+            report.status = 'PASS';
+          } catch (error) {
+            report.status = 'FAIL';
+            report.error = error instanceof Error ? error.stack || error.message : String(error);
+            throw error;
+          } finally {
+            await browser.close();
+            fs.writeFileSync('qa-artifacts/runtime-qa.json', JSON.stringify(report, null, 2));
+            console.log('MISSION_05_QA_REPORT=' + JSON.stringify(report));
+          }
+          JS
+
+      - name: Upload QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mission-05-runtime-qa
+          path: qa-artifacts
+          if-no-files-found: error
+          retention-days: 7
