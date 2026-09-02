@@ -4,33 +4,45 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>United Olympics Sports | يونايتد أوليمبيكس سبورت</title>
-    <meta name="description" content="A thoughtful sports development environment for structured training, discipline and progress. | بيئة متكاملة للتطوير الرياضي والتدريب المنظم والانضباط والتقدم." />
+    <meta
+      name="description"
+      content="A thoughtful sports development environment for structured training, discipline and progress. | بيئة متكاملة للتطوير الرياضي والتدريب المنظم والانضباط والتقدم."
+    />
     <meta property="og:title" content="United Olympics Sports | يونايتد أوليمبيكس سبورت" />
-    <meta property="og:description" content="A thoughtful sports development environment for structured training, discipline and progress. | بيئة متكاملة للتطوير الرياضي والتدريب المنظم والانضباط والتقدم." />
+    <meta
+      property="og:description"
+      content="A thoughtful sports development environment for structured training, discipline and progress. | بيئة متكاملة للتطوير الرياضي والتدريب المنظم والانضباط والتقدم."
+    />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="theme-color" content="#f6f1e6" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Cinzel:wght@600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Cinzel:wght@600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800;900&display=swap"
+      rel="stylesheet"
+    />
     <script>
       (() => {
         try {
-          const raw = localStorage.getItem('uos:ui-settings:v1');
+          const raw = localStorage.getItem("uos:ui-settings:v1");
           const parsed = raw ? JSON.parse(raw) : {};
-          const appearance = ['light', 'dark', 'system'].includes(parsed.appearance) ? parsed.appearance : 'system';
-          const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-          const mode = appearance === 'system' ? (prefersDark ? 'dark' : 'light') : appearance;
+          const appearance = ["light", "dark", "system"].includes(parsed.appearance)
+            ? parsed.appearance
+            : "system";
+          const prefersDark =
+            window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+          const mode = appearance === "system" ? (prefersDark ? "dark" : "light") : appearance;
           const root = document.documentElement;
-          root.setAttribute('data-theme', mode);
+          root.setAttribute("data-theme", mode);
           root.style.colorScheme = mode;
           const meta = document.querySelector('meta[name="theme-color"]');
           if (meta) {
-            meta.setAttribute('content', mode === 'dark' ? '#07080b' : '#f6f1e6');
+            meta.setAttribute("content", mode === "dark" ? "#07080b" : "#f6f1e6");
           }
         } catch (error) {
-          document.documentElement.setAttribute('data-theme', 'light');
-          document.documentElement.style.colorScheme = 'light';
+          document.documentElement.setAttribute("data-theme", "light");
+          document.documentElement.style.colorScheme = "light";
         }
       })();
     </script>
@@ -40,4 +52,3 @@
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-
