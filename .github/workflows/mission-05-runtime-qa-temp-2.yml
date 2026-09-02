@@ -1,0 +1,149 @@
+name: Mission 05 Temporary Runtime QA 2
+
+on:
+  push:
+    branches:
+      - work/player-app-core-phase-a
+    paths:
+      - .github/workflows/mission-05-runtime-qa-temp-2.yml
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install and source audit
+        shell: bash
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+          if grep -RInE 'United Olympics Sports Academy|United Olympic Sports Academy|United Olympics Academy|United Olympic Academy|أكاديمية يونايتد أوليمبيكس سبورت|أكاديمية يونايتد أوليمبيكس' src index.html package.json; then exit 1; fi
+          if grep -RInE 'fake login|fake password|OTP success|realtime sync active|Coach just sent this|Backend connected' src/pages/player src/components/player src/layouts/PlayerLayout.tsx; then exit 1; fi
+          echo SOURCE_AUDIT=PASS
+      - name: Install browser
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start Vite
+        shell: bash
+        run: |
+          npm run dev > /tmp/uos-vite.log 2>&1 &
+          for i in {1..45}; do curl --fail --silent http://127.0.0.1:3000/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/uos-vite.log
+          exit 1
+      - name: Exact runtime acceptance
+        shell: bash
+        run: |
+          mkdir -p qa2/screenshots
+          node --input-type=module <<'JS'
+          import { chromium } from 'playwright';
+          import fs from 'node:fs';
+          const base='http://127.0.0.1:3000';
+          const report={reducedMotion:{},normalSplash:{},skipIntro:{},routes:{},responsive:{},sportAware:{},shellIsolation:{},regressions:{},accessibility:{},consoleErrors:[],status:'RUNNING'};
+          const browser=await chromium.launch({headless:true});
+          const assert=(value,message)=>{if(!value)throw new Error(message)};
+          const text=async p=>(await p.locator('body').innerText()).trim();
+          const dims=async p=>p.evaluate(()=>({scrollWidth:document.documentElement.scrollWidth,clientWidth:document.documentElement.clientWidth}));
+          try {
+            // Reduced motion must be a genuinely fresh session.
+            const rctx=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});
+            const rp=await rctx.newPage();
+            const start=Date.now();
+            await rp.goto(base+'/',{waitUntil:'domcontentloaded'});
+            assert(await rp.locator('.splash').count()===1,'Reduced Splash missing');
+            assert(await rp.locator('.splash').getAttribute('data-reduced-motion')==='true','Synchronous reduced-motion mode not active');
+            assert(await rp.locator('.splash .official-logo').count()===1,'Reduced Splash must have exactly one official logo');
+            const rtext=await rp.locator('.splash').innerText();
+            assert(rtext.includes('United Olympics Sports')&&rtext.includes('يونايتد أوليمبيكس سبورت'),'Reduced bilingual brand missing');
+            const decorations=await rp.locator('.splash-particles,.splash-shield-outline,.splash-energy-ring,.gold-orbit').count();
+            assert(decorations===0,`Reduced decorative motion rendered: ${decorations}`);
+            await rp.screenshot({path:'qa2/screenshots/reduced-splash.png'});
+            await rp.locator('.splash').waitFor({state:'detached',timeout:1000});
+            const elapsed=Date.now()-start;
+            const seen=await rp.evaluate(()=>sessionStorage.getItem('uos:splash-seen'));
+            assert(elapsed<=1000,`Reduced Splash exceeded 1000ms: ${elapsed}`);
+            assert(seen==='1',`Session key not set: ${seen}`);
+            await rp.goto(base+'/sports',{waitUntil:'networkidle'});
+            await rp.goto(base+'/',{waitUntil:'networkidle'});
+            const replay=await rp.locator('.splash').count();
+            assert(replay===0,'Splash replayed in same session');
+            report.reducedMotion={elapsedMs:elapsed,decorationsRendered:decorations,officialLogoCount:1,sessionKey:seen,replayAfterReturn:replay,pass:true};
+            await rctx.close();
+
+            // Normal motion remains cinematic and one-logo.
+            const nctx=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'no-preference'});
+            const np=await nctx.newPage();
+            const ns=Date.now();
+            await np.goto(base+'/',{waitUntil:'domcontentloaded'});
+            assert(await np.locator('.splash').count()===1,'Normal Splash missing');
+            assert(await np.locator('.splash .official-logo').count()===1,'Normal Splash logo count not one');
+            assert(await np.locator('.splash-particles').count()===1,'Normal cinematic particles missing');
+            await np.screenshot({path:'qa2/screenshots/normal-splash.png'});
+            await np.waitForTimeout(1000);
+            assert(await np.locator('.splash').count()===1,'Normal Splash ended before cinematic interval');
+            await np.locator('.splash').waitFor({state:'detached',timeout:3500});
+            report.normalSplash={elapsedMs:Date.now()-ns,officialLogoCount:1,decorations:true,pass:true};
+            await nctx.close();
+
+            // Skip remains operational.
+            const sctx=await browser.newContext({viewport:{width:390,height:844}});
+            const sp=await sctx.newPage();
+            await sp.goto(base+'/',{waitUntil:'domcontentloaded'});
+            const skip=sp.getByRole('button',{name:/Skip Intro|تخطي المقدمة/i});
+            assert(await skip.count()===1,'Skip Intro missing');
+            const ss=Date.now(); await skip.click(); await sp.locator('.splash').waitFor({state:'detached',timeout:1000});
+            const skipSeen=await sp.evaluate(()=>sessionStorage.getItem('uos:splash-seen'));
+            assert(skipSeen==='1','Skip did not set session key');
+            report.skipIntro={elapsedMs:Date.now()-ss,sessionKey:skipSeen,pass:true};
+            await sctx.close();
+
+            const ctx=await browser.newContext({viewport:{width:1280,height:900}});
+            await ctx.addInitScript(()=>sessionStorage.setItem('uos:splash-seen','1'));
+            const page=await ctx.newPage();
+            page.on('console',m=>{if(m.type()==='error')report.consoleErrors.push(m.text())});
+            const publicRoutes=['/','/sports','/sports/football','/sports/swimming','/sports/basketball'];
+            const adminRoutes=['/admin','/admin/players','/admin/players/player-demo-001'];
+            const playerRoutes=['/player','/player/id','/player/progress','/player/performance','/player/attendance','/player/feedback'];
+            for(const route of [...publicRoutes,...adminRoutes,...playerRoutes]){
+              await page.goto(base+route,{waitUntil:'networkidle'}); const t=await text(page); assert(t.length>40,`Route empty ${route}`);
+              report.routes[route]={url:page.url(),textLength:t.length};
+              if(route.startsWith('/player')){assert(await page.locator('.player-shell').count()===1,`Player shell missing ${route}`);assert(await page.locator('.site-header').count()===0,`Public header leaked ${route}`);assert(await page.locator('.site-footer').count()===0,`Public footer leaked ${route}`);await page.reload({waitUntil:'networkidle'});assert(page.url().includes(route),`Refresh lost ${route}`);}
+            }
+            report.shellIsolation={playerShell:true,noPublicHeader:true,noPublicFooter:true,directRefresh:true};
+            for(const width of [320,360,390,430,768]){
+              await page.setViewportSize({width,height:width<768?900:1024});
+              for(const route of playerRoutes){await page.goto(base+route,{waitUntil:'networkidle'});const d=await dims(page);report.responsive[`${route}@${width}`]=d;assert(d.scrollWidth<=d.clientWidth+1,`Overflow ${route}@${width}`);assert(await page.locator('.player-bottom-nav').count()===1,`Nav missing ${route}@${width}`);}
+              await page.goto(base+'/player',{waitUntil:'networkidle'}); await page.screenshot({path:`qa2/screenshots/player-dashboard-${width}.png`,fullPage:true});
+            }
+            await page.setViewportSize({width:390,height:900});
+            for(const [route,name] of [['/player/id','id'],['/player/progress','progress'],['/player/performance','performance'],['/player/attendance','attendance'],['/player/feedback','feedback']]){await page.goto(base+route,{waitUntil:'networkidle'});await page.screenshot({path:`qa2/screenshots/player-${name}-390.png`,fullPage:true});}
+            for(const [id,sport,labels] of [['player-demo-001','Football',['Speed','Passing','Shooting']],['player-demo-003','Swimming',['Time','Technique','Endurance']],['player-demo-005','Basketball',['Shooting','Decision Making','Endurance']]]){
+              await page.goto(`${base}/player/performance?previewPlayer=${id}`,{waitUntil:'networkidle'});const t=await text(page);assert(await page.locator(`[data-preview-player="${id}"]`).count()===1,`Fixture ${id} failed`);assert(t.includes(sport),`${sport} missing`);for(const label of labels)assert(t.includes(label),`${sport} ${label} missing`);report.sportAware[id]={sport,labels,pass:true};
+            }
+            await page.goto(base+'/player?previewPlayer=missing-preview-player',{waitUntil:'networkidle'});const et=await text(page);assert(et.includes('Preview Player Not Found')&&et.includes('اللاعب التجريبي غير موجود'),'Bilingual missing-player state failed');
+            await page.setViewportSize({width:1280,height:900});
+            for(const route of [...publicRoutes,...adminRoutes]){await page.goto(base+route,{waitUntil:'networkidle'});const d=await dims(page);report.responsive[`${route}@1280`]=d;assert(d.scrollWidth<=d.clientWidth+1,`Regression overflow ${route}`);}
+            report.regressions={publicSports:'PASS',admin:'PASS'};
+            await page.goto(base+'/player',{waitUntil:'networkidle'});const home=page.locator('.player-bottom-nav a').first();assert(await page.locator('nav.player-bottom-nav').count()===1,'Semantic nav missing');assert(await home.getAttribute('aria-current')==='page','aria-current missing');await page.keyboard.press('Tab');assert(await page.evaluate(()=>document.activeElement!==document.body),'Keyboard focus failed');report.accessibility={semanticNav:true,ariaCurrent:true,keyboardFocus:true};
+            assert(report.consoleErrors.length===0,`Console errors: ${report.consoleErrors.join(' | ')}`);
+            await ctx.close();
+            report.status='PASS';
+          } catch(error){report.status='FAIL';report.error=error instanceof Error?(error.stack||error.message):String(error);throw error;}
+          finally{await browser.close();fs.writeFileSync('qa2/runtime-qa.json',JSON.stringify(report,null,2));console.log('MISSION_05_QA2_REPORT='+JSON.stringify(report));}
+          JS
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mission-05-runtime-qa-2
+          path: qa2
+          if-no-files-found: error
+          retention-days: 7
