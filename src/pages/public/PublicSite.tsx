@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Link, NavLink, Route, Routes } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check, Dumbbell, Menu, MessageCircle, Send, ShieldCheck, Sparkles, Trophy, Users, X } from 'lucide-react';
 import { getSportPreviewMedia } from '../../data/media';
@@ -46,17 +46,14 @@ function OfficialLogo({ compact = false }: { compact?: boolean }) {
 }
 
 function Splash({ onComplete }: { onComplete: () => void }) {
+  const reducedMotion = useReducedMotion();
   useEffect(() => {
-    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-    const timer = window.setTimeout(onComplete, reducedMotion ? 900 : 3000);
+    const timer = window.setTimeout(onComplete, reducedMotion ? 520 : 2500);
     return () => window.clearTimeout(timer);
-  }, [onComplete]);
+  }, [onComplete, reducedMotion]);
 
-  return <motion.div className="splash splash-refined" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: .55 }}>
-    <div className="splash-particles" aria-hidden="true">{Array.from({ length: 12 }, (_, index) => <i key={index} />)}</div>
-    <div className="splash-shield-outline" aria-hidden="true" />
-    <div className="splash-energy-ring" aria-hidden="true" />
-    <div className="gold-orbit" aria-hidden="true" />
+  return <motion.div className={`splash splash-refined ${reducedMotion ? 'splash-reduced' : ''}`} initial={reducedMotion ? false : { opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? .06 : .45 }}>
+    {!reducedMotion && <><div className="splash-particles" aria-hidden="true">{Array.from({ length: 12 }, (_, index) => <i key={index} />)}</div><div className="splash-shield-outline" aria-hidden="true" /><div className="splash-energy-ring" aria-hidden="true" /><div className="gold-orbit" aria-hidden="true" /></>}
     <div className="splash-logo-wrap"><OfficialLogo /></div>
     <div className="splash-copy"><Bilingual value={{ en: brand, ar: brandAr }} /><Bilingual value={{ en: 'From Childhood, We Build Champions', ar: 'من الطفولة نصنع الأبطال' }} /></div>
     <button className="splash-skip" type="button" onClick={onComplete}><Bilingual value={{ en: 'Skip Intro', ar: 'تخطي المقدمة' }} /><ArrowRight size={15} /></button>
@@ -100,7 +97,7 @@ export function PublicSite() {
     setShowSplash(false);
   };
 
-  return <><AnimatePresence>{showSplash && <Splash onComplete={completeSplash} />}</AnimatePresence><Routes><Route path="/player" element={<PortalLayout type="Player" title={{ en: 'Player', ar: 'اللاعب' }} />} /><Route path="/parent" element={<PortalLayout type="Parent" title={{ en: 'Parent', ar: 'ولي الأمر' }} />} /><Route path="/coach" element={<PortalLayout type="Coach" title={{ en: 'Coach', ar: 'المدرب' }} />} /><Route path="*" element={<PublicLayout />} /></Routes></>;
+  return <><AnimatePresence>{showSplash && <Splash onComplete={completeSplash} />}</AnimatePresence><Routes><Route path="/parent" element={<PortalLayout type="Parent" title={{ en: 'Parent', ar: 'ولي الأمر' }} />} /><Route path="/coach" element={<PortalLayout type="Coach" title={{ en: 'Coach', ar: 'المدرب' }} />} /><Route path="*" element={<PublicLayout />} /></Routes></>;
 }
 
 export default PublicSite;
