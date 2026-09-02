@@ -59,11 +59,8 @@ export function SwimmingPage() {
       </section>
 
       <section className="swim-section">
-        <div className="swim-section-heading"><Sparkles size={18} /><div><h2><BilingualText value={bi('Coaching from the first strokes', 'التدريب منذ الخطوات الأولى')} /></h2><p><BilingualText value={bi('Close guidance and beginner practice are presented with verified United Olympics Sports swimming visuals.', 'يظهر التوجيه المباشر وتدريب المبتدئين من خلال صور سباحة موثقة ليونايتد أوليمبيكس سبورت.')} /></p></div></div>
-        <div className="swim-two-grid">
-          <StoryCard asset={coachChild} title={bi('Child development', 'تطوير الأطفال')} text={bi('Direct coach support during a kickboard exercise in the pool.', 'دعم مباشر من المدرب خلال تمرين باستخدام لوح التدريب داخل المسبح.')} />
-          <StoryCard asset={children} title={bi('Beginner group practice', 'تدريب جماعي للمبتدئين')} text={bi('Young swimmers practise with coach support across the training lanes.', 'سباحون صغار يتدربون بدعم المدربين عبر مسارات التدريب.')} />
-        </div>
+        <div className="swim-section-heading"><Sparkles size={18} /><div><h2><BilingualText value={bi('Coaching from the first strokes', 'التدريب منذ الخطوات الأولى')} /></h2><p><BilingualText value={bi('Close guidance is presented with a verified United Olympics Sports swimming visual.', 'يظهر التوجيه المباشر من خلال صورة سباحة موثقة ليونايتد أوليمبيكس سبورت.')} /></p></div></div>
+        <StoryCard featured asset={coachChild} title={bi('Child development', 'تطوير الأطفال')} text={bi('Direct coach support during a kickboard exercise in the pool.', 'دعم مباشر من المدرب خلال تمرين باستخدام لوح التدريب داخل المسبح.')} />
       </section>
 
       <section className="swim-section swim-dark-band">
@@ -93,10 +90,8 @@ export function SwimmingPage() {
       </section>
 
       <section className="swim-section swim-gallery-section">
-        <div className="swim-section-heading"><div><h2><BilingualText value={bi('Swimming media collection', 'مجموعة صور السباحة')} /></h2><p><BilingualText value={bi(`${swimmingMediaAssets.length} verified user assets power this page and the Admin media view from one typed source.`, `تغذي ${swimmingMediaAssets.length} أصول معتمدة من المستخدم هذه الصفحة وعرض الوسائط في الإدارة من مصدر typed واحد.`)} /></p></div></div>
-        <div className="swim-gallery-strip" aria-label="Swimming gallery | معرض السباحة">
-          {swimmingMediaAssets.map(asset => <MediaImage key={asset.id} asset={asset} />)}
-        </div>
+        <div className="swim-section-heading"><div><h2><BilingualText value={bi('Beginner swimming gallery', 'معرض سباحة المبتدئين')} /></h2><p><BilingualText value={bi(`${swimmingMediaAssets.length} verified user assets power the full Swimming experience and the Admin media view from one typed source. This final gallery placement uses one image rather than forcing all ten into one screen.`, `تغذي ${swimmingMediaAssets.length} أصول معتمدة من المستخدم تجربة السباحة كاملة وعرض الوسائط في الإدارة من مصدر typed واحد. يستخدم موضع المعرض النهائي صورة واحدة بدل حشر الصور العشر في شاشة واحدة.`)} /></p></div></div>
+        <div className="swim-gallery-single"><MediaImage asset={children} /></div>
       </section>
     </div>
   );
