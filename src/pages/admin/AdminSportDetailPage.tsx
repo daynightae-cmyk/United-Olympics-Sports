@@ -2,8 +2,9 @@ import { ArrowRight, BarChart3, Dumbbell, FolderCog, ShieldCheck, Trophy, Users 
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { FuturePanel, PageHeader, StatCard, StatusBadge, Tabs } from '../../components/admin/AdminUI';
+import { SportMediaManager } from '../../components/admin/SportMediaManager';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
-import { demoSportMediaAssets, swimmingMediaPlan } from '../../data/demo/media';
+import { demoSportMediaAssets } from '../../data/demo/media';
 import { getSport, getSportGroups, getSportMetrics, getSportPlayers } from '../../data/demo/selectors';
 
 const tabs = [
@@ -17,6 +18,7 @@ export function AdminSportDetailPage() {
   if (!sport) return <FuturePanel title={bi('Sport not found', 'الرياضة غير موجودة')} description={bi('Choose a valid preview sport from the Sports Center.', 'اختر رياضة تجريبية صالحة من مركز الرياضات.')} />;
   const groups = getSportGroups(sport.id); const players = getSportPlayers(sport.id); const metrics = getSportMetrics(sport.id);
   const coaches = new Set(groups.flatMap(group => group.coachIds));
+  const sportMedia = demoSportMediaAssets.filter(asset => asset.sportId === sport.id);
   return <div className="admin-page">
     <PageHeader eyebrow={bi('Sport Detail', 'تفاصيل الرياضة')} title={sport.name} description={sport.description} actions={<StatusBadge active={sport.status === 'active'} />} />
     <section className="admin-stat-grid compact"><StatCard label={bi('Players Count', 'عدد اللاعبين')} value={players.length} icon={Users} /><StatCard label={bi('Groups Count', 'عدد المجموعات')} value={groups.length} icon={Dumbbell} /><StatCard label={bi('Programs Count', 'عدد البرامج')} value={sport.programIds.length} icon={FolderCog} /><StatCard label={bi('Coaches Count', 'عدد المدربين')} value={coaches.size} icon={ShieldCheck} /></section>
@@ -28,7 +30,7 @@ export function AdminSportDetailPage() {
       {active === 'metrics' && <div className="metric-definition-grid">{metrics.map((metric, index) => <article key={metric.id}><span>0{index + 1}</span><BarChart3 /><BilingualText value={metric.name} /><small><BilingualText value={bi('Sport-specific definition', 'تعريف خاص بالرياضة')} /></small></article>)}</div>}
       {active === 'coaches' && <FuturePanel title={bi('Coach Management', 'إدارة المدربين')} />}
       {active === 'programs' && <FuturePanel title={bi('Program Management', 'إدارة البرامج')} />}
-      {active === 'media' && <div><FuturePanel title={bi('Sport Media Collection', 'مجموعة وسائط الرياضة')} description={bi(`${demoSportMediaAssets.filter(asset => asset.sportId === sport.id).length} verified assets are connected. No external images have been invented.`, `تم ربط ${demoSportMediaAssets.filter(asset => asset.sportId === sport.id).length} أصول موثقة. لم تُخترع أي صور خارجية.`)} />{sport.id === 'swimming' && <div className="media-plan"><div className="panel-heading"><BilingualText value={bi('Swimming Ten-Image Readiness', 'جاهزية عشر صور للسباحة')} /><small><BilingualText value={bi('Ten separate future files', 'عشرة ملفات مستقبلية منفصلة')} /></small></div>{swimmingMediaPlan.map(item => <article key={item.order}><span>{String(item.order).padStart(2, '0')}</span><BilingualText value={{ en: item.altEn, ar: item.altAr }} /><code>{item.usage}</code></article>)}</div>}</div>}
+      {active === 'media' && (sport.id === 'swimming' ? <SportMediaManager assets={sportMedia} /> : <FuturePanel title={bi('Sport Media Collection', 'مجموعة وسائط الرياضة')} description={bi('No verified user media assets are connected to this sport yet.', 'لا توجد أصول وسائط معتمدة من المستخدم مرتبطة بهذه الرياضة حتى الآن.')} />)}
     </section>
   </div>;
 }

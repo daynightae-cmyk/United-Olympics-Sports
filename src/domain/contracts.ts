@@ -94,7 +94,19 @@ export type CoachEvaluation = {
 };
 
 export type EntityStatus = 'active' | 'inactive';
-export type SportMediaUsage = 'hero' | 'training' | 'children' | 'youth' | 'women' | 'coach' | 'technique' | 'group' | 'performance' | 'gallery';
+export type SportMediaUsage =
+  | 'hero'
+  | 'coach-child'
+  | 'children'
+  | 'youth-boys'
+  | 'youth-girls'
+  | 'women'
+  | 'technique'
+  | 'underwater'
+  | 'group'
+  | 'performance'
+  | 'gallery';
+export type SportMediaSourceStatus = 'verified-user-asset';
 export type SportMediaAsset = {
   id: string;
   sportId: string;
@@ -103,6 +115,7 @@ export type SportMediaAsset = {
   altAr: string;
   usage: SportMediaUsage;
   order: number;
+  sourceStatus: SportMediaSourceStatus;
 };
 
 export type ProductPortal = 'player' | 'parent' | 'coach' | 'admin';
