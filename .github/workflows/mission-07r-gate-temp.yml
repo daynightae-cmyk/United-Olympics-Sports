@@ -1,0 +1,55 @@
+name: Mission 07R Temporary Feature Gate
+
+on:
+  push:
+    branches:
+      - traycer/final-ui-theme-settings-closure
+
+permissions:
+  contents: write
+
+jobs:
+  gate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: traycer/final-ui-theme-settings-closure
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Normalize lock metadata
+        run: npm install --package-lock-only --ignore-scripts
+      - name: Clean install
+        run: npm ci
+      - name: TypeScript
+        run: npm run lint
+      - name: Build
+        run: npm run build
+      - name: Source truth audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(node -p "require('./package.json').name")" = "united-olympics-sports"
+          test "$(node -p "require('./package-lock.json').name")" = "united-olympics-sports"
+          test "$(node -p "require('./package-lock.json').packages[''].name")" = "united-olympics-sports"
+          test "$(find public/media/sports/football -maxdepth 1 -name '*.webp' | wc -l)" -eq 10
+          test "$(find public/media/sports/swimming -maxdepth 1 -name '*.webp' | wc -l)" -eq 10
+          test "$(find public/media/sports/basketball -maxdepth 1 -name '*.webp' | wc -l)" -eq 10
+          if grep -RInE 'United Olympics Sports Academy|United Olympic Sports Academy|United Olympics Academy|United Olympic Academy|أكاديمية يونايتد أوليمبيكس سبورت|أكاديمية يونايتد أوليمبيكس' src index.html metadata.json; then exit 1; fi
+          if grep -RInEi 'unsplash|pexels' src; then exit 1; fi
+          echo MISSION_07R_SOURCE_GATE=PASS
+      - name: Commit normalized lock metadata
+        shell: bash
+        run: |
+          if git diff --quiet -- package-lock.json; then
+            echo "package-lock already consistent"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "fix: synchronize package lock metadata"
+          git push origin HEAD:traycer/final-ui-theme-settings-closure
