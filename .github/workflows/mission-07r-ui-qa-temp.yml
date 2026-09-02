@@ -57,14 +57,15 @@ jobs:
           node --input-type=module <<'NODE'
           import { chromium } from 'playwright';
           const browser=await chromium.launch({headless:true});
+          const loadAll=async(page)=>{const imgs=page.locator('img');const count=await imgs.count();for(let i=0;i<count;i+=1){await imgs.nth(i).scrollIntoViewIfNeeded({timeout:4000}).catch(()=>{});await new Promise(r=>setTimeout(r,35));}await page.waitForFunction(()=>Array.from(document.images).every(img=>img.complete),null,{timeout:12000}).catch(()=>{});await new Promise(r=>setTimeout(r,250));await page.evaluate(()=>scrollTo(0,0));};
           for(const theme of ['light','dark']){
             const context=await browser.newContext({viewport:{width:1600,height:900},colorScheme:theme});
             const page=await context.newPage();
             await page.addInitScript(({theme})=>{localStorage.setItem('uos:ui-settings:v1',JSON.stringify({appearance:theme,bilingualOrder:'en-first',density:'comfortable',motion:'system',fontScale:'default',sidebarDefault:'expanded'}));sessionStorage.setItem('uos:splash-seen','1')},{theme});
-            for(const [route,name] of [['/','home'],['/programs','programs'],['/sports/football','football'],['/parent','parent'],['/coach','coach'],['/admin','admin'],['/admin/players','players'],['/admin/settings','settings']]){await page.goto('http://127.0.0.1:3000'+route,{waitUntil:'domcontentloaded'});await page.screenshot({path:`qa07r/screenshots/${name}-${theme}-1600.png`,fullPage:true});}
+            for(const [route,name] of [['/','home'],['/programs','programs'],['/sports/football','football'],['/parent','parent'],['/coach','coach'],['/admin','admin'],['/admin/players','players'],['/admin/settings','settings']]){await page.goto('http://127.0.0.1:3000'+route,{waitUntil:'domcontentloaded'});await loadAll(page);await page.screenshot({path:`qa07r/screenshots/${name}-${theme}-1600.png`,fullPage:true});}
             await context.close();
           }
-          const mobile=await browser.newContext({viewport:{width:390,height:844},colorScheme:'light'});const p=await mobile.newPage();await p.addInitScript(()=>{localStorage.setItem('uos:ui-settings:v1',JSON.stringify({appearance:'light',bilingualOrder:'en-first',density:'comfortable',motion:'system',fontScale:'default',sidebarDefault:'expanded'}));sessionStorage.setItem('uos:splash-seen','1')});for(const [route,name] of [['/programs','programs-mobile'],['/parent','parent-mobile'],['/admin/settings','settings-mobile']]){await p.goto('http://127.0.0.1:3000'+route,{waitUntil:'domcontentloaded'});await p.screenshot({path:`qa07r/screenshots/${name}-390.png`,fullPage:true});}await mobile.close();await browser.close();
+          const mobile=await browser.newContext({viewport:{width:390,height:844},colorScheme:'light'});const p=await mobile.newPage();await p.addInitScript(()=>{localStorage.setItem('uos:ui-settings:v1',JSON.stringify({appearance:'light',bilingualOrder:'en-first',density:'comfortable',motion:'system',fontScale:'default',sidebarDefault:'expanded'}));sessionStorage.setItem('uos:splash-seen','1')});for(const [route,name] of [['/programs','programs-mobile'],['/parent','parent-mobile'],['/admin/settings','settings-mobile']]){await p.goto('http://127.0.0.1:3000'+route,{waitUntil:'domcontentloaded'});await loadAll(p);await p.screenshot({path:`qa07r/screenshots/${name}-390.png`,fullPage:true});}await mobile.close();await browser.close();
           NODE
       - name: Upload QA evidence
         if: always()
