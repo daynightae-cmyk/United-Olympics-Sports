@@ -1,46 +1,82 @@
-import { MonitorSmartphone, MoonStar, SunMedium } from "lucide-react";
-import { useUiSettings } from "../../ui/theme/useUiSettings";
-import { BilingualText, bi } from "../bilingual/BilingualText";
+import { MonitorSmartphone, MoonStar, SunMedium } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useUiSettings } from '../../ui/theme/useUiSettings';
+import type { UiAppearance } from '../../ui/theme/uiSettings';
+import { BilingualText, bi } from '../bilingual/BilingualText';
 
-type ThemeToggleProps = {
-  compact?: boolean;
-};
+const options = [
+  { value: 'light' as const, icon: SunMedium, label: bi('Day Mode', 'الوضع النهاري') },
+  { value: 'dark' as const, icon: MoonStar, label: bi('Night Mode', 'الوضع الليلي') },
+  { value: 'system' as const, icon: MonitorSmartphone, label: bi('System', 'حسب النظام') },
+];
 
-const labels = {
-  light: bi("Day", "الوضع النهاري"),
-  dark: bi("Night", "الوضع الليلي"),
-  system: bi("System", "حسب النظام"),
-};
-
-export function ThemeToggle({ compact = false }: ThemeToggleProps) {
+export function ThemeToggle({ compact = false }: { compact?: boolean }) {
   const { appearance, setAppearance } = useUiSettings();
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const active = options.find((option) => option.value === appearance) ?? options[2];
+  const ActiveIcon = active.icon;
 
-  return (
-    <div
-      className={compact ? "theme-toggle compact" : "theme-toggle"}
-      aria-label="Theme settings | إعدادات المظهر"
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    const onPointer = (event: MouseEvent) => {
+      if (!wrapperRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('mousedown', onPointer);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('mousedown', onPointer);
+    };
+  }, [open]);
+
+  const choose = (value: UiAppearance) => {
+    setAppearance(value);
+    setOpen(false);
+  };
+
+  if (compact) {
+    return <div className="theme-menu" ref={wrapperRef}>
+      <button
+        type="button"
+        className="theme-menu-trigger"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`Appearance: ${active.label.en} | المظهر: ${active.label.ar}`}
+        title={`${active.label.en} | ${active.label.ar}`}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <ActiveIcon aria-hidden="true" />
+      </button>
+      {open && <div className="theme-menu-popover" role="menu" aria-label="Appearance | المظهر">
+        {options.map(({ value, icon: Icon, label }) => <button
+          key={value}
+          type="button"
+          role="menuitemradio"
+          aria-checked={appearance === value}
+          className={appearance === value ? 'active' : ''}
+          onClick={() => choose(value)}
+        >
+          <Icon aria-hidden="true" />
+          <BilingualText value={label} />
+        </button>)}
+      </div>}
+    </div>;
+  }
+
+  return <div className="theme-toggle" role="group" aria-label="Appearance | المظهر">
+    {options.map(({ value, icon: Icon, label }) => <button
+      key={value}
+      type="button"
+      className={appearance === value ? 'theme-toggle-button active' : 'theme-toggle-button'}
+      aria-pressed={appearance === value}
+      onClick={() => choose(value)}
     >
-      {[
-        { value: "light", icon: SunMedium, label: labels.light },
-        { value: "dark", icon: MoonStar, label: labels.dark },
-        { value: "system", icon: MonitorSmartphone, label: labels.system },
-      ].map(({ value, icon: Icon, label }) => {
-        const active = appearance === value;
-        return (
-          <button
-            key={value}
-            type="button"
-            className={active ? "theme-toggle-button active" : "theme-toggle-button"}
-            aria-pressed={active}
-            aria-label={`${label.en} | ${label.ar}`}
-            title={`${label.en} | ${label.ar}`}
-            onClick={() => setAppearance(value as "light" | "dark" | "system")}
-          >
-            <Icon size={compact ? 14 : 16} />
-            {!compact && <BilingualText value={label} />}
-          </button>
-        );
-      })}
-    </div>
-  );
+      <Icon aria-hidden="true" />
+      <BilingualText value={label} />
+    </button>)}
+  </div>;
 }
