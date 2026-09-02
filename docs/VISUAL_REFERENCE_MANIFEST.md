@@ -1,6 +1,8 @@
 # VISUAL REFERENCE MANIFEST — UNITED OLYMPICS SPORTS | يونايتد أوليمبيكس سبورت
 
-This document catalogues all 18 official visual assets, reference boards, and architectural guidelines established for Phase 1 of the United Olympics Sports canonical platform.
+This document catalogues the official visual assets, reference boards, and architectural guidelines established for Phase 1 of the United Olympics Sports canonical platform.
+
+> Visual-reference boards are design references only. Any branch names, addresses, phone numbers, schedules, capacities, prices, certifications, or operational details visible inside a reference image are not verified public data and must not be published unless separately confirmed.
 
 ---
 
@@ -11,7 +13,7 @@ This document catalogues all 18 official visual assets, reference boards, and ar
 | **ASSET 00** | **Official Primary Logo** | `file-0000000078c882108b91fe2972cbb1d9` | **A (Authoritative)** | [Direct](https://i.postimg.cc/L6hJjSYX/file-0000000078c882108b91fe2972cbb1d9.png) / [Page](https://postimg.cc/nCbVt61b) | Primary brand emblem: Sovereign lion crest, heraldic shield, Olympic rings, black/gold/white. |
 | **ASSET 01** | **Public Website Direction** | `file-000000001ad482108adc33415be924c0` | **B (Design Law)** | [Direct](https://i.postimg.cc/L81h0V3v/file-000000001ad482108adc33415be924c0.png) / [Page](https://postimg.cc/v4GQ4fj6) | Cinematic public showcase, hero section, sports discovery, programs, branches, coaches, events, news. |
 | **ASSET 02** | **Global Build Rules Board A** | `file-000000003d9481f4b59b4c421ade740f` | **B (Build Law)** | [Direct](https://i.postimg.cc/T3DhHcJB/file-000000003d9481f4b59b4c421ade740f.png) / [Page](https://postimg.cc/Wds2dgK7) | Implementation checklist: Splash, bilingual rule, brand tokens, stack, responsive design, data contracts. |
-| **ASSET 03** | **Branch Management** | `file-000000005c44821086adeb66b3c6c6f4` | **C (Portal Ref)** | [Direct](https://i.postimg.cc/NfV54nm6/file-000000005c44821086adeb66b3c6c6f4.png) / [Page](https://postimg.cc/crRx1XDC) | Multi-country operational hub: Cairo Olympic City, Abu Dhabi, Al Falah, New Capital, Khalifa. |
+| **ASSET 03** | **Branch Management Visual Reference** | `file-000000005c44821086adeb66b3c6c6f4` | **C (Portal Ref)** | [Direct](https://i.postimg.cc/NfV54nm6/file-000000005c44821086adeb66b3c6c6f4.png) / [Page](https://postimg.cc/crRx1XDC) | Multi-country management UX reference only. Location labels visible inside the source board are not verified operational branch data. |
 | **ASSET 04** | **Design System Tokens** | `file-000000006b6482108b8be43b7849db1f` | **B (Design Law)** | [Direct](https://i.postimg.cc/YCWjyxzn/file-000000006b6482108b8be43b7849db1f.png) / [Page](https://postimg.cc/G4bc4GNG) | Onyx dark surfaces (`#050505`, `#0D0D0D`, `#111111`), Olympic Gold (`#D4AF37`), bilingual typography. |
 | **ASSET 05** | **Super Admin Dashboard** | `file-00000000a334821096375ac01cefe11f` | **C (Portal Ref)** | [Direct](https://i.postimg.cc/Fsq7Z63g/file-00000000a334821096375ac01cefe11f.png) / [Page](https://postimg.cc/56B49nP6) | Executive command center: Country/branch filters, financial KPI ledgers, attendance rates, audit trail. |
 | **ASSET 06** | **Player App Native Feel** | `file-00000000b788820aa14c78001949f675` | **C (Portal Ref)** | [Direct](https://i.postimg.cc/wTP7VrLk/file-00000000b788820aa14c78001949f675.png) / [Page](https://postimg.cc/6yrW6YH7) | Mobile-first athlete passport: Digital ID card, biometric skill radar, video drills, nutrition log. |
@@ -32,5 +34,5 @@ This document catalogues all 18 official visual assets, reference boards, and ar
 ## Brand Law Compliance
 - **Authorized Brand Name**: `United Olympics Sports | يونايتد أوليمبيكس سبورت`
 - **Slogan / Tagline**: `From Childhood, We Build Champions | من الطفولة نصنع الأبطال`
-- **Developer Credit**: `Crafted by KNOuX | Eng. Sadek Elgazar` (WhatsApp: `+971 50 328 1920`)
+- **Developer Credit**: `Made by KNOuX | صنع بواسطة KNOuX` → `Eng. Sadek Elgazar | م. صادق الجزار`. The developer WhatsApp number is used only by the maker-signature project CTA and is not United Olympics Sports contact information.
 - **Strict Prohibition**: No "Academy" in public brand marks or headers.
