@@ -30,7 +30,7 @@ export function AdminSportDetailPage() {
       {active === 'metrics' && <div className="metric-definition-grid">{metrics.map((metric, index) => <article key={metric.id}><span>0{index + 1}</span><BarChart3 /><BilingualText value={metric.name} /><small><BilingualText value={bi('Sport-specific definition', 'تعريف خاص بالرياضة')} /></small></article>)}</div>}
       {active === 'coaches' && <FuturePanel title={bi('Coach Management', 'إدارة المدربين')} />}
       {active === 'programs' && <FuturePanel title={bi('Program Management', 'إدارة البرامج')} />}
-      {active === 'media' && (sport.id === 'swimming' ? <SportMediaManager assets={sportMedia} /> : <FuturePanel title={bi('Sport Media Collection', 'مجموعة وسائط الرياضة')} description={bi('No verified user media assets are connected to this sport yet.', 'لا توجد أصول وسائط معتمدة من المستخدم مرتبطة بهذه الرياضة حتى الآن.')} />)}
+      {active === 'media' && (sportMedia.length > 0 ? <SportMediaManager assets={sportMedia} sportName={sport.name} /> : <FuturePanel title={bi('Sport Media Collection', 'مجموعة وسائط الرياضة')} description={bi('No verified user media assets are connected to this sport yet.', 'لا توجد أصول وسائط معتمدة من المستخدم مرتبطة بهذه الرياضة حتى الآن.')} />)}
     </section>
   </div>;
 }
