@@ -25,12 +25,15 @@ async function seed(page, settings, splashSeen=true){
   }, { key:KEY, value:settings, splashSeen });
 }
 async function forceImages(page){
-  await page.evaluate(async () => {
-    const step = Math.max(500, Math.floor(innerHeight * .8));
-    for(let y=0;y<document.documentElement.scrollHeight;y+=step){ scrollTo(0,y); await new Promise(r=>setTimeout(r,18)); }
-    scrollTo(0,0);
-  });
-  await sleep(80);
+  const images = page.locator('img');
+  const count = await images.count();
+  for (let index = 0; index < count; index += 1) {
+    await images.nth(index).scrollIntoViewIfNeeded({ timeout: 4000 }).catch(() => {});
+    await sleep(45);
+  }
+  await page.waitForFunction(() => Array.from(document.images).every((image) => image.complete), null, { timeout: 12000 });
+  await sleep(300);
+  await page.evaluate(() => scrollTo(0, 0));
 }
 async function assertSurface(page,key,theme){
   await page.waitForSelector('#root > *',{timeout:8000});
