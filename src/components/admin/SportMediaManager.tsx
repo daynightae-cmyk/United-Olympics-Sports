@@ -33,7 +33,7 @@ export function SportMediaManager({ assets, sportName }: { assets: SportMediaAss
         <div>
           <BilingualText value={title} className="admin-eyebrow" />
           <h2><BilingualText value={bi('Verified user media collection', 'مجموعة وسائط معتمدة من المستخدم')} /></h2>
-          <p><BilingualText value={bi('Read-only Phase 1 media manager. The public sport experience and Admin use the same typed source of truth.', 'مدير وسائط للقراءة فقط في المرحلة الأولى. تستخدم تجربة الرياضة العامة والإدارة نفس المصدر الموحّد typed.')} /></p>
+          <p><BilingualText value={bi('Read-only Phase 1 media manager. Public sport pages and Admin use the same typed source of truth, with local rendering paths and original provenance kept together.', 'مدير وسائط للقراءة فقط في المرحلة الأولى. تستخدم صفحات الرياضات العامة والإدارة نفس المصدر الموحّد، مع حفظ مسار العرض المحلي ومرجع المصدر الأصلي معًا.')} /></p>
         </div>
         <span className="sport-media-count">{ordered.length}</span>
       </div>
@@ -44,19 +44,26 @@ export function SportMediaManager({ assets, sportName }: { assets: SportMediaAss
           <strong><BilingualText value={bi('Usage', 'الاستخدام')} /></strong>
           <strong><BilingualText value={bi('Order', 'الترتيب')} /></strong>
           <strong><BilingualText value={bi('Alt Text', 'النص البديل')} /></strong>
-          <strong><BilingualText value={bi('Source Status', 'حالة المصدر')} /></strong>
+          <strong><BilingualText value={bi('Source & Status', 'المصدر والحالة')} /></strong>
         </div>
-        {ordered.map(asset => (
-          <article className="sport-media-row" role="row" key={asset.id}>
-            <div className="sport-media-preview" role="cell">
-              <img src={asset.url} alt={`${asset.altEn} | ${asset.altAr}`} width={1648} height={928} loading="lazy" decoding="async" />
-            </div>
-            <div className="sport-media-usage" role="cell"><BilingualText value={usageLabels[asset.usage]} /><code>{asset.usage}</code></div>
-            <div className="sport-media-order" role="cell">{String(asset.order).padStart(2, '0')}</div>
-            <div className="sport-media-alt" role="cell"><span lang="en">{asset.altEn}</span><span lang="ar" dir="rtl">{asset.altAr}</span></div>
-            <div className="sport-media-status" role="cell"><span className="verified-dot" /><BilingualText value={bi('Verified User Asset', 'أصل معتمد من المستخدم')} /></div>
-          </article>
-        ))}
+        {ordered.map(asset => {
+          const isLocal = asset.url.startsWith('/');
+          return (
+            <article className="sport-media-row" role="row" key={asset.id}>
+              <div className="sport-media-preview" role="cell">
+                <img src={asset.url} alt={`${asset.altEn} | ${asset.altAr}`} width={1648} height={928} loading="lazy" decoding="async" />
+              </div>
+              <div className="sport-media-usage" role="cell"><BilingualText value={usageLabels[asset.usage]} /><code>{asset.usage}</code></div>
+              <div className="sport-media-order" role="cell">{String(asset.order).padStart(2, '0')}</div>
+              <div className="sport-media-alt" role="cell"><span lang="en">{asset.altEn}</span><span lang="ar" dir="rtl">{asset.altAr}</span></div>
+              <div className="sport-media-source" role="cell">
+                <span className="sport-media-status"><span className="verified-dot" /><BilingualText value={bi('Verified User Asset', 'أصل معتمد من المستخدم')} /></span>
+                <span className={isLocal ? 'source-chip local' : 'source-chip remote'}><BilingualText value={isLocal ? bi('Local Asset', 'أصل محلي') : bi('Remote Rendering Source', 'مصدر عرض خارجي')} /></span>
+                {asset.sourceUrl && <a href={asset.sourceUrl} target="_blank" rel="noreferrer"><BilingualText value={bi('Original Source', 'المصدر الأصلي')} /></a>}
+              </div>
+            </article>
+          );
+        })}
       </div>
     </div>
   );

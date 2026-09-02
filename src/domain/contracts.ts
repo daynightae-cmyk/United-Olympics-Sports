@@ -117,7 +117,10 @@ export type SportMediaSourceStatus = 'verified-user-asset';
 export type SportMediaAsset = {
   id: string;
   sportId: string;
+  /** Normal website rendering source. Prefer a local /public asset when localized. */
   url: string;
+  /** Original user-supplied source retained for provenance and Admin traceability. */
+  sourceUrl?: string;
   altEn: string;
   altAr: string;
   usage: SportMediaUsage;
