@@ -129,3 +129,97 @@ export type SportMediaAsset = {
 };
 
 export type ProductPortal = 'player' | 'parent' | 'coach' | 'admin';
+
+/* ── Organisation / Country / Branch ── */
+export type Organization = {
+  id: string;
+  name: BilingualText;
+  description: BilingualText;
+  countryIds: string[];
+  status: EntityStatus;
+};
+
+export type Country = {
+  id: string;
+  name: BilingualText;
+  code: string;
+  flag?: string;
+  organizationId: string;
+  branchIds: string[];
+  status: EntityStatus;
+};
+
+export type Branch = {
+  id: string;
+  name: BilingualText;
+  countryId: string;
+  organizationId: string;
+  sportIds: string[];
+  programIds: string[];
+  groupIds: string[];
+  coachIds: string[];
+  playerIds: string[];
+  status: EntityStatus;
+  address?: BilingualText;
+  phone?: string;
+  email?: string;
+};
+
+/* ── Coach ── */
+export type Coach = {
+  id: string;
+  nameEn: string;
+  nameAr: string;
+  sportIds: string[];
+  branchIds: string[];
+  groupIds: string[];
+  playerIds: string[];
+  specializations: BilingualText[];
+  certifications: BilingualText[];
+  status: EntityStatus;
+  yearsOfExperience?: number;
+  bio?: BilingualText;
+};
+
+/* ── Parent ── */
+export type Parent = {
+  id: string;
+  nameEn: string;
+  nameAr: string;
+  playerIds: string[];
+  preferredLanguage: 'en' | 'ar';
+  status: EntityStatus;
+  phone?: string;
+  email?: string;
+};
+
+/* ── Subscription ── */
+export type Subscription = {
+  id: string;
+  playerId: string;
+  programId: string;
+  branchId: string;
+  plan: BilingualText;
+  status: SubscriptionStatus;
+  startDate: string;
+  endDate?: string;
+  amount: number;
+  currency: string;
+};
+
+export type SubscriptionStatus = 'active' | 'pending' | 'expired' | 'cancelled';
+
+/* ── Payment ── */
+export type Payment = {
+  id: string;
+  subscriptionId: string;
+  playerId: string;
+  amount: number;
+  currency: string;
+  status: PaymentStatus;
+  paidAt: string;
+  method: BilingualText;
+  reference?: string;
+};
+
+export type PaymentStatus = 'completed' | 'pending' | 'failed' | 'refunded';
