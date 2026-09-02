@@ -34,12 +34,6 @@ import { AdminPaymentDetailPage } from '../pages/admin/AdminPaymentDetailPage';
 import { AdminReportsPage } from '../pages/admin/AdminReportsPage';
 import { AdminContentPage } from '../pages/admin/AdminContentPage';
 import { AdminContentDetailPage } from '../pages/admin/AdminContentDetailPage';
-import { PlayerPortalSchedulePage } from '../pages/admin/PlayerPortalSchedulePage';
-import { PlayerPortalPerformancePage } from '../pages/admin/PlayerPortalPerformancePage';
-import { ParentPortalChildrenPage } from '../pages/admin/ParentPortalChildrenPage';
-import { ParentPortalSubscriptionsPage } from '../pages/admin/ParentPortalSubscriptionsPage';
-import { CoachPortalGroupsPage } from '../pages/admin/CoachPortalGroupsPage';
-import { CoachPortalEvaluationsPage } from '../pages/admin/CoachPortalEvaluationsPage';
 import { useUiSettings } from '../ui/theme/useUiSettings';
 import '../styles/admin.css';
 
@@ -110,12 +104,6 @@ export function AdminLayout() {
       <Route path="payments" element={<AdminPaymentsPage />} />
       <Route path="payments/:paymentId" element={<AdminPaymentDetailPage />} />
       <Route path="reports" element={<AdminReportsPage />} />
-      <Route path="portal/player/schedule" element={<PlayerPortalSchedulePage />} />
-      <Route path="portal/player/performance" element={<PlayerPortalPerformancePage />} />
-      <Route path="portal/parent/children" element={<ParentPortalChildrenPage />} />
-      <Route path="portal/parent/subscriptions" element={<ParentPortalSubscriptionsPage />} />
-      <Route path="portal/coach/groups" element={<CoachPortalGroupsPage />} />
-      <Route path="portal/coach/evaluations" element={<CoachPortalEvaluationsPage />} />
       <Route path="content" element={<AdminContentPage />} />
       <Route path="content/:contentId" element={<AdminContentDetailPage />} />
       {Object.keys(routeLabels).filter((path) => !['sports','players','settings','countries','branches','programs','parents','coaches','schedules','attendance','performance','subscriptions','payments','reports','content'].includes(path)).map((path) => <Route key={path} path={path} element={<AdminFutureModulePage />} />)}

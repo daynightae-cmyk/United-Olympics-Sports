@@ -1,9 +1,14 @@
 import { Routes, Route } from 'react-router-dom';
-import { ParentPortalOverviewPage } from '../pages/admin/ParentPortalOverviewPage';
-import { ParentPortalChildrenPage } from '../pages/admin/ParentPortalChildrenPage';
-import { ParentPortalSubscriptionsPage } from '../pages/admin/ParentPortalSubscriptionsPage';
-import { ParentPortalDocumentsPage } from '../pages/admin/ParentPortalDocumentsPage';
-import { ParentPortalMessagesPage } from '../pages/admin/ParentPortalMessagesPage';
+import { ParentPortalOverviewPage } from '../pages/portal/parent/ParentPortalOverviewPage';
+import { ParentPortalChildrenPage } from '../pages/portal/parent/ParentPortalChildrenPage';
+import { ParentPortalSubscriptionsPage } from '../pages/portal/parent/ParentPortalSubscriptionsPage';
+import { ParentPortalDocumentsPage } from '../pages/portal/parent/ParentPortalDocumentsPage';
+import { ParentPortalMessagesPage } from '../pages/portal/parent/ParentPortalMessagesPage';
+import { ParentPortalProfilePage } from '../pages/portal/parent/ParentPortalProfilePage';
+import { ParentPortalSchedulePage } from '../pages/portal/parent/ParentPortalSchedulePage';
+import { ParentPortalPerformancePage } from '../pages/portal/parent/ParentPortalPerformancePage';
+import { ParentPortalFeedbackPage } from '../pages/portal/parent/ParentPortalFeedbackPage';
+import { ParentPortalPaymentsPage } from '../pages/portal/parent/ParentPortalPaymentsPage';
 
 export function ParentPortalRouter() {
   return <Routes>
@@ -12,5 +17,10 @@ export function ParentPortalRouter() {
     <Route path="subscriptions" element={<ParentPortalSubscriptionsPage />} />
     <Route path="documents" element={<ParentPortalDocumentsPage />} />
     <Route path="messages" element={<ParentPortalMessagesPage />} />
+    <Route path="schedule" element={<ParentPortalSchedulePage />} />
+    <Route path="performance" element={<ParentPortalPerformancePage />} />
+    <Route path="feedback" element={<ParentPortalFeedbackPage />} />
+    <Route path="payments" element={<ParentPortalPaymentsPage />} />
+    <Route path="profile" element={<ParentPortalProfilePage />} />
   </Routes>;
 }
