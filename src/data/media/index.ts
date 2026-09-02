@@ -1,10 +1,12 @@
 import type { SportMediaAsset, SportMediaUsage } from '../../domain/contracts';
+import { basketballMediaAssets } from './basketball';
 import { footballMediaAssets } from './football';
 import { swimmingMediaAssets } from './swimming';
 
 export const sportMediaAssets: SportMediaAsset[] = [
   ...footballMediaAssets,
   ...swimmingMediaAssets,
+  ...basketballMediaAssets,
 ];
 
 export function getSportMediaAssets(sportId: string) {
@@ -24,4 +26,4 @@ export function getSportPreviewMedia(sportId: string) {
     ?? assets[0];
 }
 
-export { footballMediaAssets, swimmingMediaAssets };
+export { basketballMediaAssets, footballMediaAssets, swimmingMediaAssets };
