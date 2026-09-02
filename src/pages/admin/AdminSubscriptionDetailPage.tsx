@@ -4,8 +4,8 @@ import { PageHeader } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 
 const demoSubscriptions = [
-  { id: 'sub-demo-001', playerId: 'player-demo-001', plan: { en: 'Foundation Football', ar: 'أساس كرة القدم' }, amount: 450, currency: 'AED', status: 'active' as const, startDate: '2026-08-01', endDate: '2027-08-01', branchId: 'branch-dubai', programId: 'program-demo-football-foundation' },
-  { id: 'sub-demo-002', playerId: 'player-demo-003', plan: { en: 'Progressive Swimming', ar: 'سباحة متقدمة' }, amount: 600, currency: 'AED', status: 'pending' as const, startDate: '2026-09-01', endDate: '2027-09-01', branchId: 'branch-jeddah', programId: 'program-demo-swimming-progressive' },
+  { id: 'sub-demo-001', playerId: 'player-demo-001', plan: { en: 'Foundation Football', ar: 'أساس كرة القدم' }, amount: 450, currency: 'AED', status: 'active' as const, startDate: '2026-08-01', endDate: '2027-08-01', branchId: 'branch-workspace-01', programId: 'program-demo-football-foundation' },
+  { id: 'sub-demo-002', playerId: 'player-demo-003', plan: { en: 'Progressive Swimming', ar: 'سباحة متقدمة' }, amount: 600, currency: 'AED', status: 'pending' as const, startDate: '2026-09-01', endDate: '2027-09-01', branchId: 'branch-workspace-04', programId: 'program-demo-swimming-progressive' },
 ];
 
 export function AdminSubscriptionDetailPage() {
