@@ -1,0 +1,519 @@
+/* =====================================================================
+   United Olympics Sports — visual system closure layer
+   Canonical brand: United Olympics Sports | يونايتد أوليمبيكس سبورت
+   ===================================================================== */
+
+:root {
+  --uos-bg-base: #050505;
+  --uos-bg-elevated: #0d0d0d;
+  --uos-bg-soft: #141414;
+  --uos-gold: #d4af37;
+  --uos-gold-muted: #c9972b;
+  --uos-gold-deep: #a97716;
+  --uos-gold-highlight: #f3c969;
+  --uos-text: #f8f8f8;
+  --uos-text-muted: #a5a5a5;
+  --uos-border: rgba(212, 175, 55, 0.18);
+  --uos-border-strong: rgba(212, 175, 55, 0.34);
+  --uos-radius-sm: 12px;
+  --uos-radius-md: 18px;
+  --uos-radius-lg: 26px;
+  --uos-shadow-soft: 0 18px 50px rgba(0, 0, 0, 0.28);
+  --uos-shadow-elevated: 0 26px 76px rgba(0, 0, 0, 0.42);
+  --uos-content-max: 1480px;
+  --uos-section-space: clamp(64px, 8vw, 118px);
+}
+
+html {
+  color-scheme: dark;
+  background: var(--uos-bg-base);
+}
+
+body {
+  background:
+    radial-gradient(circle at 14% -12%, rgba(212, 175, 55, 0.055), transparent 34rem),
+    var(--uos-bg-base);
+  color: var(--uos-text);
+}
+
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--uos-gold-highlight);
+  outline-offset: 3px;
+}
+
+:where(button, a) svg {
+  flex: 0 0 auto;
+}
+
+.bi {
+  min-width: 0;
+}
+
+.bi .bi-en,
+.bi .bi-ar {
+  overflow-wrap: anywhere;
+}
+
+.bi .bi-ar,
+[lang="ar"] {
+  line-height: 1.55;
+}
+
+/* ---------------------------------------------------------------------
+   Public website
+   --------------------------------------------------------------------- */
+
+.public-main,
+.page,
+.od-public-page {
+  width: 100%;
+}
+
+.site-header,
+.site-footer,
+.page > section,
+.od-public-page > section {
+  max-width: var(--uos-content-max);
+  margin-inline: auto;
+}
+
+.site-header {
+  backdrop-filter: blur(18px);
+  border-bottom-color: var(--uos-border);
+}
+
+.brand-lockup {
+  min-width: 0;
+}
+
+.public-nav > a,
+.portal-links > a {
+  border-radius: 999px;
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.public-nav > a:hover,
+.public-nav > a.active,
+.portal-links > a:hover {
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.button,
+.od-cta-link,
+.admin-link-button {
+  min-height: 46px;
+  border-radius: 999px;
+  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.button:hover,
+.od-cta-link:hover,
+.admin-link-button:hover {
+  transform: translateY(-2px);
+}
+
+.feature-card,
+.sport-card,
+.od-program-card,
+.od-coaching-card {
+  box-shadow: var(--uos-shadow-soft);
+}
+
+.feature-card,
+.sport-card,
+.od-program-card,
+.od-coaching-card,
+.contact-form,
+.contact-note {
+  border-color: var(--uos-border);
+}
+
+.sport-card,
+.od-program-card,
+.od-coaching-card {
+  overflow: hidden;
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.sport-card:hover,
+.od-program-card:hover,
+.od-coaching-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--uos-border-strong);
+  box-shadow: var(--uos-shadow-elevated);
+}
+
+.od-program-visual img,
+.sport-card img,
+.od-coaching-card img {
+  transition: transform 450ms cubic-bezier(.2,.8,.2,1);
+}
+
+.od-program-card:hover .od-program-visual img,
+.sport-card:hover img,
+.od-coaching-card:hover img {
+  transform: scale(1.035);
+}
+
+.od-program-grid.is-featured .od-program-card {
+  min-height: min(560px, 68vh);
+}
+
+.od-program-grid.is-featured .od-program-card-copy {
+  align-content: center;
+}
+
+/* ---------------------------------------------------------------------
+   Product previews
+   --------------------------------------------------------------------- */
+
+.od-product-shell {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 86% 14%, rgba(212, 175, 55, 0.075), transparent 28rem),
+    linear-gradient(180deg, #070707, #050505 55%);
+}
+
+.od-product-main {
+  width: min(var(--uos-content-max), calc(100% - clamp(32px, 7vw, 112px)));
+  margin-inline: auto;
+}
+
+.od-player-owner-demo,
+.od-parent-hero,
+.od-coach-dashboard-hero {
+  position: relative;
+  isolation: isolate;
+}
+
+.od-player-owner-demo::before,
+.od-parent-hero::before,
+.od-coach-dashboard-hero::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(212,175,55,.10), transparent 36%, rgba(255,255,255,.015));
+  pointer-events: none;
+}
+
+.od-phone-frame,
+.od-parent-grid > article,
+.od-coach-workspace > div,
+.od-coach-actions > article,
+.od-player-grid > article {
+  border-color: var(--uos-border);
+  box-shadow: var(--uos-shadow-soft);
+}
+
+.od-phone-frame {
+  transform: perspective(1100px) rotateY(-2.5deg) rotateX(1deg);
+  transform-origin: center;
+}
+
+.od-child-switcher button,
+.od-coach-actions button {
+  min-height: 44px;
+}
+
+.od-child-switcher button.active {
+  box-shadow: inset 0 0 0 1px rgba(243, 201, 105, 0.48), 0 12px 30px rgba(0,0,0,.2);
+}
+
+/* ---------------------------------------------------------------------
+   Admin shell and common UI
+   --------------------------------------------------------------------- */
+
+.admin-page {
+  width: min(100%, var(--uos-content-max));
+  margin-inline: auto;
+}
+
+.admin-page-header {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(24px, 3vw, 38px);
+  border: 1px solid var(--uos-border);
+  border-radius: var(--uos-radius-lg);
+  background:
+    linear-gradient(135deg, rgba(212,175,55,.075), transparent 38%),
+    linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.008));
+  box-shadow: var(--uos-shadow-soft);
+}
+
+.admin-page-header::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: 5px;
+  background: linear-gradient(180deg, var(--uos-gold-highlight), var(--uos-gold-deep));
+  opacity: .7;
+}
+
+.admin-page-header h1 {
+  max-width: 940px;
+  text-wrap: balance;
+}
+
+.admin-page-header p {
+  max-width: 850px;
+}
+
+.admin-stat-card,
+.admin-panel,
+.group-card,
+.player-identity-card,
+.overview-score-card,
+.metric-definition-grid > article,
+.admin-entity-grid > article {
+  border-color: var(--uos-border);
+  box-shadow: var(--uos-shadow-soft);
+}
+
+.admin-stat-card,
+.admin-panel,
+.group-card,
+.metric-definition-grid > article,
+.admin-entity-grid > article {
+  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
+}
+
+.admin-stat-card:hover,
+.group-card:hover,
+.metric-definition-grid > article:hover,
+.admin-entity-grid > article:hover {
+  transform: translateY(-2px);
+  border-color: var(--uos-border-strong);
+}
+
+.stat-icon,
+.section-icon,
+.amp-section-title > svg,
+.amp-family-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  color: var(--uos-gold-highlight);
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid var(--uos-border);
+}
+
+.stat-icon svg,
+.section-icon svg,
+.amp-section-title > svg,
+.amp-family-icon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.admin-tabs {
+  scrollbar-width: thin;
+}
+
+.admin-tabs button {
+  min-height: 46px;
+  border-radius: 13px;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+.admin-tabs button.active {
+  background: rgba(212,175,55,.1);
+  border-color: var(--uos-border-strong);
+}
+
+.preview-badge,
+.status-badge,
+.amp-chip {
+  min-height: 28px;
+}
+
+/* Consolidates the old emergency admin preview banner patch. */
+.amp-preview-banner > .bi {
+  width: auto !important;
+  height: auto !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  flex: 1;
+  min-width: 0;
+}
+
+.amp-preview-banner > .bi .bi-en,
+.amp-preview-banner > .bi .bi-ar {
+  width: auto;
+  writing-mode: horizontal-tb;
+  white-space: normal;
+}
+
+.amp-preview-banner > .bi .bi-ar {
+  margin-top: 2px;
+}
+
+.amp-preview-banner {
+  border-color: var(--uos-border);
+  background: linear-gradient(90deg, rgba(212,175,55,.065), rgba(255,255,255,.01));
+}
+
+/* ---------------------------------------------------------------------
+   Contextual entity preview grids used by sport/player detail closures
+   --------------------------------------------------------------------- */
+
+.admin-entity-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.admin-entity-grid > article {
+  display: grid;
+  gap: 12px;
+  min-height: 210px;
+  padding: 22px;
+  border: 1px solid var(--uos-border);
+  border-radius: var(--uos-radius-md);
+  background: linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.008));
+}
+
+.admin-entity-grid h3,
+.admin-entity-grid p {
+  margin: 0;
+}
+
+.admin-entity-grid h3 {
+  font-size: clamp(18px, 1.55vw, 24px);
+}
+
+.admin-entity-grid strong {
+  color: var(--uos-gold-highlight);
+  font-size: clamp(24px, 2.4vw, 38px);
+}
+
+.player-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.player-preview-card {
+  display: grid;
+  gap: 14px;
+  min-height: 220px;
+  padding: 24px;
+  border: 1px solid var(--uos-border);
+  border-radius: var(--uos-radius-md);
+  background:
+    linear-gradient(145deg, rgba(212,175,55,.055), transparent 45%),
+    var(--uos-bg-elevated);
+  box-shadow: var(--uos-shadow-soft);
+}
+
+.player-preview-card > svg {
+  width: 28px;
+  height: 28px;
+  color: var(--uos-gold-highlight);
+}
+
+.player-preview-card h3,
+.player-preview-card p {
+  margin: 0;
+}
+
+.player-preview-card .preview-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-block: 10px;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+
+/* ---------------------------------------------------------------------
+   Responsive closure
+   --------------------------------------------------------------------- */
+
+@media (max-width: 1180px) {
+  .admin-entity-grid,
+  .player-preview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .od-phone-frame {
+    transform: none;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --uos-section-space: 56px;
+  }
+
+  .od-product-main {
+    width: min(100% - 28px, var(--uos-content-max));
+  }
+
+  .admin-page-header {
+    padding: 22px 18px;
+    border-radius: 20px;
+  }
+
+  .admin-entity-grid,
+  .player-preview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-entity-grid > article,
+  .player-preview-card {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 430px) {
+  .public-nav > a,
+  .portal-links > a,
+  .button,
+  .od-cta-link,
+  .admin-link-button {
+    min-height: 44px;
+  }
+
+  .admin-page-header h1 {
+    font-size: clamp(26px, 9vw, 38px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+
+  .sport-card,
+  .od-program-card,
+  .od-coaching-card,
+  .admin-stat-card,
+  .group-card,
+  .metric-definition-grid > article,
+  .admin-entity-grid > article,
+  .button,
+  .od-cta-link,
+  .admin-link-button {
+    transition-duration: 0.01ms !important;
+  }
+
+  .sport-card:hover,
+  .od-program-card:hover,
+  .od-coaching-card:hover,
+  .admin-stat-card:hover,
+  .group-card:hover,
+  .metric-definition-grid > article:hover,
+  .admin-entity-grid > article:hover,
+  .button:hover,
+  .od-cta-link:hover,
+  .admin-link-button:hover {
+    transform: none !important;
+  }
+}
