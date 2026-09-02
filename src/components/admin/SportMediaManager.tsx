@@ -1,36 +1,44 @@
 import { BilingualText, bi } from '../bilingual/BilingualText';
-import type { SportMediaAsset } from '../../domain/contracts';
+import type { BilingualText as BilingualValue, SportMediaAsset } from '../../domain/contracts';
 import '../../styles/admin-media.css';
 
 const usageLabels: Record<SportMediaAsset['usage'], ReturnType<typeof bi>> = {
   hero: bi('Hero', 'رئيسية'),
   'coach-child': bi('Coach + Child', 'مدرب + طفل'),
   children: bi('Children', 'أطفال'),
+  youth: bi('Youth', 'ناشئون'),
   'youth-boys': bi('Youth Boys', 'ناشئون / أولاد'),
   'youth-girls': bi('Youth Girls', 'ناشئات / بنات'),
   women: bi('Women', 'نساء'),
+  training: bi('Training', 'تدريب'),
   technique: bi('Technique', 'تقنية'),
   underwater: bi('Underwater', 'تحت الماء'),
+  teamwork: bi('Teamwork', 'عمل جماعي'),
+  coaching: bi('Coaching', 'توجيه المدرب'),
   group: bi('Group', 'جماعي'),
+  match: bi('Match', 'مباراة'),
+  goalkeeper: bi('Goalkeeper', 'حارس مرمى'),
+  brand: bi('Brand', 'هوية بصرية'),
   performance: bi('Performance', 'أداء'),
   gallery: bi('Gallery', 'معرض'),
 };
 
-export function SportMediaManager({ assets }: { assets: SportMediaAsset[] }) {
+export function SportMediaManager({ assets, sportName }: { assets: SportMediaAsset[]; sportName: BilingualValue }) {
   const ordered = [...assets].sort((a, b) => a.order - b.order);
+  const title = bi(`${sportName.en} Media`, `وسائط ${sportName.ar}`);
 
   return (
     <div className="sport-media-manager admin-panel">
       <div className="sport-media-heading">
         <div>
-          <BilingualText value={bi('Swimming Media', 'وسائط السباحة')} className="admin-eyebrow" />
-          <h2><BilingualText value={bi('Verified ten-image collection', 'مجموعة الصور العشر الموثقة')} /></h2>
-          <p><BilingualText value={bi('Read-only Phase 1 media manager. Public Swimming and Admin use the same typed source of truth.', 'مدير وسائط للقراءة فقط في المرحلة الأولى. تستخدم صفحة السباحة العامة والإدارة نفس المصدر الموحّد typed.')} /></p>
+          <BilingualText value={title} className="admin-eyebrow" />
+          <h2><BilingualText value={bi('Verified user media collection', 'مجموعة وسائط معتمدة من المستخدم')} /></h2>
+          <p><BilingualText value={bi('Read-only Phase 1 media manager. The public sport experience and Admin use the same typed source of truth.', 'مدير وسائط للقراءة فقط في المرحلة الأولى. تستخدم تجربة الرياضة العامة والإدارة نفس المصدر الموحّد typed.')} /></p>
         </div>
-        <span className="sport-media-count">{ordered.length}/10</span>
+        <span className="sport-media-count">{ordered.length}</span>
       </div>
 
-      <div className="sport-media-table" role="table" aria-label="Swimming media | وسائط السباحة">
+      <div className="sport-media-table" role="table" aria-label={`${sportName.en} media | وسائط ${sportName.ar}`}>
         <div className="sport-media-row sport-media-header" role="row">
           <strong><BilingualText value={bi('Image Preview', 'معاينة الصورة')} /></strong>
           <strong><BilingualText value={bi('Usage', 'الاستخدام')} /></strong>
