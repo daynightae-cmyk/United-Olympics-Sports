@@ -8,9 +8,7 @@ const publicRoutes = ['/', '/about', '/sports', '/sports/football', '/sports/swi
 const productRoutes = ['/player','/parent','/coach'];
 const adminRoutes = ['/admin','/admin/sports','/admin/sports/football','/admin/sports/swimming','/admin/sports/basketball','/admin/players','/admin/players/player-demo-001','/admin/groups','/admin/parents','/admin/coaches','/admin/programs','/admin/schedules','/admin/attendance','/admin/performance','/admin/countries','/admin/branches','/admin/subscriptions','/admin/payments','/admin/reports','/admin/content','/admin/users','/admin/settings'];
 const routes = [...publicRoutes,...productRoutes,...adminRoutes];
-const viewports = [
-  [1920,1080],[1600,900],[1440,900],[1366,768],[1280,800],[1024,768],[820,1180],[768,1024],[430,932],[414,896],[390,844],[375,812],[360,800],[320,700],
-];
+const viewports = [[1920,1080],[1600,900],[1440,900],[1366,768],[1280,800],[1024,768],[820,1180],[768,1024],[430,932],[414,896],[390,844],[375,812],[360,800],[320,700]];
 const responsiveRoutes = ['/','/sports/football','/programs','/parent','/coach','/admin','/admin/players','/admin/settings'];
 const report = { routes:{}, responsive:{}, settings:{}, fouc:{}, tabs:{}, images:{}, bilingual:{}, consoleErrors:[], status:'RUNNING' };
 const browser = await chromium.launch({ headless:true });
@@ -20,8 +18,10 @@ const sleep = (ms) => new Promise((resolve)=>setTimeout(resolve,ms));
 
 async function seed(page, settings, splashSeen=true){
   await page.addInitScript(({ key, value, splashSeen }) => {
+    if (sessionStorage.getItem('__uos-qa-seeded') === '1') return;
     localStorage.setItem(key, JSON.stringify(value));
     if (splashSeen) sessionStorage.setItem('uos:splash-seen','1'); else sessionStorage.removeItem('uos:splash-seen');
+    sessionStorage.setItem('__uos-qa-seeded','1');
   }, { key:KEY, value:settings, splashSeen });
 }
 async function forceImages(page){
@@ -69,8 +69,8 @@ try{
   const page = await context.newPage();
   await seed(page,{...defaults,appearance:'light'});
   await page.goto(base+'/admin/settings',{waitUntil:'domcontentloaded'});
-
   const clickSetting = async (name) => { const target=page.getByRole('button',{name:new RegExp(name,'i')}).first(); await target.click(); await sleep(80); };
+
   await clickSetting('Night Mode');
   assert(await page.evaluate(()=>document.documentElement.dataset.theme)==='dark','Night setting did not apply');
   let stored = await page.evaluate((key)=>JSON.parse(localStorage.getItem(key)),KEY); assert(stored.appearance==='dark','Night not persisted');
@@ -90,7 +90,6 @@ try{
   assert(order[0]==='ar'&&order.includes('en'),'Arabic-first DOM order failed'); report.settings.bilingualOrder=order.join('>');
 
   const card = page.locator('.setting-card').first(); const comfortablePadding=await card.evaluate(el=>parseFloat(getComputedStyle(el).paddingTop)); await clickSetting('Compact'); const compactPadding=await card.evaluate(el=>parseFloat(getComputedStyle(el).paddingTop)); assert(compactPadding<comfortablePadding,`Density did not visibly compact: ${comfortablePadding}/${compactPadding}`); report.settings.density={comfortablePadding,compactPadding};
-
   const sampleBi=page.locator('.setting-card .bi').first(); const defaultFont=await sampleBi.evaluate(el=>parseFloat(getComputedStyle(el).fontSize)); await clickSetting('Large'); const largeFont=await sampleBi.evaluate(el=>parseFloat(getComputedStyle(el).fontSize)); assert(largeFont>defaultFont,`Large text did not increase: ${defaultFont}/${largeFont}`); const dims=await page.evaluate(()=>({s:document.documentElement.scrollWidth,c:document.documentElement.clientWidth})); assert(dims.s<=dims.c+1,'Large text caused overflow'); report.settings.fontScale={defaultFont,largeFont};
 
   await clickSetting('Collapsed'); await page.reload({waitUntil:'domcontentloaded'}); assert(await page.locator('.admin-shell.sidebar-collapsed').count()===1,'Sidebar preference lost after reload'); report.settings.sidebar='PASS';
@@ -98,7 +97,6 @@ try{
   await page.evaluate(()=>sessionStorage.removeItem('uos:splash-seen')); const start=Date.now(); await page.goto(base+'/',{waitUntil:'domcontentloaded'}); const visible=await page.locator('.splash').isVisible().catch(()=>false); const elapsed=Date.now()-start; assert(!visible&&elapsed<=1000,`Local reduced splash still visible: ${visible}/${elapsed}`); report.settings.localReducedSplash={visible,elapsed};
 
   await page.goto(base+'/admin/settings',{waitUntil:'domcontentloaded'}); await page.getByRole('button',{name:/Reset Settings/i}).click(); assert(await page.getByRole('dialog').isVisible(),'Reset dialog not visible'); await page.keyboard.press('Escape'); assert(await page.getByRole('dialog').count()===0,'Dialog Escape failed'); await page.getByRole('button',{name:/Reset Settings/i}).click(); await page.getByRole('button',{name:/Reset Interface/i}).click(); await sleep(80); assert(await page.evaluate((key)=>localStorage.getItem(key),KEY)===null,'Reset did not clear versioned key'); report.settings.reset='PASS';
-
   await page.evaluate((key)=>localStorage.setItem(key,'{broken-json'),KEY); await page.reload({waitUntil:'domcontentloaded'}); assert(await page.evaluate(()=>document.documentElement.dataset.appearance)==='system','Corrupt settings did not recover'); report.settings.corruptStorage='PASS';
 
   await page.goto(base+'/admin',{waitUntil:'domcontentloaded'}); await page.setViewportSize({width:390,height:844}); const mobileMenu=page.getByRole('button',{name:/Open navigation/i}); if(await mobileMenu.count()){await mobileMenu.click(); assert(await page.locator('.admin-sidebar.is-open').count()===1,'Admin drawer did not open'); await page.keyboard.press('Escape'); assert(await page.locator('.admin-sidebar.is-open').count()===0,'Admin drawer Escape failed');} report.settings.drawerEscape='PASS';
