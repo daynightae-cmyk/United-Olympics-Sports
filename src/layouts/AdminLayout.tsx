@@ -34,6 +34,7 @@ import { AdminPaymentDetailPage } from '../pages/admin/AdminPaymentDetailPage';
 import { AdminReportsPage } from '../pages/admin/AdminReportsPage';
 import { AdminContentPage } from '../pages/admin/AdminContentPage';
 import { AdminContentDetailPage } from '../pages/admin/AdminContentDetailPage';
+import { AdminCustomizationPage } from '../pages/admin/AdminCustomizationPage';
 import { useUiSettings } from '../ui/theme/useUiSettings';
 import '../styles/admin.css';
 
@@ -104,6 +105,7 @@ export function AdminLayout() {
       <Route path="payments" element={<AdminPaymentsPage />} />
       <Route path="payments/:paymentId" element={<AdminPaymentDetailPage />} />
       <Route path="reports" element={<AdminReportsPage />} />
+      <Route path="customization" element={<AdminCustomizationPage />} />
       <Route path="content" element={<AdminContentPage />} />
       <Route path="content/:contentId" element={<AdminContentDetailPage />} />
       {Object.keys(routeLabels).filter((path) => !['sports','players','settings','countries','branches','programs','parents','coaches','schedules','attendance','performance','subscriptions','payments','reports','content'].includes(path)).map((path) => <Route key={path} path={path} element={<AdminFutureModulePage />} />)}

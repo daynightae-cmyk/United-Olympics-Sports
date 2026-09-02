@@ -80,5 +80,6 @@ export const getParentPlayers = (parentId: string) => {
   return demoPlayers.filter(player => parent.playerIds.includes(player.id));
 };
 export const getSession = (sessionId?: string) => demoSessions.find(s => s.id === sessionId);
+export const getCustomizationReady = () => ({ organizationId: 'org-united-olympics', status: 'ready-for-customization' });
 
 export const getPlayerParents = (playerId: string) => demoParents.filter(parent => parent.playerIds.includes(playerId));
