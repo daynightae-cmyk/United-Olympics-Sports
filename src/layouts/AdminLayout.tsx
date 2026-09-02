@@ -23,6 +23,14 @@ import { AdminParentsPage } from '../pages/admin/AdminParentsPage';
 import { AdminParentDetailPage } from '../pages/admin/AdminParentDetailPage';
 import { AdminCoachesPage } from '../pages/admin/AdminCoachesPage';
 import { AdminCoachDetailPage } from '../pages/admin/AdminCoachDetailPage';
+import { AdminSchedulesPage } from '../pages/admin/AdminSchedulesPage';
+import { AdminSessionDetailPage } from '../pages/admin/AdminSessionDetailPage';
+import { AdminAttendancePage } from '../pages/admin/AdminAttendancePage';
+import { AdminPerformancePage } from '../pages/admin/AdminPerformancePage';
+import { AdminSubscriptionsPage } from '../pages/admin/AdminSubscriptionsPage';
+import { AdminSubscriptionDetailPage } from '../pages/admin/AdminSubscriptionDetailPage';
+import { AdminPaymentsPage } from '../pages/admin/AdminPaymentsPage';
+import { AdminPaymentDetailPage } from '../pages/admin/AdminPaymentDetailPage';
 import { useUiSettings } from '../ui/theme/useUiSettings';
 import '../styles/admin.css';
 
@@ -84,7 +92,15 @@ export function AdminLayout() {
       <Route path="parents/:parentId" element={<AdminParentDetailPage />} />
       <Route path="coaches" element={<AdminCoachesPage />} />
       <Route path="coaches/:coachId" element={<AdminCoachDetailPage />} />
-      {Object.keys(routeLabels).filter((path) => !['sports','players','settings','countries','branches','programs','parents','coaches'].includes(path)).map((path) => <Route key={path} path={path} element={<AdminFutureModulePage />} />)}
+      <Route path="schedules" element={<AdminSchedulesPage />} />
+      <Route path="schedules/:sessionId" element={<AdminSessionDetailPage />} />
+      <Route path="attendance" element={<AdminAttendancePage />} />
+      <Route path="performance" element={<AdminPerformancePage />} />
+      <Route path="subscriptions" element={<AdminSubscriptionsPage />} />
+      <Route path="subscriptions/:subscriptionId" element={<AdminSubscriptionDetailPage />} />
+      <Route path="payments" element={<AdminPaymentsPage />} />
+      <Route path="payments/:paymentId" element={<AdminPaymentDetailPage />} />
+      {Object.keys(routeLabels).filter((path) => !['sports','players','settings','countries','branches','programs','parents','coaches','schedules','attendance','performance','subscriptions','payments','reports','content'].includes(path)).map((path) => <Route key={path} path={path} element={<AdminFutureModulePage />} />)}
       <Route path="*" element={<Navigate to="/admin" replace />} />
     </Routes></main></div>
   </div>;

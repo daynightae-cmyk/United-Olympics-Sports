@@ -2,6 +2,7 @@ import { demoBranches, demoCountries, demoOrganization } from './business';
 import { demoCoaches } from './coaches';
 import { demoParents } from './parents';
 import { demoPlayers } from './players';
+import { demoSessions } from './sessions';
 import { metricDefinitions } from './performance';
 import { demoPrograms } from './programs';
 import { demoSports } from './sports';
@@ -78,4 +79,6 @@ export const getParentPlayers = (parentId: string) => {
   if (!parent) return [];
   return demoPlayers.filter(player => parent.playerIds.includes(player.id));
 };
+export const getSession = (sessionId?: string) => demoSessions.find(s => s.id === sessionId);
+
 export const getPlayerParents = (playerId: string) => demoParents.filter(parent => parent.playerIds.includes(playerId));
