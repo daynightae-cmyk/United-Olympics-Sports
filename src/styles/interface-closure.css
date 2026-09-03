@@ -1,0 +1,47 @@
+/* ========================================================================
+   UNITED OLYMPICS SPORTS — FINAL INTERFACE CLOSURE
+   Cross-surface structural rules only. Portal-specific visuals stay in their
+   existing stylesheets; this file closes shared spacing/state/responsive gaps.
+   ======================================================================== */
+
+/* Home owns its section spacing. Prevent .page + .hero double padding. */
+.page.home{padding:0;min-height:calc(100vh - 84px)}
+.page.home>.hero{min-height:min(720px,calc(100vh - 84px));padding-top:52px;padding-bottom:52px}
+.page.home>.section:first-of-type{padding-top:82px}
+
+/* Shared route states for Parent / Coach. */
+.portal-route-state{width:min(100%,900px);min-height:360px;margin:0 auto;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:18px;padding:clamp(24px,4vw,48px);border:1px solid var(--uos-border);border-radius:24px;background:linear-gradient(145deg,color-mix(in srgb,var(--uos-surface-2) 95%,transparent),color-mix(in srgb,var(--uos-brand) 3%,transparent));box-shadow:0 22px 60px rgba(0,0,0,.14)}
+.portal-route-state__icon{width:50px;height:50px;border-radius:16px;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--uos-brand) 28%,transparent);background:color-mix(in srgb,var(--uos-brand) 8%,transparent);color:var(--uos-brand-strong)}
+.portal-route-state__icon svg{width:22px;height:22px}.portal-route-state__copy{max-width:680px}.portal-route-state__copy>strong,.portal-route-state__copy>h1{display:block;margin:0;color:var(--uos-text-primary)}.portal-route-state__copy>h1{font-size:clamp(24px,4vw,38px);letter-spacing:-.035em}.portal-route-state__copy>span,.portal-route-state__copy>p{display:block;margin:8px 0 0;color:var(--uos-text-secondary);line-height:1.7}.portal-route-state__eyebrow{font-size:11px!important;text-transform:uppercase;letter-spacing:.12em;color:var(--uos-brand)!important;font-weight:800}.portal-route-state__actions{display:flex;flex-wrap:wrap;gap:10px}.portal-route-skeleton{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.portal-route-skeleton i{display:block;height:74px;border-radius:16px;border:1px solid var(--uos-border);background:linear-gradient(90deg,rgba(255,255,255,.025),rgba(255,255,255,.07),rgba(255,255,255,.025));background-size:220% 100%;animation:uosSkeleton 1.5s ease-in-out infinite}.portal-route-error .portal-route-state__icon{color:#e7b453}
+
+/* Public 404 is intentionally independent from PublicSite so an unknown route
+   can never fall through to a blank nested <Routes> result. */
+.public-not-found{min-height:100vh;padding:28px clamp(18px,5vw,72px);display:flex;flex-direction:column;background:radial-gradient(circle at 70% 20%,rgba(212,175,55,.09),transparent 34%),var(--uos-canvas);color:var(--uos-text-primary)}
+.public-not-found__brand{display:flex;align-items:center;gap:12px}.public-not-found__brand img{width:48px;height:48px;object-fit:contain}.public-not-found__brand strong,.public-not-found__brand small{display:block}.public-not-found__brand small{margin-top:2px;color:var(--uos-brand);font-family:Cairo,Tajawal,sans-serif;font-size:11px}.public-not-found__panel{width:min(100%,820px);margin:auto;padding:clamp(28px,5vw,56px);border:1px solid var(--uos-border);border-radius:28px;background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.012));box-shadow:0 28px 90px rgba(0,0,0,.2)}.public-not-found__icon{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;margin-bottom:22px;color:var(--uos-brand);background:rgba(212,175,55,.09);border:1px solid rgba(212,175,55,.22)}.public-not-found__panel h1{font-size:clamp(34px,6vw,64px);margin:20px 0 16px}.public-not-found__panel>p{max-width:650px;color:var(--uos-text-secondary);line-height:1.7}.public-not-found__actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
+
+/* Cross-surface accessibility and viewport safety. */
+:where(a,button,input,select,textarea,[tabindex]):focus-visible{outline:2px solid var(--uos-brand-strong);outline-offset:3px}
+:where(img,svg,video,canvas){max-width:100%}
+:where([role='dialog']){max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}
+.athlete-modal-content{overflow:auto;max-height:calc(100dvh - 32px)}
+.enterprise-table-wrap,.admin-table-wrap,.portal-table-wrap{max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain}
+
+@keyframes uosSkeleton{0%{background-position:100% 0}100%{background-position:-120% 0}}
+
+@media(max-width:820px){
+  .page.home>.hero{min-height:auto;padding-top:44px;padding-bottom:58px;gap:28px}
+  .page.home>.hero .hero-art{height:300px}
+  .portal-route-skeleton{grid-template-columns:1fr}
+  .portal-route-skeleton i{height:58px}
+}
+@media(max-width:560px){
+  .page.home>.hero{padding-left:20px;padding-right:20px}
+  .page.home>.hero .hero-art{height:245px}
+  .page.home>.hero .hero-art .official-logo{width:180px;height:180px}
+  .portal-route-state{min-height:320px;padding:24px 18px;border-radius:20px}
+  .portal-route-state__actions,.public-not-found__actions{width:100%;flex-direction:column}
+  .portal-route-state__actions .button,.public-not-found__actions .button{width:100%;min-height:44px}
+  .public-not-found{padding:20px 14px}.public-not-found__panel{border-radius:22px;padding:28px 20px}
+  :where(.button,button,input,select,textarea){min-height:44px}
+}
+@media(prefers-reduced-motion:reduce){.portal-route-skeleton i{animation:none}.uos-sports3d-icon{transition:none}}

@@ -1,11 +1,11 @@
 import { Activity, CalendarClock, Medal, Shield, Sparkles, UserRound } from 'lucide-react';
-import type { Coach, Player, Sport, TrainingGroup } from '../../../domain/contracts';
+import type { Coach, Player, Session, Sport, TrainingGroup } from '../../../domain/contracts';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
+import { Sports3DStage, sports3DKeyForSportId } from '../../../design/sports3d';
 import { useUiSettings } from '../../../ui/theme/useUiSettings';
 import { formatPlayerDateTime } from '../foundation/playerLocale';
 import { PlayerPortrait } from './PlayerPortrait';
 import { PlayerDataStat } from './PlayerDataStat';
-import type { Session } from '../../../domain/contracts';
 
 interface PlayerAthleteIdentityCardProps {
   player: Player;
@@ -20,9 +20,18 @@ interface PlayerAthleteIdentityCardProps {
 }
 
 function sportGeometryClass(sportId?: string) {
-  if (!sportId) return 'cgpt-athlete-id--generic';
-  const known = ['football', 'swimming', 'basketball', 'tennis', 'gymnastics'];
-  return known.includes(sportId) ? `cgpt-athlete-id--${sportId}` : 'cgpt-athlete-id--martial';
+  switch (sportId) {
+    case 'football':
+    case 'swimming':
+    case 'basketball':
+    case 'tennis':
+    case 'gymnastics':
+      return `cgpt-athlete-id--${sportId}`;
+    case 'martial-arts':
+      return 'cgpt-athlete-id--martial';
+    default:
+      return 'cgpt-athlete-id--generic';
+  }
 }
 
 export function PlayerAthleteIdentityCard({
@@ -38,6 +47,8 @@ export function PlayerAthleteIdentityCard({
 }: PlayerAthleteIdentityCardProps) {
   const { bilingualOrder } = useUiSettings();
   const nextSessionText = nextSession ? formatPlayerDateTime(nextSession.startsAt, bilingualOrder) : undefined;
+  const sports3dKey = sports3DKeyForSportId(sport?.id);
+  const primaryName = bilingualOrder === 'ar-first' ? player.nameAr : player.nameEn;
 
   return (
     <section className={`cgpt-athlete-id ${sportGeometryClass(sport?.id)}`} aria-labelledby="cgpt-athlete-name">
@@ -46,11 +57,14 @@ export function PlayerAthleteIdentityCard({
       <div className="cgpt-athlete-id__foil" aria-hidden="true" />
 
       <div className="cgpt-athlete-id__portrait-zone">
+        <Sports3DStage assetKey={sports3dKey} size="hero" tone="athlete" opacity={0.16} className="cgpt-athlete-id__sport-3d" />
         <div className="cgpt-athlete-id__portrait-frame">
           <PlayerPortrait
             photoUrl={player.photo}
-            name={bilingualOrder === 'ar-first' ? player.nameAr : player.nameEn}
+            name={primaryName}
+            alt={`${player.nameEn} · ${player.nameAr}`}
             className="cgpt-athlete-id__portrait"
+            eager
           />
           <span className="cgpt-athlete-id__portrait-ring" aria-hidden="true" />
         </div>
@@ -64,9 +78,7 @@ export function PlayerAthleteIdentityCard({
         </div>
 
         <div className="cgpt-athlete-id__name-block">
-          <h1 id="cgpt-athlete-name" className="cgpt-athlete-id__name-primary">
-            {bilingualOrder === 'ar-first' ? player.nameAr : player.nameEn}
-          </h1>
+          <h1 id="cgpt-athlete-name" className="cgpt-athlete-id__name-primary">{primaryName}</h1>
           <p className="cgpt-athlete-id__name-secondary" lang={bilingualOrder === 'ar-first' ? 'en' : 'ar'} dir={bilingualOrder === 'ar-first' ? 'ltr' : 'rtl'}>
             {bilingualOrder === 'ar-first' ? player.nameEn : player.nameAr}
           </p>
@@ -80,24 +92,9 @@ export function PlayerAthleteIdentityCard({
         </div>
 
         <div className="cgpt-athlete-id__stats">
-          <PlayerDataStat
-            label={bi('Attendance', 'الحضور')}
-            icon={<Activity size={13} />}
-            accent="success"
-            value={typeof attendanceRate === 'number' ? `${attendanceRate}%` : undefined}
-          />
-          <PlayerDataStat
-            label={bi('Performance', 'الأداء')}
-            icon={<Medal size={13} />}
-            accent="gold"
-            value={typeof overallScore === 'number' ? `${overallScore}/100` : undefined}
-          />
-          <PlayerDataStat
-            label={bi('Next training', 'التدريب القادم')}
-            icon={<CalendarClock size={13} />}
-            accent="info"
-            value={nextSessionText}
-          />
+          <PlayerDataStat label={bi('Attendance', 'الحضور')} icon={<Activity size={13} />} accent="success" value={typeof attendanceRate === 'number' ? `${attendanceRate}%` : undefined} />
+          <PlayerDataStat label={bi('Performance', 'الأداء')} icon={<Medal size={13} />} accent="gold" value={typeof overallScore === 'number' ? `${overallScore}/100` : undefined} />
+          <PlayerDataStat label={bi('Next training', 'التدريب القادم')} icon={<CalendarClock size={13} />} accent="info" value={nextSessionText} />
         </div>
 
         {onOpenIdentity && (

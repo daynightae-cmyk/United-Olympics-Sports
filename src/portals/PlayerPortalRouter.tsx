@@ -58,6 +58,7 @@ export function PlayerPortalRouter() {
           <Route path="home" element={<LazyRoute Component={PlayerPortalOverviewPage} />} />
           <Route path="schedule" element={<LazyRoute Component={PlayerPortalSchedulePage} />} />
           <Route path="schedule/:sessionId" element={<LazyRoute Component={PlayerPortalSessionDetailPage} />} />
+          <Route path="session/:sessionId" element={<LazyRoute Component={PlayerPortalSessionDetailPage} />} />
           <Route path="attendance" element={<LazyRoute Component={PlayerPortalAttendancePage} />} />
           <Route path="performance" element={<LazyRoute Component={PlayerPortalPerformancePage} />} />
           <Route path="achievements" element={<LazyRoute Component={PlayerPortalAchievementsPage} />} />
