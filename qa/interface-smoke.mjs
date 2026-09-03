@@ -75,14 +75,18 @@ async function assertRoute(page, runtimeErrors, route, checkOverflow = true) {
   runtimeErrors.length = 0;
   const response = await page.goto(`${baseURL}${route}`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
   await page.waitForSelector('#root', { state: 'attached', timeout: 10_000 });
-  await page.waitForTimeout(120);
+  await page.waitForTimeout(150);
   if (response && response.status() >= 400) throw new Error(`${route}: HTTP ${response.status()}`);
   const state = await page.evaluate(() => ({
     rootText: document.querySelector('#root')?.textContent?.trim().length ?? 0,
     overflow: document.documentElement.scrollWidth - window.innerWidth,
+    failedImages: [...document.images]
+      .filter((image) => image.complete && image.naturalWidth === 0 && Boolean(image.currentSrc || image.src))
+      .map((image) => image.currentSrc || image.src),
   }));
   if (state.rootText < 8) throw new Error(`${route}: root rendered effectively empty`);
   if (checkOverflow && state.overflow > 2) throw new Error(`${route}: body horizontal overflow ${state.overflow}px`);
+  if (state.failedImages.length) throw new Error(`${route}: broken image ${state.failedImages.join(' | ')}`);
   if (runtimeErrors.length) throw new Error(`${route}: ${runtimeErrors.join(' | ')}`);
 }
 
