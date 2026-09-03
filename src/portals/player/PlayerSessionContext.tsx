@@ -68,7 +68,7 @@ interface PlayerSessionContextType {
   parent?: Parent;
   sessions: Session[];
   attendanceRecords: Player['attendanceRecords'];
-  attendanceStats: { present: number; late: number; absent: number; excused: number; total: number; rate: number; streak: number };
+  attendanceStats: { present: number; late: number; absent: number; excused: number; total: number; rate: number | null; streak: number };
   metrics: ReturnType<typeof getLatestPlayerMetrics>;
   overallScore: number | null;
   feedback: CoachFeedback[];
@@ -96,20 +96,24 @@ const EMPTY_SUBSCRIPTIONS: Subscription[] = [];
 const EMPTY_PAYMENTS: Payment[] = [];
 const EMPTY_MESSAGES: PlayerChatThread[] = [];
 
+function isStoredAuthSession(value: unknown): value is PlayerAuthSession {
+  if (typeof value !== 'object' || value === null) return false;
+  if (!('userId' in value) || !('playerId' in value) || !('createdAt' in value) || !('provider' in value)) return false;
+  return typeof value.userId === 'string'
+    && typeof value.playerId === 'string'
+    && typeof value.createdAt === 'string'
+    && (value.provider === 'preview' || value.provider === 'production');
+}
+
 function readStoredAuthSession(): PlayerAuthSession | null {
   if (typeof window === 'undefined') return null;
   const raw = localStorage.getItem('uos:player-portal:session');
   if (!raw) return null;
   try {
-    const candidate = JSON.parse(raw) as Partial<PlayerAuthSession>;
-    if (
-      typeof candidate.userId !== 'string' ||
-      typeof candidate.playerId !== 'string' ||
-      typeof candidate.createdAt !== 'string' ||
-      (candidate.provider !== 'preview' && candidate.provider !== 'production')
-    ) return null;
+    const candidate: unknown = JSON.parse(raw);
+    if (!isStoredAuthSession(candidate)) return null;
     if (candidate.provider === 'production' && !productionAuthGateway.isProductionConfigured()) return null;
-    return candidate as PlayerAuthSession;
+    return candidate;
   } catch {
     return null;
   }
@@ -177,7 +181,7 @@ export function PlayerSessionProvider({ children }: { children: ReactNode }) {
     const absent = counts.absent ?? 0;
     const excused = counts.excused ?? 0;
     const total = attendanceRecords.length;
-    const rate = total > 0 ? Math.round(((present + late + excused) / total) * 100) : 0;
+    const rate = total > 0 ? Math.round(((present + late + excused) / total) * 100) : null;
     const sorted = [...attendanceRecords].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     let streak = 0;
     for (const record of sorted) {
