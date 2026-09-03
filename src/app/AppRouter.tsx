@@ -4,6 +4,7 @@ import { PlayerPortalRouter } from '../portals/PlayerPortalRouter';
 import { ParentPortalRouter } from '../portals/ParentPortalRouter';
 import { CoachPortalRouter } from '../portals/CoachPortalRouter';
 import { PublicSite } from '../pages/public/PublicSite';
+import { AuthRouter } from '../portals/AuthRouter';
 
 export function AppRouter() {
   return (
@@ -13,6 +14,7 @@ export function AppRouter() {
         <Route path="/player/*" element={<PlayerPortalRouter />} />
         <Route path="/parent/*" element={<ParentPortalRouter />} />
         <Route path="/coach/*" element={<CoachPortalRouter />} />
+        <Route path="/auth/*" element={<AuthRouter />} />
         <Route path="*" element={<PublicSite />} />
       </Routes>
     </BrowserRouter>

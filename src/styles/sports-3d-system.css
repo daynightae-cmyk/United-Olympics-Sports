@@ -1,0 +1,5 @@
+:root{--s3d-brand:#bfa15f;--s3d-black:#0a0a0a;--s3d-gold:#c9a227;--s3d-deep:#16212e;--s3d-muted:#6b5a3a;}
+.sports3d-stage{perspective:1000px;transform-style:preserve-3d;background:linear-gradient(135deg,#0a0a0a 0%,#16212e 100%);border:1px solid var(--s3d-brand);border-radius:1rem;padding:1rem;position:relative;overflow:hidden;}
+.sports3d-stage::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 20%,rgba(191,161,95,.08) 0%,transparent 60%);pointer-events:none;}
+.sports3d-icon{display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--s3d-brand),var(--s3d-gold));box-shadow:0 8px 24px rgba(191,161,95,.35);flex-shrink:0;}
+@media(max-width:640px){.sports3d-stage{padding:.75rem;}.sports3d-icon{width:48px;height:48px;}}

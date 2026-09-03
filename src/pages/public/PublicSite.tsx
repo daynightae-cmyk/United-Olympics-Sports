@@ -369,7 +369,7 @@ function Home() {
       <section className="hero">
         <div className="hero-content">
           <span className="eyebrow">
-            <Trophy size={15} />
+            <Sparkles size={15} />
             <Bilingual
               value={{
                 en: "Athletic development, thoughtfully built",
