@@ -22,7 +22,7 @@ export function AdminSchedulesPage() {
           <article key={s.id} className="schedule-session-card">
             <div className="session-time"><CalendarClock size={16} /><span className="mono">{new Date(s.startsAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span></div>
             <h4><Link to={`/admin/schedules/${s.id}`}><BilingualText value={{ en: 'Session ' + s.id, ar: 'جلسة ' + s.id }} /></Link></h4>
-            <div className="session-meta"><span>{bi('Sport', 'الرياضة')}: {s.sportId}</span><span>{bi('Group', 'المجموعة')}: {s.groupId}</span></div>
+            <div className="session-meta"><span><BilingualText value={bi('Sport', 'الرياضة')} />: <span className="mono">{s.sportId}</span></span><span><BilingualText value={bi('Group', 'المجموعة')} />: <span className="mono">{s.groupId}</span></span></div>
             <StatusBadge active={true} />
           </article>
         ))}
