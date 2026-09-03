@@ -8,6 +8,7 @@ import { getBranch, getCoach, getCountry, getGroup, getParent, getPlayer, getPro
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
 import { AdminFutureModulePage } from '../pages/admin/AdminFutureModulePage';
 import { AdminGroupDetailPage } from '../pages/admin/AdminGroupDetailPage';
+import { AdminGroupsPage } from '../pages/admin/AdminGroupsPage';
 import { AdminPlayerDetailPage } from '../pages/admin/AdminPlayerDetailPage';
 import { AdminPlayersPage } from '../pages/admin/AdminPlayersPage';
 import { AdminSettingsPage } from '../pages/admin/AdminSettingsPage';
@@ -95,6 +96,7 @@ export function AdminLayout() {
       <Route path="sports/:sportId/groups/:groupId" element={<AdminGroupDetailPage />} />
       <Route path="sports/:sportId/groups" element={<AdminSportDetailPage />} />
       <Route path="sports/:sportId" element={<AdminSportDetailPage />} />
+      <Route path="groups" element={<AdminGroupsPage />} />
       <Route path="players" element={<AdminPlayersPage />} />
       <Route path="players/:playerId" element={<AdminPlayerDetailPage />} />
       <Route path="settings" element={<AdminSettingsPage />} />
@@ -131,7 +133,7 @@ export function AdminLayout() {
       <Route path="messages" element={<AdminMessagesPage />} />
       <Route path="messages/:messageId" element={<AdminMessagesDetailPage />} />
       <Route path="audit-activity" element={<AdminAuditActivityPage />} />
-      {Object.keys(routeLabels).filter((path) => !['sports','players','settings','countries','branches','programs','parents','coaches','schedules','attendance','performance','subscriptions','payments','reports','content','users','registrations','achievements','events','announcements','messages','audit-activity'].includes(path)).map((path) => <Route key={path} path={path} element={<AdminFutureModulePage />} />)}
+      {Object.keys(routeLabels).filter((path) => !['sports','groups','players','settings','countries','branches','programs','parents','coaches','schedules','attendance','performance','subscriptions','payments','reports','content','users','registrations','achievements','events','announcements','messages','audit-activity'].includes(path)).map((path) => <Route key={path} path={path} element={<AdminFutureModulePage />} />)}
       <Route path="*" element={<Navigate to="/admin" replace />} />
     </Routes></main></div>
   </div>;

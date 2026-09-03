@@ -9,9 +9,10 @@ import { ParentPortalSchedulePage } from '../pages/portal/parent/ParentPortalSch
 import { ParentPortalPerformancePage } from '../pages/portal/parent/ParentPortalPerformancePage';
 import { ParentPortalFeedbackPage } from '../pages/portal/parent/ParentPortalFeedbackPage';
 import { ParentPortalPaymentsPage } from '../pages/portal/parent/ParentPortalPaymentsPage';
+import { PortalLayout } from '../layouts/PortalLayout';
 
 export function ParentPortalRouter() {
-  return <Routes>
+  return <PortalLayout portal="parent"><Routes>
     <Route index element={<ParentPortalOverviewPage />} />
     <Route path="children" element={<ParentPortalChildrenPage />} />
     <Route path="subscriptions" element={<ParentPortalSubscriptionsPage />} />
@@ -22,5 +23,5 @@ export function ParentPortalRouter() {
     <Route path="feedback" element={<ParentPortalFeedbackPage />} />
     <Route path="payments" element={<ParentPortalPaymentsPage />} />
     <Route path="profile" element={<ParentPortalProfilePage />} />
-  </Routes>;
+  </Routes></PortalLayout>;
 }
