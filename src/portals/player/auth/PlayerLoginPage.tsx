@@ -15,6 +15,7 @@ import {
 import { usePlayerSession } from "../PlayerSessionContext";
 import { productionAuthGateway, previewAuthGateway } from "./PlayerAuthGateway";
 import { BilingualText, bi } from "../../../components/bilingual/BilingualText";
+import SafeBrandLogo from '../../../components/ui/SafeBrandLogo';
 
 export function PlayerLoginPage() {
   const { allPlayers, login } = usePlayerSession();
@@ -537,21 +538,47 @@ export function PlayerLoginPage() {
                 <button
                   type="button"
                   onClick={handleProductionGoogle}
-                  disabled={loading}
+                  disabled={loading || !productionAuthGateway.isProductionConfigured()}
+                  aria-disabled={!productionAuthGateway.isProductionConfigured()}
                   className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl bg-white text-slate-900 font-semibold text-xs hover:bg-slate-100 transition-all shadow-md active:scale-[0.99]"
                 >
-                  <img src="/brand/google-logo.svg" alt="Google" className="w-4 h-4" />
-                  <span><BilingualText value={bi('Continue with Google', 'المتابعة باستخدام Google')} /></span>
+                  {productionAuthGateway.isProductionConfigured() ? (
+                    <img src="/brand/google-logo.svg" alt="Google" className="w-4 h-4" />
+                  ) : (
+                    <span className="w-4 h-4 text-[11px] text-slate-500">G</span>
+                  )}
+                  <span>
+                    <BilingualText
+                      value={
+                        productionAuthGateway.isProductionConfigured()
+                          ? bi('Continue with Google', 'المتابعة باستخدام Google')
+                          : bi('Google sign-in unavailable', 'تسجيل دخول Google غير متاح')
+                      }
+                    />
+                  </span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleProductionApple}
-                  disabled={loading}
+                  disabled={loading || !productionAuthGateway.isProductionConfigured()}
+                  aria-disabled={!productionAuthGateway.isProductionConfigured()}
                   className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl bg-black text-white font-semibold text-xs hover:bg-slate-900 border border-white/20 transition-all shadow-md active:scale-[0.99]"
                 >
-                  <img src="/brand/apple-logo.svg" alt="Apple" className="w-4 h-4 text-white" />
-                  <span><BilingualText value={bi('Continue with Apple', 'المتابعة باستخدام Apple')} /></span>
+                  {productionAuthGateway.isProductionConfigured() ? (
+                    <img src="/brand/apple-logo.svg" alt="Apple" className="w-4 h-4 text-white" />
+                  ) : (
+                    <span className="w-4 h-4 text-[11px] text-slate-500"></span>
+                  )}
+                  <span>
+                    <BilingualText
+                      value={
+                        productionAuthGateway.isProductionConfigured()
+                          ? bi('Continue with Apple', 'المتابعة باستخدام Apple')
+                          : bi('Apple sign-in unavailable', 'تسجيل دخول Apple غير متاح')
+                      }
+                    />
+                  </span>
                 </button>
 
                 <div className="relative flex py-2 items-center">

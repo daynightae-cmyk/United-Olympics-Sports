@@ -90,14 +90,7 @@ export function PlayerVerifyOtpPage() {
           <span><BilingualText value={bi('Back to Phone Entry', 'العودة لإدخال الهاتف')} /></span>
         </Link>
         <div className="flex items-center gap-2">
-          <img
-            src="/brand/united-olympics-sports-logo.png"
-            alt="United Olympics Sports"
-            className="w-8 h-8 object-contain"
-            onError={(e) => {
-              (e.target as HTMLElement).style.display = 'none';
-            }}
-          />
+          <SafeBrandLogo className="w-8 h-8 object-contain" />
           <span className="font-['Cinzel',serif] text-xs font-bold text-slate-200">
             UNITED OLYMPICS SPORTS
           </span>
