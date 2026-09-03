@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   CreditCard,
   ShieldCheck,
@@ -11,10 +11,10 @@ import {
   MapPin,
   Phone,
   Info,
-} from 'lucide-react';
-import { usePlayerSession } from '../../../portals/player/PlayerSessionContext';
-import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
-import SafeBrandLogo from '../../../components/ui/SafeBrandLogo';
+} from "lucide-react";
+import { usePlayerSession } from "../../../portals/player/PlayerSessionContext";
+import { BilingualText, bi } from "../../../components/bilingual/BilingualText";
+import SafeBrandLogo from "../../../components/ui/SafeBrandLogo";
 
 export function PlayerPortalSubscriptionPage() {
   const { player, sport, group, parent } = usePlayerSession();
@@ -33,11 +33,15 @@ export function PlayerPortalSubscriptionPage() {
                 <CreditCard size={18} />
               </span>
               <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">
-                <BilingualText value={bi('Athletic Membership & Credential', 'العضوية والبطاقة الرياضية')} />
+                <BilingualText
+                  value={bi("Athletic Membership & Credential", "العضوية والبطاقة الرياضية")}
+                />
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-white">
-              <BilingualText value={bi('Membership & Digital Athlete ID', 'العضوية والبطاقة الرقمية')} />
+              <BilingualText
+                value={bi("Membership & Digital Athlete ID", "العضوية والبطاقة الرقمية")}
+              />
             </h1>
             <p className="text-xs text-slate-300">
               <BilingualText
@@ -51,7 +55,9 @@ export function PlayerPortalSubscriptionPage() {
 
           <span className="px-3 py-1.5 rounded-xl bg-white/5 text-slate-400 border border-white/10 text-xs font-bold self-start sm:self-auto flex items-center gap-1.5">
             <ShieldCheck size={15} />
-            <span><BilingualText value={bi('Player Identity Preview', 'معاينة هوية اللاعب')} /></span>
+            <span>
+              <BilingualText value={bi("Player Identity Preview", "معاينة هوية اللاعب")} />
+            </span>
           </span>
         </div>
       </div>
@@ -82,7 +88,7 @@ export function PlayerPortalSubscriptionPage() {
                     </div>
                   </div>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30 uppercase tracking-wider">
-                    <BilingualText value={bi('Preview', 'معاينة')} />
+                    <BilingualText value={bi("Preview", "معاينة")} />
                   </span>
                 </div>
 
@@ -92,14 +98,11 @@ export function PlayerPortalSubscriptionPage() {
                     {player.nameEn.charAt(0)}
                   </div>
                   <div>
-                    <h4 className="text-lg font-bold text-white leading-tight">
-                      {player.nameEn}
-                    </h4>
-                    <p className="text-xs text-amber-300 font-medium">
-                      {player.nameAr}
-                    </p>
+                    <h4 className="text-lg font-bold text-white leading-tight">{player.nameEn}</h4>
+                    <p className="text-xs text-amber-300 font-medium">{player.nameAr}</p>
                     <p className="text-[11px] text-slate-300 mt-1">
-                      <BilingualText value={sport ? sport.name : bi('Sport', 'الرياضة')} /> · {player.level?.en}
+                      <BilingualText value={sport ? sport.name : bi("Sport", "الرياضة")} /> ·{" "}
+                      {player.level?.en}
                     </p>
                   </div>
                 </div>
@@ -107,14 +110,18 @@ export function PlayerPortalSubscriptionPage() {
                 {/* Card Meta & Barcode */}
                 <div className="pt-3 border-t border-white/15 flex items-center justify-between text-[11px] relative z-10">
                   <div>
-                    <span className="text-slate-400 block"><BilingualText value={bi('Player ID', 'رقم اللاعب')} /></span>
+                    <span className="text-slate-400 block">
+                      <BilingualText value={bi("Player ID", "رقم اللاعب")} />
+                    </span>
                     <strong className="font-mono text-white tracking-wider">
                       {player.id.toUpperCase()}
                     </strong>
                   </div>
                   <div className="text-right">
-                    <span className="text-slate-400 block"><BilingualText value={bi('Group', 'المجموعة')} /></span>
-                    <strong className="text-amber-300">{group?.name?.en || '—'}</strong>
+                    <span className="text-slate-400 block">
+                      <BilingualText value={bi("Group", "المجموعة")} />
+                    </span>
+                    <strong className="text-amber-300">{group?.name?.en || "—"}</strong>
                   </div>
                 </div>
               </div>
@@ -123,30 +130,36 @@ export function PlayerPortalSubscriptionPage() {
               <div className="digital-id-card min-h-[260px] flex flex-col justify-between transition-all duration-500 hover:scale-[1.01]">
                 <div className="flex items-center justify-between pb-2 border-b border-white/15 relative z-10">
                   <span className="text-xs font-bold text-amber-300">
-                    <BilingualText value={bi('Player Identity Details', 'تفاصيل هوية اللاعب')} />
+                    <BilingualText value={bi("Player Identity Details", "تفاصيل هوية اللاعب")} />
                   </span>
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    {player.id}
-                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">{player.id}</span>
                 </div>
 
                 <div className="space-y-2.5 my-3 text-xs relative z-10">
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400"><BilingualText value={bi('Sport', 'الرياضة')} />:</span>
-                    <strong className="text-slate-200">{sport?.name?.en || '—'}</strong>
+                    <span className="text-slate-400">
+                      <BilingualText value={bi("Sport", "الرياضة")} />:
+                    </span>
+                    <strong className="text-slate-200">{sport?.name?.en || "—"}</strong>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400"><BilingualText value={bi('Emergency Guardian', 'ولي الأمر للطوارئ')} />:</span>
-                    <strong className="text-slate-200">{parent?.nameEn || '—'}</strong>
+                    <span className="text-slate-400">
+                      <BilingualText value={bi("Emergency Guardian", "ولي الأمر للطوارئ")} />:
+                    </span>
+                    <strong className="text-slate-200">{parent?.nameEn || "—"}</strong>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400"><BilingualText value={bi('Emergency Contact', 'هاتف الطوارئ')} />:</span>
-                    <strong className="font-mono text-amber-300">{parent?.phone || '—'}</strong>
+                    <span className="text-slate-400">
+                      <BilingualText value={bi("Emergency Contact", "هاتف الطوارئ")} />:
+                    </span>
+                    <strong className="font-mono text-amber-300">{parent?.phone || "—"}</strong>
                   </div>
                 </div>
 
                 <div className="pt-2 border-t border-white/15 flex items-center justify-between relative z-10 text-[10px] text-slate-400">
-                  <span><BilingualText value={bi('Identity Preview', 'معاينة الهوية')} /></span>
+                  <span>
+                    <BilingualText value={bi("Identity Preview", "معاينة الهوية")} />
+                  </span>
                 </div>
               </div>
             )}
@@ -159,7 +172,11 @@ export function PlayerPortalSubscriptionPage() {
             <RotateCw size={13} />
             <span>
               <BilingualText
-                value={isFlipped ? bi('Flip to front view', 'عرض واجهة البطاقة') : bi('Flip to view emergency info', 'عرض الوجه الخلفي وبيانات الطوارئ')}
+                value={
+                  isFlipped
+                    ? bi("Flip to front view", "عرض واجهة البطاقة")
+                    : bi("Flip to view emergency info", "عرض الوجه الخلفي وبيانات الطوارئ")
+                }
               />
             </span>
           </button>
@@ -169,10 +186,15 @@ export function PlayerPortalSubscriptionPage() {
         <div className="lg:col-span-6 space-y-4">
           <div className="athlete-glass-card p-6 border-l-2 border-l-slate-500">
             <h3 className="text-lg font-bold text-white mb-1">
-              <BilingualText value={bi('Membership Status', 'حالة العضوية')} />
+              <BilingualText value={bi("Membership Status", "حالة العضوية")} />
             </h3>
             <p className="text-xs text-slate-400 mb-5">
-              <BilingualText value={bi('Membership information is not available yet.', 'معلومات العضوية غير متاحة بعد.')} />
+              <BilingualText
+                value={bi(
+                  "Membership information is not available yet.",
+                  "معلومات العضوية غير متاحة بعد."
+                )}
+              />
             </p>
           </div>
         </div>
