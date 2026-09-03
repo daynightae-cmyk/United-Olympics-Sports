@@ -1,32 +1,15 @@
-import { MessageSquareText, UsersRound } from 'lucide-react';
+import { ArrowUpRight, MessageSquareText, Target, UserRound } from 'lucide-react';
 import { PageHeader } from '../../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
-import { demoPlayers } from '../../../data/demo/players';
+import { EnterpriseStatus, PreviewNotice } from '../../../components/enterprise/EnterpriseUI';
+import { PortalSection } from '../../../components/portal/PortalUI';
+import { activePlayer } from '../portalData';
 
 export function PlayerPortalFeedbackPage() {
-  const player = demoPlayers[0];
-  const feedbackCount = player.coachFeedback?.length ?? 0;
-  return (
-    <div className="admin-page">
-      <PageHeader
-        eyebrow={bi('Player Portal | Feedback', 'بوابة اللاعب | الملاحظات')}
-        title={bi('Feedback', 'الملاحظات')}
-        description={bi('Coach feedback preview with truthful count.', 'معاينة ملاحظات المدربين مع عدد صادق.')}
-        actions={<span className="preview-badge"><BilingualText value={bi('Preview Data', 'بيانات تجريبية')} /></span>}
-      />
-      <section className="admin-stat-grid compact" aria-label="Feedback stats">
-        <article className="admin-stat-card">
-          <strong>{feedbackCount}</strong>
-          <span><MessageSquareText size={14} /><BilingualText value={bi('Feedback Records', 'سجلات الملاحظات')} /></span>
-        </article>
-      </section>
-      <section aria-label="Feedback note">
-        <div className="admin-preview-card" style={{ padding: 18 }}>
-          <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
-            <BilingualText value={bi('Feedback records are preview-only. Verified assessments remain deferred to coaching operations.', 'سجلات الملاحظات تجريبية فقط. التقييمات الموثقة مؤجلة إلى عمليات التدريب.')} />
-          </p>
-        </div>
-      </section>
-    </div>
-  );
+  const feedback = activePlayer.coachFeedback;
+  return <div className="admin-page">
+    <PageHeader icon={MessageSquareText} eyebrow={bi('Player Portal · Feedback', 'بوابة اللاعب · الملاحظات')} title={bi('Coach Feedback', 'ملاحظات المدرب')} description={bi('Turn the latest coaching notes into a focused next-session plan.', 'حوّل أحدث ملاحظات التدريب إلى خطة مركزة للحصة القادمة.')} actions={<PreviewNotice />} />
+    <section className="portal-metric-grid"><article className="portal-metric"><strong>{feedback.length}</strong><BilingualText value={bi('Feedback records', 'سجلات الملاحظات')} /></article><article className="portal-metric portal-metric-green"><strong>{feedback.reduce((sum, item) => sum + item.strengths.length, 0)}</strong><BilingualText value={bi('Strength signals', 'مؤشرات القوة')} /></article><article className="portal-metric portal-metric-blue"><strong>{feedback.reduce((sum, item) => sum + item.focusAreas.length, 0)}</strong><BilingualText value={bi('Focus areas', 'مجالات التركيز')} /></article><article className="portal-metric portal-metric-gold"><strong>+4</strong><BilingualText value={bi('Latest movement', 'آخر تحسن')} /></article></section>
+    <PortalSection title={bi('Feedback timeline', 'الخط الزمني للملاحظات')} description={bi('Preview coaching notes connected to your athlete record.', 'ملاحظات تدريب تجريبية مرتبطة بسجل الرياضي.')}>{feedback.length ? <div className="portal-timeline">{feedback.map(item => <article className="portal-timeline-item feedback-timeline-item" key={item.id}><div className="feedback-heading"><span className="portal-card-icon"><UserRound size={15} /></span><div><strong><BilingualText value={bi('Coach review', 'مراجعة المدرب')} /></strong><small>{item.createdAt} · {item.id}</small></div><EnterpriseStatus label={bi('Preview', 'تجريبي')} tone="info" /></div><p><BilingualText value={item.summary} /></p><div className="feedback-pill-row">{item.strengths.map(strength => <span key={strength.en}><ArrowUpRight size={12} /><BilingualText value={strength} /></span>)}</div><div className="feedback-focus"><Target size={14} /><strong><BilingualText value={bi('Next focus', 'التركيز القادم')} /></strong>{item.focusAreas.map(area => <BilingualText value={area} key={area.en} />)}</div></article>)}</div> : <div className="enterprise-empty"><MessageSquareText size={22} /><h3><BilingualText value={bi('No feedback yet', 'لا توجد ملاحظات بعد')} /></h3><p><BilingualText value={bi('Verified coaching notes will appear here when available.', 'ستظهر ملاحظات التدريب الموثقة هنا عند توفرها.')} /></p></div>}</PortalSection>
+  </div>;
 }

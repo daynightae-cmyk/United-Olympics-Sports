@@ -1,40 +1,20 @@
-import { CheckSquare, Clock } from 'lucide-react';
+import { CalendarDays, CheckCircle2, Clock3, Flame, XCircle } from 'lucide-react';
+import { useMemo } from 'react';
 import { PageHeader } from '../../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
-import { demoPlayers } from '../../../data/demo/players';
+import { EnterpriseProgress, EnterpriseStatus, PreviewNotice } from '../../../components/enterprise/EnterpriseUI';
+import { PortalMetric, PortalSection, PortalStatus } from '../../../components/portal/PortalUI';
+import { activePlayer } from '../portalData';
 
 export function PlayerPortalAttendancePage() {
-  const player = demoPlayers[0];
-  const attendance = player.attendanceSummary ?? { attended: 0, scheduled: 0 };
-  return (
-    <div className="admin-page">
-      <PageHeader
-        eyebrow={bi('Player Portal | Attendance', 'بوابة اللاعب | الحضور')}
-        title={bi('Attendance', 'الحضور')}
-        description={bi('Truthful attendance preview with no fabricated sessions.', 'معاينة حضور صادقة بدون جلسات مختلقة.')}
-        actions={<span className="preview-badge"><BilingualText value={bi('Preview Data', 'بيانات تجريبية')} /></span>}
-      />
-      <section className="admin-stat-grid compact" aria-label="Attendance stats">
-        <article className="admin-stat-card">
-          <strong>{attendance.attended ?? '—'}</strong>
-          <span><CheckSquare size={14} /><BilingualText value={bi('Attended', 'حاضر')} /></span>
-        </article>
-        <article className="admin-stat-card">
-          <strong>{attendance.scheduled ?? '—'}</strong>
-          <span><Clock size={14} /><BilingualText value={bi('Scheduled', 'مجدول')} /></span>
-        </article>
-        <article className="admin-stat-card">
-          <strong>{'—'}</strong>
-          <span><BilingualText value={bi('Rate', 'المعدل')} /></span>
-        </article>
-      </section>
-      <section aria-label="Attendance note">
-        <div className="admin-preview-card" style={{ padding: 18 }}>
-          <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
-            <BilingualText value={bi('Attendance records are preview-only and intentionally incomplete until verified.', 'سجلات الحضور تجريبية فقط ومقصودة غير مكتملة حتى التحقق.')} />
-          </p>
-        </div>
-      </section>
-    </div>
-  );
+  const records = activePlayer.attendanceRecords;
+  const counts = useMemo(() => records.reduce<Record<string, number>>((result, record) => { result[record.status] = (result[record.status] ?? 0) + 1; return result; }, {}), [records]);
+  const rate = Math.round(((counts.present ?? 0) + (counts.late ?? 0) + (counts.excused ?? 0)) / Math.max(records.length, 1) * 100);
+  return <div className="admin-page">
+    <PageHeader icon={CheckCircle2} eyebrow={bi('Player Portal · Attendance', 'بوابة اللاعب · الحضور')} title={bi('Attendance Journey', 'مسيرة الحضور')} description={bi('See the habits behind your progress with a transparent record of the current preview sessions.', 'شاهد العادات خلف تقدمك عبر سجل شفاف للحصص التجريبية الحالية.')} actions={<PreviewNotice />} />
+    <section className="portal-metric-grid"><PortalMetric label={bi('Attendance rate', 'معدل الحضور')} value={`${rate}%`} detail={bi('Derived from records', 'مشتق من السجلات')} tone="green" /><PortalMetric label={bi('Present', 'حاضر')} value={counts.present ?? 0} detail={bi('On time', 'في الموعد')} /><PortalMetric label={bi('Late', 'متأخر')} value={counts.late ?? 0} detail={bi('Follow-up signal', 'مؤشر متابعة')} tone="blue" /><PortalMetric label={bi('Streak', 'التتابع')} value="3" detail={bi('Preview sessions', 'حصص تجريبية')} tone="gold" /></section>
+    <PortalSection title={bi('Monthly rhythm', 'إيقاع الشهر')} description={bi('A simple visual rhythm across four preview attendance records.', 'إيقاع بصري بسيط عبر أربعة سجلات حضور تجريبية.')}><div className="attendance-rhythm">{records.map(record => <div className="attendance-day" key={record.id}><span className={`attendance-dot attendance-${record.status}`} /><strong>{new Date(record.date).toLocaleDateString('en-GB', { day: '2-digit' })}</strong><small><BilingualText value={{ en: record.status, ar: ({ present: 'حاضر', absent: 'غائب', late: 'متأخر', excused: 'معذور' } as Record<string, string>)[record.status] }} /></small></div>)}</div><div style={{ marginTop: 18 }}><EnterpriseProgress value={rate} label={bi('Current attendance signal', 'مؤشر الحضور الحالي')} color="green" /></div></PortalSection>
+    <PortalSection title={bi('Attendance history', 'سجل الحضور')} description={bi('Local preview marks can be reviewed but are not submitted to a server.', 'يمكن مراجعة علامات المعاينة المحلية لكنها لا ترسل إلى خادم.') }><div className="portal-list">{records.map(record => <div className="portal-list-item" key={record.id}><div><strong><CalendarDays size={13} /> {record.date}</strong><small><BilingualText value={bi('Training session', 'حصة تدريبية')} /></small></div><PortalStatus label={bi(record.status, ({ present: 'حاضر', absent: 'غائب', late: 'متأخر', excused: 'معذور' } as Record<string, string>)[record.status])} tone={record.status === 'present' ? 'active' : record.status === 'late' ? 'pending' : 'neutral'} /></div>)}</div></PortalSection>
+    <div className="portal-card-grid"><div className="portal-card"><Flame size={18} color="var(--color-brand-strong)" /><h3><BilingualText value={bi('Keep the rhythm', 'حافظ على الإيقاع')} /></h3><p><BilingualText value={bi('Consistent attendance keeps your development signal honest.', 'الانتظام في الحضور يحافظ على صدق مؤشر تطورك.')} /></p></div><div className="portal-card"><Clock3 size={18} color="var(--color-brand-strong)" /><h3><BilingualText value={bi('Arrival note', 'ملاحظة الوصول')} /></h3><p><BilingualText value={bi('Late and excused marks remain visible for coaching conversations.', 'تبقى علامات التأخر والعذر واضحة لنقاشات التدريب.')} /></p></div><div className="portal-card"><XCircle size={18} color="var(--color-brand-strong)" /><h3><BilingualText value={bi('Preview boundary', 'حدود المعاينة')} /></h3><p><BilingualText value={bi('No attendance claim is sent to production.', 'لا يتم إرسال أي مطالبة بالحضور إلى الإنتاج.')} /></p></div></div>
+  </div>;
 }

@@ -1,4 +1,5 @@
 import { ShieldCheck, User, Award, CalendarDays, Activity } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { PageHeader } from '../../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
 import { demoPlayers } from '../../../data/demo/players';
@@ -52,8 +53,8 @@ export function PlayerPortalProfilePage() {
       </section>
       <section aria-label="Profile actions">
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 10 }}>
-          <a href="#" className="admin-link-button" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><BilingualText value={bi('Edit Profile', 'تعديل الملف الشخصي')} /></a>
-          <a href="#" className="admin-link-button" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><BilingualText value={bi('View Documents', 'عرض المستندات')} /></a>
+          <Link to="/player/profile" className="admin-link-button" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><BilingualText value={bi('Edit Profile Preview', 'معاينة تعديل الملف الشخصي')} /></Link>
+          <Link to="/player/documents" className="admin-link-button" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><BilingualText value={bi('View Documents', 'عرض المستندات')} /></Link>
         </div>
       </section>
     </div>

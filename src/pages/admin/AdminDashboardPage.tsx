@@ -1,116 +1,39 @@
-import { ArrowRight, BarChart3, CalendarClock, Dumbbell, Medal, ShieldCheck, Trophy, Users } from 'lucide-react';
+import { Activity, ArrowRight, BarChart3, CalendarClock, CheckCircle2, CircleDollarSign, Flag, LayoutDashboard, Medal, ShieldCheck, Trophy, UsersRound } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { StatCard, PageHeader } from '../../components/admin/AdminUI';
+import { PageHeader } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
+import { EnterpriseKpi, EnterprisePanel, EnterpriseProgress, EnterpriseSelect, EnterpriseSparkline, EnterpriseStatus, EnterpriseTable, PreviewNotice } from '../../components/enterprise/EnterpriseUI';
+import { UiButton } from '../../components/ui/UiPrimitives';
+import { demoBranches, demoCountries } from '../../data/demo/business';
 import { demoPlayers } from '../../data/demo/players';
-import { demoActivity, demoSessions } from '../../data/demo/sessions';
+import { demoSessions, demoActivity } from '../../data/demo/sessions';
 import { demoSports } from '../../data/demo/sports';
 import { demoTrainingGroups } from '../../data/demo/trainingGroups';
+import { previewPayments, previewSubscriptions } from '../../data/demo/adminRecords';
+import { getSport } from '../../data/demo/selectors';
 
 export function AdminDashboardPage() {
-  const coachCount = new Set(demoTrainingGroups.flatMap(group => group.coachIds)).size;
-  const programCount = new Set(demoSports.flatMap(sport => sport.programIds)).size;
+  const [country, setCountry] = useState('all');
+  const [branch, setBranch] = useState('all');
+  const [sport, setSport] = useState('all');
+  const scopedBranches = useMemo(() => demoBranches.filter(item => (country === 'all' || item.countryId === country) && (branch === 'all' || item.id === branch) && (sport === 'all' || item.sportIds.includes(sport))), [country, branch, sport]);
+  const branchIds = new Set(scopedBranches.map(item => item.id));
+  const playerIds = new Set(scopedBranches.flatMap(item => item.playerIds));
+  const players = scopedBranches.length ? demoPlayers.filter(player => playerIds.has(player.id)) : [];
+  const groups = demoTrainingGroups.filter(group => (sport === 'all' || group.sportId === sport) && (scopedBranches.length ? scopedBranches.some(item => item.groupIds.includes(group.id)) : false));
+  const sessions = demoSessions.filter(session => (sport === 'all' || session.sportId === sport) && groups.some(group => group.id === session.groupId));
+  const attendance = players.reduce((sum, player) => sum + ((player.attendanceSummary?.attended ?? 0) / Math.max(player.attendanceSummary?.scheduled ?? 1, 1)), 0) / Math.max(players.length, 1) * 100;
+  const collected = previewPayments.filter(payment => payment.status === 'completed' && (!players.length || playerIds.has(payment.playerId))).reduce((sum, payment) => sum + payment.amount, 0);
+  const activeSubscriptions = previewSubscriptions.filter(subscription => subscription.status === 'active' && (!players.length || playerIds.has(subscription.playerId))).length;
+  const reset = () => { setCountry('all'); setBranch('all'); setSport('all'); };
   return <div className="admin-page">
-    <section className="feature-strip admin-panel" aria-label="Dashboard command header | رأس لوحة التحكم" style={{ background: 'linear-gradient(135deg, rgba(212,175,55,0.08), transparent 42%), linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.008))', borderColor: 'rgba(212,175,55,0.18)', padding: '28px 24px', borderRadius: '22px', marginBottom: '28px', boxShadow: '0 14px 36px rgba(0,0,0,0.28)' }}>
-      <div className="feature-strip-copy" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-        <img src="/brand/united-olympics-sports-logo.png" alt="Official logo" style={{ width: '56px', height: '56px', objectFit: 'contain', filter: 'drop-shadow(0 0 18px rgba(215,180,90,.22))', flexShrink: 0 }} />
-        <div style={{ minWidth: 0 }}>
-          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#f4d98a' }}><BilingualText value={bi('Super Admin Command Center', 'مركز قيادة الإدارة الرئيسية')} /></h2>
-          <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'rgba(255,255,255,0.65)' }}><BilingualText value={bi('Preview operational environment — no live backend connected.', 'بيئة تشغيل تجريبية — لا يوجد خادم مباشر متصل.')} /></p>
-        </div>
-      </div>
-    </section>
-
-    <PageHeader icon={BarChart3} eyebrow={bi('Operations Overview', 'نظرة عامة على العمليات')} title={bi('Super Admin Dashboard', 'لوحة الإدارة الرئيسية')} description={bi('A truthful operational foundation calculated entirely from isolated preview fixtures.', 'أساس تشغيلي موثوق محسوب بالكامل من بيانات تجريبية معزولة.')} />
-
-    <section className="admin-stat-grid" aria-label="Overview metrics | المؤشرات العامة">
-      <StatCard label={bi('Sports', 'الرياضات')} value={demoSports.length} icon={Trophy} />
-      <StatCard label={bi('Training Groups', 'مجموعات التدريب')} value={demoTrainingGroups.length} icon={Dumbbell} />
-      <StatCard label={bi('Players', 'اللاعبون')} value={demoPlayers.length} icon={Medal} />
-      <StatCard label={bi('Coaches', 'المدربون')} value={coachCount} icon={ShieldCheck} />
-      <StatCard label={bi('Programs', 'البرامج')} value={programCount} icon={BarChart3} />
-      <StatCard label={bi('Upcoming Sessions', 'الحصص القادمة')} value={demoSessions.length} icon={CalendarClock} note={bi('Preview schedule', 'جدول تجريبي')} />
-    </section>
-
-    <section className="admin-dashboard-grid" aria-label="Dashboard sections | أقسام لوحة التحكم">
-      <section className="admin-panel quick-panel">
-        <div className="panel-heading">
-          <div>
-            <BilingualText value={bi('Quick Access', 'وصول سريع')} />
-            <small><BilingualText value={bi('Primary management surfaces', 'واجهات الإدارة الأساسية')} /></small>
-          </div>
-        </div>
-        <div className="quick-grid">
-          {[
-            { to: '/admin/sports', Icon: Trophy, label: bi('Manage Sports', 'إدارة الرياضات') },
-            { to: '/admin/players', Icon: Users, label: bi('Manage Players', 'إدارة اللاعبين') },
-            { to: '/admin/schedules', Icon: CalendarClock, label: bi('Schedule Preview', 'معاينة الجداول') },
-            { to: '/admin/registrations', Icon: ShieldCheck, label: bi('Registrations', 'التسجيلات') },
-          ].map(({ to, Icon, label }) => (
-            <Link to={to} key={to} className="quick-action-card">
-              <span className="quick-action-icon"><Icon /></span>
-              <span className="quick-action-label"><BilingualText value={label} /></span>
-              <ArrowRight />
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="admin-panel activity-panel">
-        <div className="panel-heading">
-          <div>
-            <BilingualText value={bi('Recent Preview Activity', 'نشاط المعاينة الحديث')} />
-            <small><BilingualText value={bi('Local preview events only', 'أحداث معاينة محلية فقط')} /></small>
-          </div>
-          <span className="preview-badge"><span className="preview-dot" /><BilingualText value={bi('Not Live', 'ليست مباشرة')} /></span>
-        </div>
-        <div className="activity-list">
-          {demoActivity.map((item, index) => (
-            <article key={item.id} className="activity-item">
-              <span className="activity-index">0{index + 1}</span>
-              <div className="activity-body">
-                <BilingualText value={item.title} />
-                <small><BilingualText value={item.time} /></small>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-    </section>
-
-    <section className="branch-readiness-preview admin-panel" aria-label="Branch Readiness Preview | معاينة جاهزية الفروع">
-      <div className="panel-heading">
-        <BilingualText value={bi('Branch Readiness', 'جاهزية الفروع')} />
-        <small><BilingualText value={bi('Calculated from current preview fixtures', 'محسوبة من البيانات التجريبية الحالية')} /></small>
-      </div>
-      <div className="readiness-grid">
-        <article className="readiness-card">
-          <h3><BilingualText value={bi('Branch A', 'الفرع أ')} /></h3>
-          <div className="readiness-meter">
-            <span className="readiness-fill" style={{ width: '68%' }} />
-            <strong>68%</strong>
-          </div>
-          <div className="readiness-breakdown">
-            <span><BilingualText value={bi('Contact', 'الاتصال')} /><strong>75%</strong></span>
-            <span><BilingualText value={bi('Location', 'الموقع')} /><strong>67%</strong></span>
-            <span><BilingualText value={bi('Programs', 'البرامج')} /><strong>55%</strong></span>
-            <span><BilingualText value={bi('Images', 'الصور')} /><strong>62%</strong></span>
-          </div>
-        </article>
-        <article className="readiness-card">
-          <h3><BilingualText value={bi('Branch B', 'الفرع ب')} /></h3>
-          <div className="readiness-meter">
-            <span className="readiness-fill" style={{ width: '42%' }} />
-            <strong>42%</strong>
-          </div>
-          <div className="readiness-breakdown">
-            <span><BilingualText value={bi('Contact', 'الاتصال')} /><strong>35%</strong></span>
-            <span><BilingualText value={bi('Location', 'الموقع')} /><strong>50%</strong></span>
-            <span><BilingualText value={bi('Programs', 'البرامج')} /><strong>40%</strong></span>
-            <span><BilingualText value={bi('Images', 'الصور')} /><strong>30%</strong></span>
-          </div>
-        </article>
-      </div>
-    </section>
+    <section className="feature-strip admin-panel" aria-label="Dashboard command header | رأس لوحة التحكم"><div className="feature-strip-copy"><img src="/brand/united-olympics-sports-logo.png" alt="United Olympics Sports | يونايتد أوليمبيكس سبورت" /><div><h2><BilingualText value={bi('Super Admin Command Center', 'مركز قيادة الإدارة الرئيسية')} /></h2><p><BilingualText value={bi('Preview operational environment · no live backend connected.', 'بيئة تشغيل تجريبية · لا يوجد خادم مباشر متصل.')} /></p></div></div><PreviewNotice /></section>
+    <PageHeader icon={LayoutDashboard} eyebrow={bi('Operations Overview', 'نظرة عامة على العمليات')} title={bi('Executive Dashboard', 'لوحة القيادة التنفيذية')} description={bi('A scoped command center calculated from anonymized organization, roster, attendance and finance preview fixtures.', 'مركز قيادة مخصص محسوب من بيانات المؤسسة والقائمة والحضور والمالية التجريبية المجهولة.')} />
+    <EnterprisePanel title={bi('Global scope controls', 'عناصر التحكم في النطاق')} description={bi('Change the view without changing the underlying preview data.','غيّر العرض دون تغيير بيانات المعاينة الأساسية.')} actions={<UiButton variant="ghost" type="button" onClick={reset}><BilingualText value={bi('Clear scope', 'مسح النطاق')} /></UiButton>}><div className="dashboard-scope-grid"><EnterpriseSelect label={bi('Country', 'الدولة')} value={country} onChange={value => { setCountry(value); setBranch('all'); }} options={[{ value: 'all', label: bi('All countries', 'كل الدول') }, ...demoCountries.map(item => ({ value: item.id, label: item.name }))]} /><EnterpriseSelect label={bi('Branch', 'الفرع')} value={branch} onChange={setBranch} options={[{ value: 'all', label: bi('All branches', 'كل الفروع') }, ...demoBranches.filter(item => country === 'all' || item.countryId === country).map(item => ({ value: item.id, label: item.name }))]} /><EnterpriseSelect label={bi('Sport', 'الرياضة')} value={sport} onChange={setSport} options={[{ value: 'all', label: bi('All sports', 'كل الرياضات') }, ...demoSports.map(item => ({ value: item.id, label: item.name }))]} /><span className="scope-status"><EnterpriseStatus label={bi(`${scopedBranches.length} branches in scope`, `${scopedBranches.length} فروع في النطاق`)} tone="info" /></span></div></EnterprisePanel>
+    <section className="enterprise-kpi-grid dashboard-kpi-grid"><EnterpriseKpi label={bi('Countries', 'الدول')} value={country === 'all' ? demoCountries.length : 1} detail={bi('Organization scope', 'نطاق المؤسسة')} icon={Flag} /><EnterpriseKpi label={bi('Branches', 'الفروع')} value={scopedBranches.length} detail={bi('Filtered scope', 'النطاق المفلتر')} icon={LayoutDashboard} tone="blue" /><EnterpriseKpi label={bi('Sports', 'الرياضات')} value={new Set(scopedBranches.flatMap(item => item.sportIds)).size} detail={bi('Active sport reach', 'انتشار الرياضات النشطة')} icon={Trophy} /><EnterpriseKpi label={bi('Players', 'اللاعبون')} value={players.length} detail={bi('Roster records', 'سجلات القائمة')} icon={UsersRound} tone="green" /><EnterpriseKpi label={bi('Training groups', 'مجموعات التدريب')} value={groups.length} detail={bi('Operational teams', 'الفرق التشغيلية')} icon={Medal} /><EnterpriseKpi label={bi('Upcoming sessions', 'الحصص القادمة')} value={sessions.length} detail={bi('Preview calendar', 'تقويم تجريبي')} icon={CalendarClock} tone="blue" /><EnterpriseKpi label={bi('Attendance rate', 'معدل الحضور')} value={`${Math.round(attendance)}%`} detail={bi('Derived from roster', 'مشتق من القائمة')} icon={CheckCircle2} tone="green" trend={6} /><EnterpriseKpi label={bi('Collected preview', 'المحصل التجريبي')} value={`${collected} AED`} detail={bi('Completed rows only', 'الصفوف المكتملة فقط')} icon={CircleDollarSign} /></section>
+    <section className="enterprise-grid-2"><EnterprisePanel title={bi('Operations pulse', 'نبض العمليات')} description={bi('The next actions visible for the current scope.', 'الإجراءات التالية الظاهرة للنطاق الحالي.')}><div className="enterprise-list">{sessions.slice(0, 4).map(session => <div className="enterprise-list-item" key={session.id}><div><strong><BilingualText value={getSport(session.sportId)?.name ?? bi(session.sportId, session.sportId)} /></strong><small>{session.id} · {new Date(session.startsAt).toLocaleDateString('en-GB')}</small></div><EnterpriseStatus label={bi('Scheduled', 'مجدولة')} tone="info" /></div>)}{!sessions.length && <div className="enterprise-empty"><CalendarClock size={20} /><h3><BilingualText value={bi('No sessions in scope', 'لا توجد حصص في النطاق')} /></h3></div>}</div></EnterprisePanel><EnterprisePanel title={bi('Attendance and finance', 'الحضور والمالية')} description={bi('High-level signals calculated from local preview records.', 'مؤشرات عالية المستوى محسوبة من سجلات المعاينة المحلية.')}><EnterpriseProgress value={Math.round(attendance)} label={bi('Attendance consistency', 'انتظام الحضور')} color="green" /><div className="dashboard-signal-row"><span><BilingualText value={bi('Active subscriptions', 'الاشتراكات النشطة')} /><strong>{activeSubscriptions}</strong></span><span><BilingualText value={bi('Pending value', 'القيمة المعلقة')} /><strong>{previewPayments.filter(payment => payment.status === 'pending').reduce((sum, payment) => sum + payment.amount, 0)} AED</strong></span></div><EnterpriseSparkline values={[54, 59, 57, 64, 68, Math.round(attendance)]} color="green" /></EnterprisePanel></section>
+    <EnterprisePanel title={bi('Branch performance', 'أداء الفروع')} description={bi('Readiness is derived from each branch’s linked preview records, not hardcoded operational facts.','الجاهزية مشتقة من سجلات المعاينة المرتبطة بكل فرع وليست بيانات تشغيلية ثابتة.') }><EnterpriseTable caption={bi('Branch performance table', 'جدول أداء الفروع')}><thead><tr>{[bi('Branch', 'الفرع'), bi('Country', 'الدولة'), bi('Players', 'اللاعبون'), bi('Coaches', 'المدربون'), bi('Programs', 'البرامج'), bi('Readiness', 'الجاهزية'), bi('Status', 'الحالة'), bi('Open', 'فتح')].map(label => <th key={label.en}><BilingualText value={label} /></th>)}</tr></thead><tbody>{scopedBranches.map(item => { const readiness = Math.round((item.sportIds.length / Math.max(demoSports.length, 1) * 30) + (item.programIds.length / 4 * 25) + (item.groupIds.length / 4 * 25) + (item.playerIds.length / 8 * 20)); return <tr key={item.id}><td><strong><BilingualText value={item.name} /></strong><small>{item.id}</small></td><td>{demoCountries.find(countryItem => countryItem.id === item.countryId)?.name.en ?? item.countryId}</td><td>{item.playerIds.length}</td><td>{item.coachIds.length}</td><td>{item.programIds.length}</td><td><EnterpriseProgress value={readiness} /></td><td><EnterpriseStatus label={bi('Active', 'نشط')} tone="active" /></td><td><Link className="admin-link-button" to={`/admin/branches/${item.id}`}><ArrowRight size={14} /><BilingualText value={bi('View', 'عرض')} /></Link></td></tr>; })}</tbody></EnterpriseTable></EnterprisePanel>
+    <EnterprisePanel title={bi('Recent preview activity', 'نشاط المعاينة الحديث')} description={bi('Local preview events only.', 'أحداث معاينة محلية فقط.')}><div className="activity-timeline">{demoActivity.map((item, index) => <div className="activity-timeline-item" key={item.id}><span>0{index + 1}</span><div><strong><BilingualText value={item.title} /></strong><small><BilingualText value={item.time} /></small></div></div>)}</div></EnterprisePanel>
   </div>;
 }
