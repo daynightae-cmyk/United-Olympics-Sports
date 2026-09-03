@@ -2,6 +2,7 @@ import { ArrowLeft, ArrowRight, Check, Dumbbell, ShieldCheck, Sparkles, Trophy, 
 import { FormEvent, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
+import { SportConceptVisual } from '../../components/owner-demo/OwnerDemoVisuals';
 import { basketballMediaAssets } from '../../data/media/basketball';
 import type { SportMediaAsset } from '../../domain/contracts';
 import '../../styles/basketball.css';
@@ -11,6 +12,9 @@ const basketballMedia = Object.fromEntries(
 ) as Record<string, SportMediaAsset>;
 
 function BasketballImage({ asset, priority = false, className = '' }: { asset: SportMediaAsset; priority?: boolean; className?: string }) {
+  const [ok, setOk] = useState(true);
+  if (!asset) return <SportConceptVisual sportId="basketball" />;
+  if (!ok) return <SportConceptVisual sportId="basketball" />;
   return (
     <img
       className={`basketball-image ${className}`.trim()}
@@ -21,6 +25,7 @@ function BasketballImage({ asset, priority = false, className = '' }: { asset: S
       loading={priority ? 'eager' : 'lazy'}
       fetchPriority={priority ? 'high' : 'auto'}
       decoding="async"
+      onError={() => setOk(false)}
     />
   );
 }

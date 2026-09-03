@@ -5,6 +5,7 @@ import { PreviewBadge, SportConceptVisual } from '../../components/owner-demo/Ow
 import { getDemoProgram } from '../../data/demo/programs';
 import { getSportPreviewMedia } from '../../data/media';
 import '../../styles/owner-demo.css';
+import React, { useState } from 'react';
 
 const stages = [bi('Foundation', 'الأساس'), bi('Development', 'التطوير'), bi('Performance', 'الأداء'), bi('Advanced Focus', 'التركيز المتقدم')];
 
@@ -13,9 +14,10 @@ export function ProgramPreviewPage() {
   const program = getDemoProgram(programSlug);
   if (!program) return <Navigate to="/programs" replace />;
   const media = getSportPreviewMedia(program.sportId);
+  const [mediaAvailable, setMediaAvailable] = useState(true);
   return <div className={`od-public-page od-program-detail sport-${program.sportId}`}>
     <section className="od-program-detail-hero">
-      <div className="od-program-detail-media">{media ? <img src={media.url} alt={`${media.altEn} | ${media.altAr}`} width={1648} height={928} loading="eager" decoding="async" /> : <SportConceptVisual sportId={program.sportId} />}<div className="od-program-detail-shade" /></div>
+      <div className="od-program-detail-media">{media && mediaAvailable ? <img src={media.url} alt={`${media.altEn} | ${media.altAr}`} width={1648} height={928} loading="eager" decoding="async" onError={() => setMediaAvailable(false)} /> : <SportConceptVisual sportId={program.sportId} />}<div className="od-program-detail-shade" /></div>
       <div className="od-program-detail-copy"><PreviewBadge /><Link className="od-back-link" to="/programs"><BilingualText value={bi('All Programs', 'كل البرامج')} /></Link><span className="od-kicker"><BilingualText value={program.sport} /></span><h1><BilingualText value={program.name} /></h1><p><BilingualText value={program.description} /></p><div className="od-program-chips"><span><BilingualText value={program.ageGroup} /></span><span><BilingualText value={program.level} /></span></div></div>
     </section>
 

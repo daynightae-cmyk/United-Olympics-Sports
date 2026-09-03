@@ -2,6 +2,7 @@ import { ArrowLeft, ArrowRight, Check, CircleDot, Dumbbell, Goal, ShieldCheck, S
 import { FormEvent, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
+import { SportConceptVisual } from '../../components/owner-demo/OwnerDemoVisuals';
 import { footballMediaAssets } from '../../data/media/football';
 import type { SportMediaAsset } from '../../domain/contracts';
 import '../../styles/football.css';
@@ -9,7 +10,10 @@ import '../../styles/football.css';
 const media = Object.fromEntries(footballMediaAssets.map(asset => [asset.id, asset])) as Record<string, SportMediaAsset>;
 
 function FootballImage({ asset, priority = false, className = '' }: { asset: SportMediaAsset; priority?: boolean; className?: string }) {
-  return <img className={`football-image ${className}`.trim()} src={asset.url} alt={`${asset.altEn} | ${asset.altAr}`} width={1648} height={928} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} decoding="async" />;
+  const [ok, setOk] = useState(true);
+  if (!asset) return <SportConceptVisual sportId="football" />;
+  if (!ok) return <SportConceptVisual sportId="football" />;
+  return <img className={`football-image ${className}`.trim()} src={asset.url} alt={`${asset.altEn} | ${asset.altAr}`} width={1648} height={928} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} decoding="async" onError={() => setOk(false)} />;
 }
 
 const pillars = [

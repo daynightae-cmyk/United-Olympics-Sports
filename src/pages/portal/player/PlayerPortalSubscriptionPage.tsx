@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { usePlayerSession } from '../../../portals/player/PlayerSessionContext';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
+import SafeBrandLogo from '../../../components/ui/SafeBrandLogo';
 
 export function PlayerPortalSubscriptionPage() {
   const { player, sport, group, parent } = usePlayerSession();
@@ -70,14 +71,7 @@ export function PlayerPortalSubscriptionPage() {
                 {/* Brand & Badge */}
                 <div className="flex items-center justify-between relative z-10">
                   <div className="flex items-center gap-2.5">
-                    <img
-                      src="/brand/united-olympics-sports-logo.png"
-                      alt="United Olympics Sports"
-                      className="w-10 h-10 object-contain"
-                      onError={(e) => {
-                        (e.target as HTMLElement).style.display = 'none';
-                      }}
-                    />
+                    <SafeBrandLogo className="w-10 h-10 object-contain" />
                     <div>
                       <h3 className="font-['Cinzel',serif] text-xs font-bold tracking-wider text-slate-100">
                         UNITED OLYMPICS SPORTS

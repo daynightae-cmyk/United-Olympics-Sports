@@ -2,10 +2,14 @@ import { ArrowLeft, Sparkles, Waves } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { getSwimmingMediaByUsage, swimmingMediaAssets } from '../../data/media/swimming';
+import { SportConceptVisual } from '../../components/owner-demo/OwnerDemoVisuals';
 import type { SportMediaAsset } from '../../domain/contracts';
 import '../../styles/swimming.css';
 
 function MediaImage({ asset, priority = false, className = '' }: { asset: SportMediaAsset; priority?: boolean; className?: string }) {
+  const [ok, setOk] = useState(true);
+  if (!asset) return <SportConceptVisual sportId="swimming" />;
+  if (!ok) return <SportConceptVisual sportId="swimming" />;
   return (
     <img
       className={`swim-media ${className}`.trim()}
@@ -16,6 +20,7 @@ function MediaImage({ asset, priority = false, className = '' }: { asset: SportM
       loading={priority ? 'eager' : 'lazy'}
       fetchPriority={priority ? 'high' : 'auto'}
       decoding="async"
+      onError={() => setOk(false)}
     />
   );
 }
