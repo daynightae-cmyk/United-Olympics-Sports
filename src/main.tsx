@@ -6,6 +6,7 @@ import './styles/visual-system.css';
 import './styles/theme-closure.css';
 import './styles/enterprise.css';
 import './styles/portal-experience.css';
+import './styles/admin-directory-v2.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
