@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-import React, { useState } from "react";
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
@@ -16,7 +14,7 @@ import {
 import { usePlayerSession } from "../PlayerSessionContext";
 import { productionAuthGateway, previewAuthGateway } from "./PlayerAuthGateway";
 import { BilingualText, bi } from "../../../components/bilingual/BilingualText";
-import SafeBrandLogo from '../../../components/ui/SafeBrandLogo';
+import SafeBrandLogo from "../../../components/ui/SafeBrandLogo";
 
 export function PlayerLoginPage() {
   const { allPlayers, login } = usePlayerSession();
@@ -288,7 +286,9 @@ export function PlayerLoginPage() {
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
                     <Sparkles size={14} className="text-amber-400" />
-                    <BilingualText value={bi("Enter Preview Athlete Mode", "الدخول إلى وضع المعاينة")} />
+                    <BilingualText
+                      value={bi("Enter Preview Athlete Mode", "الدخول إلى وضع المعاينة")}
+                    />
                   </span>
                   <span className="text-[10px] text-amber-400 uppercase font-semibold px-2 py-0.5 rounded bg-amber-400/10 border border-amber-400/20">
                     Preview
@@ -297,7 +297,9 @@ export function PlayerLoginPage() {
 
                 <div className="space-y-2">
                   <label className="block text-[11px] text-slate-400">
-                    <BilingualText value={bi("Select demo athlete identity:", "اختر هوية الرياضي التجريبية:")} />
+                    <BilingualText
+                      value={bi("Select demo athlete identity:", "اختر هوية الرياضي التجريبية:")}
+                    />
                   </label>
                   <select
                     value={selectedAthleteId}
@@ -318,7 +320,9 @@ export function PlayerLoginPage() {
                     className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold text-xs shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2 mt-1"
                   >
                     <span>
-                      <BilingualText value={bi("Enter Preview Athlete Mode", "الدخول إلى وضع المعاينة")} />
+                      <BilingualText
+                        value={bi("Enter Preview Athlete Mode", "الدخول إلى وضع المعاينة")}
+                      />
                     </span>
                     <ArrowRight size={14} className="rtl:rotate-180" />
                   </button>
@@ -332,10 +336,10 @@ export function PlayerLoginPage() {
       {/* Footer */}
       <footer className="relative z-10 w-full max-w-7xl mx-auto px-6 py-6 text-center text-xs text-slate-500 border-t border-white/5">
         <p>
-          © {new Date().getFullYear()} United Olympics Sports · يونايتد أوليمبيكس سبورت. All rights reserved.
+          © {new Date().getFullYear()} United Olympics Sports · يونايتد أوليمبيكس سبورت. All rights
+          reserved.
         </p>
       </footer>
     </div>
   );
 }
-          reserved.
