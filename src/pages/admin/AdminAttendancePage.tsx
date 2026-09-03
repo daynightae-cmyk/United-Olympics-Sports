@@ -10,8 +10,12 @@ export function AdminAttendancePage() {
       title={bi('Attendance', 'الحضور')}
       description={bi('Player attendance tracking preview.', 'معاينة تتبع حضور اللاعبين.')}
     />
+    <section className="player-filter-bar" aria-label="Attendance filters | فلاتر الحضور">
+      <label className="filter-search"><span className="sr-only">Search attendance</span><input placeholder="Search players... | البحث عن اللاعبين..." /></label>
+      <span className="result-count"><BilingualText value={bi('Preview attendance', 'حضور تجريبي')} /></span>
+    </section>
     <div className="admin-table-preview">
-      <table>
+      <table className="player-table">
         <thead><tr><th><BilingualText value={bi('Player', 'اللاعب')} /></th><th><BilingualText value={bi('Scheduled', 'المجدول')} /></th><th><BilingualText value={bi('Attended', 'الحضور')} /></th></tr></thead>
         <tbody>
           {demoPlayers.slice(0, 6).map(p => (
