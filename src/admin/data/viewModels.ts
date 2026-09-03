@@ -86,7 +86,7 @@ export type PlayerViewModel = {
   level: BilingualText;
   status: BilingualText;
   attendanceRate: number;
-  performanceScore: number;
+  performanceScore: number | null;
 };
 
 export type CoachViewModel = {
