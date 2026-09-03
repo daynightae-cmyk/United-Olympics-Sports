@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Phone, ArrowLeft, AlertCircle, Sparkles } from 'lucide-react';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
+import SafeBrandLogo from '../../../components/ui/SafeBrandLogo';
 import { productionAuthGateway } from './PlayerAuthGateway';
 
 const COUNTRY_CODES = [
@@ -62,14 +63,7 @@ export function PlayerPhoneAuthPage() {
           <span><BilingualText value={bi('Back to Login Options', 'العودة لخيارات الدخول')} /></span>
         </Link>
         <div className="flex items-center gap-2">
-          <img
-            src="/brand/united-olympics-sports-logo.png"
-            alt="United Olympics Sports"
-            className="w-8 h-8 object-contain"
-            onError={(e) => {
-              (e.target as HTMLElement).style.display = 'none';
-            }}
-          />
+          <SafeBrandLogo className="w-8 h-8 object-contain" />
           <span className="font-['Cinzel',serif] text-xs font-bold text-slate-200">
             UNITED OLYMPICS SPORTS
           </span>

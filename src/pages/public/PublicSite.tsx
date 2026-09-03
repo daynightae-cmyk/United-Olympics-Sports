@@ -559,9 +559,11 @@ function About() {
 function SportCard({ sport }: { sport: Sport }) {
   const preview = getSportPreviewMedia(sport.id);
   const href = sportDetailRoutes[sport.id];
+  const [mediaAvailable, setMediaAvailable] = useState(true);
+
   return (
     <article className="sport-card od-sport-card">
-      {preview ? (
+      {preview && mediaAvailable ? (
         <img
           className="sport-card-media"
           src={preview.url}
@@ -570,6 +572,7 @@ function SportCard({ sport }: { sport: Sport }) {
           height={928}
           loading="lazy"
           decoding="async"
+          onError={() => setMediaAvailable(false)}
         />
       ) : (
         <SportConceptVisual sportId={sport.id} compact />
