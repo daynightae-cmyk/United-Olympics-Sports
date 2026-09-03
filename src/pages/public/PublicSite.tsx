@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { Sports3DStage } from "../../design/sports3d";
+import SafeBrandLogo from "../../components/ui/SafeBrandLogo";
 import { ThemeToggle } from "../../components/ui/ThemeToggle";
 import { SportConceptVisual } from "../../components/owner-demo/OwnerDemoVisuals";
 import { getSportPreviewMedia } from "../../data/media";
@@ -129,13 +130,7 @@ function Bilingual({ value, className = "" }: { value: Bilingual; className?: st
 }
 
 function OfficialLogo({ compact = false }: { compact?: boolean }) {
-  return (
-    <img
-      className={compact ? "official-logo compact" : "official-logo"}
-      src="/brand/united-olympics-sports-logo.png"
-      alt={`${brand} | ${brandAr}`}
-    />
-  );
+  return <SafeBrandLogo compact={compact} className={compact ? 'official-logo compact' : 'official-logo'} />;
 }
 
 function Splash({ onComplete }: { onComplete: () => void }) {
@@ -241,8 +236,7 @@ function PublicHeader() {
   );
 }
 
-const developerWhatsApp =
-  "https://wa.me/971503281920?text=Hello%20Eng.%20Sadek%20Elgazar%2C%20I%20would%20like%20to%20start%20a%20new%20project%20with%20KNOuX.%20%7C%20%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%20%D9%85.%20%D8%B5%D8%A7%D8%AF%D9%82%20%D8%A7%D9%84%D8%AC%D8%B2%D8%A7%D8%B1%D8%8C%20%D8%A3%D9%88%D8%AF%20%D8%A7%D9%84%D8%A8%D8%AF%D8%A1%20%D9%81%D9%8A%20%D9%85%D8%B4%D8%B1%D9%88%D8%B9%20%D8%AC%D8%AF%D9%8A%D8%AF%20%D9%85%D8%B9%20KNOuX.";
+const developerContact = '/contact';
 function Footer() {
   return (
     <footer className="site-footer">
@@ -278,18 +272,13 @@ function Footer() {
       <div className="knoux">
         <a
           className="knoux-signature"
-          href={developerWhatsApp}
-          target="_blank"
-          rel="noreferrer"
-          aria-label="Made by KNOuX — Eng. Sadek Elgazar | صنع بواسطة KNOuX — م. صادق الجزار"
+          href={developerContact}
+          aria-label="Made by KNOuX — signature removed for privacy"
         >
           <Bilingual value={{ en: "Made by KNOuX", ar: "صنع بواسطة KNOuX" }} />
           <strong>
-            <Bilingual value={{ en: "Eng. Sadek Elgazar", ar: "م. صادق الجزار" }} />
+            <Bilingual value={{ en: "KNOuX", ar: "KNOuX" }} />
           </strong>
-          <small>
-            <Bilingual value={{ en: "Start a New Project", ar: "ابدأ مشروعًا جديدًا" }} />
-          </small>
         </a>
       </div>
     </footer>

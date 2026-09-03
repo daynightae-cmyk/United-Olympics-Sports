@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { BilingualText, bi } from '../components/bilingual/BilingualText';
+import SafeBrandLogo from '../components/ui/SafeBrandLogo';
 import { ThemeToggle } from '../components/ui/ThemeToggle';
 import type { BilingualText as BilingualValue } from '../domain/contracts';
 import '../styles/admin.css';
@@ -80,7 +81,7 @@ export function PortalLayout({ portal, children }: { portal: PortalKind; childre
   return <div className={`portal-shell portal-${portal}`}>
     <aside className={`portal-sidebar ${open ? 'is-open' : ''}`} aria-label={`${meta.title.en} navigation | تنقل ${meta.title.ar}`}>
       <div className="portal-brand">
-        <img src="/brand/united-olympics-sports-logo.png" alt="United Olympics Sports | يونايتد أوليمبيكس سبورت" />
+        <SafeBrandLogo className="portal-brand-logo" />
         <div><strong>United Olympics Sports</strong><span lang="ar" dir="rtl">يونايتد أوليمبيكس سبورت</span></div>
         <button type="button" onClick={() => setOpen(false)} className="portal-icon-button portal-mobile-only" aria-label="Close navigation | إغلاق القائمة"><X /></button>
       </div>

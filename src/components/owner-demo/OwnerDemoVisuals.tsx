@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import type { BilingualText as BilingualValue } from '../../domain/contracts';
 import { BilingualText, bi } from '../bilingual/BilingualText';
 import { ThemeToggle } from '../ui/ThemeToggle';
+import SafeBrandLogo from '../ui/SafeBrandLogo';
 
 export function PreviewBadge({ label = bi('Preview Experience', 'تجربة تجريبية') }: { label?: BilingualValue }) {
   return <span className="od-preview-badge"><span aria-hidden="true" /><BilingualText value={label} /></span>;
@@ -29,7 +30,7 @@ export function SportConceptVisual({ sportId, compact = false }: { sportId: stri
 
 export function ProductPreviewHeader({ product }: { product: BilingualValue }) {
   return <header className="od-product-header">
-    <Link to="/" className="od-product-brand"><img src="/brand/united-olympics-sports-logo.png" alt="United Olympics Sports | يونايتد أوليمبيكس سبورت" /><span><strong>United Olympics Sports</strong><small lang="ar" dir="rtl">يونايتد أوليمبيكس سبورت</small></span></Link>
+    <Link to="/" className="od-product-brand"><SafeBrandLogo className="od-product-logo" /><span><strong>United Olympics Sports</strong><small lang="ar" dir="rtl">يونايتد أوليمبيكس سبورت</small></span></Link>
     <div className="od-product-title"><BilingualText value={product} /><PreviewBadge /></div>
     <div className="od-product-header-actions"><ThemeToggle compact /><Link className="od-public-return" to="/"><ArrowLeft aria-hidden="true" /><BilingualText value={bi('Public Website', 'الموقع العام')} /></Link></div>
   </header>;
