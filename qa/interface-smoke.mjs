@@ -8,7 +8,32 @@ const publicRoutes = ['/', '/about', '/sports', '/sports/football', '/sports/swi
 const playerRoutes = ['/player', '/player/login', '/player/auth/phone', '/player/auth/verify', '/player/phone', '/player/otp', '/player/home', '/player/schedule', '/player/schedule/session-demo-001', '/player/session/session-demo-001', '/player/attendance', '/player/performance', '/player/achievements', '/player/feedback', '/player/subscription', '/player/payments', '/player/documents', '/player/messages', '/player/notifications', '/player/profile', '/player/settings', '/player/route-that-must-404'];
 const parentRoutes = ['/parent', '/parent/children', '/parent/children/player-demo-001', '/parent/subscriptions', '/parent/documents', '/parent/messages', '/parent/schedule', '/parent/performance', '/parent/feedback', '/parent/payments', '/parent/profile', '/parent/route-that-must-404'];
 const coachRoutes = ['/coach', '/coach/schedule', '/coach/groups', '/coach/groups/football-demo-u12', '/coach/evaluations', '/coach/players', '/coach/players/player-demo-001', '/coach/attendance', '/coach/programs', '/coach/messages', '/coach/profile', '/coach/route-that-must-404'];
-const adminRoutes = ['/admin', '/admin/countries', '/admin/branches', '/admin/sports', '/admin/programs', '/admin/players', '/admin/parents', '/admin/coaches', '/admin/groups', '/admin/schedules', '/admin/attendance', '/admin/registrations', '/admin/performance', '/admin/achievements', '/admin/events', '/admin/subscriptions', '/admin/payments', '/admin/reports', '/admin/announcements', '/admin/messages', '/admin/content', '/admin/users', '/admin/settings', '/admin/audit-activity'];
+const adminRoutes = [
+  '/admin',
+  '/admin/countries', '/admin/countries/country-workspace-01',
+  '/admin/branches', '/admin/branches/branch-workspace-01',
+  '/admin/sports', '/admin/sports/football', '/admin/sports/football/groups', '/admin/sports/football/groups/football-demo-u12',
+  '/admin/programs', '/admin/programs/program-demo-football-foundation',
+  '/admin/players', '/admin/players/player-demo-001',
+  '/admin/parents', '/admin/parents/parent-preview-01',
+  '/admin/coaches', '/admin/coaches/coach-preview-01',
+  '/admin/groups',
+  '/admin/schedules', '/admin/schedules/session-demo-001',
+  '/admin/attendance',
+  '/admin/registrations', '/admin/registrations/registration-preview-001',
+  '/admin/performance',
+  '/admin/achievements', '/admin/achievements/achievement-preview-001',
+  '/admin/events', '/admin/events/event-preview-001',
+  '/admin/subscriptions', '/admin/subscriptions/subscription-preview-001',
+  '/admin/payments', '/admin/payments/payment-preview-001',
+  '/admin/reports',
+  '/admin/announcements', '/admin/announcements/announcement-preview-001',
+  '/admin/messages', '/admin/messages/message-preview-001',
+  '/admin/content', '/admin/content/content-preview-001',
+  '/admin/users',
+  '/admin/settings',
+  '/admin/audit-activity',
+];
 const allRoutes = [...publicRoutes, ...playerRoutes, ...parentRoutes, ...coachRoutes, ...adminRoutes];
 
 const viewportMatrix = [
