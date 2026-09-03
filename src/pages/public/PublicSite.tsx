@@ -130,7 +130,12 @@ function Bilingual({ value, className = "" }: { value: Bilingual; className?: st
 }
 
 function OfficialLogo({ compact = false }: { compact?: boolean }) {
-  return <SafeBrandLogo compact={compact} className={compact ? 'official-logo compact' : 'official-logo'} />;
+  return (
+    <SafeBrandLogo
+      compact={compact}
+      className={compact ? "official-logo compact" : "official-logo"}
+    />
+  );
 }
 
 function Splash({ onComplete }: { onComplete: () => void }) {
@@ -236,7 +241,7 @@ function PublicHeader() {
   );
 }
 
-const developerContact = '/contact';
+const developerContact = "/contact";
 function Footer() {
   return (
     <footer className="site-footer">

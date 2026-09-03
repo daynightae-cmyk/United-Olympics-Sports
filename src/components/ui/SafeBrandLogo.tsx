@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 type Props = {
   compact?: boolean;
@@ -6,7 +6,7 @@ type Props = {
   alt?: string;
 };
 
-export function SafeBrandLogo({ compact = false, className = '', alt }: Props) {
+export function SafeBrandLogo({ compact = false, className = "", alt }: Props) {
   const [visible, setVisible] = React.useState(true);
   const imgClass = compact ? `official-logo compact ${className}` : `official-logo ${className}`;
 
@@ -15,7 +15,7 @@ export function SafeBrandLogo({ compact = false, className = '', alt }: Props) {
       <img
         className={imgClass}
         src="/brand/united-olympics-sports-logo.png"
-        alt={alt ?? 'United Olympics Sports | يونايتد أوليمبيكس سبورت'}
+        alt={alt ?? "United Olympics Sports | يونايتد أوليمبيكس سبورت"}
         onError={() => setVisible(false)}
       />
     );
@@ -24,7 +24,9 @@ export function SafeBrandLogo({ compact = false, className = '', alt }: Props) {
   return (
     <div className={`brand-fallback ${className}`} aria-hidden>
       <strong>United Olympics Sports</strong>
-      <small lang="ar" dir="rtl">يونايتد أوليمبيكس سبورت</small>
+      <small lang="ar" dir="rtl">
+        يونايتد أوليمبيكس سبورت
+      </small>
     </div>
   );
 }

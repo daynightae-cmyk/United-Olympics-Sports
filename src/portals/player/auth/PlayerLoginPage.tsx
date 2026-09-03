@@ -77,14 +77,7 @@ export function PlayerLoginPage() {
       {/* Top Brand Bar */}
       <header className="relative z-10 w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3 group">
-          <img
-            src="/brand/united-olympics-sports-logo.png"
-            alt="United Olympics Sports"
-            className="w-11 h-11 object-contain filter drop-shadow-[0_0_16px_rgba(212,175,55,0.4)]"
-            onError={(e) => {
-              (e.target as HTMLElement).style.display = "none";
-            }}
-          />
+          <SafeBrandLogo className="w-11 h-11 object-contain filter drop-shadow-[0_0_16px_rgba(212,175,55,0.4)]" />
           <div>
             <h1 className="font-['Cinzel',serif] text-sm font-bold tracking-wider text-slate-100">
               UNITED OLYMPICS SPORTS
