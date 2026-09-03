@@ -48,6 +48,7 @@ import { AdminMessagesDetailPage } from '../pages/admin/AdminMessagesDetailPage'
 import { AdminAuditActivityPage } from '../pages/admin/AdminAuditActivityPage';
 import { useUiSettings } from '../ui/theme/useUiSettings';
 import '../styles/admin.css';
+import '../styles/admin-visual-rebuild.css';
 
 const routeLabels: Record<string, { en: string; ar: string }> = {
   sports: bi('Sports', 'الرياضات'), players: bi('Players', 'اللاعبون'), groups: bi('Training Groups', 'مجموعات التدريب'), parents: bi('Parents', 'أولياء الأمور'), coaches: bi('Coaches', 'المدربون'), programs: bi('Programs', 'البرامج'), schedules: bi('Schedules', 'الجداول'), attendance: bi('Attendance', 'الحضور'), performance: bi('Performance', 'الأداء'), countries: bi('Countries', 'الدول'), branches: bi('Branches', 'الفروع'), subscriptions: bi('Subscriptions', 'الاشتراكات'), payments: bi('Payments', 'المدفوعات'), reports: bi('Reports', 'التقارير'), content: bi('Content', 'المحتوى'), users: bi('Users & Roles', 'المستخدمون والصلاحيات'), settings: bi('Settings', 'الإعدادات'), registrations: bi('Registrations', 'التسجيلات'), achievements: bi('Achievements', 'الإنجازات'), events: bi('Events', 'الفعاليات'), announcements: bi('Announcements', 'الإعلانات'), messages: bi('Messages', 'الرسائل'), 'audit-activity': bi('Audit Activity', 'سجل النشاط'),
