@@ -9,6 +9,10 @@ export function AdminSportsPage() {
   const sports = data?.items ?? [];
   return <div className="admin-page">
     <PageHeader eyebrow={bi('Sports Management Center', 'مركز إدارة الرياضات')} title={bi('Sports', 'الرياضات')} description={bi('Data-driven sport structures with every count derived from linked preview fixtures.', 'هياكل رياضية قائمة على البيانات، وكل عدد مشتق من العلاقات التجريبية المرتبطة.')} />
+    <section className="player-filter-bar" aria-label="Sport filters | فلاتر الرياضات">
+      <label className="filter-search"><span className="sr-only">Search sports</span><input placeholder="Search sports... | البحث عن الرياضات..." /></label>
+      <span className="result-count"><BilingualText value={bi(`${sports.length} preview sports`, `${sports.length} رياضة تجريبية`)} /></span>
+    </section>
     <div className="sport-management-grid">{sports.map(sport => {
       return <article className="sport-management-card" key={sport.id}>
         <div className="sport-card-head"><span className="sport-glyph"><Trophy /></span><StatusBadge active={sport.status === 'active'} /></div>
