@@ -11,6 +11,16 @@ export function AdminDashboardPage() {
   const coachCount = new Set(demoTrainingGroups.flatMap(group => group.coachIds)).size;
   const programCount = new Set(demoSports.flatMap(sport => sport.programIds)).size;
   return <div className="admin-page">
+    <section className="feature-strip admin-panel" aria-label="Dashboard command header | رأس لوحة التحكم" style={{ background: 'linear-gradient(135deg, rgba(212,175,55,0.08), transparent 42%), linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.008))', borderColor: 'rgba(212,175,55,0.18)', padding: '28px 24px', borderRadius: '22px', marginBottom: '28px', boxShadow: '0 14px 36px rgba(0,0,0,0.28)' }}>
+      <div className="feature-strip-copy" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+        <img src="/brand/united-olympics-sports-logo.png" alt="Official logo" style={{ width: '56px', height: '56px', objectFit: 'contain', filter: 'drop-shadow(0 0 18px rgba(215,180,90,.22))', flexShrink: 0 }} />
+        <div style={{ minWidth: 0 }}>
+          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#f4d98a' }}><BilingualText value={bi('Super Admin Command Center', 'مركز قيادة الإدارة الرئيسية')} /></h2>
+          <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'rgba(255,255,255,0.65)' }}><BilingualText value={bi('Preview operational environment — no live backend connected.', 'بيئة تشغيل تجريبية — لا يوجد خادم مباشر متصل.')} /></p>
+        </div>
+      </div>
+    </section>
+
     <PageHeader icon={BarChart3} eyebrow={bi('Operations Overview', 'نظرة عامة على العمليات')} title={bi('Super Admin Dashboard', 'لوحة الإدارة الرئيسية')} description={bi('A truthful operational foundation calculated entirely from isolated preview fixtures.', 'أساس تشغيلي موثوق محسوب بالكامل من بيانات تجريبية معزولة.')} />
 
     <section className="admin-stat-grid" aria-label="Overview metrics | المؤشرات العامة">
