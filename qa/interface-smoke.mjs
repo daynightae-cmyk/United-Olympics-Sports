@@ -51,7 +51,11 @@ function sessionBootstrap({ appearance = 'dark', rtl = false } = {}) {
     localStorage.setItem('uos:player-portal:auth', 'true');
     localStorage.setItem(settingsKey, JSON.stringify({ appearance: theme, bilingualOrder: forceRtl ? 'ar-first' : 'en-first', density: 'comfortable', motion: 'reduced', fontScale: 'default', sidebarDefault: 'expanded' }));
     sessionStorage.setItem('uos:splash-seen', 'true');
-    if (forceRtl) document.documentElement.setAttribute('dir', 'rtl');
+    if (forceRtl) {
+      document.addEventListener('DOMContentLoaded', () => {
+        document.documentElement?.setAttribute('dir', 'rtl');
+      }, { once: true });
+    }
   };
 }
 
