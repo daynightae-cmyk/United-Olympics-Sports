@@ -1,0 +1,29 @@
+:root {
+  --athlete-bg: #07090e;
+  --athlete-bg-subtle: #0d121c;
+  --athlete-surface-glass: rgba(14, 20, 32, 0.72);
+  --athlete-surface-card: rgba(18, 26, 42, 0.68);
+  --athlete-surface-card-hover: rgba(26, 36, 58, 0.85);
+  --athlete-surface-elevated: rgba(22, 32, 52, 0.88);
+  --athlete-border: rgba(214, 175, 72, 0.18);
+  --athlete-border-strong: rgba(214, 175, 72, 0.38);
+  --athlete-border-subtle: rgba(255, 255, 255, 0.08);
+  --athlete-gold: #d4af37;
+  --athlete-gold-bright: #f3ce5a;
+  --athlete-gold-glow: rgba(212, 175, 55, 0.28);
+  --athlete-gold-soft: rgba(212, 175, 55, 0.12);
+  --athlete-text-primary: #f8fafc;
+  --athlete-text-secondary: #cbd5e1;
+  --athlete-text-muted: #8492a6;
+  --athlete-success: #34d399;
+  --athlete-success-glow: rgba(52, 211, 153, 0.22);
+  --athlete-warning: #fbbf24;
+  --athlete-danger: #f87171;
+  --athlete-info: #60a5fa;
+  --athlete-radius-sm: 10px;
+  --athlete-radius-md: 16px;
+  --athlete-radius-lg: 22px;
+  --athlete-radius-xl: 28px;
+  --athlete-shadow-card: 0 12px 36px -8px rgba(0, 0, 0, 0.45);
+  --athlete-shadow-glow: 0 0 40px -10px rgba(212, 175, 55, 0.2);
+}

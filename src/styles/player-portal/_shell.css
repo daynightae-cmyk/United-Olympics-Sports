@@ -1,0 +1,47 @@
+.player-shell-container {
+  min-height: 100vh;
+  background-color: var(--athlete-bg);
+  background-image:
+    radial-gradient(ellipse at 85% 5%, var(--athlete-gold-soft) 0%, transparent 45%),
+    radial-gradient(ellipse at 10% 40%, rgba(30, 58, 138, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 90%, rgba(20, 30, 50, 0.3) 0%, transparent 60%);
+  background-attachment: fixed;
+  color: var(--athlete-text-primary);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-x: hidden;
+  font-family: 'Outfit', 'Cairo', system-ui, sans-serif;
+}
+
+.athlete-workspace {
+  margin-left: 280px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.athlete-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: 72px;
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--athlete-surface-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--athlete-border-subtle);
+}
+
+.athlete-content-area {
+  flex: 1;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 28px 32px 80px;
+}

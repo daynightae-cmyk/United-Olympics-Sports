@@ -12,6 +12,7 @@ import {
   Trophy,
   X,
 } from "lucide-react";
+import { Sports3DStage } from "../../design/sports3d";
 import { ThemeToggle } from "../../components/ui/ThemeToggle";
 import { SportConceptVisual } from "../../components/owner-demo/OwnerDemoVisuals";
 import { getSportPreviewMedia } from "../../data/media";
@@ -581,13 +582,21 @@ function SportCard({ sport }: { sport: Sport }) {
       )}
       <div className="sport-card-body">
         <div className="sport-icon">
-          {sport.id === "swimming" ? (
-            <Sparkles />
-          ) : sport.id === "basketball" ? (
-            <Trophy />
-          ) : (
-            <Dumbbell />
-          )}
+          <Sports3DStage
+            sportKey={sport.id}
+            size={84}
+            opacity={0.16}
+            className="sport-3d-medallion"
+          />
+          <div className="sport-icon-fallback" aria-hidden>
+            {sport.id === "swimming" ? (
+              <Sparkles />
+            ) : sport.id === "basketball" ? (
+              <Trophy />
+            ) : (
+              <Dumbbell />
+            )}
+          </div>
         </div>
         <h3>
           <Bilingual value={{ en: sport.en, ar: sport.ar }} />
