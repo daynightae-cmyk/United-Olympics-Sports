@@ -125,6 +125,71 @@
   box-shadow: 0 32px 80px rgba(0, 0, 0, 0.48), 0 0 0 1px rgba(212, 175, 55, 0.1) inset !important;
 }
 
+/* Quick action cards (Dashboard) */
+.quick-action-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.005));
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 200ms ease;
+  text-decoration: none;
+  color: inherit;
+}
+.quick-action-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(212, 175, 55, 0.28);
+  box-shadow: 0 14px 32px rgba(212, 175, 55, 0.1);
+}
+.quick-action-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  color: var(--uos-gold-highlight);
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.18);
+  flex-shrink: 0;
+}
+.quick-action-icon svg { width: 20px; height: 20px; }
+.quick-action-label { font-weight: 600; font-size: 13px; }
+
+/* Readiness cards */
+.readiness-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.005));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+}
+.readiness-meter {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  margin: 10px 0 14px;
+  position: relative;
+}
+.readiness-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #d4b23a, #f0c75e);
+  display: block;
+}
+.readiness-breakdown {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 14px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.75);
+}
+.readiness-breakdown span { display: flex; justify-content: space-between; }
+.readiness-breakdown strong { color: rgba(255, 255, 255, 0.92); }
+
 /* Responsive refinement */
 @media (max-width: 768px) {
   .admin-page-header { padding: 24px 18px !important; border-radius: 16px !important; }
