@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
-  Activity, Award, CalendarDays, CheckCircle2, ChevronLeft, CreditCard, FileText,
-  Home, IdCard, Menu, MessageSquareText, ShieldCheck, Target, UserRound, UsersRound, X,
+  Activity, Award, Bell, CalendarDays, CheckCircle2, ChevronLeft, CreditCard, FileText,
+  Home, IdCard, Menu, MessageSquareText, Settings, ShieldCheck, Target, UserRound, UsersRound, X,
   type LucideIcon,
 } from 'lucide-react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
@@ -10,6 +10,7 @@ import { ThemeToggle } from '../components/ui/ThemeToggle';
 import type { BilingualText as BilingualValue } from '../domain/contracts';
 import '../styles/admin.css';
 import '../styles/portal-shell.css';
+import '../styles/player-portal.css';
 
 type PortalKind = 'player' | 'parent' | 'coach';
 type PortalNavItem = { path: string; label: BilingualValue; icon: LucideIcon };
@@ -25,7 +26,12 @@ const portalMeta: Record<PortalKind, { title: BilingualValue; role: BilingualVal
       { path: 'feedback', label: bi('Feedback', 'الملاحظات'), icon: MessageSquareText },
       { path: 'achievements', label: bi('Achievements', 'الإنجازات'), icon: Award },
       { path: 'documents', label: bi('Documents', 'المستندات'), icon: FileText },
+      { path: 'subscription', label: bi('Membership', 'العضوية'), icon: ShieldCheck },
+      { path: 'payments', label: bi('Payments', 'المدفوعات'), icon: CreditCard },
+      { path: 'messages', label: bi('Messages', 'الرسائل'), icon: MessageSquareText },
+      { path: 'notifications', label: bi('Notifications', 'الإشعارات'), icon: Bell },
       { path: 'profile', label: bi('Profile', 'الملف الشخصي'), icon: IdCard },
+      { path: 'settings', label: bi('Settings', 'الإعدادات'), icon: Settings },
     ],
   },
   parent: {
@@ -84,7 +90,7 @@ export function PortalLayout({ portal, children }: { portal: PortalKind; childre
         <div><strong>United Olympics Sports</strong><span lang="ar" dir="rtl">يونايتد أوليمبيكس سبورت</span></div>
         <button type="button" onClick={() => setOpen(false)} className="portal-icon-button portal-mobile-only" aria-label="Close navigation | إغلاق القائمة"><X /></button>
       </div>
-      <div className="portal-role"><small><BilingualText value={bi('Preview Product', 'منتج تجريبي')} /></small><BilingualText value={meta.title} /><span><BilingualText value={meta.role} /></span></div>
+      <div className="portal-role"><small><BilingualText value={bi('United athlete space', 'مساحة الرياضي في يونايتد')} /></small><BilingualText value={meta.title} /><span><BilingualText value={meta.role} /></span></div>
       <nav className="portal-nav">{meta.nav.map(({ path, label, icon: Icon }) => <NavLink key={path || 'overview'} to={path ? `${base}/${path}` : base} end={!path}><Icon /><BilingualText value={label} /><ChevronLeft /></NavLink>)}</nav>
       <Link className="portal-public-link" to="/"><ChevronLeft /><BilingualText value={bi('Public Website', 'الموقع العام')} /></Link>
     </aside>
@@ -97,6 +103,9 @@ export function PortalLayout({ portal, children }: { portal: PortalKind; childre
         <ThemeToggle compact />
       </header>
       <main className="portal-main">{children}</main>
+      {portal === 'player' && <nav className="player-bottom-nav" aria-label="Player navigation | تنقل اللاعب">
+        {[{ path: '/player/home', label: bi('Home','الرئيسية'), icon: Home }, { path: '/player/schedule', label: bi('Schedule','الجدول'), icon: CalendarDays }, { path: '/player/performance', label: bi('Performance','الأداء'), icon: Activity }, { path: '/player/messages', label: bi('Messages','الرسائل'), icon: MessageSquareText }, { path: '/player/settings', label: bi('More','المزيد'), icon: Menu }].map(({ path, label, icon: Icon }) => <NavLink key={path} to={path}><Icon/><BilingualText value={label}/></NavLink>)}
+      </nav>}
     </section>
   </div>;
 }
