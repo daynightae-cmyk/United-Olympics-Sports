@@ -8,6 +8,7 @@ import { getBranch, getCoach, getCountry, getGroup, getParent, getPlayer, getPro
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
 import { AdminFutureModulePage } from '../pages/admin/AdminFutureModulePage';
 import { AdminGroupDetailPage } from '../pages/admin/AdminGroupDetailPage';
+import { AdminGroupsPage } from '../pages/admin/AdminGroupsPage';
 import { AdminPlayerDetailPage } from '../pages/admin/AdminPlayerDetailPage';
 import { AdminPlayersPage } from '../pages/admin/AdminPlayersPage';
 import { AdminSettingsPage } from '../pages/admin/AdminSettingsPage';
@@ -34,12 +35,24 @@ import { AdminPaymentDetailPage } from '../pages/admin/AdminPaymentDetailPage';
 import { AdminReportsPage } from '../pages/admin/AdminReportsPage';
 import { AdminContentPage } from '../pages/admin/AdminContentPage';
 import { AdminContentDetailPage } from '../pages/admin/AdminContentDetailPage';
-import { AdminCustomizationPage } from '../pages/admin/AdminCustomizationPage';
+import { AdminUsersPage } from '../pages/admin/AdminUsersPage';
+import { AdminRegistrationsPage } from '../pages/admin/AdminRegistrationsPage';
+import { AdminRegistrationsDetailPage } from '../pages/admin/AdminRegistrationsDetailPage';
+import { AdminAchievementsPage } from '../pages/admin/AdminAchievementsPage';
+import { AdminAchievementsDetailPage } from '../pages/admin/AdminAchievementsDetailPage';
+import { AdminEventsPage } from '../pages/admin/AdminEventsPage';
+import { AdminEventsDetailPage } from '../pages/admin/AdminEventsDetailPage';
+import { AdminAnnouncementsPage } from '../pages/admin/AdminAnnouncementsPage';
+import { AdminAnnouncementsDetailPage } from '../pages/admin/AdminAnnouncementsDetailPage';
+import { AdminMessagesPage } from '../pages/admin/AdminMessagesPage';
+import { AdminMessagesDetailPage } from '../pages/admin/AdminMessagesDetailPage';
+import { AdminAuditActivityPage } from '../pages/admin/AdminAuditActivityPage';
 import { useUiSettings } from '../ui/theme/useUiSettings';
 import '../styles/admin.css';
+import '../styles/admin-visual-rebuild.css';
 
 const routeLabels: Record<string, { en: string; ar: string }> = {
-  sports: bi('Sports', 'الرياضات'), players: bi('Players', 'اللاعبون'), groups: bi('Training Groups', 'مجموعات التدريب'), parents: bi('Parents', 'أولياء الأمور'), coaches: bi('Coaches', 'المدربون'), programs: bi('Programs', 'البرامج'), schedules: bi('Schedules', 'الجداول'), attendance: bi('Attendance', 'الحضور'), performance: bi('Performance', 'الأداء'), countries: bi('Countries', 'الدول'), branches: bi('Branches', 'الفروع'), subscriptions: bi('Subscriptions', 'الاشتراكات'), payments: bi('Payments', 'المدفوعات'), reports: bi('Reports', 'التقارير'), content: bi('Content', 'المحتوى'), users: bi('Users & Roles', 'المستخدمون والصلاحيات'), settings: bi('Settings', 'الإعدادات'),
+  sports: bi('Sports', 'الرياضات'), players: bi('Players', 'اللاعبون'), groups: bi('Training Groups', 'مجموعات التدريب'), parents: bi('Parents', 'أولياء الأمور'), coaches: bi('Coaches', 'المدربون'), programs: bi('Programs', 'البرامج'), schedules: bi('Schedules', 'الجداول'), attendance: bi('Attendance', 'الحضور'), performance: bi('Performance', 'الأداء'), countries: bi('Countries', 'الدول'), branches: bi('Branches', 'الفروع'), subscriptions: bi('Subscriptions', 'الاشتراكات'), payments: bi('Payments', 'المدفوعات'), reports: bi('Reports', 'التقارير'), content: bi('Content', 'المحتوى'), users: bi('Users & Roles', 'المستخدمون والصلاحيات'), settings: bi('Settings', 'الإعدادات'), registrations: bi('Registrations', 'التسجيلات'), achievements: bi('Achievements', 'الإنجازات'), events: bi('Events', 'الفعاليات'), announcements: bi('Announcements', 'الإعلانات'), messages: bi('Messages', 'الرسائل'), 'audit-activity': bi('Audit Activity', 'سجل النشاط'),
 };
 
 function usePageTitle() {
@@ -83,6 +96,7 @@ export function AdminLayout() {
       <Route path="sports/:sportId/groups/:groupId" element={<AdminGroupDetailPage />} />
       <Route path="sports/:sportId/groups" element={<AdminSportDetailPage />} />
       <Route path="sports/:sportId" element={<AdminSportDetailPage />} />
+      <Route path="groups" element={<AdminGroupsPage />} />
       <Route path="players" element={<AdminPlayersPage />} />
       <Route path="players/:playerId" element={<AdminPlayerDetailPage />} />
       <Route path="settings" element={<AdminSettingsPage />} />
@@ -105,10 +119,21 @@ export function AdminLayout() {
       <Route path="payments" element={<AdminPaymentsPage />} />
       <Route path="payments/:paymentId" element={<AdminPaymentDetailPage />} />
       <Route path="reports" element={<AdminReportsPage />} />
-      <Route path="customization" element={<AdminCustomizationPage />} />
       <Route path="content" element={<AdminContentPage />} />
       <Route path="content/:contentId" element={<AdminContentDetailPage />} />
-      {Object.keys(routeLabels).filter((path) => !['sports','players','settings','countries','branches','programs','parents','coaches','schedules','attendance','performance','subscriptions','payments','reports','content'].includes(path)).map((path) => <Route key={path} path={path} element={<AdminFutureModulePage />} />)}
+      <Route path="users" element={<AdminUsersPage />} />
+      <Route path="registrations" element={<AdminRegistrationsPage />} />
+      <Route path="registrations/:registrationId" element={<AdminRegistrationsDetailPage />} />
+      <Route path="achievements" element={<AdminAchievementsPage />} />
+      <Route path="achievements/:achievementId" element={<AdminAchievementsDetailPage />} />
+      <Route path="events" element={<AdminEventsPage />} />
+      <Route path="events/:eventId" element={<AdminEventsDetailPage />} />
+      <Route path="announcements" element={<AdminAnnouncementsPage />} />
+      <Route path="announcements/:announcementId" element={<AdminAnnouncementsDetailPage />} />
+      <Route path="messages" element={<AdminMessagesPage />} />
+      <Route path="messages/:messageId" element={<AdminMessagesDetailPage />} />
+      <Route path="audit-activity" element={<AdminAuditActivityPage />} />
+      {Object.keys(routeLabels).filter((path) => !['sports','groups','players','settings','countries','branches','programs','parents','coaches','schedules','attendance','performance','subscriptions','payments','reports','content','users','registrations','achievements','events','announcements','messages','audit-activity'].includes(path)).map((path) => <Route key={path} path={path} element={<AdminFutureModulePage />} />)}
       <Route path="*" element={<Navigate to="/admin" replace />} />
     </Routes></main></div>
   </div>;

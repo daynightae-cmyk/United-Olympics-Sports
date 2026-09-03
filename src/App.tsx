@@ -1,10 +1,13 @@
 import { AppRouter } from "./app/AppRouter";
-import { UiSettingsProvider } from "./ui/theme/UiSettingsProvider";
+import { AdminDataProvider } from './admin/data/AdminDataProvider';
+import { UiSettingsProvider } from './ui/theme/UiSettingsProvider';
 
 export function App() {
   return (
     <UiSettingsProvider>
-      <AppRouter />
+      <AdminDataProvider>
+        <AppRouter />
+      </AdminDataProvider>
     </UiSettingsProvider>
   );
 }

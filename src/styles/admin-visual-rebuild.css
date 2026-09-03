@@ -1,0 +1,241 @@
+/* ===================================================================
+   Mission 10V — Premium Admin / Portal Visual Rebuild Layer
+   Adds glass depth, refined gold hierarchy, dense operational layout,
+   premium typography spacing, responsive refinements.
+   =================================================================== */
+
+:root {
+  --uos-glass-strong: rgba(18, 22, 29, 0.82);
+  --uos-glass-medium: rgba(18, 22, 29, 0.62);
+  --uos-glass-soft: rgba(18, 22, 29, 0.42);
+  --uos-gold-glow: rgba(212, 175, 55, 0.18);
+  --uos-gold-line: rgba(212, 175, 55, 0.36);
+  --uos-card-border: rgba(255, 255, 255, 0.08);
+  --uos-inner-highlight: rgba(255, 255, 255, 0.035);
+}
+
+/* Enhanced glass surface system */
+.admin-page-header {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(212, 175, 55, 0.08) inset !important;
+  background:
+    linear-gradient(135deg, rgba(212, 175, 55, 0.08), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.005)) !important;
+}
+
+.admin-stat-card,
+.admin-panel,
+.player-preview-card,
+.admin-entity-grid > article,
+.group-card,
+.amp-card {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(212, 175, 55, 0.06) inset !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.008)) !important;
+}
+
+/* Card hover premium lift */
+.admin-stat-card:hover,
+.admin-panel:hover,
+.group-card:hover,
+.amp-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(212, 175, 55, 0.22) !important;
+  box-shadow: 0 22px 56px rgba(0, 0, 0, 0.34), 0 0 0 1px rgba(212, 175, 55, 0.12) inset !important;
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 260ms ease;
+}
+
+/* Premium table header */
+.admin-table-head,
+.amp-table-head,
+.player-table thead th {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)) !important;
+  border-bottom-color: rgba(212, 175, 55, 0.28) !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em;
+}
+
+/* Filter bar glass */
+.player-filter-bar,
+.admin-filters,
+.amp-preview-banner {
+  border-color: rgba(255, 255, 255, 0.07) !important;
+  background: linear-gradient(90deg, rgba(212, 175, 55, 0.055), rgba(255, 255, 255, 0.015)) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+  border-radius: 16px !important;
+  padding: 14px 18px !important;
+}
+
+/* Status badges refined */
+.status-badge,
+.preview-badge,
+.amp-chip {
+  border-color: rgba(212, 175, 55, 0.24) !important;
+  background: rgba(212, 175, 55, 0.08) !important;
+  color: #f3c969 !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em;
+}
+
+/* Premium button hover */
+.admin-primary-button,
+.admin-secondary-button,
+.ui-button-primary,
+.admin-link-button {
+  transition: transform 160ms ease, background-color 160ms ease, border-color 180ms ease, box-shadow 200ms ease !important;
+}
+.admin-primary-button:hover,
+.admin-secondary-button:hover,
+.admin-link-button:hover,
+.ui-button-primary:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 22px rgba(212, 175, 55, 0.22) !important;
+}
+
+/* Page header enhanced */
+.admin-page-header {
+  border-radius: 22px !important;
+  padding: 36px 32px !important;
+}
+
+/* Sidebar refined active */
+.admin-nav-section > a.active {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.14), rgba(212, 175, 55, 0.06)) !important;
+  border-color: rgba(212, 175, 55, 0.42) !important;
+  color: #f4d98a !important;
+  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.1) !important;
+}
+
+/* Mobile cards */
+.player-mobile-card,
+.admin-modal-backdrop > .admin-modal {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28) !important;
+  border-radius: 18px !important;
+}
+
+/* Modal glass */
+.admin-modal,
+.ui-dialog {
+  background: linear-gradient(180deg, rgba(24, 26, 32, 0.96), rgba(14, 16, 20, 0.92)) !important;
+  border-color: rgba(212, 175, 55, 0.32) !important;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.48), 0 0 0 1px rgba(212, 175, 55, 0.1) inset !important;
+}
+
+/* Quick action cards (Dashboard) */
+.quick-action-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.005));
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 200ms ease;
+  text-decoration: none;
+  color: inherit;
+}
+.quick-action-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(212, 175, 55, 0.28);
+  box-shadow: 0 14px 32px rgba(212, 175, 55, 0.1);
+}
+.quick-action-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  color: var(--uos-gold-highlight);
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.18);
+  flex-shrink: 0;
+}
+.quick-action-icon svg { width: 20px; height: 20px; }
+.quick-action-label { font-weight: 600; font-size: 13px; }
+
+/* Readiness cards */
+.readiness-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.005));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+}
+.readiness-meter {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  margin: 10px 0 14px;
+  position: relative;
+}
+.readiness-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #d4b23a, #f0c75e);
+  display: block;
+}
+.readiness-breakdown {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 14px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.75);
+}
+.readiness-breakdown span { display: flex; justify-content: space-between; }
+.readiness-breakdown strong { color: rgba(255, 255, 255, 0.92); }
+
+/* Player profile premium identity header */
+.player-identity-card,
+.player-preview-grid {
+  display: grid;
+  gap: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.005));
+  padding: 24px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.2);
+  transition: box-shadow 200ms ease;
+}
+.player-identity-card:hover,
+.player-preview-grid:hover { box-shadow: 0 16px 40px rgba(212, 175, 55, 0.06); }
+
+/* Schedule calendar preview cards */
+.schedule-calendar-preview .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 16px; }
+.schedule-day-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.schedule-session-card { border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 18px; background: linear-gradient(145deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.005)); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); transition: transform 180ms ease, border-color 180ms ease, box-shadow 200ms ease; }
+.schedule-session-card:hover { transform: translateY(-2px); border-color: rgba(212, 175, 55, 0.25); box-shadow: 0 14px 36px rgba(212, 175, 55, 0.08); }
+.schedule-session-card h4 { margin: 10px 0 6px; font-size: 16px; }
+.session-time { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--uos-gold-highlight); font-weight: 600; }
+.session-time svg { width: 16px; height: 16px; }
+.session-meta { display: flex; gap: 10px; font-size: 11px; color: rgba(255, 255, 255, 0.65); }
+
+/* Groups directory: dense on desktop, operational cards on mobile */
+.groups-filter-bar{display:grid!important;grid-template-columns:minmax(260px,1fr) minmax(220px,.38fr) auto}.groups-sport-filter{display:flex;align-items:center;gap:9px}.groups-sport-filter>.bi{font-size:8px;color:var(--color-text-muted)}.groups-sport-filter select{height:43px;min-width:170px;border:1px solid var(--color-border);border-radius:9px;padding:0 10px;background:var(--color-surface-2);color:var(--color-text-primary)}
+.groups-table-shell{border:1px solid var(--color-border);border-radius:18px;overflow:hidden;background:var(--color-surface-1);box-shadow:var(--shadow-card)}.groups-table-heading{min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 17px;border-bottom:1px solid var(--color-border);background:linear-gradient(90deg,color-mix(in srgb,var(--color-brand) 7%,transparent),transparent)}.groups-table-heading>div>.bi{font-size:12px;font-weight:700}.groups-table-heading small{display:block;margin-top:5px}.groups-table-heading small .bi{font-size:7px;color:var(--color-text-muted)}.groups-table-heading>span{padding:7px 10px;border:1px solid color-mix(in srgb,var(--color-brand) 25%,var(--color-border));border-radius:8px;color:var(--color-brand-strong)}.groups-table-heading>span .bi{font-size:7px}.groups-desktop-table{overflow-x:auto}.groups-table{min-width:1120px}.groups-table td:first-child{min-width:235px}.groups-table td:first-child>.bi{display:block}.groups-table td:first-child small{display:block;margin-top:6px}.groups-level{display:inline-block;padding:5px 8px;border:1px solid color-mix(in srgb,var(--color-brand) 22%,var(--color-border));border-radius:7px;background:color-mix(in srgb,var(--color-brand) 7%,transparent)}.groups-level .bi{font-size:8px}.groups-mobile-list{display:none}.groups-empty{min-height:180px;display:grid;place-items:center;align-content:center;gap:10px;color:var(--color-text-muted)}.groups-empty svg{width:24px}.groups-empty .bi{font-size:10px}
+
+/* Calendar board: a real weekly structure without inventing sessions */
+.schedule-calendar-preview{overflow:hidden}.schedule-calendar-preview .panel-heading>div small{display:block;margin-top:5px}.schedule-calendar-preview .panel-heading>div small .bi{font-size:7px;color:var(--color-text-muted)}.schedule-calendar-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.schedule-calendar-toolbar>span{display:flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid var(--color-border);border-radius:9px;background:var(--color-surface-2)}.schedule-calendar-toolbar svg{width:15px}.schedule-calendar-toolbar .bi{font-size:8px}.schedule-calendar-toolbar .is-clear{color:#67cf8b}.schedule-calendar-toolbar .has-conflict{color:#ef7777}.schedule-week-scroller{overflow-x:auto;border:1px solid var(--color-border);border-radius:13px}.schedule-week-grid{display:grid;grid-template-columns:repeat(7,minmax(150px,1fr));min-width:1050px}.schedule-day-column{min-height:285px;border-right:1px solid var(--color-border);background:color-mix(in srgb,var(--color-surface-1) 94%,transparent)}.schedule-day-column:last-child{border-right:0}.schedule-day-column>header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px;border-bottom:1px solid var(--color-border);background:var(--color-surface-2)}.schedule-day-column>header strong{font-size:10px}.schedule-day-column>header span{font-size:8px;color:var(--color-text-muted)}.schedule-day-column>div{display:flex;flex-direction:column;gap:8px;padding:8px}.schedule-day-column .schedule-session-card{padding:11px;border-radius:10px;border-left:3px solid var(--color-brand)}.schedule-day-column .schedule-session-card.sport-football{border-left-color:#8eb34e}.schedule-day-column .schedule-session-card.sport-swimming{border-left-color:#5aa8da}.schedule-day-column .schedule-session-card.sport-basketball{border-left-color:#df9349}.schedule-day-column .schedule-session-card.conflict{border-color:#db5151;background:rgba(219,81,81,.08)}.schedule-day-column .schedule-session-card h4{font-size:11px;margin:8px 0}.schedule-day-column .schedule-session-card h4 a{color:var(--color-text-primary);text-decoration:none}.schedule-day-column .session-time{font-size:9px}.schedule-day-column .session-meta{display:block}.schedule-day-column .session-meta .bi{font-size:7px;color:var(--color-text-muted)}.session-status-copy{margin-top:9px;padding-top:8px;border-top:1px solid var(--color-border);font-size:7px;color:var(--color-brand-strong)}.schedule-empty-day{min-height:100px;display:grid;place-items:center;align-content:center;color:var(--color-text-muted)}.schedule-empty-day .bi{font-size:7px}.schedule-legend{display:flex;flex-wrap:wrap;gap:13px;margin-top:12px}.schedule-legend>span{display:flex;align-items:center;gap:6px}.schedule-legend i{width:8px;height:8px;border-radius:50%;background:var(--color-brand)}.schedule-legend .football i{background:#8eb34e}.schedule-legend .swimming i{background:#5aa8da}.schedule-legend .basketball i{background:#df9349}.schedule-legend .conflict i{background:#db5151}.schedule-legend .bi{font-size:7px;color:var(--color-text-muted)}
+
+/* Responsive refinement */
+@media (max-width: 768px) {
+  .admin-page-header { padding: 24px 18px !important; border-radius: 16px !important; }
+  .admin-stat-card { min-height: 112px; padding: 14px; }
+  .admin-stat-card strong { font-size: 22px; }
+  .player-mobile-card { border-radius: 14px !important; padding: 16px; }
+  .groups-filter-bar{grid-template-columns:1fr!important}.groups-sport-filter{justify-content:space-between}.groups-sport-filter select{flex:1}.groups-desktop-table{display:none}.groups-mobile-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:10px}.group-mobile-card{border:1px solid var(--color-border);border-radius:14px;padding:14px;background:var(--color-surface-2)}.group-mobile-card header{display:flex;align-items:flex-start;justify-content:space-between;gap:9px}.group-mobile-card header strong,.group-mobile-card header small{display:block}.group-mobile-card header strong .bi{font-size:9px}.group-mobile-card header small{margin-top:5px;color:var(--color-text-muted);font-size:7px}.group-mobile-card dl{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:13px 0}.group-mobile-card dl>div{padding:8px;border:1px solid var(--color-border);border-radius:8px}.group-mobile-card dt .bi{font-size:6px;color:var(--color-text-muted)}.group-mobile-card dd{margin:5px 0 0;font-size:9px}.group-mobile-card dd .bi{font-size:8px}.schedule-calendar-toolbar{align-items:stretch;flex-direction:column}.schedule-calendar-toolbar>span{justify-content:center}
+}
+
+@media (max-width: 430px) {
+  .admin-page-header h1 { font-size: 28px !important; }
+  .admin-page-header-copy { width: 100%; min-width: 0; }
+  .admin-page-header-copy > div { min-width: 0; max-width: calc(100% - 58px); }
+  .admin-page-header h1 :where(.bi-en, .bi-ar) { white-space: normal; overflow-wrap: anywhere; }
+  .admin-stat-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .groups-mobile-list{grid-template-columns:1fr}.groups-table-heading{align-items:flex-start;flex-direction:column}.groups-table-heading>span{display:none}
+}

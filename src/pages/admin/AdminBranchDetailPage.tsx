@@ -3,9 +3,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { FuturePanel, PageHeader, StatusBadge, Tabs } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
-import { demoPlayers } from '../../data/demo/players';
-import { demoCoaches } from '../../data/demo/coaches';
-import { getBranch, getBranchCoaches, getBranchGroups, getBranchPlayers, getBranchPrograms, getBranchSports, getCountry } from '../../data/demo/selectors';
+import { useBranch } from '../../admin/data/adminHooks';
 
 const tabs = [
   { id: 'overview', label: bi('Overview', 'نظرة عامة') },
@@ -25,20 +23,20 @@ const tabs = [
 
 export function AdminBranchDetailPage() {
   const { branchId } = useParams();
-  const branch = getBranch(branchId);
+  const { item: branch, loading, error } = useBranch(branchId);
   const [active, setActive] = useState('overview');
 
-  if (!branch) return <FuturePanel
+  if (loading) return <div className="admin-page"><PageHeader icon={Building2} eyebrow={bi('Branch Cockpit', 'مركز تحكم الفرع')} title={bi('Loading...', 'جاري التحميل...')} description={bi('Loading branch preview.', 'جاري تحميل معاينة الفرع.')} /></div>;
+  if (error || !branch) return <FuturePanel
     title={bi('Branch not found', 'الفرع غير موجود')}
     description={bi('Choose a valid branch from the Branches directory.', 'اختر فرعاً صالحاً من دليل الفروع.')}
   />;
 
-  const country = getCountry(branch.countryId);
-  const sports = getBranchSports(branch.id);
-  const programs = getBranchPrograms(branch.id);
-  const groups = getBranchGroups(branch.id);
-  const coaches = getBranchCoaches(branch.id);
-  const players = getBranchPlayers(branch.id);
+  const sports = branch.sportIds.map(id => ({ id, name: { en: `Sport ${id}`, ar: `رياضة ${id}` } }));
+  const programs = branch.programIds.map(id => ({ id, name: { en: `Program ${id}`, ar: `برنامج ${id}` } }));
+  const groups = branch.groupIds.map(id => ({ id, name: { en: `Group ${id}`, ar: `مجموعة ${id}` }, sportId: branch.sportIds[0] ?? '' }));
+  const coaches = branch.coachIds.map(id => ({ id, nameEn: `Coach ${id}`, nameAr: `مدرب ${id}` }));
+  const players = branch.playerIds.map(id => ({ id, nameEn: `Player ${id}`, nameAr: `لاعب ${id}` }));
 
   return <div className="admin-page">
     <PageHeader
@@ -55,7 +53,7 @@ export function AdminBranchDetailPage() {
         <h2><BilingualText value={branch.name} /></h2>
       </div>
       <dl>
-        <div><dt><BilingualText value={bi('Country', 'الدولة')} /></dt><dd>{country && <BilingualText value={country.name} />}</dd></div>
+            <div><dt><BilingualText value={bi('Country', 'الدولة')} /></dt><dd>{branch.countryId ? <BilingualText value={{ en: `Country ${branch.countryId}`, ar: `الدولة ${branch.countryId}` }} /> : <BilingualText value={bi('Unknown', 'غير معروف')} />}</dd></div>
         {branch.address && <div><dt><BilingualText value={bi('Address', 'العنوان')} /></dt><dd><BilingualText value={branch.address} /></dd></div>}
         <div><dt><BilingualText value={bi('Sports', 'الرياضات')} /></dt><dd>{sports.length}</dd></div>
         <div><dt><BilingualText value={bi('Programs', 'البرامج')} /></dt><dd>{programs.length}</dd></div>
@@ -75,7 +73,7 @@ export function AdminBranchDetailPage() {
           </div>
           <dl className="detail-list">
             <div><dt><BilingualText value={bi('Branch ID', 'معرف الفرع')} /></dt><dd><code>{branch.id}</code></dd></div>
-            <div><dt><BilingualText value={bi('Country', 'الدولة')} /></dt><dd>{country && <BilingualText value={country.name} />}</dd></div>
+        <div><dt><BilingualText value={bi('Country', 'الدولة')} /></dt><dd>{branch.countryId ? <BilingualText value={{ en: `Country ${branch.countryId}`, ar: `الدولة ${branch.countryId}` }} /> : <BilingualText value={bi('Unknown', 'غير معروف')} />}</dd></div>
             <div><dt><BilingualText value={bi('Organization', 'المنظمة')} /></dt><dd>{branch.organizationId}</dd></div>
             <div><dt><BilingualText value={bi('Players', 'اللاعبون')} /></dt><dd>{branch.playerIds.length}</dd></div>
             <div><dt><BilingualText value={bi('Coaches', 'المدربون')} /></dt><dd>{branch.coachIds.length}</dd></div>
@@ -142,35 +140,25 @@ export function AdminBranchDetailPage() {
       {active === 'attendance' && <div className="admin-panel">
         <div className="panel-heading"><BilingualText value={bi('Attendance Overview', 'نظرة عامة على الحضور')} /><BarChart3 /></div>
         <p><BilingualText value={bi('Aggregate attendance data across all branch groups and sessions.', 'بيانات الحضور الإجمالية عبر جميع مجموعات الفرع والحصص.')} /></p>
-        <div className="pipeline-flow">
-          <span><BilingualText value={bi('Branch', 'الفرع')} /> 82%</span><i>→</i>
-          <span><BilingualText value={bi('Group Avg', 'متوسط المجموعة')} /> 78%</span><i>→</i>
-          <span><BilingualText value={bi('Player Avg', 'متوسط اللاعب')} /> 74%</span>
-        </div>
+        <p className="empty-message"><BilingualText value={bi('No attendance data available in preview.', 'لا توجد بيانات حضور في المعاينة.')} /></p>
       </div>}
 
       {active === 'performance' && <div className="admin-panel">
         <div className="panel-heading"><BilingualText value={bi('Performance Overview', 'نظرة عامة على الأداء')} /><BarChart3 /></div>
         <p><BilingualText value={bi('Aggregate performance metrics across all branch sports and programmes.', 'مقاييس الأداء الإجمالية عبر جميع رياضات وبرامج الفرع.')} /></p>
-        <div className="preview-line"><BilingualText value={bi('Average Score', 'متوسط الدرجات')} /><strong>72 / 100</strong></div>
-        <div className="preview-line"><BilingualText value={bi('Metrics Tracked', 'المقاييس المتتبعة')} /><strong>15</strong></div>
+        <p className="empty-message"><BilingualText value={bi('No performance data available in preview.', 'لا توجد بيانات أداء في المعاينة.')} /></p>
       </div>}
 
       {active === 'subscriptions' && <div className="admin-panel">
         <div className="panel-heading"><BilingualText value={bi('Subscriptions', 'الاشتراكات')} /><DollarSign /></div>
         <p><BilingualText value={bi('Subscription management overview for this branch.', 'نظرة عامة على إدارة الاشتراكات لهذا الفرع.')} /></p>
-        <div className="pipeline-flow">
-          <span><BilingualText value={bi('Active', 'نشط')} /> 24</span><i>→</i>
-          <span><BilingualText value={bi('Pending', 'قيد الانتظار')} /> 3</span><i>→</i>
-          <span><BilingualText value={bi('Expired', 'منتهي')} /> 2</span>
-        </div>
+        <p className="empty-message"><BilingualText value={bi('No subscription data available in preview.', 'لا توجد بيانات اشتراكات في المعاينة.')} /></p>
       </div>}
 
       {active === 'payments' && <div className="admin-panel">
         <div className="panel-heading"><BilingualText value={bi('Payment Records', 'سجلات الدفع')} /><DollarSign /></div>
         <p><BilingualText value={bi('Payment records and transaction history for this branch.', 'سجلات الدفع وتاريخ المعاملات لهذا الفرع.')} /></p>
-        <div className="preview-line"><BilingualText value={bi('This Month', 'هذا الشهر')} /> <strong>$12,500</strong></div>
-        <div className="preview-line"><BilingualText value={bi('Outstanding', 'مستحق')} /> <strong>$2,100</strong></div>
+        <p className="empty-message"><BilingualText value={bi('No payment data available in preview.', 'لا توجد بيانات دفع في المعاينة.')} /></p>
       </div>}
 
       {active === 'reports' && <div className="admin-panel">

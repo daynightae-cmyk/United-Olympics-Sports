@@ -10,9 +10,10 @@ import { CoachPortalGroupDetailPage } from '../pages/portal/coach/CoachPortalGro
 import { CoachPortalAttendancePage } from '../pages/portal/coach/CoachPortalAttendancePage';
 import { CoachPortalProgramsPage } from '../pages/portal/coach/CoachPortalProgramsPage';
 import { CoachPortalMessagesPage } from '../pages/portal/coach/CoachPortalMessagesPage';
+import { PortalLayout } from '../layouts/PortalLayout';
 
 export function CoachPortalRouter() {
-  return <Routes>
+  return <PortalLayout portal="coach"><Routes>
     <Route index element={<CoachPortalOverviewPage />} />
     <Route path="schedule" element={<CoachPortalSchedulePage />} />
     <Route path="groups" element={<CoachPortalGroupsPage />} />
@@ -24,5 +25,5 @@ export function CoachPortalRouter() {
     <Route path="programs" element={<CoachPortalProgramsPage />} />
     <Route path="messages" element={<CoachPortalMessagesPage />} />
     <Route path="profile" element={<CoachPortalProfilePage />} />
-  </Routes>;
+  </Routes></PortalLayout>;
 }

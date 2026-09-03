@@ -16,6 +16,8 @@ export function StatusBadge({ active = true }: { active?: boolean }) { return <s
 
 export function PlayerAvatar({ id, large = false }: { id: string; large?: boolean }) { return <div className={`player-avatar ${large ? 'large' : ''}`} aria-label={`Preview player avatar ${id} | صورة لاعب تجريبية ${id}`}><UserRound /><span>{id.slice(-3)}</span></div>; }
 
+export function UserAvatar({ name, large = false }: { name: string; large?: boolean }) { return <div className={`player-avatar ${large ? 'large' : ''}`} aria-label={`User avatar ${name} | صورة مستخدم ${name}`}><UserRound /><span>{name.charAt(0).toUpperCase()}</span></div>; }
+
 export function Trend({ current, previous }: { current: number; previous: number }) {
   const delta = current - previous;
   return <span className={`metric-trend ${delta > 0 ? 'up' : delta < 0 ? 'down' : ''}`}>{delta > 0 ? <ArrowUpRight /> : delta < 0 ? <ArrowDownRight /> : <Minus />}<BilingualText value={delta > 0 ? bi(`Up ${delta}`, `ارتفاع ${delta}`) : delta < 0 ? bi(`Down ${Math.abs(delta)}`, `انخفاض ${Math.abs(delta)}`) : bi('Stable', 'ثابت')} /></span>;

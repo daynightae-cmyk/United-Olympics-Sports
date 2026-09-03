@@ -11,6 +11,8 @@ import {
   LayoutDashboard,
   MapPinned,
   Medal,
+  Megaphone,
+  MessageSquare,
   Settings2,
   ShieldCheck,
   Trophy,
@@ -18,7 +20,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-export type AdminIconKey = 'dashboard' | 'sports' | 'groups' | 'players' | 'parents' | 'coaches' | 'programs' | 'schedules' | 'attendance' | 'performance' | 'countries' | 'branches' | 'subscriptions' | 'payments' | 'reports' | 'content' | 'users' | 'settings';
+export type AdminIconKey = 'dashboard' | 'sports' | 'groups' | 'players' | 'parents' | 'coaches' | 'programs' | 'schedules' | 'attendance' | 'performance' | 'countries' | 'branches' | 'subscriptions' | 'payments' | 'reports' | 'content' | 'users' | 'settings' | 'registrations' | 'achievements' | 'events' | 'announcements' | 'messages' | 'audit';
 
 export const adminIconRegistry: Record<AdminIconKey, LucideIcon> = {
   dashboard: LayoutDashboard,
@@ -39,4 +41,10 @@ export const adminIconRegistry: Record<AdminIconKey, LucideIcon> = {
   content: FileText,
   users: ShieldCheck,
   settings: Settings2,
+  registrations: ClipboardCheck,
+  achievements: Medal,
+  events: CalendarDays,
+  announcements: Megaphone,
+  messages: MessageSquare,
+  audit: ShieldCheck,
 };
