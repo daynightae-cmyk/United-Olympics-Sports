@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { ShieldCheck, ArrowLeft, KeyRound, AlertCircle, Sparkles } from 'lucide-react';
 import { usePlayerSession } from '../PlayerSessionContext';
 import { productionAuthGateway } from './PlayerAuthGateway';
+import SafeBrandLogo from '../../../components/ui/SafeBrandLogo';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
 
 export function PlayerVerifyOtpPage() {
