@@ -15,7 +15,20 @@ export function AdminSchedulesPage() {
       <label className="filter-search"><span className="sr-only">Search schedules</span><input placeholder="Search sessions... | البحث عن الجلسات..." /></label>
       <span className="result-count"><BilingualText value={bi(`${demoSessions.length} preview sessions`, `${demoSessions.length} جلسة تجريبية`)} /></span>
     </section>
-    <div className="schedule-calendar-preview admin-panel">
+    <section className="schedule-calendar-preview admin-panel" aria-label="Schedule calendar preview | معاينة التقويم">
+      <div className="panel-heading"><BilingualText value={bi('Weekly Schedule Preview', 'معاينة الجدول الأسبوعي')} /><CalendarClock /></div>
+      <div className="schedule-day-grid">
+        {demoSessions.slice(0, 5).map(s => (
+          <article key={s.id} className="schedule-session-card">
+            <div className="session-time"><CalendarClock size={16} /><span className="mono">{new Date(s.startsAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span></div>
+            <h4><Link to={`/admin/schedules/${s.id}`}><BilingualText value={{ en: 'Session ' + s.id, ar: 'جلسة ' + s.id }} /></Link></h4>
+            <div className="session-meta"><span>{bi('Sport', 'الرياضة')}: {s.sportId}</span><span>{bi('Group', 'المجموعة')}: {s.groupId}</span></div>
+            <StatusBadge active={true} />
+          </article>
+        ))}
+      </div>
+    </section>
+    <div className="schedule-table-preview admin-panel">
       <table className="player-table">
         <thead><tr><th><BilingualText value={bi('Session', 'الجلسة')} /></th><th><BilingualText value={bi('Sport', 'الرياضة')} /></th><th><BilingualText value={bi('Group', 'المجموعة')} /></th><th><BilingualText value={bi('Starts', 'يبدأ')} /></th><th><BilingualText value={bi('Status', 'الحالة')} /></th></tr></thead>
         <tbody>
