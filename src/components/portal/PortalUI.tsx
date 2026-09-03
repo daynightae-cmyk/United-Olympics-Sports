@@ -1,5 +1,6 @@
 import { ArrowRight, CheckCircle2, LockKeyhole, Sparkles } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import type { BilingualText as BilingualValue } from '../../domain/contracts';
 import { BilingualText, bi } from '../bilingual/BilingualText';
 import { EnterpriseProgress, EnterpriseSparkline } from '../enterprise/EnterpriseUI';
@@ -17,7 +18,7 @@ export function PortalCard({ icon: Icon, title, description, children, className
 }
 
 export function PortalAction({ to, icon: Icon, label, detail }: { to: string; icon: React.ComponentType<{ size?: number }>; label: BilingualValue; detail: BilingualValue }) {
-  return <a className="portal-action" href={to}><span className="portal-card-icon"><Icon size={17} /></span><span><strong><BilingualText value={label} /></strong><small><BilingualText value={detail} /></small></span><ArrowRight size={15} /></a>;
+  return <Link className="portal-action" to={to}><span className="portal-card-icon"><Icon size={17} /></span><span><strong><BilingualText value={label} /></strong><small><BilingualText value={detail} /></small></span><ArrowRight size={15} /></a>;
 }
 
 export function PortalPreviewCard({ title, description, children }: { title: BilingualValue; description: BilingualValue; children?: ReactNode }) {

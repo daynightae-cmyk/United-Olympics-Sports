@@ -37,6 +37,7 @@ import { demoSports } from '../../data/demo/sports';
 import { demoPrograms } from '../../data/demo/programs';
 import { demoTrainingGroups } from '../../data/demo/trainingGroups';
 import { getPlayerOverall, getGroup, getSport, getBranch, getCountry, getCoach, getParent, getProgram } from '../../data/demo/selectors';
+import { previewAchievements, previewAnnouncements, previewAuditActivity, previewContent, previewEvents, previewMessages, previewPayments, previewRegistrations, previewReports, previewSubscriptions, previewUsers } from '../../data/demo/adminRecords';
 
 let previewSessionData = {
   countries: [...demoCountries],
@@ -48,20 +49,20 @@ let previewSessionData = {
   sports: [...demoSports],
   programs: [...demoPrograms],
   groups: [...demoTrainingGroups],
-  subscriptions: [] as SubscriptionViewModel[],
-  payments: [] as PaymentViewModel[],
-  reports: [] as ReportViewModel[],
-  content: [] as ContentViewModel[],
-  users: [] as UserViewModel[],
-  registrations: [] as RegistrationViewModel[],
-  achievements: [] as AchievementViewModel[],
-  events: [] as EventViewModel[],
-  announcements: [] as AnnouncementViewModel[],
-  messages: [] as MessageViewModel[],
-  auditActivity: [] as AuditActivityViewModel[],
+  subscriptions: [...previewSubscriptions],
+  payments: [...previewPayments],
+  reports: [...previewReports],
+  content: [...previewContent],
+  users: [...previewUsers],
+  registrations: [...previewRegistrations],
+  achievements: [...previewAchievements],
+  events: [...previewEvents],
+  announcements: [...previewAnnouncements],
+  messages: [...previewMessages],
+  auditActivity: [...previewAuditActivity],
 };
 
-const previewDelay = () => new Promise(resolve => setTimeout(resolve, 150));
+const previewDelay = () => Promise.resolve();
 
 function paginate<T>(items: T[], params?: ListQueryParams): ListResult<T> {
   const page = params?.page ?? 1;
@@ -1116,16 +1117,16 @@ export function resetPreviewData() {
     sports: [...demoSports],
     programs: [...demoPrograms],
     groups: [...demoTrainingGroups],
-    subscriptions: [],
-    payments: [],
-    reports: [],
-    content: [],
-    users: [],
-    registrations: [],
-    achievements: [],
-    events: [],
-    announcements: [],
-    messages: [],
-    auditActivity: [],
+    subscriptions: [...previewSubscriptions],
+    payments: [...previewPayments],
+    reports: [...previewReports],
+    content: [...previewContent],
+    users: [...previewUsers],
+    registrations: [...previewRegistrations],
+    achievements: [...previewAchievements],
+    events: [...previewEvents],
+    announcements: [...previewAnnouncements],
+    messages: [...previewMessages],
+    auditActivity: [...previewAuditActivity],
   };
 }
