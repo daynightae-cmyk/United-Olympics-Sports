@@ -13,6 +13,10 @@ export function AdminBranchesPage() {
       title={bi('Branches', 'الفروع')}
       description={bi('Centralised branch cockpit covering all operational domains.', 'مركز تحكم مركزي للفروع يغطي جميع المجالات التشغيلية.')}
     />
+    <section className="player-filter-bar" aria-label="Branch filters | فلاتر الفروع">
+      <label className="filter-search"><span className="sr-only">Search branches</span><input placeholder="Search by branch name or code | البحث حسب اسم أو رمز الفرع" /></label>
+      <span className="result-count"><BilingualText value={bi(`${branches.length} preview branches`, `${branches.length} فرع تجريبي`)} /></span>
+    </section>
     <div className="branch-management-grid">
       {branches.map(branch => {
         return <article className="branch-management-card" key={branch.id}>
