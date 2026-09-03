@@ -1,0 +1,100 @@
+.athlete-hero-card {
+  position: relative;
+  background: linear-gradient(135deg, rgba(24, 34, 56, 0.88) 0%, rgba(13, 19, 32, 0.94) 100%);
+  border: 1px solid var(--athlete-border-strong);
+  border-radius: var(--athlete-radius-xl);
+  padding: 32px;
+  box-shadow: var(--athlete-shadow-card), var(--athlete-shadow-glow);
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+
+.athlete-hero-card::after {
+  content: '';
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--athlete-gold-glow) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.athlete-hero-shimmer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, var(--athlete-gold) 50%, transparent 100%);
+}
+
+.athlete-stat-pill {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--athlete-border-subtle);
+  border-radius: var(--athlete-radius-md);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.athlete-stat-pill strong {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--athlete-text-primary);
+  line-height: 1.1;
+}
+
+.athlete-stat-pill span {
+  font-size: 11px;
+  color: var(--athlete-text-muted);
+}
+
+.athlete-action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.athlete-action-card {
+  padding: 20px 18px;
+  background: var(--athlete-surface-card);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--athlete-border);
+  border-radius: var(--athlete-radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--athlete-text-primary);
+  transition: all 0.2s ease;
+}
+
+.athlete-action-card:hover {
+  border-color: var(--athlete-gold);
+  background: var(--athlete-surface-card-hover);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.4);
+}
+
+.athlete-action-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--athlete-gold-soft);
+  border: 1px solid var(--athlete-border);
+  color: var(--athlete-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.athlete-action-card:hover .athlete-action-icon {
+  transform: scale(1.08);
+  background: var(--athlete-gold);
+  color: #000;
+}
