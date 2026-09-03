@@ -142,35 +142,25 @@ export function AdminBranchDetailPage() {
       {active === 'attendance' && <div className="admin-panel">
         <div className="panel-heading"><BilingualText value={bi('Attendance Overview', 'نظرة عامة على الحضور')} /><BarChart3 /></div>
         <p><BilingualText value={bi('Aggregate attendance data across all branch groups and sessions.', 'بيانات الحضور الإجمالية عبر جميع مجموعات الفرع والحصص.')} /></p>
-        <div className="pipeline-flow">
-          <span><BilingualText value={bi('Branch', 'الفرع')} /> 82%</span><i>→</i>
-          <span><BilingualText value={bi('Group Avg', 'متوسط المجموعة')} /> 78%</span><i>→</i>
-          <span><BilingualText value={bi('Player Avg', 'متوسط اللاعب')} /> 74%</span>
-        </div>
+        <p className="empty-message"><BilingualText value={bi('No attendance data available in preview.', 'لا توجد بيانات حضور في المعاينة.')} /></p>
       </div>}
 
       {active === 'performance' && <div className="admin-panel">
         <div className="panel-heading"><BilingualText value={bi('Performance Overview', 'نظرة عامة على الأداء')} /><BarChart3 /></div>
         <p><BilingualText value={bi('Aggregate performance metrics across all branch sports and programmes.', 'مقاييس الأداء الإجمالية عبر جميع رياضات وبرامج الفرع.')} /></p>
-        <div className="preview-line"><BilingualText value={bi('Average Score', 'متوسط الدرجات')} /><strong>72 / 100</strong></div>
-        <div className="preview-line"><BilingualText value={bi('Metrics Tracked', 'المقاييس المتتبعة')} /><strong>15</strong></div>
+        <p className="empty-message"><BilingualText value={bi('No performance data available in preview.', 'لا توجد بيانات أداء في المعاينة.')} /></p>
       </div>}
 
       {active === 'subscriptions' && <div className="admin-panel">
         <div className="panel-heading"><BilingualText value={bi('Subscriptions', 'الاشتراكات')} /><DollarSign /></div>
         <p><BilingualText value={bi('Subscription management overview for this branch.', 'نظرة عامة على إدارة الاشتراكات لهذا الفرع.')} /></p>
-        <div className="pipeline-flow">
-          <span><BilingualText value={bi('Active', 'نشط')} /> 24</span><i>→</i>
-          <span><BilingualText value={bi('Pending', 'قيد الانتظار')} /> 3</span><i>→</i>
-          <span><BilingualText value={bi('Expired', 'منتهي')} /> 2</span>
-        </div>
+        <p className="empty-message"><BilingualText value={bi('No subscription data available in preview.', 'لا توجد بيانات اشتراكات في المعاينة.')} /></p>
       </div>}
 
       {active === 'payments' && <div className="admin-panel">
         <div className="panel-heading"><BilingualText value={bi('Payment Records', 'سجلات الدفع')} /><DollarSign /></div>
         <p><BilingualText value={bi('Payment records and transaction history for this branch.', 'سجلات الدفع وتاريخ المعاملات لهذا الفرع.')} /></p>
-        <div className="preview-line"><BilingualText value={bi('This Month', 'هذا الشهر')} /> <strong>$12,500</strong></div>
-        <div className="preview-line"><BilingualText value={bi('Outstanding', 'مستحق')} /> <strong>$2,100</strong></div>
+        <p className="empty-message"><BilingualText value={bi('No payment data available in preview.', 'لا توجد بيانات دفع في المعاينة.')} /></p>
       </div>}
 
       {active === 'reports' && <div className="admin-panel">
