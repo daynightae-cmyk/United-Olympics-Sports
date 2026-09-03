@@ -9,10 +9,10 @@ const feedback = (id: string, playerId: string, coachId: string, sportId: string
 });
 
 export const demoCoachFeedback: CoachFeedback[] = [
-  feedback('feedback-demo-001', 'player-demo-001', 'coach-demo-01', 'football', 'football-demo-u12', 'football-passing'),
-  feedback('feedback-demo-002', 'player-demo-003', 'coach-demo-03', 'swimming', 'swimming-demo-beginners', 'swimming-technique'),
-  feedback('feedback-demo-003', 'player-demo-005', 'coach-demo-05', 'basketball', 'basketball-demo-u14', 'basketball-decisions'),
-  feedback('feedback-demo-004', 'player-demo-007', 'coach-demo-06', 'tennis', 'tennis-demo-youth', 'tennis-control'),
-  feedback('feedback-demo-005', 'player-demo-009', 'coach-demo-07', 'gymnastics', 'gymnastics-demo-foundation', 'gymnastics-execution'),
-  feedback('feedback-demo-006', 'player-demo-011', 'coach-demo-08', 'martial-arts', 'martial-arts-demo-youth', 'martial-arts-control'),
+  feedback('feedback-demo-001', 'player-demo-001', 'coach-preview-01', 'football', 'football-demo-u12', 'football-passing'),
+  feedback('feedback-demo-002', 'player-demo-003', 'coach-preview-03', 'swimming', 'swimming-demo-beginners', 'swimming-technique'),
+  feedback('feedback-demo-003', 'player-demo-005', 'coach-preview-05', 'basketball', 'basketball-demo-u14', 'basketball-decisions'),
+  feedback('feedback-demo-004', 'player-demo-007', 'coach-preview-06', 'tennis', 'tennis-demo-youth', 'tennis-control'),
+  feedback('feedback-demo-005', 'player-demo-009', 'coach-preview-07', 'gymnastics', 'gymnastics-demo-foundation', 'gymnastics-execution'),
+  feedback('feedback-demo-006', 'player-demo-011', 'coach-preview-08', 'martial-arts', 'martial-arts-demo-youth', 'martial-arts-control'),
 ];
