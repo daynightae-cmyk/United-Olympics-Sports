@@ -3,9 +3,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { FuturePanel, PageHeader, StatusBadge, Tabs } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
-import { demoPlayers } from '../../data/demo/players';
-import { demoCoaches } from '../../data/demo/coaches';
-import { getBranch, getBranchCoaches, getBranchGroups, getBranchPlayers, getBranchPrograms, getBranchSports, getCountry } from '../../data/demo/selectors';
+import { useBranch } from '../../admin/data/adminHooks';
 
 const tabs = [
   { id: 'overview', label: bi('Overview', 'نظرة عامة') },
@@ -25,20 +23,20 @@ const tabs = [
 
 export function AdminBranchDetailPage() {
   const { branchId } = useParams();
-  const branch = getBranch(branchId);
+  const { item: branch, loading, error } = useBranch(branchId);
   const [active, setActive] = useState('overview');
 
-  if (!branch) return <FuturePanel
+  if (loading) return <div className="admin-page"><PageHeader icon={Building2} eyebrow={bi('Branch Cockpit', 'مركز تحكم الفرع')} title={bi('Loading...', 'جاري التحميل...')} description={bi('Loading branch preview.', 'جاري تحميل معاينة الفرع.')} /></div>;
+  if (error || !branch) return <FuturePanel
     title={bi('Branch not found', 'الفرع غير موجود')}
     description={bi('Choose a valid branch from the Branches directory.', 'اختر فرعاً صالحاً من دليل الفروع.')}
   />;
 
-  const country = getCountry(branch.countryId);
-  const sports = getBranchSports(branch.id);
-  const programs = getBranchPrograms(branch.id);
-  const groups = getBranchGroups(branch.id);
-  const coaches = getBranchCoaches(branch.id);
-  const players = getBranchPlayers(branch.id);
+  const sports = branch.sportIds.map(id => ({ id, name: { en: `Sport ${id}`, ar: `رياضة ${id}` } }));
+  const programs = branch.programIds.map(id => ({ id, name: { en: `Program ${id}`, ar: `برنامج ${id}` } }));
+  const groups = branch.groupIds.map(id => ({ id, name: { en: `Group ${id}`, ar: `مجموعة ${id}` }, sportId: branch.sportIds[0] ?? '' }));
+  const coaches = branch.coachIds.map(id => ({ id, nameEn: `Coach ${id}`, nameAr: `مدرب ${id}` }));
+  const players = branch.playerIds.map(id => ({ id, nameEn: `Player ${id}`, nameAr: `لاعب ${id}` }));
 
   return <div className="admin-page">
     <PageHeader
@@ -55,7 +53,7 @@ export function AdminBranchDetailPage() {
         <h2><BilingualText value={branch.name} /></h2>
       </div>
       <dl>
-        <div><dt><BilingualText value={bi('Country', 'الدولة')} /></dt><dd>{country && <BilingualText value={country.name} />}</dd></div>
+            <div><dt><BilingualText value={bi('Country', 'الدولة')} /></dt><dd>{branch.countryId ? <BilingualText value={{ en: `Country ${branch.countryId}`, ar: `الدولة ${branch.countryId}` }} /> : <BilingualText value={bi('Unknown', 'غير معروف')} />}</dd></div>
         {branch.address && <div><dt><BilingualText value={bi('Address', 'العنوان')} /></dt><dd><BilingualText value={branch.address} /></dd></div>}
         <div><dt><BilingualText value={bi('Sports', 'الرياضات')} /></dt><dd>{sports.length}</dd></div>
         <div><dt><BilingualText value={bi('Programs', 'البرامج')} /></dt><dd>{programs.length}</dd></div>
@@ -75,7 +73,7 @@ export function AdminBranchDetailPage() {
           </div>
           <dl className="detail-list">
             <div><dt><BilingualText value={bi('Branch ID', 'معرف الفرع')} /></dt><dd><code>{branch.id}</code></dd></div>
-            <div><dt><BilingualText value={bi('Country', 'الدولة')} /></dt><dd>{country && <BilingualText value={country.name} />}</dd></div>
+        <div><dt><BilingualText value={bi('Country', 'الدولة')} /></dt><dd>{branch.countryId ? <BilingualText value={{ en: `Country ${branch.countryId}`, ar: `الدولة ${branch.countryId}` }} /> : <BilingualText value={bi('Unknown', 'غير معروف')} />}</dd></div>
             <div><dt><BilingualText value={bi('Organization', 'المنظمة')} /></dt><dd>{branch.organizationId}</dd></div>
             <div><dt><BilingualText value={bi('Players', 'اللاعبون')} /></dt><dd>{branch.playerIds.length}</dd></div>
             <div><dt><BilingualText value={bi('Coaches', 'المدربون')} /></dt><dd>{branch.coachIds.length}</dd></div>
