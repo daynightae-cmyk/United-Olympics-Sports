@@ -11,8 +11,12 @@ export function AdminSchedulesPage() {
       title={bi('Schedules', 'الجداول')}
       description={bi('Training session schedule preview.', 'معاينة جدول جلسات التدريب.')}
     />
-    <div className="admin-table-preview">
-      <table>
+    <section className="player-filter-bar" aria-label="Schedule filters | فلاتر الجداول">
+      <label className="filter-search"><span className="sr-only">Search schedules</span><input placeholder="Search sessions... | البحث عن الجلسات..." /></label>
+      <span className="result-count"><BilingualText value={bi(`${demoSessions.length} preview sessions`, `${demoSessions.length} جلسة تجريبية`)} /></span>
+    </section>
+    <div className="schedule-calendar-preview admin-panel">
+      <table className="player-table">
         <thead><tr><th><BilingualText value={bi('Session', 'الجلسة')} /></th><th><BilingualText value={bi('Sport', 'الرياضة')} /></th><th><BilingualText value={bi('Group', 'المجموعة')} /></th><th><BilingualText value={bi('Starts', 'يبدأ')} /></th><th><BilingualText value={bi('Status', 'الحالة')} /></th></tr></thead>
         <tbody>
           {demoSessions.map(s => (
