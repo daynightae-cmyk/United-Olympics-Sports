@@ -10,6 +10,9 @@ export function AdminPerformancePage() {
       title={bi('Performance', 'الأداء')}
       description={bi('Player performance metrics preview.', 'معاينة مقاييس أداء اللاعبين.')}
     />
+    <section className="player-filter-bar" aria-label="Performance filters | فلاتر الأداء">
+      <label className="filter-search"><span className="sr-only">Search performance</span><input placeholder="Search players... | البحث عن اللاعبين..." /></label>
+    </section>
     <div className="admin-grid-cards">
       {demoPlayers.slice(0, 4).map(p => (
         <article key={p.id} className="admin-preview-card">
