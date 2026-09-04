@@ -1,222 +1,85 @@
-import React, { useState } from 'react';
-import {
-  Receipt,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
-  ShieldCheck,
-  CreditCard,
-  X,
-  Printer,
-  FileQuestion,
-} from 'lucide-react';
+import { CheckCircle2, Clock, FileQuestion, Receipt, ShieldCheck, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { usePlayerSession } from '../../../portals/player/PlayerSessionContext';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
 import type { Payment } from '../../../domain/contracts';
 
 export function PlayerPortalPaymentsPage() {
-  const { player, payments, subscriptions } = usePlayerSession();
+  const { player, payments } = usePlayerSession();
   const [selectedReceipt, setSelectedReceipt] = useState<Payment | null>(null);
-
   if (!player) return null;
+
+  const completedCount = useMemo(() => payments.filter((item) => item.status === 'completed').length, [payments]);
+  const pendingCount = useMemo(() => payments.filter((item) => item.status === 'pending').length, [payments]);
+  const currencies = useMemo(() => Array.from(new Set(payments.map((item) => item.currency))), [payments]);
 
   return (
     <div className="space-y-6" id="player-payments-page">
-      {/* Header Banner */}
-      <div className="athlete-glass-card p-6 border-amber-400/25">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-teal-500/10 text-teal-400">
-                <Receipt size={18} />
-              </span>
-              <span className="text-xs font-semibold uppercase tracking-wider text-teal-400">
-                <BilingualText value={bi('Account Billing & Receipts', 'الفواتير والإيصالات')} />
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-white">
-              <BilingualText value={bi('Payments & Transaction Records', 'سجل الدفعات والمعاملات')} />
-            </h1>
-            <p className="text-xs text-slate-300">
-              <BilingualText
-                value={bi(
-                  `Financial transactions on record for athlete ${player.nameEn}`,
-                  `المعاملات المالية المسجلة للاعب ${player.nameAr}`
-                )}
-              />
-            </p>
+      <section className="athlete-glass-card p-6 border-amber-400/25">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="max-w-3xl">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-400"><Receipt size={18} /><BilingualText value={bi('Recorded Billing Data', 'بيانات الدفع المسجلة')} /></div>
+            <h1 className="mt-2 text-xl sm:text-2xl font-bold text-white"><BilingualText value={bi('Payments & Receipts', 'المدفوعات والإيصالات')} /></h1>
+            <p className="mt-1 text-xs leading-6 text-slate-300"><BilingualText value={bi(`Only payment records explicitly linked to athlete ${player.nameEn} are listed here. No balance, invoice or receipt is generated from missing data.`, `يتم عرض سجلات الدفع المرتبطة صراحةً باللاعب ${player.nameAr} فقط. ولا يتم إنشاء رصيد أو فاتورة أو إيصال من بيانات غير موجودة.`)} /></p>
           </div>
-
-          <span className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-300 self-start sm:self-auto flex items-center gap-1.5">
-            <ShieldCheck size={14} className="text-amber-400" />
-            <span><BilingualText value={bi('Payment Records', 'سجلات الدفع')} /></span>
-          </span>
-        </div>
-      </div>
-
-      {/* Transaction List / Truthful Empty State */}
-      <div className="athlete-glass-card p-6 space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-white/10">
-          <div>
-            <h3 className="text-sm font-bold text-white">
-              <BilingualText value={bi('Transactions History', 'سجل المعاملات المالية')} />
-            </h3>
-            <p className="text-xs text-slate-400 mt-0.5">
-              <BilingualText value={bi('Payment receipts on record', 'إيصالات السداد المسجلة في الحساب')} />
-            </p>
-          </div>
-          <span className="text-xs font-mono text-slate-400">
-            {payments.length} <BilingualText value={bi('records', 'سجلات')} />
-          </span>
+          <span className="athlete-data-scope"><ShieldCheck size={13} /><BilingualText value={bi('Linked records only', 'السجلات المرتبطة فقط')} /></span>
         </div>
 
-        {payments.length > 0 ? (
-          <div className="space-y-3" id="payments-history-list">
-            {payments.map((txn) => {
-              const isCompleted = txn.status === 'completed';
-              return (
-                <div
-                  key={txn.id}
-                  className="p-4 rounded-xl bg-white/[0.03] border border-white/10 hover:border-amber-400/30 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                >
-                  <div className="flex items-start sm:items-center gap-3.5">
-                    <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                        isCompleted
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                          : 'bg-amber-400/10 text-amber-400 border border-amber-400/20'
-                      }`}
-                    >
-                      {isCompleted ? <CheckCircle2 size={18} /> : <Clock size={18} />}
-                    </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-5 border-t border-white/10">
+          <PaymentStat label={bi('All records', 'كل السجلات')} value={String(payments.length)} />
+          <PaymentStat label={bi('Completed', 'المكتملة')} value={completedCount ? String(completedCount) : undefined} />
+          <PaymentStat label={bi('Pending', 'قيد الانتظار')} value={pendingCount ? String(pendingCount) : undefined} />
+          <PaymentStat label={bi('Currencies', 'العملات')} value={currencies.length ? currencies.join(', ') : undefined} />
+        </div>
+      </section>
 
-                    <div className="space-y-0.5">
-                      <strong className="text-xs sm:text-sm font-bold text-white block">
-                        <BilingualText value={bi(`Membership Dues (${txn.currency} ${txn.amount})`, `رسوم العضوية (${txn.amount} ${txn.currency})`)} />
-                      </strong>
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
-                        <span className="font-mono">{txn.paidAt}</span>
-                        <span>·</span>
-                        <span><BilingualText value={txn.method} /></span>
-                        <span>·</span>
-                        <span className="font-mono text-slate-500 text-[11px]">{txn.reference}</span>
-                      </div>
-                    </div>
-                  </div>
+      <section className="athlete-glass-card p-5 sm:p-6">
+        <header className="flex items-center justify-between gap-3 pb-4 border-b border-white/10"><div><span className="text-[10px] uppercase tracking-[.16em] text-amber-400 font-black"><BilingualText value={bi('Transaction history', 'سجل المعاملات')} /></span><h2 className="mt-1 text-base font-black text-white"><BilingualText value={bi('Linked Payment Records', 'سجلات الدفع المرتبطة')} /></h2></div><span className="text-xs font-mono text-slate-400">{payments.length}</span></header>
 
-                  <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/5">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase ${
-                        isCompleted
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                          : 'bg-amber-400/10 text-amber-400 border border-amber-400/20'
-                      }`}
-                    >
-                      {txn.status}
-                    </span>
-
-                    <button
-                      onClick={() => setSelectedReceipt(txn)}
-                      className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-200 hover:text-white border border-white/10 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-                    >
-                      <Receipt size={13} className="text-amber-400" />
-                      <span><BilingualText value={bi('View Receipt', 'عرض الإيصال')} /></span>
-                    </button>
-                  </div>
+        {payments.length ? (
+          <div className="mt-5 space-y-3" id="payments-history-list">
+            {payments.map((payment) => (
+              <article key={payment.id} className="rounded-2xl border border-white/10 bg-white/[.025] p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div className="flex items-start gap-3 min-w-0">
+                  <span className={`w-11 h-11 rounded-xl grid place-items-center flex-shrink-0 border ${payment.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-amber-400/10 border-amber-400/20 text-amber-400'}`}>{payment.status === 'completed' ? <CheckCircle2 size={19} /> : <Clock size={19} />}</span>
+                  <div className="min-w-0"><strong className="text-sm font-bold text-white block"><BilingualText value={bi(`${payment.amount} ${payment.currency} payment record`, `سجل دفع بقيمة ${payment.amount} ${payment.currency}`)} /></strong><div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-400"><span className="font-mono">{payment.paidAt}</span><span><BilingualText value={payment.method} /></span>{payment.reference && <span className="font-mono text-slate-500">{payment.reference}</span>}</div></div>
                 </div>
-              );
-            })}
+                <div className="athlete-action-row lg:justify-end"><PaymentStatus status={payment.status} /><button type="button" onClick={() => setSelectedReceipt(payment)} className="athlete-action-secondary"><Receipt size={13} /><BilingualText value={bi('Receipt record', 'سجل الإيصال')} /></button></div>
+              </article>
+            ))}
           </div>
         ) : (
-          <div className="py-12 text-center text-slate-400 space-y-3">
-            <FileQuestion size={32} className="mx-auto text-slate-500" />
-            <h4 className="text-sm font-bold text-slate-200">
-              <BilingualText value={bi('No payment records are available for this player.', 'لا توجد سجلات دفع متاحة لهذا اللاعب.')} />
-            </h4>
-            <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-              <BilingualText
-                value={bi(
-                  'No billing records are associated with your athlete profile at this time.',
-                  'لا توجد سجلات فواتير مرتبطة بملف الرياضي حالياً.'
-                )}
-              />
-            </p>
-          </div>
+          <div className="athlete-empty-system mt-5"><div><FileQuestion size={34} className="mx-auto text-slate-500" /><h3 className="mt-4 text-base font-bold text-white"><BilingualText value={bi('No payment records are linked yet', 'لا توجد سجلات دفع مرتبطة حتى الآن')} /></h3><p className="mt-2 text-xs leading-6 text-slate-400"><BilingualText value={bi('Amounts, payment methods, transaction references and receipts remain empty until a billing record is connected to this athlete.', 'تظل المبالغ وطرق الدفع ومراجع المعاملات والإيصالات فارغة حتى يتم ربط سجل مالي بهذا اللاعب.')} /></p></div></div>
         )}
-      </div>
+      </section>
 
-      {/* Receipt Modal */}
       {selectedReceipt && (
-        <div className="athlete-modal-overlay" onClick={() => setSelectedReceipt(null)}>
-          <div
-            className="athlete-modal-content !max-w-md p-6 sm:p-7"
-            onClick={(e) => e.stopPropagation()}
-            id="receipt-detail-modal"
-          >
-            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
-              <div className="flex items-center gap-2">
-                <Receipt size={18} className="text-amber-400" />
-                <h3 className="text-base font-bold text-white">
-                  <BilingualText value={bi('Payment Receipt', 'إيصال الدفع')} />
-                </h3>
-              </div>
-              <button
-                onClick={() => setSelectedReceipt(null)}
-                className="p-1 text-slate-400 hover:text-white rounded-lg"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="space-y-4 text-xs text-slate-300">
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2.5">
-                <div className="flex justify-between">
-                  <span className="text-slate-400"><BilingualText value={bi('Reference', 'رقم المرجع')} />:</span>
-                  <strong className="text-white font-mono">{selectedReceipt.reference}</strong>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400"><BilingualText value={bi('Athlete', 'اسم الرياضي')} />:</span>
-                  <strong className="text-amber-400">{player.nameEn} · {player.nameAr}</strong>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400"><BilingualText value={bi('Amount', 'المبلغ')} />:</span>
-                  <strong className="text-white font-mono text-sm">{selectedReceipt.amount} {selectedReceipt.currency}</strong>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400"><BilingualText value={bi('Date', 'التاريخ')} />:</span>
-                  <span className="font-mono text-slate-200">{selectedReceipt.paidAt}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400"><BilingualText value={bi('Payment Method', 'طريقة الدفع')} />:</span>
-                  <strong className="text-white"><BilingualText value={selectedReceipt.method} /></strong>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400"><BilingualText value={bi('Status', 'الحالة')} />:</span>
-                  <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    {selectedReceipt.status}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-white/10 flex justify-end gap-2">
-              <button
-                onClick={() => window.print()}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-200 transition-colors flex items-center gap-1.5"
-              >
-                <Printer size={13} />
-                <span><BilingualText value={bi('Print Receipt', 'طباعة الإيصال')} /></span>
-              </button>
-              <button
-                onClick={() => setSelectedReceipt(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-amber-400 hover:bg-amber-300 text-black font-bold transition-colors"
-              >
-                <BilingualText value={bi('Close', 'إغلاق')} />
-              </button>
-            </div>
+        <div className="athlete-modal-overlay" onClick={() => setSelectedReceipt(null)} role="presentation">
+          <div className="athlete-modal-content !max-w-lg p-6" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="payment-record-title" id="receipt-detail-modal">
+            <header className="flex items-start justify-between gap-3 pb-4 border-b border-white/10"><div className="flex items-start gap-2"><Receipt size={18} className="text-amber-400 mt-0.5" /><div><span className="text-[10px] text-slate-500"><BilingualText value={bi('Payment record', 'سجل الدفع')} /></span><h2 id="payment-record-title" className="text-base font-bold text-white"><BilingualText value={bi('Receipt Details', 'تفاصيل الإيصال')} /></h2></div></div><button type="button" onClick={() => setSelectedReceipt(null)} className="p-2 text-slate-400 hover:text-white rounded-lg" aria-label="Close receipt details | إغلاق تفاصيل الإيصال"><X size={18} /></button></header>
+            <div className="athlete-field-grid mt-5"><Field label={bi('Athlete', 'اللاعب')} value={`${player.nameEn} · ${player.nameAr}`} /><Field label={bi('Amount', 'المبلغ')} value={`${selectedReceipt.amount} ${selectedReceipt.currency}`} /><Field label={bi('Date', 'التاريخ')} value={selectedReceipt.paidAt} /><Field label={bi('Payment method', 'طريقة الدفع')} value={`${selectedReceipt.method.en} · ${selectedReceipt.method.ar}`} /><Field label={bi('Reference', 'المرجع')} value={selectedReceipt.reference} mono /><Field label={bi('Status', 'الحالة')} value={paymentStatusText(selectedReceipt.status)} /></div>
+            <div className="athlete-truth-note mt-5"><ShieldCheck size={14} className="text-amber-400 flex-shrink-0 mt-0.5" /><BilingualText value={bi('This modal reflects an existing payment record. It does not create a PDF invoice or claim a downloadable receipt file unless one is connected.', 'تعكس هذه النافذة سجل دفع موجودًا. ولا تنشئ فاتورة PDF ولا تدعي وجود ملف إيصال قابل للتنزيل ما لم يتم ربطه فعليًا.')} /></div>
+            <div className="athlete-action-row mt-5 justify-end"><button type="button" onClick={() => setSelectedReceipt(null)} className="athlete-action-primary"><BilingualText value={bi('Close', 'إغلاق')} /></button></div>
           </div>
         </div>
       )}
     </div>
   );
+}
+
+function PaymentStat({ label, value }: { label: { en: string; ar: string }; value?: string }) {
+  return <div className="athlete-stat-pill"><span><BilingualText value={label} /></span><strong className={value ? 'text-white text-sm font-bold' : 'text-slate-500 text-xs font-semibold'}>{value ?? <BilingualText value={bi('Not recorded', 'غير مسجل')} />}</strong></div>;
+}
+
+function Field({ label, value, mono = false }: { label: { en: string; ar: string }; value?: string; mono?: boolean }) {
+  return <div className="athlete-field"><span><BilingualText value={label} /></span><strong className={`${mono ? 'font-mono' : ''} ${value ? '' : 'athlete-unavailable'}`}>{value || <BilingualText value={bi('Not recorded', 'غير مسجل')} />}</strong></div>;
+}
+
+function paymentStatusText(status: Payment['status']) {
+  return status === 'completed' ? 'Completed · مكتمل' : status === 'pending' ? 'Pending · قيد الانتظار' : status === 'failed' ? 'Failed · فشل' : 'Refunded · مسترد';
+}
+
+function PaymentStatus({ status }: { status: Payment['status'] }) {
+  const tone = status === 'completed' ? 'text-emerald-300 border-emerald-500/20 bg-emerald-500/10' : status === 'pending' ? 'text-amber-300 border-amber-400/20 bg-amber-400/10' : 'text-slate-300 border-white/10 bg-white/5';
+  return <span className={`inline-flex min-h-10 items-center px-3 rounded-xl border text-[10px] font-bold ${tone}`}>{paymentStatusText(status)}</span>;
 }
