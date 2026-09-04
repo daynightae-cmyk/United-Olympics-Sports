@@ -1,5 +1,5 @@
 import { CheckCircle2, Clock, FileQuestion, Receipt, ShieldCheck, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { usePlayerSession } from '../../../portals/player/PlayerSessionContext';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
 import type { Payment } from '../../../domain/contracts';
@@ -9,9 +9,9 @@ export function PlayerPortalPaymentsPage() {
   const [selectedReceipt, setSelectedReceipt] = useState<Payment | null>(null);
   if (!player) return null;
 
-  const completedCount = useMemo(() => payments.filter((item) => item.status === 'completed').length, [payments]);
-  const pendingCount = useMemo(() => payments.filter((item) => item.status === 'pending').length, [payments]);
-  const currencies = useMemo(() => Array.from(new Set(payments.map((item) => item.currency))), [payments]);
+  const completedCount = payments.filter((item) => item.status === 'completed').length;
+  const pendingCount = payments.filter((item) => item.status === 'pending').length;
+  const currencies = Array.from(new Set(payments.map((item) => item.currency)));
 
   return (
     <div className="space-y-6" id="player-payments-page">
