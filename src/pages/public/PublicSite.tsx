@@ -171,7 +171,17 @@ function Splash({ onComplete }: { onComplete: () => void }) {
           <div className="gold-orbit" aria-hidden="true" />
         </>
       )}
-      <div className="splash-logo-wrap">
+        <div className="splash-golden-sand" aria-hidden="true">
+            <span className="sand-particle" />
+            <span className="sand-particle" />
+            <span className="sand-particle" />
+            <span className="sand-particle" />
+            <span className="sand-particle" />
+            <span className="sand-particle" />
+            <span className="sand-particle" />
+            <span className="sand-particle" />
+          </div>
+        <div className="splash-logo-wrap">
         <OfficialLogo />
       </div>
       <div className="splash-copy">
