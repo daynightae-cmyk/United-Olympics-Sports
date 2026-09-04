@@ -1,5 +1,6 @@
 import '../styles/player-portal.css';
 import '../styles/player-portal-chatgpt-black-gold.css';
+import '../styles/player-portal-final.css';
 import React, { lazy, Suspense, type ComponentType } from 'react';
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { PlayerSessionProvider } from './player/PlayerSessionContext';
