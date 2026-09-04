@@ -1,5 +1,5 @@
 import { Calendar, ExternalLink, User, Users, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePlayerSession } from '../../../portals/player/PlayerSessionContext';
 import { PlayerSessionSummary } from '../../../portals/player/components/PlayerSessionSummary';
@@ -17,17 +17,17 @@ export function PlayerPortalSchedulePage() {
   if (!player) return null;
 
   const now = Date.now();
-  const counts = useMemo(() => ({
+  const counts = {
     all: sessions.length,
     upcoming: sessions.filter((item) => new Date(item.startsAt).getTime() >= now).length,
     completed: sessions.filter((item) => new Date(item.startsAt).getTime() < now).length,
-  }), [sessions, now]);
-  const filteredSessions = useMemo(() => sessions.filter((item) => {
+  };
+  const filteredSessions = sessions.filter((item) => {
     const time = new Date(item.startsAt).getTime();
     if (selectedTab === 'upcoming') return time >= now;
     if (selectedTab === 'completed') return time < now;
     return true;
-  }).sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()), [sessions, selectedTab, now]);
+  }).sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
 
   return (
     <div className="space-y-6" id="player-schedule-page">
