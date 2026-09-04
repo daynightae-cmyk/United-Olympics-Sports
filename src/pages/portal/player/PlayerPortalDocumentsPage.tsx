@@ -1,247 +1,107 @@
-import React, { useState } from 'react';
-import {
-  FileText,
-  FileCheck2,
-  ShieldCheck,
-  Printer,
-  Eye,
-  X,
-  Upload,
-  FolderOpen,
-} from 'lucide-react';
-import { usePlayerSession, PlayerDocumentItem } from '../../../portals/player/PlayerSessionContext';
+import { Eye, FileCheck2, FileText, FolderOpen, ShieldCheck, Upload, X } from 'lucide-react';
+import { useState } from 'react';
+import { usePlayerSession, type PlayerDocumentItem } from '../../../portals/player/PlayerSessionContext';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
+
+const categories = [
+  { id: 'all', label: bi('All records', 'جميع السجلات') },
+  { id: 'identity', label: bi('Identity', 'الهوية') },
+  { id: 'consent', label: bi('Consents', 'الموافقات') },
+  { id: 'medical', label: bi('Medical', 'الطبي') },
+  { id: 'certificate', label: bi('Certificates', 'الشهادات') },
+  { id: 'evaluation', label: bi('Evaluations', 'التقييمات') },
+] as const;
 
 export function PlayerPortalDocumentsPage() {
   const { player, documents } = usePlayerSession();
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [previewDoc, setPreviewDoc] = useState<PlayerDocumentItem | null>(null);
+  if (!player) return null;
 
-  if (!player) {
-    return null;
-  }
-
-  const filteredDocs = documents.filter((doc) => {
-    if (selectedCategory === 'all') return true;
-    return doc.category === selectedCategory;
-  });
+  const filteredDocs = documents.filter((doc) => selectedCategory === 'all' || doc.category === selectedCategory);
 
   return (
     <div className="space-y-6" id="player-documents-page">
-      {/* Header Banner */}
-      <div className="athlete-glass-card p-6 border-amber-400/25">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-sky-500/10 text-sky-400">
-                <FileText size={18} />
-              </span>
-              <span className="text-xs font-semibold uppercase tracking-wider text-sky-400">
-                <BilingualText value={bi('Athletic Records & Credentials', 'سجلات ومستندات الرياضي')} />
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-white">
-              <BilingualText value={bi('Document Vault', 'خزنة وثائق الرياضي')} />
-            </h1>
-            <p className="text-xs text-slate-300">
-              <BilingualText
-                value={bi(
-                  `Digital document repository and registrations for ${player.nameEn}`,
-                  `المستودع الرقمي للوثائق وسجلات التسجيل للاعب ${player.nameAr}`
-                )}
-              />
-            </p>
+      <section className="athlete-glass-card p-6 border-amber-400/25">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="max-w-3xl">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-sky-400"><FileText size={18} /><BilingualText value={bi('Athlete Document Records', 'سجلات مستندات اللاعب')} /></div>
+            <h1 className="mt-2 text-xl sm:text-2xl font-bold text-white"><BilingualText value={bi('Document Vault', 'خزنة المستندات')} /></h1>
+            <p className="mt-1 text-xs leading-6 text-slate-300"><BilingualText value={bi(`Document metadata currently linked to athlete ${player.nameEn}. File storage and upload controls remain unavailable until a real storage service is connected.`, `بيانات المستندات المرتبطة حاليًا باللاعب ${player.nameAr}. يظل تخزين الملفات ورفعها غير متاح حتى يتم ربط خدمة تخزين حقيقية.`)} /></p>
           </div>
-
-          <span className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-300 self-start sm:self-auto flex items-center gap-1.5">
-            <ShieldCheck size={14} className="text-emerald-400" />
-            <span><BilingualText value={bi('Secure Repository', 'مستودع آمن')} /></span>
-          </span>
+          <span className="athlete-data-scope"><ShieldCheck size={13} /><BilingualText value={bi('Linked records only', 'السجلات المرتبطة فقط')} /></span>
         </div>
 
-        {/* Category Filter Tabs */}
-        <div className="flex flex-wrap gap-2 mt-6 pt-5 border-t border-white/10">
-          {[
-            { id: 'all', label: { en: 'All Records', ar: 'جميع الوثائق' } },
-            { id: 'identity', label: { en: 'Identity & Pass', ar: 'الهوية والبطاقة' } },
-            { id: 'consent', label: { en: 'Consents & Waivers', ar: 'الموافقات' } },
-            { id: 'medical', label: { en: 'Medical Clearance', ar: 'الفحص الطبي' } },
-            { id: 'certificate', label: { en: 'Certificates', ar: 'الشهادات' } },
-          ].map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                selectedCategory === cat.id
-                  ? 'bg-amber-400 text-black shadow-md shadow-amber-400/20'
-                  : 'bg-white/5 text-slate-300 hover:bg-white/10'
-              }`}
-            >
-              <BilingualText value={cat.label} />
+        <div className="flex flex-wrap gap-2 mt-6 pt-5 border-t border-white/10" role="tablist" aria-label="Document categories | فئات المستندات">
+          {categories.map((category) => (
+            <button key={category.id} type="button" role="tab" aria-selected={selectedCategory === category.id} onClick={() => setSelectedCategory(category.id)} className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${selectedCategory === category.id ? 'bg-amber-400 text-black shadow-md shadow-amber-400/20' : 'bg-white/5 text-slate-300 hover:bg-white/10'}`}>
+              <BilingualText value={category.label} />
             </button>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* Documents Grid / Truthful Empty State */}
-      {filteredDocs.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4" id="documents-vault-grid">
-          {filteredDocs.map((doc) => (
-            <div
-              key={doc.id}
-              className="athlete-glass-card athlete-glass-card-interactive p-5 flex flex-col justify-between gap-4"
-            >
-              <div>
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <div className="w-11 h-11 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center justify-center flex-shrink-0">
-                    <FileCheck2 size={20} />
+      <section className="athlete-glass-card p-5 sm:p-6">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
+          <div><span className="text-[10px] font-black uppercase tracking-[.16em] text-amber-400"><BilingualText value={bi('Vault contents', 'محتويات الخزنة')} /></span><h2 className="mt-1 text-base font-black text-white"><BilingualText value={bi('Linked Document Records', 'سجلات المستندات المرتبطة')} /></h2></div>
+          <span className="text-xs font-mono text-slate-400">{filteredDocs.length} <BilingualText value={bi('records', 'سجلات')} /></span>
+        </header>
+
+        {filteredDocs.length ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5" id="documents-vault-grid">
+            {filteredDocs.map((doc) => (
+              <article key={doc.id} className="rounded-2xl border border-white/10 bg-white/[.025] p-4 sm:p-5 flex flex-col justify-between gap-4">
+                <div>
+                  <div className="flex items-start justify-between gap-3"><span className="w-11 h-11 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20 grid place-items-center"><FileCheck2 size={20} /></span><DocumentStatus status={doc.status} /></div>
+                  <h3 className="mt-4 text-sm font-bold text-white"><BilingualText value={doc.title} /></h3>
+                  <div className="athlete-field-grid mt-4">
+                    <Field label={bi('Record ID', 'معرف السجل')} value={doc.id} mono />
+                    <Field label={bi('Category', 'الفئة')} value={categoryLabel(doc.category)} />
+                    <Field label={bi('Issue date', 'تاريخ الإصدار')} value={doc.issueDate} />
+                    <Field label={bi('Expiry date', 'تاريخ الانتهاء')} value={doc.expiryDate} />
+                    <Field label={bi('Verification body', 'جهة التحقق')} value={`${doc.verifiedBy.en} · ${doc.verifiedBy.ar}`} />
+                    <Field label={bi('Recorded file size', 'حجم الملف المسجل')} value={doc.fileSize} />
                   </div>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                    {doc.status}
-                  </span>
                 </div>
-
-                <strong className="text-sm font-bold text-white block mb-1">
-                  <BilingualText value={doc.title} />
-                </strong>
-
-                <div className="space-y-1 text-xs text-slate-400 mt-2">
-                  <div className="flex items-center justify-between">
-                    <span><BilingualText value={bi('Issued By', 'جهة الإصدار')} />:</span>
-                    <span className="text-slate-300 font-medium">
-                      <BilingualText value={doc.verifiedBy} />
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span><BilingualText value={bi('Issued', 'تاريخ الإصدار')} />:</span>
-                    <span className="font-mono text-slate-300">{doc.issueDate}</span>
-                  </div>
-                  {doc.expiryDate && (
-                    <div className="flex items-center justify-between">
-                      <span><BilingualText value={bi('Valid Until', 'صالح حتى')} />:</span>
-                      <span className="font-mono text-amber-300">{doc.expiryDate}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-white/5 flex items-center justify-between text-xs">
-                <span className="text-slate-500 font-mono text-[11px]">{doc.fileSize}</span>
-                <button
-                  onClick={() => setPreviewDoc(doc)}
-                  className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-200 hover:text-white border border-white/10 font-semibold flex items-center gap-1.5 transition-colors"
-                >
-                  <Eye size={13} className="text-amber-400" />
-                  <span><BilingualText value={bi('View Document', 'معاينة الوثيقة')} /></span>
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="athlete-glass-card p-12 text-center text-slate-400 space-y-4 max-w-xl mx-auto border-dashed border-white/15">
-          <div className="w-16 h-16 rounded-2xl bg-white/5 text-amber-400 border border-white/10 flex items-center justify-center mx-auto">
-            <FolderOpen size={30} />
+                <button type="button" onClick={() => setPreviewDoc(doc)} className="athlete-action-secondary self-start"><Eye size={13} /><BilingualText value={bi('View record details', 'عرض تفاصيل السجل')} /></button>
+              </article>
+            ))}
           </div>
+        ) : (
+          <div className="athlete-empty-system mt-5"><div><FolderOpen size={34} className="mx-auto text-slate-500" /><h3 className="mt-4 text-base font-bold text-white"><BilingualText value={selectedCategory === 'all' ? bi('No document records are linked yet', 'لا توجد سجلات مستندات مرتبطة حتى الآن') : bi('No records in this category', 'لا توجد سجلات في هذه الفئة')} /></h3><p className="mt-2 text-xs leading-6 text-slate-400"><BilingualText value={bi('Nothing is generated to fill the vault. Records appear only when document metadata is connected to the athlete.', 'لا يتم إنشاء بيانات لملء الخزنة. تظهر السجلات فقط عند ربط بيانات مستندات باللاعب.')} /></p></div></div>
+        )}
 
-          <div className="space-y-1.5">
-            <h3 className="text-base font-bold text-white">
-              <BilingualText value={bi('No athlete documents uploaded yet.', 'لم يتم رفع أي مستندات للرياضي بعد.')} />
-            </h3>
-            <p className="text-xs text-slate-400 leading-relaxed max-w-md mx-auto">
-              <BilingualText
-                value={bi(
-                  'Player documents will appear here when registration records are uploaded or issued by United Olympics Sports.',
-                  'ستظهر مستندات اللاعب هنا عند رفع وثائق التسجيل أو إصدارها من إدارة يونايتد أوليمبيكس سبورت.'
-                )}
-              />
-            </p>
-          </div>
+        <div className="athlete-truth-note mt-5"><Upload size={14} className="text-amber-400 flex-shrink-0 mt-0.5" /><div><strong className="text-slate-200"><BilingualText value={bi('Upload unavailable', 'الرفع غير متاح')} /></strong><div className="mt-1"><BilingualText value={bi('No storage bucket or upload endpoint is connected to the Player Portal, so no file selector is presented as a working upload action.', 'لا توجد حاوية تخزين أو نقطة رفع متصلة ببوابة اللاعب، لذلك لا يتم عرض اختيار الملفات كعملية رفع فعالة.')} /></div></div></div>
+      </section>
 
-          <div className="pt-3">
-            <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-black font-bold text-xs shadow-lg shadow-amber-400/20 cursor-pointer transition-all">
-              <Upload size={14} />
-              <span><BilingualText value={bi('Upload Document', 'رفع مستند')} /></span>
-              <input
-                type="file"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    // truthful confirmation notice
-                    alert(`Document upload: ${file.name} selected for upload.`);
-                  }
-                }}
-              />
-            </label>
-          </div>
-        </div>
-      )}
-
-      {/* Document Preview Modal */}
       {previewDoc && (
-        <div className="athlete-modal-overlay" onClick={() => setPreviewDoc(null)}>
-          <div
-            className="athlete-modal-content !max-w-lg p-6 sm:p-7"
-            onClick={(e) => e.stopPropagation()}
-            id="document-preview-modal"
-          >
-            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-5">
-              <div className="flex items-center gap-2">
-                <FileCheck2 size={18} className="text-amber-400" />
-                <h3 className="text-base font-bold text-white">
-                  <BilingualText value={previewDoc.title} />
-                </h3>
-              </div>
-              <button
-                onClick={() => setPreviewDoc(null)}
-                className="p-1 text-slate-400 hover:text-white rounded-lg"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="space-y-4 text-xs text-slate-300">
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2.5">
-                <div className="flex justify-between">
-                  <span className="text-slate-400"><BilingualText value={bi('Document ID', 'معرّف الوثيقة')} />:</span>
-                  <strong className="text-white font-mono">{previewDoc.id.toUpperCase()}</strong>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400"><BilingualText value={bi('Athlete Name', 'اسم اللاعب')} />:</span>
-                  <strong className="text-amber-400">{player.nameEn} · {player.nameAr}</strong>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400"><BilingualText value={bi('Verification Body', 'جهة الاعتماد')} />:</span>
-                  <strong className="text-white">
-                    <BilingualText value={previewDoc.verifiedBy} />
-                  </strong>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400"><BilingualText value={bi('Validation Status', 'حالة الصلاحية')} />:</span>
-                  <strong className="text-emerald-400 font-semibold">{previewDoc.status}</strong>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-white/10 flex justify-end gap-2">
-              <button
-                onClick={() => window.print()}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-200 transition-colors flex items-center gap-1.5"
-              >
-                <Printer size={13} />
-                <span><BilingualText value={bi('Print Copy', 'طباعة نسخة')} /></span>
-              </button>
-              <button
-                onClick={() => setPreviewDoc(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-amber-400 hover:bg-amber-300 text-black font-bold transition-colors"
-              >
-                <BilingualText value={bi('Close', 'إغلاق')} />
-              </button>
-            </div>
+        <div className="athlete-modal-overlay" onClick={() => setPreviewDoc(null)} role="presentation">
+          <div className="athlete-modal-content !max-w-lg p-6 sm:p-7" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="document-record-title" id="document-preview-modal">
+            <header className="flex items-start justify-between gap-3 pb-4 border-b border-white/10"><div className="flex items-start gap-2"><FileCheck2 size={18} className="text-amber-400 mt-0.5" /><div><span className="text-[10px] text-slate-500"><BilingualText value={bi('Document record', 'سجل المستند')} /></span><h2 id="document-record-title" className="text-base font-bold text-white"><BilingualText value={previewDoc.title} /></h2></div></div><button type="button" onClick={() => setPreviewDoc(null)} className="p-2 text-slate-400 hover:text-white rounded-lg" aria-label="Close document record | إغلاق سجل المستند"><X size={18} /></button></header>
+            <div className="athlete-field-grid mt-5"><Field label={bi('Record ID', 'معرف السجل')} value={previewDoc.id} mono /><Field label={bi('Athlete', 'اللاعب')} value={`${player.nameEn} · ${player.nameAr}`} /><Field label={bi('Category', 'الفئة')} value={categoryLabel(previewDoc.category)} /><Field label={bi('Status', 'الحالة')} value={statusLabel(previewDoc.status)} /><Field label={bi('Issue date', 'تاريخ الإصدار')} value={previewDoc.issueDate} /><Field label={bi('Expiry date', 'تاريخ الانتهاء')} value={previewDoc.expiryDate} /></div>
+            <div className="athlete-truth-note mt-5"><ShieldCheck size={14} className="text-amber-400 flex-shrink-0 mt-0.5" /><BilingualText value={bi('This view shows record metadata only. A downloadable file is not claimed unless a real file source is connected.', 'يعرض هذا القسم بيانات السجل فقط. ولا يتم ادعاء وجود ملف قابل للتنزيل ما لم يتم ربط مصدر ملف حقيقي.')} /></div>
+            <div className="athlete-action-row mt-5 justify-end"><button type="button" onClick={() => setPreviewDoc(null)} className="athlete-action-primary"><BilingualText value={bi('Close', 'إغلاق')} /></button></div>
           </div>
         </div>
       )}
     </div>
   );
+}
+
+function Field({ label, value, mono = false }: { label: { en: string; ar: string }; value?: string; mono?: boolean }) {
+  return <div className="athlete-field"><span><BilingualText value={label} /></span><strong className={`${mono ? 'font-mono' : ''} ${value ? '' : 'athlete-unavailable'}`}>{value || <BilingualText value={bi('Not recorded', 'غير مسجل')} />}</strong></div>;
+}
+
+function categoryLabel(category: PlayerDocumentItem['category']) {
+  const labels: Record<PlayerDocumentItem['category'], string> = { identity: 'Identity · الهوية', consent: 'Consent · الموافقة', medical: 'Medical · طبي', certificate: 'Certificate · شهادة', evaluation: 'Evaluation · تقييم' };
+  return labels[category];
+}
+
+function statusLabel(status: PlayerDocumentItem['status']) {
+  return status === 'verified' ? 'Verified · موثق' : status === 'pending' ? 'Pending · قيد المراجعة' : 'Expired · منتهي';
+}
+
+function DocumentStatus({ status }: { status: PlayerDocumentItem['status'] }) {
+  const tone = status === 'verified' ? 'text-emerald-300 border-emerald-500/25 bg-emerald-500/10' : status === 'pending' ? 'text-amber-300 border-amber-400/25 bg-amber-400/10' : 'text-slate-400 border-white/10 bg-white/5';
+  return <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${tone}`}>{statusLabel(status)}</span>;
 }
