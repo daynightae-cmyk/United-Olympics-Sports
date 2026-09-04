@@ -7,6 +7,7 @@ import './styles/theme-closure.css';
 import './styles/enterprise.css';
 import './styles/portal-experience.css';
 import './styles/admin-directory-v2.css';
+import './styles/uos-benchmark.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
