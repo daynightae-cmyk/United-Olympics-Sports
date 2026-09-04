@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { ParentPortalOverviewPage } from '../pages/portal/parent/ParentPortalOverviewPage';
 import { ParentPortalChildrenPage } from '../pages/portal/parent/ParentPortalChildrenPage';
+import { ParentPortalChildDetailPage } from '../pages/portal/parent/ParentPortalChildDetailPage';
 import { ParentPortalSubscriptionsPage } from '../pages/portal/parent/ParentPortalSubscriptionsPage';
 import { ParentPortalDocumentsPage } from '../pages/portal/parent/ParentPortalDocumentsPage';
 import { ParentPortalMessagesPage } from '../pages/portal/parent/ParentPortalMessagesPage';
@@ -15,6 +16,7 @@ export function ParentPortalRouter() {
   return <PortalLayout portal="parent"><Routes>
     <Route index element={<ParentPortalOverviewPage />} />
     <Route path="children" element={<ParentPortalChildrenPage />} />
+    <Route path="children/:childId" element={<ParentPortalChildDetailPage />} />
     <Route path="subscriptions" element={<ParentPortalSubscriptionsPage />} />
     <Route path="documents" element={<ParentPortalDocumentsPage />} />
     <Route path="messages" element={<ParentPortalMessagesPage />} />

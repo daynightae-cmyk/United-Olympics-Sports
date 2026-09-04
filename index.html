@@ -10,6 +10,12 @@
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="theme-color" content="#f6f1e6" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/brand/united-olympics-sports-logo.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="UOS" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Cinzel:wght@600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -39,7 +45,9 @@
         document.querySelector('meta[name="theme-color"]')?.setAttribute('content', mode === 'dark' ? '#07080b' : '#f6f1e6');
       })();
     </script>
-  </head>
+    <meta property="og:image" content="/brand/united-olympics-sports-logo.png">
+    <meta name="twitter:image" content="/brand/united-olympics-sports-logo.png">
+</head>
   <body class="font-sans antialiased overflow-x-hidden">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

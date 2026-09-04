@@ -4,15 +4,21 @@ import { Link, NavLink, Route, Routes } from "react-router-dom";
 import {
   ArrowRight,
   Dumbbell,
+  Mail,
   Menu,
   MessageCircle,
+  PenLine,
   Send,
   ShieldCheck,
   Sparkles,
+  Tag,
   Trophy,
+  UserRound,
   X,
 } from "lucide-react";
 import { ThemeToggle } from "../../components/ui/ThemeToggle";
+import { Sports3DIcon } from "../../design/sports3d";
+import { UosFormSection, UosTextAreaField, UosTextField, uosCommonHelpers } from "../../components/fields/UosFields";
 import { SportConceptVisual } from "../../components/owner-demo/OwnerDemoVisuals";
 import { getSportPreviewMedia } from "../../data/media";
 import {
@@ -581,13 +587,7 @@ function SportCard({ sport }: { sport: Sport }) {
       )}
       <div className="sport-card-body">
         <div className="sport-icon">
-          {sport.id === "swimming" ? (
-            <Sparkles />
-          ) : sport.id === "basketball" ? (
-            <Trophy />
-          ) : (
-            <Dumbbell />
-          )}
+          <Sports3DIcon sport={sport.id as 'football' | 'basketball' | 'swimming' | 'tennis' | 'gymnastics' | 'martial-arts'} size="md" decorative />
         </div>
         <h3>
           <Bilingual value={{ en: sport.en, ar: sport.ar }} />
@@ -653,22 +653,16 @@ function Contact() {
             setPreviewed(true);
           }}
         >
-          <label>
-            <Bilingual value={{ en: "Name", ar: "الاسم" }} />
-            <input required placeholder="Your name | اسمك" />
-          </label>
-          <label>
-            <Bilingual value={{ en: "Email", ar: "البريد الإلكتروني" }} />
-            <input required type="email" placeholder="you@example.com | بريدك الإلكتروني" />
-          </label>
-          <label>
-            <Bilingual value={{ en: "Subject", ar: "الموضوع" }} />
-            <input required placeholder="How can we help? | كيف يمكننا مساعدتك؟" />
-          </label>
-          <label>
-            <Bilingual value={{ en: "Message", ar: "الرسالة" }} />
-            <textarea required rows={5} placeholder="Write your message | اكتب رسالتك" />
-          </label>
+          <UosFormSection
+            title={{ en: "Your enquiry", ar: "استفسارك" }}
+            icon={<MessageCircle size={17} />}
+            description={{ en: "Prepare your message below. Nothing is sent yet.", ar: "جهّز رسالتك أدناه. لن يتم إرسال أي شيء بعد." }}
+          >
+            <UosTextField label={{ en: "Name", ar: "الاسم" }} icon={<UserRound size={16} />} name="name" required autoComplete="name" placeholder="Your name | اسمك" />
+            <UosTextField label={{ en: "Email", ar: "البريد الإلكتروني" }} icon={<Mail size={16} />} name="email" type="email" required autoComplete="email" placeholder="you@example.com | بريدك الإلكتروني" helper={uosCommonHelpers.email} />
+            <UosTextField label={{ en: "Subject", ar: "الموضوع" }} icon={<Tag size={16} />} name="subject" required placeholder="How can we help? | كيف يمكننا مساعدتك؟" />
+            <UosTextAreaField label={{ en: "Message", ar: "الرسالة" }} icon={<PenLine size={16} />} name="message" required rows={5} placeholder="Write your message | اكتب رسالتك" />
+          </UosFormSection>
           <button className="button primary" type="submit">
             <Bilingual value={{ en: "Preview Message", ar: "معاينة الرسالة" }} />
             <Send size={17} />

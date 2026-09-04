@@ -1,5 +1,25 @@
-:root{--s3d-brand:#bfa15f;--s3d-black:#0a0a0a;--s3d-gold:#c9a227;--s3d-deep:#16212e;--s3d-muted:#6b5a3a;}
-.sports3d-stage{perspective:1000px;transform-style:preserve-3d;background:linear-gradient(135deg,#0a0a0a 0%,#16212e 100%);border:1px solid var(--s3d-brand);border-radius:1rem;padding:1rem;position:relative;overflow:hidden;}
+:root{--s3d-brand:#bfa15f;--s3d-black:#0a0a0a;--s3d-gold:#c9a227;--s3d-deep:#16212e;--s3d-muted:#6b5a3a;--s3d-champagne:#e9d8a6;--s3d-motion:220ms;}
+/* Identity stage: black/navy framing, gold edge, controlled atmosphere. */
+.sports3d-stage{perspective:1000px;transform-style:preserve-3d;background:linear-gradient(135deg,#0a0a0a 0%,#16212e 100%);border:1px solid color-mix(in srgb,var(--s3d-brand) 55%,transparent);border-radius:1rem;padding:1rem;position:relative;overflow:hidden;}
 .sports3d-stage::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 20%,rgba(191,161,95,.08) 0%,transparent 60%);pointer-events:none;}
-.sports3d-icon{display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--s3d-brand),var(--s3d-gold));box-shadow:0 8px 24px rgba(191,161,95,.35);flex-shrink:0;}
-@media(max-width:640px){.sports3d-stage{padding:.75rem;}.sports3d-icon{width:48px;height:48px;}}
+.sports3d-stage-atmosphere{position:absolute;inset:0;background:radial-gradient(circle at 70% 80%,rgba(201,162,39,.06) 0%,transparent 55%);pointer-events:none;}
+.sports3d-stage-watermark{position:absolute;inset-inline-end:-8%;inset-block-end:-12%;width:62%;max-width:280px;opacity:.16;pointer-events:none;filter:saturate(.9);}
+.sports3d-stage-content{position:relative;z-index:1;}
+.sports3d-stage--hero{padding:1.25rem;border-radius:1.25rem;}
+.sports3d-stage--badge{padding:.5rem;border-radius:.9rem;display:inline-flex;margin-bottom:14px;}
+.sports3d-stage--watermark{background:transparent;border-color:transparent;}
+.sports3d-stage--watermark .sports3d-stage-watermark{opacity:.2;}
+/* Identity medallion: integrated, not a sticker. */
+.sports3d-icon{display:inline-flex;align-items:center;justify-content:center;border-radius:9999px;flex-shrink:0;background:linear-gradient(135deg,color-mix(in srgb,var(--s3d-brand) 88%,#000 12%),var(--s3d-gold));box-shadow:0 8px 24px rgba(191,161,95,.28),inset 0 1px 0 rgba(255,255,255,.22);border:1px solid rgba(233,216,166,.45);color:#0a0a0a;transition:transform var(--s3d-motion) ease,box-shadow var(--s3d-motion) ease;}
+.sports3d-icon--sm{width:40px;height:40px;}.sports3d-icon--sm .sports3d-icon-mono{font-size:.8rem;}
+.sports3d-icon--md{width:56px;height:56px;}.sports3d-icon--md .sports3d-icon-mono{font-size:1rem;}
+.sports3d-icon--lg{width:72px;height:72px;}.sports3d-icon--lg .sports3d-icon-mono{font-size:1.25rem;}
+.sports3d-icon--hero{width:96px;height:96px;}.sports3d-icon--hero .sports3d-icon-mono{font-size:1.6rem;}
+.sports3d-icon-mono{font-weight:800;font-family:"DM Sans","Cairo",system-ui,sans-serif;letter-spacing:.02em;}
+.sports3d-icon-img{width:72%;height:72%;object-fit:contain;}
+a:hover .sports3d-icon,.sports3d-icon--interactive:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 12px 28px rgba(191,161,95,.34),inset 0 1px 0 rgba(255,255,255,.25);}
+/* Light-mode contrast: stage stays deep so photography keeps depth; medallion keeps gold on light chrome. */
+@media (prefers-color-scheme:light){.sports3d-stage-watermark{opacity:.12;}}
+[data-theme="light"] .sports3d-stage-watermark{opacity:.12;}
+@media(max-width:640px){.sports3d-stage{padding:.75rem;}.sports3d-icon--md{width:48px;height:48px;}.sports3d-icon--hero{width:72px;height:72px;}.sports3d-icon--hero .sports3d-icon-mono{font-size:1.25rem;}}
+@media (prefers-reduced-motion:reduce){.sports3d-icon{transition:none;}a:hover .sports3d-icon{transform:none;}}

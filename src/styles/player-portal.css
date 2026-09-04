@@ -1,0 +1,18 @@
+/* =====================================================================
+   UNITED OLYMPICS SPORTS — PLAYER PORTAL DESIGN SYSTEM
+   يونايتد أوليمبيكس سبورت — نظام تصميم بوابة اللاعب
+   Luxury Athletic Glassmorphism & High-Contrast Bilingual Tokens
+   ===================================================================== */
+
+@import './player-portal/_tokens.css';
+@import './player-portal/_light.css';
+@import './player-portal/_shell.css';
+@import './player-portal/_glass.css';
+@import './player-portal/_navigation.css';
+@import './player-portal/_identity.css';
+@import './player-portal/_cards.css';
+@import './player-portal/_charts.css';
+@import './player-portal/_modals.css';
+@import './player-portal/_motion.css';
+@import './player-portal/_responsive.css';
+@import './player-portal/_rtl.css';

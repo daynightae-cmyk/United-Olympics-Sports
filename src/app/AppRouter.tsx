@@ -4,19 +4,23 @@ import { PlayerPortalRouter } from '../portals/PlayerPortalRouter';
 import { ParentPortalRouter } from '../portals/ParentPortalRouter';
 import { CoachPortalRouter } from '../portals/CoachPortalRouter';
 import { PublicSite } from '../pages/public/PublicSite';
-import { AuthRouter } from '../portals/AuthRouter';
+import { BenchmarkShowcasePage } from '../pages/benchmark/BenchmarkShowcasePage';
+import { UnitedAssistant } from '../assistant/UnitedAssistant';
+import { UpdateToast } from '../platform/UpdateToast';
 
 export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/benchmark" element={<BenchmarkShowcasePage />} />
         <Route path="/admin/*" element={<AdminLayout />} />
         <Route path="/player/*" element={<PlayerPortalRouter />} />
         <Route path="/parent/*" element={<ParentPortalRouter />} />
         <Route path="/coach/*" element={<CoachPortalRouter />} />
-        <Route path="/auth/*" element={<AuthRouter />} />
         <Route path="*" element={<PublicSite />} />
       </Routes>
+      <UnitedAssistant />
+      <UpdateToast />
     </BrowserRouter>
   );
 }

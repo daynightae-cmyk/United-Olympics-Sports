@@ -1,6 +1,7 @@
 import { ArrowLeft, Sparkles, Waves } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
+import { Sports3DIcon, Sports3DStage } from '../../design/sports3d';
 import { getSwimmingMediaByUsage, swimmingMediaAssets } from '../../data/media/swimming';
 import type { SportMediaAsset } from '../../domain/contracts';
 import '../../styles/swimming.css';
@@ -52,6 +53,7 @@ export function SwimmingPage() {
         <div className="swim-hero-overlay" />
         <div className="swim-hero-content">
           <Link className="swim-back" to="/sports"><ArrowLeft size={16} /><BilingualText value={bi('All Sports', 'جميع الرياضات')} /></Link>
+          <Sports3DStage sport="swimming" variant="badge" label="Swimming identity | هوية السباحة"><Sports3DIcon sport="swimming" size="hero" decorative /></Sports3DStage>
           <span className="swim-kicker"><Waves size={16} /><BilingualText value={bi('Swimming', 'السباحة')} /></span>
           <h1><BilingualText value={bi('Technique. Confidence. Performance.', 'تقنية. ثقة. أداء.')} /></h1>
           <p><BilingualText value={bi('A visual journey through child development, youth training, technical coaching, group work and performance preparation.', 'رحلة بصرية عبر تطوير الأطفال وتدريب الناشئين والتعليم التقني والعمل الجماعي والاستعداد للأداء.')} /></p>

@@ -1,0 +1,37 @@
+/* UOS portal closure layer — Parent family + Coach desk refinements.
+   Additive only: base portal shells live in portal-shell.css / portal-experience.css.
+   Uses logical properties for RTL; single-column collapse under 560px. */
+
+.parent-child-context{display:block;margin-top:2px;font-size:11px;color:var(--color-text-muted);}
+.parent-child-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px;}
+.parent-child-stat{display:flex;flex-direction:column;gap:2px;padding:10px;border:1px solid var(--color-border);border-radius:12px;background:color-mix(in srgb,var(--color-surface-2) 70%,transparent);}
+.parent-child-stat small{font-size:10px;color:var(--color-text-muted);}
+.parent-child-stat strong{font-size:13px;color:var(--color-text-primary);}
+.parent-child-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--color-border);font-size:11px;}
+.parent-child-feedback{display:inline-flex;align-items:center;gap:4px;color:var(--color-brand-strong);}
+.parent-child-sub{color:var(--color-text-muted);}
+.parent-child-open{margin-inline-start:auto;color:var(--color-brand-strong);font-weight:700;text-decoration:none;}
+.parent-quick-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+
+/* Coach training desk */
+.coach-desk-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:12px;margin-bottom:12px;}
+.coach-today{padding:16px;border:1px solid var(--color-border);border-radius:16px;background:linear-gradient(145deg,color-mix(in srgb,var(--color-surface-2) 86%,transparent),color-mix(in srgb,var(--color-surface-1) 94%,transparent));}
+.coach-today h3{margin:0 0 4px;font-size:14px;}
+.coach-today p{margin:0;color:var(--color-text-muted);font-size:11px;line-height:1.6;}
+.coach-today-list{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:8px;}
+.coach-today-list li{display:flex;align-items:center;gap:8px;font-size:12px;padding:10px;border:1px solid var(--color-border);border-radius:12px;}
+.coach-upcoming{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:8px;}
+.coach-upcoming li{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;padding:10px 12px;border:1px solid var(--color-border);border-radius:12px;}
+.coach-upcoming time{color:var(--color-text-muted);font-size:11px;}
+
+@media(max-width:900px){.coach-desk-grid{grid-template-columns:1fr;}}
+@media(max-width:560px){
+  .parent-child-stats{grid-template-columns:1fr 1fr;}
+  .parent-children-grid{grid-template-columns:1fr;}
+  .parent-child-open{margin-inline-start:0;}
+  .parent-quick-row .admin-link-button{flex:1 1 100%;justify-content:center;}
+}
+@media (prefers-reduced-motion:reduce){.parent-action-card:hover{transform:none;}}
+/* Player Black Gold secondary identity: sport mark stays behind the portrait. */
+.athlete-3d-secondary{position:absolute;inset-inline-end:12px;inset-block-start:12px;opacity:.18;pointer-events:none;}
+@media(max-width:560px){.athlete-3d-secondary{display:none;}}

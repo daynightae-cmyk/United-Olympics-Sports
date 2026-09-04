@@ -1,0 +1,33 @@
+@media (max-width: 1024px) {
+  .athlete-sidebar {
+    transform: translateX(-100%);
+  }
+  .athlete-sidebar.is-open {
+    transform: translateX(0);
+  }
+  .athlete-workspace {
+    margin-left: 0;
+  }
+  .athlete-mobile-bottom-bar {
+    display: flex;
+  }
+  .athlete-content-area {
+    padding: 20px 16px 96px;
+  }
+  .athlete-topbar {
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .athlete-hero-card {
+    padding: 20px;
+    border-radius: var(--athlete-radius-lg);
+  }
+  .athlete-stat-pill {
+    padding: 10px 14px;
+  }
+  .athlete-stat-pill strong {
+    font-size: 18px;
+  }
+}

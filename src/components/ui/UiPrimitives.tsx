@@ -1,5 +1,5 @@
 import { AlertTriangle, CheckCircle2, Info, LoaderCircle, X } from 'lucide-react';
-import { useEffect, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { useEffect, useRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import type { BilingualText as BilingualValue } from '../../domain/contracts';
 import { BilingualText, bi } from '../bilingual/BilingualText';
 
@@ -10,16 +10,27 @@ export function UiButton({ variant = 'secondary', className = '', children, ...p
 }
 
 export function UiDialog({ open, title, description, children, onClose }: { open: boolean; title: BilingualValue; description?: BilingualValue; children: ReactNode; onClose: () => void }) {
+  const dialogRef = useRef<HTMLElement>(null);
+  const restoreRef = useRef<Element | null>(null);
   useEffect(() => {
     if (!open) return;
+    restoreRef.current = document.activeElement;
     const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const frame = requestAnimationFrame(() => dialogRef.current?.focus());
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previousOverflow;
+      cancelAnimationFrame(frame);
+      if (restoreRef.current instanceof HTMLElement) restoreRef.current.focus();
+    };
   }, [onClose, open]);
   if (!open) return null;
   return <div className="ui-dialog-layer" role="presentation">
-    <button className="ui-dialog-backdrop" type="button" aria-label="Close dialog | إغلاق النافذة" onClick={onClose} />
-    <section className="ui-dialog" role="dialog" aria-modal="true" aria-labelledby="ui-dialog-title">
+    <div className="ui-dialog-backdrop" onClick={onClose} aria-hidden="true" />
+    <section ref={dialogRef} tabIndex={-1} className="ui-dialog" role="dialog" aria-modal="true" aria-labelledby="ui-dialog-title">
       <div className="ui-dialog-heading">
         <div><h2 id="ui-dialog-title"><BilingualText value={title} /></h2>{description && <p><BilingualText value={description} /></p>}</div>
         <button type="button" className="ui-icon-button" onClick={onClose} aria-label="Close dialog | إغلاق النافذة"><X aria-hidden="true" /></button>

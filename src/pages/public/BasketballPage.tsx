@@ -2,6 +2,7 @@ import { ArrowLeft, ArrowRight, Check, Dumbbell, ShieldCheck, Sparkles, Trophy, 
 import { FormEvent, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
+import { Sports3DIcon, Sports3DStage } from '../../design/sports3d';
 import { basketballMediaAssets } from '../../data/media/basketball';
 import type { SportMediaAsset } from '../../domain/contracts';
 import '../../styles/basketball.css';
@@ -52,6 +53,7 @@ export function BasketballPage() {
         <div className="basketball-hero-shade" />
         <div className="basketball-hero-content">
           <Link className="basketball-back" to="/sports"><ArrowLeft size={16} /><BilingualText value={bi('All Sports', 'جميع الرياضات')} /></Link>
+          <Sports3DStage sport="basketball" variant="badge" label="Basketball identity | هوية كرة السلة"><Sports3DIcon sport="basketball" size="hero" decorative /></Sports3DStage>
           <BilingualText className="basketball-kicker" value={bi('Basketball Program', 'برنامج كرة السلة')} icon={<Sparkles size={15} />} />
           <h1><BilingualText value={bi('Move Fast. Think Faster.', 'تحرك بسرعة. وفكر أسرع.')} /></h1>
           <p><BilingualText value={bi('Structured basketball training develops movement, coordination, decision-making, team awareness and confident execution.', 'يطور تدريب كرة السلة المنظم الحركة والتناسق واتخاذ القرار والوعي الجماعي والتنفيذ بثقة.')} /></p>

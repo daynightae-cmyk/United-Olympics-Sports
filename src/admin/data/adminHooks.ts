@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAdminData } from './AdminDataProvider';
 import type { ListResult, ListQueryParams } from './queryTypes';
 import type {
@@ -29,49 +29,90 @@ import type {
 } from './viewModels';
 
 function useList<T>(fetch: (params?: ListQueryParams) => Promise<ListResult<T>>, initialParams?: ListQueryParams) {
+  const fetchRef = useRef(fetch);
+  const requestRef = useRef(0);
   const [data, setData] = useState<ListResult<T>>({ items: [], total: 0, page: 1, pageSize: 20 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [params, setParams] = useState<ListQueryParams>(initialParams ?? { page: 1, pageSize: 20 });
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await fetch(params);
-      setData(result);
-    } catch (e) {
-      setError(e as Error);
-    } finally {
-      setLoading(false);
-    }
-  }, [fetch, params]);
+  useEffect(() => {
+    fetchRef.current = fetch;
+  }, [fetch]);
 
-  useEffect(() => { load(); }, [load]);
+  const load = useCallback(async () => {
+    const requestId = ++requestRef.current;
+    setError(null);
+
+    try {
+      const result = await fetchRef.current(params);
+      if (requestRef.current === requestId) {
+        setData(result);
+      }
+    } catch (e) {
+      if (requestRef.current === requestId) {
+        setError(e as Error);
+      }
+    } finally {
+      if (requestRef.current === requestId) {
+        setLoading(false);
+      }
+    }
+  }, [params]);
+
+  useEffect(() => {
+    void load();
+    return () => {
+      requestRef.current += 1;
+    };
+  }, [load]);
 
   return { data, loading, error, params, setParams, refetch: load };
 }
 
 function useDetail<T>(fetch: (id: string) => Promise<T | null>, id?: string) {
+  const fetchRef = useRef(fetch);
+  const requestRef = useRef(0);
   const [item, setItem] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  useEffect(() => {
+    fetchRef.current = fetch;
+  }, [fetch]);
+
   const load = useCallback(async () => {
-    if (!id) { setItem(null); setLoading(false); return; }
-    setLoading(true);
+    const requestId = ++requestRef.current;
+
+    if (!id) {
+      setItem(null);
+      setLoading(false);
+      return;
+    }
+
     setError(null);
     try {
-      const result = await fetch(id);
-      setItem(result);
+      const result = await fetchRef.current(id);
+      if (requestRef.current === requestId) {
+        setItem(result);
+      }
     } catch (e) {
-      setError(e as Error);
+      if (requestRef.current === requestId) {
+        setError(e as Error);
+      }
     } finally {
-      setLoading(false);
+      if (requestRef.current === requestId) {
+        setLoading(false);
+      }
     }
-  }, [fetch, id]);
+  }, [id]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    void load();
+    return () => {
+      requestRef.current += 1;
+    };
+  }, [load]);
 
   return { item, loading, error, refetch: load };
 }

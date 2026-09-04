@@ -2,6 +2,7 @@ import { ArrowLeft, ArrowRight, Check, CircleDot, Dumbbell, Goal, ShieldCheck, S
 import { FormEvent, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
+import { Sports3DIcon, Sports3DStage } from '../../design/sports3d';
 import { footballMediaAssets } from '../../data/media/football';
 import type { SportMediaAsset } from '../../domain/contracts';
 import '../../styles/football.css';
@@ -36,6 +37,7 @@ export function FootballPage() {
       <div className="football-hero-shade" />
       <div className="football-hero-content">
         <Link className="football-back" to="/sports"><ArrowLeft size={16} /><BilingualText value={bi('All Sports', 'جميع الرياضات')} /></Link>
+        <Sports3DStage sport="football" variant="badge" label="Football identity | هوية كرة القدم"><Sports3DIcon sport="football" size="hero" decorative /></Sports3DStage>
         <BilingualText className="football-kicker" value={bi('Football Program', 'برنامج كرة القدم')} icon={<Sparkles size={15} />} />
         <h1><BilingualText value={bi('Train with Purpose', 'تدرب بهدف')} /></h1>
         <p><BilingualText value={bi('A structured football experience focused on technique, discipline, confidence, teamwork and progressive player development.', 'تجربة كرة قدم منظمة تركز على المهارة والانضباط والثقة والعمل الجماعي وتطوير اللاعب بشكل تدريجي.')} /></p>

@@ -1,0 +1,47 @@
+.athlete-mini-badge {
+  margin: 14px 14px 8px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, var(--athlete-gold-soft), rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--athlete-border);
+  border-radius: var(--athlete-radius-md);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.athlete-mini-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--athlete-gold), #8c6d1f);
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 15px;
+  box-shadow: 0 4px 14px var(--athlete-gold-glow);
+  flex-shrink: 0;
+}
+
+.digital-id-card {
+  background: linear-gradient(135deg, #162038 0%, #0c1220 100%);
+  border: 1.5px solid var(--athlete-gold);
+  border-radius: 20px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6), 0 0 35px var(--athlete-gold-glow);
+  color: #fff;
+}
+
+.digital-id-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 60%);
+  pointer-events: none;
+}

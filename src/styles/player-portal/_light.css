@@ -1,0 +1,24 @@
+[data-theme="light"] {
+  --athlete-bg: #f4f6fa;
+  --athlete-bg-subtle: #e9eef6;
+  --athlete-surface-glass: rgba(255, 255, 255, 0.85);
+  --athlete-surface-card: rgba(255, 255, 255, 0.92);
+  --athlete-surface-card-hover: #ffffff;
+  --athlete-surface-elevated: #ffffff;
+  --athlete-border: rgba(184, 142, 38, 0.22);
+  --athlete-border-strong: rgba(184, 142, 38, 0.44);
+  --athlete-border-subtle: rgba(0, 0, 0, 0.08);
+  --athlete-gold: #b38b22;
+  --athlete-gold-bright: #d4af37;
+  --athlete-gold-glow: rgba(179, 139, 34, 0.2);
+  --athlete-gold-soft: rgba(179, 139, 34, 0.1);
+  --athlete-text-primary: #0f172a;
+  --athlete-text-secondary: #334155;
+  --athlete-text-muted: #64748b;
+  --athlete-shadow-card: 0 10px 30px -6px rgba(15, 23, 42, 0.08);
+}
+
+[data-theme="light"] .athlete-hero-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid var(--athlete-border-strong);
+}

@@ -1,0 +1,21 @@
+{
+  "name": "United Olympics Sports | يونايتد أوليمبيكس سبورت",
+  "short_name": "UOS",
+  "description": "A thoughtful sports development environment for structured training, discipline and progress.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#07080b",
+  "theme_color": "#07080b",
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/brand/united-olympics-sports-logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

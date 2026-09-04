@@ -1,0 +1,48 @@
+/* UOS field architecture: Section -> Field -> Control -> Feedback.
+   48-56px controls, visible focus, bilingual helpers, RTL logical props. */
+.uos-form-section{border-radius:var(--uos-radius-lg);padding:20px;margin-top:14px;}
+.uos-form-section-head{display:flex;gap:10px;align-items:flex-start;margin-bottom:14px;}
+.uos-form-section-icon{display:grid;place-items:center;width:36px;height:36px;border-radius:12px;border:1px solid var(--uos-glass-border);background:rgba(212,175,55,.08);color:#d8b35a;flex-shrink:0;}
+.uos-form-section-title{margin:0;font-size:14px;font-weight:800;}
+.uos-form-section-desc{margin:4px 0 0;font-size:11px;color:var(--color-text-muted);line-height:1.6;}
+.uos-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.uos-field{display:flex;flex-direction:column;gap:6px;min-width:0;}
+.uos-field-label{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;}
+.uos-field-icon{display:inline-flex;color:#d8b35a;}
+.uos-field-required{color:#d8b35a;}
+.uos-input{width:100%;min-height:52px;padding:12px 14px;border-radius:12px;border:1px solid var(--color-border);background:var(--uos-glass-1);color:inherit;font:inherit;font-size:16px;}
+.uos-input::placeholder{color:var(--color-text-muted);opacity:.8;}
+.uos-input:focus{outline:none;}
+.uos-input:focus-visible{border-color:var(--uos-hover-edge);box-shadow:var(--uos-focus-ring);}
+.uos-input:disabled{opacity:.55;cursor:not-allowed;}
+.uos-textarea{min-height:110px;resize:vertical;}
+.uos-input-wrap{position:relative;}
+.uos-input--with-action{padding-inline-end:48px;}
+.uos-input-action{position:absolute;inset-inline-end:6px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:36px;height:36px;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--color-text-muted);cursor:pointer;}
+.uos-input-action:hover{color:#d8b35a;border-color:var(--color-border);}
+.uos-input-action:focus-visible{outline:none;border-color:var(--uos-hover-edge);box-shadow:var(--uos-focus-ring);}
+select.uos-input{appearance:auto;}
+.uos-field-meta{min-height:18px;}
+.uos-field-helper{font-size:11px;color:var(--color-text-muted);line-height:1.6;}
+.uos-field-error{font-size:11px;color:#e08a85;font-weight:700;}
+.uos-field--error .uos-input{border-color:rgba(224,138,133,.6);}
+.uos-field--disabled{opacity:.7;}
+@media(max-width:640px){.uos-form-grid{grid-template-columns:1fr;}.uos-form-section{padding:16px;}}
+/* Review list: label/value rows for wizard confirmation. */
+.uos-review-list{display:grid;gap:8px;}
+.uos-review-list>div{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--color-border);border-radius:12px;font-size:12px;}
+.uos-review-list span{color:var(--color-text-muted);}
+.uos-review-list strong{text-align:end;}
+/* Stepper: numbered dots, gold current, connectors, bilingual labels. */
+.uos-steps{list-style:none;margin:0 0 18px;padding:0;display:flex;align-items:flex-start;gap:4px;}
+.uos-step{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;position:relative;font-size:11px;}
+.uos-step::before{content:"";position:absolute;top:15px;inset-inline-start:calc(-50% + 18px);inset-inline-end:calc(50% + 18px);height:1px;background:var(--color-border);}
+.uos-step:first-child::before{display:none;}
+.uos-step-dot{display:grid;place-items:center;width:30px;height:30px;border-radius:9999px;border:1px solid var(--color-border);background:rgba(255,255,255,.04);color:var(--color-text-muted);font-weight:800;font-size:12px;}
+.uos-step--current .uos-step-dot{border-color:var(--uos-hover-edge);background:rgba(212,175,55,.14);color:#d8b35a;box-shadow:var(--uos-hover-glow);}
+.uos-step--done .uos-step-dot{border-color:rgba(104,209,158,.5);background:rgba(104,209,158,.12);color:#68d19e;}
+.uos-step--done::before{background:rgba(104,209,158,.4);}
+.uos-step-label{color:var(--color-text-muted);line-height:1.5;}
+.uos-step--current .uos-step-label{color:inherit;font-weight:800;}
+[dir="rtl"] .uos-step:first-child::before{display:none;}
+@media (prefers-reduced-motion:reduce){.uos-input,.uos-input-action{transition:none;}}

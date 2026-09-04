@@ -1,0 +1,18 @@
+.athlete-glass-card {
+  background: var(--athlete-surface-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--athlete-border);
+  border-radius: var(--athlete-radius-lg);
+  box-shadow: var(--athlete-shadow-card);
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.athlete-glass-card-interactive:hover {
+  border-color: var(--athlete-border-strong);
+  background: var(--athlete-surface-card-hover);
+  box-shadow: var(--athlete-shadow-card), var(--athlete-shadow-glow);
+  transform: translateY(-2px);
+}

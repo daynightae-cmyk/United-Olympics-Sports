@@ -1,0 +1,3 @@
+.athlete-radar-svg {
+  filter: drop-shadow(0 0 16px var(--athlete-gold-glow));
+}
