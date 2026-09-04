@@ -4,11 +4,27 @@ import { demoPlayers } from '../../data/demo/players';
 import { demoPrograms } from '../../data/demo/programs';
 import { demoSessions } from '../../data/demo/sessions';
 import { demoTrainingGroups } from '../../data/demo/trainingGroups';
-import { getGroup, getSport } from '../../data/demo/selectors';
+import { getGroup, getPlayer, getSport } from '../../data/demo/selectors';
 
-export const activePlayer = demoPlayers[0];
-export const activeParent = demoParents[0];
-export const activeCoach = demoCoaches[0];
+const requirePreviewPlayer = (id: string) => {
+  const player = getPlayer(id);
+  if (!player) throw new Error(`Missing preview player fixture: ${id}`);
+  return player;
+};
+const requirePreviewParent = (id: string) => {
+  const parent = demoParents.find(item => item.id === id);
+  if (!parent) throw new Error(`Missing preview parent fixture: ${id}`);
+  return parent;
+};
+const requirePreviewCoach = (id: string) => {
+  const coach = demoCoaches.find(item => item.id === id);
+  if (!coach) throw new Error(`Missing preview coach fixture: ${id}`);
+  return coach;
+};
+
+export const activePlayer = requirePreviewPlayer('player-demo-001');
+export const activeParent = requirePreviewParent('parent-preview-01');
+export const activeCoach = requirePreviewCoach('coach-preview-01');
 export const activePlayerSport = getSport(activePlayer.sportId);
 export const activePlayerGroup = getGroup(activePlayer.groupId);
 export const portalSessions = demoSessions;
