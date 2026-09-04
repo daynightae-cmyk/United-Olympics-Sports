@@ -3,10 +3,11 @@ import { chromium, firefox, webkit } from 'playwright';
 const baseURL = process.env.UOS_BASE_URL ?? 'http://127.0.0.1:4173';
 const uiSettingsKey = 'uos:ui-settings:v1';
 const previewPlayerId = 'player-demo-001';
+const previewParentId = 'parent-preview-01';
 
 const publicRoutes = ['/', '/about', '/sports', '/sports/football', '/sports/swimming', '/sports/basketball', '/sports/tennis', '/sports/gymnastics', '/sports/martial-arts', '/programs', '/programs/football-foundations', '/coaches', '/contact', '/route-that-must-404'];
 const playerRoutes = ['/player', '/player/login', '/player/auth/phone', '/player/auth/verify', '/player/phone', '/player/otp', '/player/home', '/player/schedule', '/player/schedule/session-demo-001', '/player/session/session-demo-001', '/player/attendance', '/player/performance', '/player/achievements', '/player/feedback', '/player/subscription', '/player/payments', '/player/documents', '/player/messages', '/player/notifications', '/player/profile', '/player/settings', '/player/route-that-must-404'];
-const parentRoutes = ['/parent', '/parent/children', '/parent/children/player-demo-001', '/parent/subscriptions', '/parent/documents', '/parent/messages', '/parent/schedule', '/parent/performance', '/parent/feedback', '/parent/payments', '/parent/profile', '/parent/route-that-must-404'];
+const parentRoutes = ['/parent', '/parent/login', '/parent/children', '/parent/children/player-demo-001', '/parent/schedule', '/parent/attendance', '/parent/performance', '/parent/feedback', '/parent/subscriptions', '/parent/payments', '/parent/documents', '/parent/messages', '/parent/notifications', '/parent/profile', '/parent/settings', '/parent/route-that-must-404'];
 const coachRoutes = ['/coach', '/coach/schedule', '/coach/groups', '/coach/groups/football-demo-u12', '/coach/evaluations', '/coach/players', '/coach/players/player-demo-001', '/coach/attendance', '/coach/programs', '/coach/messages', '/coach/profile', '/coach/route-that-must-404'];
 const adminRoutes = [
   '/admin',
@@ -47,7 +48,7 @@ const viewportMatrix = [
   { width: 1440, height: 900 },
   { width: 1920, height: 1080 },
 ];
-const responsiveRoutes = ['/', '/sports', '/player/login', '/player/home', '/parent', '/coach', '/admin', '/admin/players'];
+const responsiveRoutes = ['/', '/sports', '/player/login', '/player/home', '/parent/login', '/parent', '/parent/children', '/parent/payments', '/coach', '/admin', '/admin/players'];
 
 async function waitForServer() {
   let lastError;
@@ -63,17 +64,23 @@ async function waitForServer() {
   throw lastError ?? new Error(`Preview server did not become ready: ${baseURL}`);
 }
 
-function sessionBootstrap({ appearance = 'dark', rtl = false } = {}) {
-  return ({ playerId, settingsKey, theme, forceRtl }) => {
-    const authSession = {
+function sessionBootstrap() {
+  return ({ playerId, parentId, settingsKey, theme, forceRtl }) => {
+    const playerSession = {
       userId: `preview-user-${playerId}`,
       playerId,
       provider: 'preview',
       createdAt: new Date().toISOString(),
     };
-    localStorage.setItem('uos:player-portal:session', JSON.stringify(authSession));
+    const parentSession = {
+      parentId,
+      provider: 'preview',
+      createdAt: new Date().toISOString(),
+    };
+    localStorage.setItem('uos:player-portal:session', JSON.stringify(playerSession));
     localStorage.setItem('uos:player-portal:active-id', playerId);
     localStorage.setItem('uos:player-portal:auth', 'true');
+    localStorage.setItem('uos:parent-portal:session:v1', JSON.stringify(parentSession));
     localStorage.setItem(settingsKey, JSON.stringify({ appearance: theme, bilingualOrder: forceRtl ? 'ar-first' : 'en-first', density: 'comfortable', motion: 'reduced', fontScale: 'default', sidebarDefault: 'expanded' }));
     sessionStorage.setItem('uos:splash-seen', 'true');
     if (forceRtl) {
@@ -86,7 +93,7 @@ function sessionBootstrap({ appearance = 'dark', rtl = false } = {}) {
 
 async function createCheckedPage(browser, options = {}) {
   const context = await browser.newContext({ viewport: options.viewport ?? { width: 1440, height: 900 }, reducedMotion: 'reduce' });
-  await context.addInitScript(sessionBootstrap(options), { playerId: previewPlayerId, settingsKey: uiSettingsKey, theme: options.appearance ?? 'dark', forceRtl: Boolean(options.rtl) });
+  await context.addInitScript(sessionBootstrap(), { playerId: previewPlayerId, parentId: previewParentId, settingsKey: uiSettingsKey, theme: options.appearance ?? 'dark', forceRtl: Boolean(options.rtl) });
   const page = await context.newPage();
   const runtimeErrors = [];
   page.on('pageerror', (error) => runtimeErrors.push(`pageerror: ${error.message}`));
@@ -152,7 +159,7 @@ async function themeAndRtlSweep() {
   try {
     for (const variant of variants) {
       const { context, page, runtimeErrors } = await createCheckedPage(browser, { ...variant, viewport: { width: 390, height: 844 } });
-      for (const route of ['/', '/player/home', '/parent', '/coach', '/admin']) await assertRoute(page, runtimeErrors, route, true);
+      for (const route of ['/', '/player/home', '/parent', '/parent/settings', '/coach', '/admin']) await assertRoute(page, runtimeErrors, route, true);
       await context.close();
       console.log(`[theme] ${variant.label}: representative role routes passed`);
     }
