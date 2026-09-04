@@ -1,13 +1,17 @@
-import { ArrowRight, CheckCircle2, Filter, Plus, Search, SlidersHorizontal, UserRound } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Filter, Plus, SlidersHorizontal, UserRound } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { usePlayers } from '../../admin/data/adminHooks';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
-import { BmBadge, BmButton, BmDataTable, BmEmptyState, BmErrorState, BmFilterBar, BmFilterSelect, BmLoadingTable, BmModal, BmFormField, BmFormSelect, BmFormSection, BmPageHeader, type BmColumn } from '../../components/benchmark/BenchmarkComponents';
+import { BmBadge, BmButton, BmDataTable, BmDrawer, BmEmptyState, BmErrorState, BmFilterBar, BmFilterSelect, BmLoadingTable, BmPageHeader, type BmColumn } from '../../components/benchmark/BenchmarkComponents';
+import { UosFormSection, UosSelectField, UosSteps, UosTextField } from '../../components/fields/UosFields';
+import { UiDialog } from '../../components/ui/UiPrimitives';
 import type { PlayerViewModel } from '../../admin/data/viewModels';
 import { demoSports } from '../../data/demo/sports';
+import { demoTrainingGroups } from '../../data/demo/trainingGroups';
 import { getGroup, getSport } from '../../data/demo/selectors';
-import { User } from 'lucide-react';
+
+const PLAYER_WIZARD_STEPS = [bi('Identity', 'الهوية'), bi('Sport & Assignment', 'الرياضة والتكليف'), bi('Review', 'المراجعة')];
 
 export function AdminPlayersPage() {
   const [query, setQuery] = useState('');
@@ -16,6 +20,13 @@ export function AdminPlayersPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [notice, setNotice] = useState(false);
+  const [wizardStep, setWizardStep] = useState(0);
+  const [draftNameEn, setDraftNameEn] = useState('');
+  const [draftNameAr, setDraftNameAr] = useState('');
+  const [draftSport, setDraftSport] = useState('');
+  const [draftGroup, setDraftGroup] = useState('');
+  const [draftAge, setDraftAge] = useState('');
+  const [draftError, setDraftError] = useState<{ en: string; ar: string } | null>(null);
   const [sortBy, setSortBy] = useState('nameEn');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -81,7 +92,7 @@ export function AdminPlayersPage() {
       title={bi('Player Directory', 'دليل اللاعبين')}
       description={bi('A high-density roster view linked to sports, groups, attendance and performance preview data.', 'عرض قائمة عالي الكثافة مرتبط بالرياضات والمجموعات والحضور وبيانات الأداء التجريبية.')}
       icon={<UserRound aria-hidden="true" />}
-      actions={<BmButton variant="primary" onClick={() => setShowForm(true)}><Plus aria-hidden="true" /><BilingualText value={bi('Add Player', 'إضافة لاعب')} /></BmButton>}
+      actions={<BmButton variant="primary" onClick={() => { setWizardStep(0); setDraftError(null); setShowForm(true); }}><Plus aria-hidden="true" /><BilingualText value={bi('Add Player', 'إضافة لاعب')} /></BmButton>}
     />
 
     {notice && <div className="bm-badge bm-badge-info" style={{ marginBottom: '16px' }} role="status"><BilingualText value={bi('Preview record prepared locally', 'تم تجهيز السجل التجريبي محليًا')} /></div>}
@@ -131,24 +142,63 @@ export function AdminPlayersPage() {
       )}
     </div>
 
-    <BmModal
+    <BmDrawer
+      open={drawerOpen}
+      onClose={() => setDrawerOpen(false)}
+      title={bi('Player Filters', 'فلاتر اللاعبين')}
+      description={bi('Search, sport and status scope for the player directory.', 'البحث ونطاق الرياضة والحالة لدليل اللاعبين.')}
+      footer={<BmButton variant="primary" onClick={() => setDrawerOpen(false)}><BilingualText value={bi('Show results', 'عرض النتائج')} /></BmButton>}
+    >
+      <div className="bm-field">
+        <label className="bm-field-label" htmlFor="player-drawer-search"><BilingualText value={bi('Search', 'البحث')} /></label>
+        <input id="player-drawer-search" className="bm-field-input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search players or IDs | البحث عن اللاعبين أو المعرفات" />
+      </div>
+      <BmFilterSelect label={bi('Sport', 'الرياضة')} value={sport} onChange={setSport} options={[{ value: 'all', label: bi('All sports', 'كل الرياضات') }, ...demoSports.map(s => ({ value: s.id, label: s.name }))]} />
+      <BmFilterSelect label={bi('Status', 'الحالة')} value={status} onChange={setStatus} options={[{ value: 'all', label: bi('All statuses', 'كل الحالات') }, { value: 'active', label: bi('Active', 'نشط') }, { value: 'inactive', label: bi('Inactive', 'غير نشط') }]} />
+    </BmDrawer>
+
+    <UiDialog
       open={showForm}
       onClose={() => setShowForm(false)}
       title={bi('Add Player Preview', 'معاينة إضافة لاعب')}
-      description={bi('This local form demonstrates the future intake flow without claiming persistence.', 'يوضح هذا النموذج المحلي مسار الإدخال المستقبلي دون ادعاء الحفظ الدائم.')}
-      footer={
-        <>
-          <BmButton variant="ghost" onClick={() => setShowForm(false)}><BilingualText value={bi('Cancel', 'إلغاء')} /></BmButton>
-          <BmButton variant="primary" onClick={() => { setShowForm(false); setNotice(true); }}><BilingualText value={bi('Prepare Preview', 'تجهيز المعاينة')} /></BmButton>
-        </>
-      }
+      description={bi('A local intake preview. Nothing is saved to a backend.', 'معاينة إدخال محلية. لا يتم حفظ أي شيء في نظام خلفي.')}
     >
-      <BmFormSection icon={<User aria-hidden="true" />} title={bi('Identity | الهوية', 'Identity | الهوية')} cols={2}>
-        <BmFormField label={bi('Player name (English)', 'اسم اللاعب (إنجليزي)')} icon={<User aria-hidden="true" />} placeholder="Player name" required helper={bi('As shown on ID', 'كما هو في الهوية')} />
-        <BmFormField label={bi('Player name (Arabic)', 'اسم اللاعب (عربي)')} placeholder="اسم اللاعب" required />
-        <BmFormSelect label={bi('Sport', 'الرياضة')} icon={<UserRound aria-hidden="true" />} required options={demoSports.map(s => ({ value: s.id, label: s.name }))} />
-        <BmFormField label={bi('Age', 'العمر')} type="number" placeholder="10" />
-      </BmFormSection>
-    </BmModal>
+      <UosSteps steps={PLAYER_WIZARD_STEPS} current={wizardStep} />
+      {wizardStep === 0 && (
+        <UosFormSection title={bi('Identity', 'الهوية')} icon={<UserRound size={17} />} description={bi('The athlete name in both languages, plus age.', 'اسم الرياضي باللغتين، إضافة إلى العمر.')}>
+          <UosTextField label={bi('Player name (English)', 'اسم اللاعب (إنجليزي)')} icon={<UserRound size={16} />} value={draftNameEn} onChange={(event) => setDraftNameEn(event.target.value)} required autoComplete="off" placeholder="Player name" helper={bi('As shown on ID', 'كما هو في الهوية')} error={draftError} />
+          <UosTextField label={bi('Player name (Arabic)', 'اسم اللاعب (عربي)')} value={draftNameAr} onChange={(event) => setDraftNameAr(event.target.value)} required autoComplete="off" placeholder="اسم اللاعب" />
+          <UosTextField label={bi('Age', 'العمر')} value={draftAge} onChange={(event) => setDraftAge(event.target.value.replace(/\D/g, '').slice(0, 2))} inputMode="numeric" autoComplete="off" placeholder="10" helper={bi('Optional; numbers only.', 'اختياري؛ أرقام فقط.')} />
+        </UosFormSection>
+      )}
+      {wizardStep === 1 && (
+        <UosFormSection title={bi('Sport & Assignment', 'الرياضة والتكليف')} icon={<UserRound size={17} />} description={bi('Sport first, then an optional training group in that sport.', 'الرياضة أولًا، ثم مجموعة تدريب اختيارية في الرياضة نفسها.')}>
+          <UosSelectField label={bi('Sport', 'الرياضة')} icon={<UserRound size={16} />} value={draftSport} onChange={(event) => { setDraftSport(event.target.value); setDraftGroup(''); }} required placeholder={bi('Choose sport', 'اختر الرياضة')} options={demoSports.map((s) => ({ value: s.id, label: s.name }))} error={draftError} />
+          <UosSelectField label={bi('Training group (optional)', 'المجموعة التدريبية (اختياري)')} value={draftGroup} onChange={(event) => setDraftGroup(event.target.value)} placeholder={bi('Choose group', 'اختر المجموعة')} options={demoTrainingGroups.filter((group) => !draftSport || group.sportId === draftSport).map((group) => ({ value: group.id, label: group.name }))} helper={bi('Groups narrow once a sport is chosen.', 'تضيق المجموعات بعد اختيار الرياضة.')} />
+        </UosFormSection>
+      )}
+      {wizardStep === 2 && (
+        <UosFormSection title={bi('Review', 'المراجعة')} icon={<CheckCircle2 size={17} />} description={bi('Confirm the preview record before preparing it locally.', 'أكد سجل المعاينة قبل تجهيزه محليًا.')}>
+          <div className="uos-review-list">
+            <div><span><BilingualText value={bi('Name', 'الاسم')} /></span><strong>{draftNameEn || '—'} · {draftNameAr || '—'}</strong></div>
+            <div><span><BilingualText value={bi('Sport', 'الرياضة')} /></span><strong>{demoSports.find((s) => s.id === draftSport)?.name.en ?? '—'}</strong></div>
+            <div><span><BilingualText value={bi('Group', 'المجموعة')} /></span><strong>{demoTrainingGroups.find((group) => group.id === draftGroup)?.name.en ?? bi('Not assigned', 'غير معين').en}</strong></div>
+          </div>
+          <p className="uos-field-helper"><BilingualText value={bi('Preparing stores nothing outside this browser session.', 'التجهيز لا يحفظ أي شيء خارج جلسة المتصفح هذه.')} /></p>
+        </UosFormSection>
+      )}
+      <div className="dialog-actions" style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+        <button type="button" className="uos-btn-ghost uos-touch" onClick={() => setShowForm(false)}><BilingualText value={bi('Cancel', 'إلغاء')} /></button>
+        {wizardStep > 0 && <button type="button" className="uos-btn-ghost uos-touch" onClick={() => { setDraftError(null); setWizardStep((step) => step - 1); }}><BilingualText value={bi('Back', 'رجوع')} /></button>}
+        {wizardStep < PLAYER_WIZARD_STEPS.length - 1
+          ? <button type="button" className="uos-btn-primary uos-touch" onClick={() => {
+              if (wizardStep === 0 && (!draftNameEn.trim() || !draftNameAr.trim())) { setDraftError({ en: 'Enter the player name in both languages to continue.', ar: 'أدخل اسم اللاعب باللغتين للمتابعة.' }); return; }
+              if (wizardStep === 1 && !draftSport) { setDraftError({ en: 'Choose a sport to continue.', ar: 'اختر الرياضة للمتابعة.' }); return; }
+              setDraftError(null);
+              setWizardStep((step) => step + 1);
+            }}><BilingualText value={bi('Continue', 'متابعة')} /></button>
+          : <button type="button" className="uos-btn-primary uos-touch" onClick={() => { setShowForm(false); setNotice(true); }}><BilingualText value={bi('Prepare Preview', 'تجهيز المعاينة')} /></button>}
+      </div>
+    </UiDialog>
   </div>;
 }

@@ -21,6 +21,7 @@ export function AdminDashboardPage() {
   const players = scopedBranches.length ? demoPlayers.filter(player => playerIds.has(player.id)) : [];
   const groups = demoTrainingGroups.filter(group => (sport === 'all' || group.sportId === sport) && (scopedBranches.length ? scopedBranches.some(item => item.groupIds.includes(group.id)) : false));
   const sessions = demoSessions.filter(session => (sport === 'all' || session.sportId === sport) && groups.some(group => group.id === session.groupId));
+  const upcomingSessions = sessions.filter(session => new Date(session.startsAt).getTime() >= Date.now());
   const attendance = players.reduce((sum, player) => sum + ((player.attendanceSummary?.attended ?? 0) / Math.max(player.attendanceSummary?.scheduled ?? 1, 1)), 0) / Math.max(players.length, 1) * 100;
   const collected = previewPayments.filter(payment => payment.status === 'completed' && (!players.length || playerIds.has(payment.playerId))).reduce((sum, payment) => sum + payment.amount, 0);
   const activeSubscriptions = previewSubscriptions.filter(subscription => subscription.status === 'active' && (!players.length || playerIds.has(subscription.playerId))).length;
@@ -51,8 +52,8 @@ export function AdminDashboardPage() {
       <BmMetricCard icon={<Trophy aria-hidden="true" />} label={bi('Sports', 'الرياضات')} value={new Set(scopedBranches.flatMap(item => item.sportIds)).size} detail={bi('Active sport reach', 'انتشار الرياضات النشطة')} />
       <BmMetricCard icon={<UsersRound aria-hidden="true" />} label={bi('Players', 'اللاعبون')} value={players.length} detail={bi('Roster records', 'سجلات القائمة')} tier="featured" />
       <BmMetricCard icon={<Medal aria-hidden="true" />} label={bi('Training Groups', 'مجموعات التدريب')} value={groups.length} detail={bi('Operational teams', 'الفرق التشغيلية')} />
-      <BmMetricCard icon={<CalendarClock aria-hidden="true" />} label={bi('Upcoming Sessions', 'الحصص القادمة')} value={sessions.length} detail={bi('Preview calendar', 'تقويم تجريبي')} tier="featured" />
-      <BmMetricCard icon={<CheckCircle2 aria-hidden="true" />} label={bi('Attendance Rate', 'معدل الحضور')} value={`${Math.round(attendance)}%`} detail={bi('Derived from roster', 'مشتق من القائمة')} trend="+6%" trendDirection="up" />
+      <BmMetricCard icon={<CalendarClock aria-hidden="true" />} label={bi('Upcoming Sessions', 'الحصص القادمة')} value={upcomingSessions.length} detail={bi('Preview calendar', 'تقويم تجريبي')} tier="featured" />
+      <BmMetricCard icon={<CheckCircle2 aria-hidden="true" />} label={bi('Attendance Rate', 'معدل الحضور')} value={`${Math.round(attendance)}%`} detail={bi('Derived from roster', 'مشتق من القائمة')} />
       <BmMetricCard icon={<CircleDollarSign aria-hidden="true" />} label={bi('Collected Preview', 'المحصل التجريبي')} value={`${collected}`} detail={bi('AED · completed rows', 'درهم · الصفوف المكتملة')} tier="featured" />
     </div>
 
@@ -113,7 +114,7 @@ export function AdminDashboardPage() {
       <BmSectionLabel num="02" icon={<MapPin aria-hidden="true" />} title={bi('Branch Performance', 'أداء الفروع')} />
       <div className="bm-grid bm-grid-2">
         {scopedBranches.map(item => {
-          const readiness = Math.round((item.sportIds.length / Math.max(demoSports.length, 1) * 30) + (item.programIds.length / 4 * 25) + (item.groupIds.length / 4 * 25) + (item.playerIds.length / 8 * 20));
+          const branchActive = item.status === 'active';
           return (
             <div key={item.id} className="bm-card bm-card-clickable" style={{ padding: '22px' }} >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
@@ -121,22 +122,13 @@ export function AdminDashboardPage() {
                   <strong style={{ fontSize: '16px' }}><BilingualText value={item.name} /></strong>
                   <div style={{ fontSize: '10px', color: 'var(--uos-text-muted, #a5a29c)', marginTop: '4px' }}>{item.id}</div>
                 </div>
-                <BmBadge tone="success" label={bi('Active', 'نشط')} icon={<CheckCircle2 aria-hidden="true" />} />
+                <BmBadge tone={branchActive ? 'success' : 'neutral'} label={branchActive ? bi('Active', 'نشط') : bi('Inactive', 'غير نشط')} icon={branchActive ? <CheckCircle2 aria-hidden="true" /> : undefined} />
               </div>
               <div className="bm-grid bm-grid-4" style={{ gap: '10px', marginBottom: '14px' }}>
                 <div><span style={{ fontSize: '9px', color: 'var(--uos-text-muted, #a5a29c)' }}><BilingualText value={bi('Players', 'اللاعبون')} /></span><strong style={{ display: 'block', fontSize: '18px' }}>{item.playerIds.length}</strong></div>
                 <div><span style={{ fontSize: '9px', color: 'var(--uos-text-muted, #a5a29c)' }}><BilingualText value={bi('Coaches', 'المدربون')} /></span><strong style={{ display: 'block', fontSize: '18px' }}>{item.coachIds.length}</strong></div>
                 <div><span style={{ fontSize: '9px', color: 'var(--uos-text-muted, #a5a29c)' }}><BilingualText value={bi('Programs', 'البرامج')} /></span><strong style={{ display: 'block', fontSize: '18px' }}>{item.programIds.length}</strong></div>
-                <div><span style={{ fontSize: '9px', color: 'var(--uos-text-muted, #a5a29c)' }}><BilingualText value={bi('Sports', 'الرياضات')} /></span><strong style={{ display: 'block', fontSize: '18px' }}>{item.sportIds.length}</strong></div>
-              </div>
-              <div style={{ marginBottom: '14px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '10px', color: 'var(--uos-text-muted, #a5a29c)' }}><BilingualText value={bi('Readiness', 'الجاهزية')} /></span>
-                  <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--bm-gold, #d8b35a)' }}>{readiness}%</span>
-                </div>
-                <div style={{ height: '6px', borderRadius: '999px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${readiness}%`, borderRadius: '999px', background: 'linear-gradient(90deg, #d4b23a, #f0c75e)' }} />
-                </div>
+                <div><span style={{ fontSize: '9px', color: 'var(--uos-text-muted, #a5a29c)' }}><BilingualText value={bi('Groups', 'المجموعات')} /></span><strong style={{ display: 'block', fontSize: '18px' }}>{item.groupIds.length}</strong></div>
               </div>
               <Link to={`/admin/branches/${item.id}`} className="bm-btn bm-btn-tertiary" style={{ width: '100%' }}>
                 <BilingualText value={bi('Open Branch Cockpit', 'فتح مركز الفرع')} />

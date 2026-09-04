@@ -4,6 +4,7 @@ import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
 import { useUiSettings } from '../../../ui/theme/useUiSettings';
 import { formatPlayerDateTime } from '../foundation/playerLocale';
 import { PlayerPortrait } from './PlayerPortrait';
+import { Sports3DIcon } from '../../../design/sports3d';
 import { PlayerDataStat } from './PlayerDataStat';
 import type { Session } from '../../../domain/contracts';
 
@@ -55,6 +56,11 @@ export function PlayerAthleteIdentityCard({
           <span className="cgpt-athlete-id__portrait-ring" aria-hidden="true" />
         </div>
         <div className="cgpt-athlete-id__monogram" aria-hidden="true">UOS</div>
+        {sport?.id === 'football' || sport?.id === 'basketball' || sport?.id === 'swimming' || sport?.id === 'tennis' ? (
+          <span className="athlete-3d-secondary" aria-hidden="true">
+            <Sports3DIcon sport={sport.id as 'football' | 'basketball' | 'swimming' | 'tennis'} size="sm" decorative />
+          </span>
+        ) : null}
       </div>
 
       <div className="cgpt-athlete-id__content">

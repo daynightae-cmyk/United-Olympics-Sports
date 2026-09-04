@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Phone, ArrowLeft, AlertCircle, Sparkles } from 'lucide-react';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
+import { UosSteps } from '../../../components/fields/UosFields';
 import { productionAuthGateway } from './PlayerAuthGateway';
 
 const COUNTRY_CODES = [
@@ -79,6 +80,7 @@ export function PlayerPhoneAuthPage() {
       {/* Main Card */}
       <main className="relative z-10 w-full max-w-md mx-auto px-6 py-12 flex-1 flex items-center justify-center">
         <div className="athlete-glass-card w-full p-8 border border-amber-400/30 shadow-2xl">
+          <UosSteps steps={[bi('Mobile number', 'رقم الهاتف'), bi('Verification code', 'رمز التحقق')]} current={0} />
           <div className="text-center mb-6">
             <span className="w-12 h-12 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center mx-auto mb-3 text-amber-400">
               <Phone size={22} />

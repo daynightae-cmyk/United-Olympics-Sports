@@ -231,7 +231,7 @@ export function BenchmarkShowcasePage() {
 
         <div className="bm-grid bm-grid-2" style={{ marginBottom: 'clamp(28px, 4vw, 44px)' }}>
           <BmScheduleCard time="16:00 — 17:30" title={bi('Football Training · U12', 'تدريب كرة القدم · تحت 12')} meta={[bi('Branch: Dubai', 'الفرع: دبي'), bi('Coach: Ahmed', 'المدرب: أحمد')]} accentColor="#8eb34e" />
-          <BmActivityCard icon={<Award aria-hidden="true" />} title={bi('New achievement unlocked', 'إنجاز جديد')} subtitle={bi('Player performance milestone reached', 'تم الوصول لمعلم أداء اللاعب')} time="2h ago" />
+          <BmActivityCard icon={<Award aria-hidden="true" />} title={bi('New achievement unlocked', 'إنجاز جديد')} subtitle={bi('Player performance milestone reached', 'تم الوصول لمعلم أداء اللاعب')} time={bi('2h ago', 'منذ ساعتين')} />
         </div>
 
         {/* B — Table System */}

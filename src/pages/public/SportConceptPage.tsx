@@ -2,6 +2,7 @@ import { ArrowRight, Focus, Route, ShieldCheck, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { BilingualText as BilingualValue } from '../../domain/contracts';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
+import { Sports3DIcon, Sports3DStage } from '../../design/sports3d';
 import { PreviewBadge, SportConceptVisual } from '../../components/owner-demo/OwnerDemoVisuals';
 import '../../styles/owner-demo.css';
 
@@ -15,7 +16,7 @@ const concepts: Record<string, Concept> = {
 export function SportConceptPage({ sportId }: { sportId: 'tennis' | 'gymnastics' | 'martial-arts' }) {
   const concept = concepts[sportId];
   return <div className={`od-public-page od-concept-sport sport-${sportId}`}>
-    <section className="od-concept-hero"><div className="od-concept-copy"><PreviewBadge label={bi('Sport Concept Preview', 'معاينة تصور الرياضة')} /><span className="od-kicker"><BilingualText value={concept.name} /></span><h1><BilingualText value={concept.headline} /></h1><p><BilingualText value={concept.philosophy} /></p><div className="od-concept-actions"><Link className="button primary" to="/programs"><BilingualText value={bi('Explore Programs', 'استكشف البرامج')} /><ArrowRight /></Link><Link className="button secondary" to="/contact"><BilingualText value={bi('Register Interest', 'إبداء الاهتمام')} /></Link></div></div><SportConceptVisual sportId={sportId} /></section>
+    <section className="od-concept-hero"><div className="od-concept-copy"><PreviewBadge label={bi('Sport Concept Preview', 'معاينة تصور الرياضة')} />{sportId === 'tennis' ? <Sports3DStage sport="tennis" variant="badge" label="Tennis identity | هوية التنس"><Sports3DIcon sport="tennis" size="md" decorative /></Sports3DStage> : null}<span className="od-kicker"><BilingualText value={concept.name} /></span><h1><BilingualText value={concept.headline} /></h1><p><BilingualText value={concept.philosophy} /></p><div className="od-concept-actions"><Link className="button primary" to="/programs"><BilingualText value={bi('Explore Programs', 'استكشف البرامج')} /><ArrowRight /></Link><Link className="button secondary" to="/contact"><BilingualText value={bi('Register Interest', 'إبداء الاهتمام')} /></Link></div></div><SportConceptVisual sportId={sportId} /></section>
 
     <section className="od-detail-section"><div className="od-section-heading"><span><BilingualText value={bi('Training Philosophy', 'فلسفة التدريب')} /></span><h2><BilingualText value={bi('A premium visual direction without invented operational claims', 'اتجاه بصري احترافي دون ادعاءات تشغيلية مختلقة')} /></h2></div><div className="od-concept-pillars">{concept.pillars.map((pillar, index) => <article key={pillar.en}><span>{String(index + 1).padStart(2, '0')}</span><Focus /><h3><BilingualText value={pillar} /></h3></article>)}</div></section>
 

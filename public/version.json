@@ -1,0 +1,8 @@
+{
+  "version": "0.0.0",
+  "build": "preview",
+  "releasedAt": "2026-09-04",
+  "minimumSupportedVersion": "0.0.0",
+  "title": { "en": "Preview build", "ar": "نسخة المعاينة" },
+  "notes": { "en": "You are on the latest preview build.", "ar": "أنت على أحدث نسخة معاينة." }
+}

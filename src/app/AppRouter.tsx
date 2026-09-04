@@ -5,6 +5,8 @@ import { ParentPortalRouter } from '../portals/ParentPortalRouter';
 import { CoachPortalRouter } from '../portals/CoachPortalRouter';
 import { PublicSite } from '../pages/public/PublicSite';
 import { BenchmarkShowcasePage } from '../pages/benchmark/BenchmarkShowcasePage';
+import { UnitedAssistant } from '../assistant/UnitedAssistant';
+import { UpdateToast } from '../platform/UpdateToast';
 
 export function AppRouter() {
   return (
@@ -17,6 +19,8 @@ export function AppRouter() {
         <Route path="/coach/*" element={<CoachPortalRouter />} />
         <Route path="*" element={<PublicSite />} />
       </Routes>
+      <UnitedAssistant />
+      <UpdateToast />
     </BrowserRouter>
   );
 }

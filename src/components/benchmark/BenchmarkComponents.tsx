@@ -20,6 +20,7 @@ import {
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 import { BilingualText, bi } from '../bilingual/BilingualText';
@@ -351,7 +352,7 @@ export function BmActivityCard({
   icon: ReactNode;
   title: BiValue;
   subtitle: BiValue;
-  time: string;
+  time: BiValue;
   tier?: CardTier;
 }) {
   return (
@@ -366,7 +367,7 @@ export function BmActivityCard({
             <BilingualText value={subtitle} />
           </small>
         </div>
-        <span className="bm-activity-time">{time}</span>
+        <span className="bm-activity-time"><BilingualText value={time} /></span>
       </div>
     </BmCard>
   );
@@ -807,17 +808,28 @@ export function BmModal({
   footer?: ReactNode;
   onClose: () => void;
 }) {
+  const modalRef = useRef<HTMLElement>(null);
+  const restoreRef = useRef<Element | null>(null);
   useEffect(() => {
     if (!open) return;
+    restoreRef.current = document.activeElement;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const frame = requestAnimationFrame(() => modalRef.current?.focus());
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previousOverflow;
+      cancelAnimationFrame(frame);
+      if (restoreRef.current instanceof HTMLElement) restoreRef.current.focus();
+    };
   }, [onClose, open]);
   if (!open) return null;
   return (
     <div className="bm-modal-layer" role="presentation">
-      <button className="bm-modal-backdrop" type="button" aria-label="Close dialog | إغلاق النافذة" onClick={onClose} />
-      <section className="bm-modal" role="dialog" aria-modal="true" aria-labelledby="bm-modal-title">
+      <div className="bm-modal-backdrop" onClick={onClose} aria-hidden="true" />
+      <section ref={modalRef} tabIndex={-1} className="bm-modal uos-focus-quiet" role="dialog" aria-modal="true" aria-labelledby="bm-modal-title">
         <div className="bm-modal-head">
           <div>
             <h2 id="bm-modal-title">
@@ -855,17 +867,28 @@ export function BmDrawer({
   footer?: ReactNode;
   onClose: () => void;
 }) {
+  const drawerRef = useRef<HTMLElement>(null);
+  const restoreRef = useRef<Element | null>(null);
   useEffect(() => {
     if (!open) return;
+    restoreRef.current = document.activeElement;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const frame = requestAnimationFrame(() => drawerRef.current?.focus());
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previousOverflow;
+      cancelAnimationFrame(frame);
+      if (restoreRef.current instanceof HTMLElement) restoreRef.current.focus();
+    };
   }, [onClose, open]);
   if (!open) return null;
   return (
     <div className="bm-drawer-layer" role="presentation">
-      <button className="bm-drawer-backdrop" type="button" aria-label="Close drawer | إغلاق اللوحة" onClick={onClose} />
-      <aside className="bm-drawer" role="dialog" aria-modal="true" aria-labelledby="bm-drawer-title">
+      <div className="bm-drawer-backdrop" onClick={onClose} aria-hidden="true" />
+      <aside ref={drawerRef} tabIndex={-1} className="bm-drawer uos-focus-quiet" role="dialog" aria-modal="true" aria-labelledby="bm-drawer-title">
         <div className="bm-drawer-head">
           <div>
             <h2 id="bm-drawer-title">
@@ -1028,21 +1051,34 @@ export function BmDataTable<T extends { id: string }>({
                     />
                   </th>
                 )}
-                {columns.map((col) => (
-                  <th
-                    key={col.key}
-                    className={`${col.sortable ? 'bm-sortable' : ''} ${sortBy === col.key ? 'bm-sorted' : ''}`.trim()}
-                    style={col.width ? { width: col.width } : undefined}
-                    onClick={col.sortable ? () => onSort?.(col.key) : undefined}
-                  >
-                    <BilingualText value={col.label} />
-                    {col.sortable && (
-                      <span className="bm-sort-icon">
-                        {sortBy === col.key && sortDir === 'asc' ? <ChevronUp aria-hidden="true" /> : <ChevronDown aria-hidden="true" />}
-                      </span>
-                    )}
-                  </th>
-                ))}
+                {columns.map((col) => {
+                  const sorted = sortBy === col.key;
+                  const nextDir = sorted && sortDir === 'asc' ? 'descending' : 'ascending';
+                  return (
+                    <th
+                      key={col.key}
+                      className={`${col.sortable ? 'bm-sortable' : ''} ${sorted ? 'bm-sorted' : ''}`.trim()}
+                      style={col.width ? { width: col.width } : undefined}
+                      aria-sort={col.sortable ? (sorted ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none') : undefined}
+                    >
+                      {col.sortable ? (
+                        <button
+                          type="button"
+                          className="bm-sort-btn"
+                          onClick={() => onSort?.(col.key)}
+                          aria-label={`${col.label.en} — sort ${nextDir} | ${col.label.ar} — ترتيب ${sorted && sortDir === 'asc' ? 'تنازلي' : 'تصاعدي'}`}
+                        >
+                          <BilingualText value={col.label} />
+                          <span className="bm-sort-icon">
+                            {sorted && sortDir === 'asc' ? <ChevronUp aria-hidden="true" /> : <ChevronDown aria-hidden="true" />}
+                          </span>
+                        </button>
+                      ) : (
+                        <BilingualText value={col.label} />
+                      )}
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>

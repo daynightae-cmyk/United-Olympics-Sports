@@ -150,41 +150,45 @@ export function PlayerLoginPage() {
             </div>
           )}
 
+          {/* Production providers: text-only while the gateway is unconfigured.
+              No provider image assets are bundled; no unofficial marks are drawn.
+              Tapping surfaces the gateway's truthful AUTH_SERVICE_UNCONFIGURED error. */}
+          <p id="production-auth-status" style={{ margin: '0 0 12px', padding: '10px 12px', borderRadius: '12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#8a8780', fontSize: '11px', lineHeight: 1.7 }}>
+            <BilingualText value={bi('Production sign-in is not configured in this environment. Tapping a provider shows its honest status.', 'تسجيل الدخول الإنتاجي غير مهيأ في هذه البيئة. الضغط على أي موفر يعرض حالته الحقيقية.')} />
+          </p>
           <div className="bm-login-fields">
             <button
               type="button"
               onClick={handleProductionGoogle}
               disabled={loading}
+              aria-describedby="production-auth-status"
               style={{
-                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px',
-                padding: '12px 16px', borderRadius: '12px', background: '#fff', color: '#1a1a1a',
-                fontWeight: 600, fontSize: '13px', border: '0', cursor: loading ? 'not-allowed' : 'pointer',
+                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                padding: '12px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.07)', color: '#c9c6bf',
+                fontWeight: 600, fontSize: '13px', border: '1px solid rgba(255,255,255,0.1)', cursor: loading ? 'not-allowed' : 'pointer',
                 transition: 'background 160ms ease, transform 160ms ease',
                 opacity: loading ? 0.6 : 1,
               }}
-              onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = '#f5f5f5'; }}
-              onMouseLeave={(e) => { if (!loading) e.currentTarget.style.background = '#fff'; }}
             >
-              <img src="/brand/google-logo.svg" alt="Google" style={{ width: '16px', height: '16px' }} onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} />
               <span><BilingualText value={bi('Continue with Google', 'المتابعة باستخدام Google')} /></span>
+              <span style={{ fontSize: '9px', textTransform: 'uppercase', fontWeight: 700, padding: '3px 8px', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.15)', color: '#8a8780' }}><BilingualText value={bi('Not configured', 'غير مهيأة')} /></span>
             </button>
 
             <button
               type="button"
               onClick={handleProductionApple}
               disabled={loading}
+              aria-describedby="production-auth-status"
               style={{
-                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px',
-                padding: '12px 16px', borderRadius: '12px', background: '#000', color: '#fff',
-                fontWeight: 600, fontSize: '13px', border: '1px solid rgba(255,255,255,0.15)',
+                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                padding: '12px 16px', borderRadius: '12px', background: 'rgba(255,255,255,0.04)', color: '#c9c6bf',
+                fontWeight: 600, fontSize: '13px', border: '1px solid rgba(255,255,255,0.1)',
                 cursor: loading ? 'not-allowed' : 'pointer', transition: 'background 160ms ease',
                 opacity: loading ? 0.6 : 1,
               }}
-              onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = '#1a1a1a'; }}
-              onMouseLeave={(e) => { if (!loading) e.currentTarget.style.background = '#000'; }}
             >
-              <img src="/brand/apple-logo.svg" alt="Apple" style={{ width: '16px', height: '16px' }} onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} />
               <span><BilingualText value={bi('Continue with Apple', 'المتابعة باستخدام Apple')} /></span>
+              <span style={{ fontSize: '9px', textTransform: 'uppercase', fontWeight: 700, padding: '3px 8px', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.15)', color: '#8a8780' }}><BilingualText value={bi('Not configured', 'غير مهيأة')} /></span>
             </button>
 
             <div className="bm-login-divider">

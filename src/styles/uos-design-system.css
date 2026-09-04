@@ -1,0 +1,51 @@
+/* =====================================================================
+   United Olympics Sports — design token & interaction layer (Mission 10X)
+   Owns ONLY: glass levels, motion, focus, hover-light, z-index, safe-area,
+   type scale helpers. Colors/surfaces live in theme-closure.css + visual-system.css.
+   No !important. Additive only.
+   ===================================================================== */
+:root{
+  --uos-font-en:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --uos-font-ar:"Cairo","DM Sans",system-ui,sans-serif;
+  --uos-font-mono:"DM Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --uos-radius-sm:10px;--uos-radius-md:14px;--uos-radius-lg:18px;--uos-radius-xl:22px;
+  --uos-motion-fast:140ms;--uos-motion-base:200ms;--uos-motion-slow:300ms;
+  --uos-ease:cubic-bezier(.22,.61,.21,1);
+  --uos-z-toast:60;--uos-z-drawer:70;--uos-z-dialog:80;--uos-z-assistant:90;--uos-z-splash:100;
+  --uos-hover-edge:rgba(212,175,55,.32);
+  --uos-hover-glow:0 10px 28px rgba(212,175,55,.16);
+  --uos-focus-ring:0 0 0 3px rgba(212,175,55,.28);
+  --uos-gold-reflection:linear-gradient(135deg,rgba(233,216,166,.5),rgba(201,162,39,.12));
+  /* Glass levels */
+  --uos-glass-1:rgba(255,255,255,.03);
+  --uos-glass-2:rgba(255,255,255,.055);
+  --uos-glass-3:rgba(255,255,255,.08);
+  --uos-glass-4:rgba(10,12,18,.72);
+  --uos-glass-border:rgba(212,175,55,.16);
+  --uos-glass-blur-sm:blur(8px);--uos-glass-blur-md:blur(14px);--uos-glass-blur-lg:blur(22px);
+}
+.uos-glass-1{background:var(--uos-glass-1);border:1px solid var(--color-border);backdrop-filter:var(--uos-glass-blur-sm);-webkit-backdrop-filter:var(--uos-glass-blur-sm);}
+.uos-glass-2{background:var(--uos-glass-2);border:1px solid var(--color-border);backdrop-filter:var(--uos-glass-blur-md);-webkit-backdrop-filter:var(--uos-glass-blur-md);}
+.uos-glass-3{background:var(--uos-glass-3);border:1px solid var(--uos-glass-border);backdrop-filter:var(--uos-glass-blur-md);-webkit-backdrop-filter:var(--uos-glass-blur-md);box-shadow:0 18px 44px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.08);}
+.uos-glass-4{background:var(--uos-glass-4);border:1px solid var(--uos-glass-border);backdrop-filter:var(--uos-glass-blur-lg);-webkit-backdrop-filter:var(--uos-glass-blur-lg);box-shadow:0 24px 60px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.1);}
+@media (prefers-reduced-transparency:reduce){.uos-glass-1,.uos-glass-2,.uos-glass-3{background:var(--color-surface-2);backdrop-filter:none;-webkit-backdrop-filter:none;}.uos-glass-4{background:#0a0c12;backdrop-filter:none;-webkit-backdrop-filter:none;}}
+/* Interactive halo: restrained luminous hover for fields/cards/buttons. */
+.uos-halo{transition:border-color var(--uos-motion-base) var(--uos-ease),box-shadow var(--uos-motion-base) var(--uos-ease),transform var(--uos-motion-base) var(--uos-ease),background-color var(--uos-motion-base) var(--uos-ease);}
+@media (hover:hover){.uos-halo:hover{border-color:var(--uos-hover-edge);box-shadow:var(--uos-hover-glow);}}
+.uos-halo:focus-visible{outline:none;border-color:var(--uos-hover-edge);box-shadow:var(--uos-focus-ring);}
+/* Type scale */
+.uos-display{font-family:var(--uos-font-en);font-weight:800;letter-spacing:-.02em;}
+.uos-kicker{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;}
+[lang="ar"],.uos-ar{font-family:var(--uos-font-ar);letter-spacing:0;}
+.uos-mono{font-family:var(--uos-font-mono);}
+/* Safe-area aware chrome (PWA / future iOS / Android shells). */
+.uos-safe-top{padding-top:env(safe-area-inset-top,0px);}
+.uos-safe-bottom{padding-bottom:env(safe-area-inset-bottom,0px);}
+.uos-safe-x{padding-inline-start:env(safe-area-inset-left,0px);padding-inline-end:env(safe-area-inset-right,0px);}
+.uos-dock-bottom{position:sticky;bottom:0;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));}
+/* Programmatic dialog focus must not draw a ring; the close control carries focus-visible. */
+.ui-dialog:focus,.uos-focus-quiet:focus{outline:none;}
+/* Touch targets for primary mobile interactions. */
+.uos-touch{min-height:44px;min-width:44px;}
+/* Motion guard */
+@media (prefers-reduced-motion:reduce){.uos-halo{transition:none;}}

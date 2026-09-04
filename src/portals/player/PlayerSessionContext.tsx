@@ -55,7 +55,12 @@ export interface PlayerAchievementItem {
   id: string;
   title: BilingualText;
   description: BilingualText;
-  tier: 'gold' | 'silver' | 'bronze' | 'diamond';
+  /**
+   * Tier is only meaningful when the record carries one. Domain achievement
+   * entries are bare names, so derivations use 'recorded' (neutral) instead
+   * of fabricating gold/silver/bronze claims. Not rendered as a badge.
+   */
+  tier: 'gold' | 'silver' | 'bronze' | 'diamond' | 'recorded';
   category: BilingualText;
   awardedAt?: string;
   isLocked: boolean;
@@ -223,19 +228,22 @@ export function PlayerSessionProvider({ children }: { children: React.ReactNode 
   const subscriptions = useMemo((): Subscription[] => [], []);
   const payments = useMemo((): Payment[] => [], []);
 
-  // Achievements derived strictly from canonical player.achievements on athlete record
+  // Achievements derived strictly from canonical player.achievements (bare
+  // bilingual names). No tier, category, date or locked status is invented:
+  // category names the factual source, tier stays neutral, award date stays
+  // unset so surfaces render "On Athlete Record" instead of a fake date.
   const achievements = useMemo((): PlayerAchievementItem[] => {
     if (!player) return [];
 
     return (player.achievements || []).map((ach, idx) => ({
-      id: `ach-earned-${idx}`,
+      id: `ach-record-${player.id}-${idx}`,
       title: ach,
       description: {
-        en: 'Milestone noted on athlete development record.',
-        ar: 'إنجاز مسجل في سجل تطوير الرياضي.',
+        en: 'Listed on the athlete development record.',
+        ar: 'مدرج في سجل تطوير الرياضي.',
       },
-      tier: 'gold' as const,
-      category: { en: 'Development', ar: 'تطوير' },
+      tier: 'recorded' as const,
+      category: { en: 'Athlete record', ar: 'سجل اللاعب' },
       isLocked: false,
     }));
   }, [player]);

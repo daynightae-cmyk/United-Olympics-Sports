@@ -1160,3 +1160,9 @@ html[dir="rtl"] .bm-drawer { inset-inline-end: auto; inset-inline-start: 0; bord
 html[dir="rtl"] .bm-field-input { padding: 0 44px 0 16px; }
 html[dir="rtl"] .bm-field-input-icon { inset-inline-start: auto; inset-inline-end: 14px; }
 html[dir="rtl"] .bm-field-loading .bm-field-input-wrap::after { inset-inline-end: auto; inset-inline-start: 16px; }
+
+/* Accessible sortable headers: native button + visible focus + sort affordance. */
+.bm-sort-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:6px 8px;margin:-6px -8px;border-radius:8px;color:inherit;font:inherit;cursor:pointer;min-height:44px;}
+.bm-sort-btn:hover{color:var(--bm-gold,#d8b35a);}
+.bm-sort-btn:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(212,175,55,.35);}
+th[aria-sort="ascending"] .bm-sort-btn,th[aria-sort="descending"] .bm-sort-btn{color:var(--bm-gold,#d8b35a);}
