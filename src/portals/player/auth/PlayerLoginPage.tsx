@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
-import { AlertCircle, ArrowRight, ExternalLink, Lock, Phone, ShieldCheck, Sparkles } from 'lucide-react';
+import { AlertCircle, ArrowRight, ExternalLink, Lock, Phone, ShieldCheck, Sparkles, UserRound, Trophy } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
+import { getGroup, getSport } from '../../../data/demo/selectors';
 import { usePlayerSession } from '../PlayerSessionContext';
 import { previewAuthGateway, productionAuthGateway } from './PlayerAuthGateway';
 
@@ -13,6 +14,25 @@ export function PlayerLoginPage() {
   const [authError, setAuthError] = useState<{ en: string; ar: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const productionConfigured = productionAuthGateway.isProductionConfigured();
+  const selectedPlayer = useMemo(() => allPlayers.find((item) => item.id === selectedAthleteId), [allPlayers, selectedAthleteId]);
+  const selectedSport = selectedPlayer ? getSport(selectedPlayer.sportId) : undefined;
+  const selectedGroup = selectedPlayer?.groupId ? getGroup(selectedPlayer.groupId) : undefined;
+
+  const handleProductionAuth = async (provider: 'google' | 'apple') => {
+    if (!productionConfigured) return;
+    setLoading(true);
+    setAuthError(null);
+    const result = provider === 'google'
+      ? await productionAuthGateway.signInWithGoogle()
+      : await productionAuthGateway.signInWithApple();
+    setLoading(false);
+    if (!result.success || !result.data?.playerId) {
+      setAuthError(result.error ? bi(result.error.messageEn, result.error.messageAr) : bi('Authentication could not be completed.', 'تعذر إكمال المصادقة.'));
+      return;
+    }
+    login(result.data.playerId);
+    navigate('/player/home');
+  };
 
   const handleEnterPreviewMode = async () => {
     if (!selectedAthleteId) return;
@@ -55,17 +75,17 @@ export function PlayerLoginPage() {
               <ShieldCheck size={14} /><BilingualText value={bi('Athlete portal access', 'دخول بوابة اللاعب')} />
             </div>
             <h1 className="mt-5 mb-4 text-3xl sm:text-5xl lg:text-[3.45rem] font-extrabold tracking-[-.04em] text-white leading-[1.02]">
-              <span className="block"><BilingualText value={bi('Your training workspace,', 'مساحتك التدريبية،')} /></span>
-              <span className="block mt-2 text-amber-300"><BilingualText value={bi('without invented access.', 'بدون وصول أو بيانات مختلقة.')} /></span>
+              <span className="block"><BilingualText value={bi('Your complete athlete workspace,', 'مساحتك الرياضية المتكاملة،')} /></span>
+              <span className="block mt-2 text-amber-300"><BilingualText value={bi('with truthful access states.', 'بحالات دخول واضحة وصادقة.')} /></span>
             </h1>
             <p className="text-sm sm:text-base text-slate-300 max-w-xl leading-7">
-              <BilingualText value={bi('Production authentication is shown only when its real provider gateway is configured. Preview Athlete Mode remains clearly isolated for product evaluation.', 'يظهر تسجيل الدخول للإنتاج فقط عند تهيئة بوابة المصادقة الحقيقية. ويظل وضع معاينة اللاعب منفصلًا بوضوح لتقييم المنتج.')} />
+              <BilingualText value={bi('One portal for schedule, attendance, performance, coach feedback, membership, payments, documents, notifications, profile and settings. Production authentication is enabled only when its real provider gateway exists.', 'بوابة واحدة للجدول والحضور والأداء وملاحظات المدرب والعضوية والمدفوعات والمستندات والإشعارات والملف والإعدادات. ولا يتم تفعيل مصادقة الإنتاج إلا عند توفر بوابة مزود حقيقية.')} />
             </p>
             <div className="mt-6 grid sm:grid-cols-3 gap-3">
               {[
                 bi('Assigned schedule', 'الجدول المخصص'),
-                bi('Recorded performance', 'الأداء المسجل'),
-                bi('Coach-linked feedback', 'ملاحظات المدرب المرتبطة'),
+                bi('Recorded development', 'التطور المسجل'),
+                bi('Player-owned records', 'سجلات اللاعب المرتبطة'),
               ].map((label) => <div key={label.en} className="rounded-2xl border border-white/9 bg-white/[.025] px-4 py-3 text-xs text-slate-300"><BilingualText value={label} /></div>)}
             </div>
           </section>
@@ -73,23 +93,23 @@ export function PlayerLoginPage() {
           <section className="lg:col-span-5 athlete-glass-card p-5 sm:p-7 border border-amber-400/25 shadow-2xl" aria-labelledby="player-login-title">
             <div className="flex items-start gap-3 mb-5">
               <span className="w-10 h-10 rounded-xl bg-amber-400/10 border border-amber-400/25 grid place-items-center text-amber-400"><Lock size={18} /></span>
-              <div><h2 id="player-login-title" className="text-lg font-bold text-white"><BilingualText value={bi('Athlete Sign In', 'تسجيل دخول اللاعب')} /></h2><p className="text-[11px] text-slate-400 mt-1"><BilingualText value={bi('Production and preview access are kept separate.', 'يتم الفصل بين دخول الإنتاج ودخول المعاينة.')} /></p></div>
+              <div><h2 id="player-login-title" className="text-lg font-bold text-white"><BilingualText value={bi('Athlete Sign In', 'تسجيل دخول اللاعب')} /></h2><p className="text-[11px] text-slate-400 mt-1"><BilingualText value={bi('Production and preview access remain strictly separated.', 'يبقى دخول الإنتاج ودخول المعاينة منفصلين بشكل واضح.')} /></p></div>
             </div>
 
             {!productionConfigured && (
               <div className="mb-5 p-3.5 rounded-xl bg-cyan-400/[.06] border border-cyan-300/20 text-xs text-slate-300 flex items-start gap-2.5" role="status">
                 <AlertCircle size={16} className="text-cyan-300 flex-shrink-0 mt-0.5" />
-                <BilingualText value={bi('Production authentication is not configured in this environment. Google, Apple and SMS OTP are unavailable.', 'مصادقة الإنتاج غير مهيأة في هذه البيئة. تسجيل Google وApple ورمز التحقق عبر الرسائل غير متاح.')}/>
+                <BilingualText value={bi('Production authentication is not configured in this environment. Google, Apple and SMS OTP are unavailable.', 'مصادقة الإنتاج غير مهيأة في هذه البيئة. تسجيل Google وApple ورمز التحقق عبر الرسائل غير متاح.')} />
               </div>
             )}
 
             {authError && <div className="mb-4 p-3 rounded-xl bg-red-400/[.07] border border-red-300/20 text-red-200 text-xs" role="alert"><BilingualText value={authError} /></div>}
 
             <div className="space-y-2.5" aria-label="Production authentication | مصادقة الإنتاج">
-              <button type="button" disabled={!productionConfigured || loading} className="w-full min-h-11 px-4 rounded-xl border border-white/10 bg-white/[.035] text-xs font-semibold text-slate-400 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+              <button type="button" onClick={() => handleProductionAuth('google')} disabled={!productionConfigured || loading} className="w-full min-h-11 px-4 rounded-xl border border-white/10 bg-white/[.035] text-xs font-semibold text-slate-400 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
                 <BilingualText value={productionConfigured ? bi('Continue with Google', 'المتابعة باستخدام Google') : bi('Google · Not configured', 'Google · غير مهيأ')} />
               </button>
-              <button type="button" disabled={!productionConfigured || loading} className="w-full min-h-11 px-4 rounded-xl border border-white/10 bg-white/[.035] text-xs font-semibold text-slate-400 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
+              <button type="button" onClick={() => handleProductionAuth('apple')} disabled={!productionConfigured || loading} className="w-full min-h-11 px-4 rounded-xl border border-white/10 bg-white/[.035] text-xs font-semibold text-slate-400 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300">
                 <BilingualText value={productionConfigured ? bi('Continue with Apple', 'المتابعة باستخدام Apple') : bi('Apple · Not configured', 'Apple · غير مهيأ')} />
               </button>
               {productionConfigured ? (
@@ -100,15 +120,29 @@ export function PlayerLoginPage() {
             </div>
 
             <div className="mt-6 pt-5 border-t border-white/10">
-              <div className="flex items-center justify-between gap-3 mb-3"><strong className="text-xs text-slate-200 flex items-center gap-1.5"><Sparkles size={14} className="text-amber-400" /><BilingualText value={bi('Preview Athlete Mode', 'وضع معاينة اللاعب')} /></strong><span className="text-[9px] uppercase tracking-widest text-amber-300 px-2 py-1 rounded-full border border-amber-400/20 bg-amber-400/8">Preview</span></div>
+              <div className="flex items-center justify-between gap-3 mb-3"><strong className="text-xs text-slate-200 flex items-center gap-1.5"><Sparkles size={14} className="text-amber-400" /><BilingualText value={bi('Preview Athlete Mode', 'وضع معاينة اللاعب')} /></strong><span className="text-[9px] tracking-widest text-amber-300 px-2 py-1 rounded-full border border-amber-400/20 bg-amber-400/8"><BilingualText value={bi('Preview', 'معاينة')} /></span></div>
               <label className="block text-[11px] text-slate-400" htmlFor="preview-athlete"><BilingualText value={bi('Preview athlete identity', 'هوية اللاعب للمعاينة')} /></label>
               <select id="preview-athlete" value={selectedAthleteId} onChange={(event) => setSelectedAthleteId(event.target.value)} className="mt-2 w-full min-h-11 px-3 rounded-xl bg-[#0d1118] border border-white/10 text-xs text-slate-200 focus:outline-none focus:border-amber-400">
                 {allPlayers.map((player) => <option key={player.id} value={player.id}>{player.nameEn} · {player.nameAr}</option>)}
               </select>
+
+              {selectedPlayer && (
+                <div className="mt-3 grid grid-cols-[auto_1fr] gap-3 rounded-2xl border border-white/10 bg-white/[.025] p-3" aria-live="polite">
+                  <div className="w-11 h-11 rounded-xl bg-amber-400/12 border border-amber-400/25 grid place-items-center text-amber-300"><UserRound size={20} /></div>
+                  <div className="min-w-0">
+                    <strong className="text-xs text-white block truncate">{selectedPlayer.nameEn} · {selectedPlayer.nameAr}</strong>
+                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-400">
+                      <span className="inline-flex items-center gap-1"><Trophy size={11} className="text-amber-400" /><BilingualText value={selectedSport?.name ?? bi('Sport not assigned', 'الرياضة غير معينة')} /></span>
+                      <span><BilingualText value={selectedGroup?.name ?? bi('Group not assigned', 'المجموعة غير معينة')} /></span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <button type="button" onClick={handleEnterPreviewMode} disabled={loading || !selectedAthleteId} className="mt-3 w-full min-h-11 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 disabled:opacity-50 text-black font-bold text-xs flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
-                <BilingualText value={bi('Enter Preview Athlete Mode', 'الدخول إلى وضع معاينة اللاعب')} /><ArrowRight size={14} className="rtl:rotate-180" />
+                <BilingualText value={loading ? bi('Opening preview...', 'جارٍ فتح المعاينة...') : bi('Enter Preview Athlete Mode', 'الدخول إلى وضع معاينة اللاعب')} /><ArrowRight size={14} className="rtl:rotate-180" />
               </button>
-              <p className="mt-3 text-[10px] leading-5 text-slate-500"><BilingualText value={bi('Preview sessions are local product-demo access and are not production authentication.', 'جلسات المعاينة هي دخول محلي لتجربة المنتج وليست مصادقة إنتاجية.')} /></p>
+              <p className="mt-3 text-[10px] leading-5 text-slate-500"><BilingualText value={bi('Preview sessions are local product-demo access and are never presented as production authentication.', 'جلسات المعاينة هي دخول محلي لتجربة المنتج ولا يتم عرضها كمصادقة إنتاجية.')} /></p>
             </div>
           </section>
         </div>
