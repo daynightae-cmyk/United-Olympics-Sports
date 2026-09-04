@@ -1,0 +1,303 @@
+/* UNITED OLYMPICS SPORTS — PLAYER PORTAL FINAL CLOSURE
+   One finishing layer for every athlete route. Keeps Black/Gold identity while
+   standardising spacing, cards, forms, dialogs, responsive behaviour and RTL. */
+
+#player-portal-shell {
+  --player-panel: rgba(255,255,255,.045);
+  --player-panel-strong: rgba(255,255,255,.072);
+  --player-line: rgba(255,255,255,.10);
+  --player-line-gold: rgba(212,175,55,.30);
+  --player-gold: #d4af37;
+  --player-gold-soft: #f2d675;
+  --player-muted: #8f9bad;
+  --player-radius: 22px;
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 78% 3%, rgba(212,175,55,.07), transparent 34rem),
+    radial-gradient(circle at 10% 90%, rgba(37,99,235,.055), transparent 30rem),
+    #07090e;
+}
+
+#athlete-content-area > [id^="player-"] {
+  width: min(100%, 1480px);
+  margin-inline: auto;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+#athlete-content-area .athlete-glass-card,
+#athlete-content-area .athlete-hero-card {
+  position: relative;
+  overflow: clip;
+  border-radius: var(--player-radius);
+  box-shadow: 0 24px 65px -46px rgba(0,0,0,.9), inset 0 1px rgba(255,255,255,.025);
+}
+
+#athlete-content-area .athlete-glass-card::after,
+#athlete-content-area .athlete-hero-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(115deg, rgba(255,255,255,.025), transparent 28% 72%, rgba(212,175,55,.018));
+}
+
+#athlete-content-area h1,
+#athlete-content-area h2,
+#athlete-content-area h3,
+#athlete-content-area strong { text-wrap: balance; }
+
+#athlete-content-area p { text-wrap: pretty; }
+
+#athlete-content-area button,
+#athlete-content-area a,
+#athlete-topbar button,
+#athlete-desktop-sidebar a,
+#athlete-desktop-sidebar button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+#athlete-content-area button:not(:disabled),
+#athlete-content-area a,
+#athlete-topbar button:not(:disabled) {
+  cursor: pointer;
+}
+
+#athlete-content-area button:focus-visible,
+#athlete-content-area a:focus-visible,
+#athlete-content-area input:focus-visible,
+#athlete-content-area select:focus-visible,
+#athlete-content-area textarea:focus-visible,
+#athlete-topbar button:focus-visible,
+#athlete-desktop-sidebar a:focus-visible,
+#athlete-desktop-sidebar button:focus-visible {
+  outline: 2px solid var(--player-gold-soft);
+  outline-offset: 3px;
+}
+
+#athlete-content-area input,
+#athlete-content-area select,
+#athlete-content-area textarea {
+  min-height: 44px;
+  border-radius: 13px;
+}
+
+#athlete-content-area button:disabled,
+#athlete-content-area input:disabled,
+#athlete-content-area select:disabled,
+#athlete-content-area textarea:disabled {
+  cursor: not-allowed;
+  opacity: .58;
+}
+
+.athlete-data-scope {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  min-height: 30px;
+  padding: .35rem .65rem;
+  border-radius: 999px;
+  border: 1px solid var(--player-line-gold);
+  background: rgba(212,175,55,.075);
+  color: var(--player-gold-soft);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+
+.athlete-truth-note {
+  display: flex;
+  align-items: flex-start;
+  gap: .55rem;
+  padding: .75rem .85rem;
+  border: 1px solid var(--player-line);
+  border-radius: 14px;
+  background: rgba(255,255,255,.025);
+  color: var(--player-muted);
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.athlete-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 10px;
+}
+
+.athlete-field {
+  min-width: 0;
+  padding: 13px 14px;
+  border: 1px solid var(--player-line);
+  border-radius: 15px;
+  background: var(--player-panel);
+}
+
+.athlete-field > span:first-child {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--player-muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.athlete-field > strong,
+.athlete-field > span:last-child {
+  display: block;
+  overflow-wrap: anywhere;
+  color: #f2f5f8;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.athlete-unavailable {
+  color: #788598 !important;
+  font-weight: 650 !important;
+}
+
+.athlete-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.athlete-action-primary,
+.athlete-action-secondary,
+.athlete-action-disabled {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 13px;
+  padding: 0 14px;
+  font-size: 11px;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.athlete-action-primary {
+  border: 1px solid #d9b744;
+  background: linear-gradient(135deg,#e5c558,#c79f27);
+  color: #111318;
+  box-shadow: 0 12px 28px -18px rgba(212,175,55,.9);
+}
+
+.athlete-action-secondary {
+  border: 1px solid var(--player-line);
+  background: var(--player-panel);
+  color: #dce2ea;
+}
+
+.athlete-action-disabled {
+  border: 1px solid rgba(255,255,255,.07);
+  background: rgba(255,255,255,.018);
+  color: #687487;
+  cursor: not-allowed;
+}
+
+.athlete-empty-system {
+  display: grid;
+  place-items: center;
+  min-height: 260px;
+  padding: 34px 20px;
+  text-align: center;
+  border: 1px dashed rgba(212,175,55,.20);
+  border-radius: var(--player-radius);
+  background: linear-gradient(145deg,rgba(212,175,55,.04),rgba(255,255,255,.015));
+}
+
+.athlete-empty-system > div { max-width: 560px; }
+
+.athlete-modal-overlay {
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  overflow-y: auto;
+}
+
+.athlete-modal-content {
+  max-height: min(88dvh, 760px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+#athlete-notifications-popover {
+  max-width: min(96vw, 384px);
+}
+
+.digital-id-card {
+  isolation: isolate;
+  position: relative;
+  overflow: hidden;
+  border-radius: 26px;
+  border: 1px solid rgba(212,175,55,.32);
+  background:
+    radial-gradient(circle at 92% 8%, rgba(212,175,55,.20), transparent 32%),
+    linear-gradient(145deg,#0a0e15,#111827 56%,#090c12);
+  box-shadow: 0 28px 70px -42px rgba(0,0,0,.95), 0 0 44px -34px rgba(212,175,55,.75);
+  padding: 22px;
+}
+
+.digital-id-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: .15;
+  background: repeating-linear-gradient(122deg,transparent 0 34px,rgba(212,175,55,.12) 35px,transparent 36px 70px);
+}
+
+#player-schedule-page [role="tablist"],
+#player-notifications-page [role="tablist"],
+#player-documents-page [role="tablist"] {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+#player-schedule-page [role="tablist"]::-webkit-scrollbar,
+#player-notifications-page [role="tablist"]::-webkit-scrollbar,
+#player-documents-page [role="tablist"]::-webkit-scrollbar { display:none; }
+
+@media (max-width: 1023px) {
+  #athlete-content-area { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+  #athlete-content-area > [id^="player-"] { padding-inline: 2px; }
+  #athlete-notifications-popover { position: fixed; top: 68px; left: 12px; right: 12px; width: auto; margin: 0; }
+}
+
+@media (max-width: 639px) {
+  #athlete-content-area { padding-inline: 12px; }
+  #athlete-content-area .athlete-glass-card,
+  #athlete-content-area .athlete-hero-card { border-radius: 18px; }
+  #athlete-content-area .athlete-glass-card.p-6,
+  #athlete-content-area .athlete-hero-card.p-6 { padding: 18px; }
+  .athlete-field-grid { grid-template-columns: 1fr; }
+  .athlete-action-row > * { flex: 1 1 100%; }
+  .digital-id-card { padding: 17px; border-radius: 21px; }
+}
+
+[dir="rtl"] #athlete-content-area .rtl\:rotate-180 { transform: rotate(180deg); }
+[dir="rtl"] .athlete-field,
+[dir="rtl"] .athlete-truth-note { text-align: right; }
+
+[data-theme="light"] #player-portal-shell {
+  --player-panel: rgba(15,23,42,.035);
+  --player-panel-strong: rgba(15,23,42,.055);
+  --player-line: rgba(15,23,42,.09);
+  --player-muted: #667085;
+  background: radial-gradient(circle at 80% 0,rgba(190,145,30,.09),transparent 34rem),#f6f7f9;
+}
+
+[data-theme="light"] .athlete-field > strong,
+[data-theme="light"] .athlete-field > span:last-child { color:#172033; }
+[data-theme="light"] .athlete-action-secondary { color:#172033; }
+[data-theme="light"] .athlete-truth-note { color:#667085; }
+
+@media (prefers-reduced-motion: reduce) {
+  #player-portal-shell *,
+  #player-portal-shell *::before,
+  #player-portal-shell *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
