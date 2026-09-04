@@ -1,5 +1,5 @@
-import { Bell, Check, Eye, Globe, LogOut, Monitor, RotateCcw, Settings, Shield, Sparkles, Type, User } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Bell, Check, Eye, Globe, LogOut, Monitor, RotateCcw, Settings, Shield, Type, User } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePlayerSession } from '../../../portals/player/PlayerSessionContext';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
@@ -23,6 +23,17 @@ function loadPrefs(): NotificationPrefs {
   }
 }
 
+function readPreviewSession() {
+  if (typeof window === 'undefined') return false;
+  try {
+    const raw = localStorage.getItem('uos:player-portal:session');
+    if (!raw) return false;
+    return (JSON.parse(raw) as { provider?: string }).provider === 'preview';
+  } catch {
+    return false;
+  }
+}
+
 export function PlayerPortalSettingsPage() {
   const { player, allPlayers, switchPlayer, logout } = usePlayerSession();
   const { appearance, bilingualOrder, density, motion, fontScale, setAppearance, setSetting, resetSettings } = useUiSettings();
@@ -30,15 +41,7 @@ export function PlayerPortalSettingsPage() {
   const [prefs, setPrefs] = useState<NotificationPrefs>(() => loadPrefs());
   if (!player) return null;
 
-  const isPreviewSession = useMemo(() => {
-    try {
-      const raw = localStorage.getItem('uos:player-portal:session');
-      if (!raw) return false;
-      return (JSON.parse(raw) as { provider?: string }).provider === 'preview';
-    } catch {
-      return false;
-    }
-  }, [player.id]);
+  const isPreviewSession = readPreviewSession();
 
   const savePrefs = (next: NotificationPrefs) => {
     setPrefs(next);
@@ -123,7 +126,7 @@ export function PlayerPortalSettingsPage() {
   );
 }
 
-function SettingCard({ icon, title, children }: { icon: React.ReactNode; title: { en: string; ar: string }; children: React.ReactNode }) {
+function SettingCard({ icon, title, children }: { icon: ReactNode; title: { en: string; ar: string }; children: ReactNode }) {
   return <section className="athlete-glass-card p-5 sm:p-6"><header className="flex items-center gap-2 pb-4 border-b border-white/10 text-amber-400">{icon}<h2 className="text-sm font-bold text-white"><BilingualText value={title} /></h2></header><div className="mt-4">{children}</div></section>;
 }
 
