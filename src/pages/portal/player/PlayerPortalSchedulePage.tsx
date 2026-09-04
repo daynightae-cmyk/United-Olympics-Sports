@@ -1,221 +1,198 @@
-import React, { useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import {
-  Calendar,
-  Clock,
-  MapPin,
-  User,
-  Users,
-  ChevronRight,
-  ExternalLink,
-  X,
-  Sparkles,
-  Info,
-} from 'lucide-react';
-import { usePlayerSession } from '../../../portals/player/PlayerSessionContext';
-import { PlayerSessionSummary } from "../../../portals/player/components/PlayerSessionSummary";
+import { CalendarClock, ChevronLeft, ChevronRight, Clock, MapPin, Users, CheckCircle, AlertCircle } from 'lucide-react';
+import { PageHeader } from '../../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
-import type { Session } from '../../../domain/contracts';
+import { demoSessions } from '../../../data/demo/sessions';
+import { demoTrainingGroups } from '../../../data/demo/trainingGroups';
+import { demoSports } from '../../../data/demo/sports';
+import { useState } from 'react';
+
+type SessionWithDetails = {
+  id: string;
+  sportId: string;
+  groupId: string;
+  startsAt: string;
+  status: { en: string; ar: string };
+  sportName: { en: string; ar: string };
+  groupName: { en: string; ar: string };
+  location: { en: string; ar: string };
+};
+
+const enrichedSessions: SessionWithDetails[] = demoSessions.map((session) => {
+  const sport = demoSports.find(s => s.id === session.sportId);
+  const group = demoTrainingGroups.find(g => g.id === session.groupId);
+  return {
+    ...session,
+    sportName: sport?.name ?? { en: 'Unknown Sport', ar: 'رياضة غير معروفة' },
+    groupName: group?.name ?? { en: 'Unknown Group', ar: 'مجموعة غير معروفة' },
+    location: { en: 'Main Training Facility · Preview', ar: 'المنشأة التدريبية الرئيسية · تجريبي' },
+  };
+});
+
+const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const dayLabelsAr = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 
 export function PlayerPortalSchedulePage() {
-  const { player, sport, group, coach, sessions } = usePlayerSession();
-  const [selectedTab, setSelectedTab] = useState<'all' | 'upcoming' | 'completed'>('all');
-  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
-  const navigate = useNavigate();
+  const [currentWeek, setCurrentWeek] = useState(0);
+  const [viewMode, setViewMode] = useState<'week' | 'list'>('week');
 
-  if (!player) return null;
+  const today = new Date();
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - today.getDay() + (currentWeek * 7));
 
-  // Filter sessions based on tab using live date
-  const filteredSessions = useMemo(() => {
-    const now = new Date();
-    return sessions.filter((s) => {
-      const sDate = new Date(s.startsAt);
-      if (selectedTab === 'upcoming') {
-        return sDate >= now;
-      }
-      if (selectedTab === 'completed') {
-        return sDate < now;
-      }
-      return true;
-    });
-  }, [sessions, selectedTab]);
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    return d;
+  });
+
+  const sessionsForDay = (date: Date) => {
+    const dateStr = date.toISOString().split('T')[0];
+    return enrichedSessions.filter(s => s.startsAt.startsWith(dateStr));
+  };
+
+  const formatTime = (iso: string) => {
+    const date = new Date(iso);
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+  };
+
+  const formatTimeAr = (iso: string) => {
+    const date = new Date(iso);
+    return date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', hour12: false });
+  };
 
   return (
-    <div className="space-y-6" id="player-schedule-page">
-      {/* Header Banner */}
-      <div className="athlete-glass-card p-6 border-amber-400/25">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-amber-400/10 text-amber-400">
-                <Calendar size={18} />
-              </span>
-              <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">
-                <BilingualText value={bi('Training Calendar', 'التقويم التدريبي')} />
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-white">
-              <BilingualText value={bi('Athlete Training Schedule', 'جدول تدريبات الرياضي')} />
-            </h1>
-            <p className="text-xs text-slate-300">
-              <BilingualText
-                value={bi(
-                  `Assigned sessions for ${player.nameEn} · ${group?.name.en || '—'}`,
-                  `الحصص المعتمدة للاعب ${player.nameAr} · ${group?.name.ar || '—'}`
-                )}
-              />
-            </p>
+    <div className="admin-page">
+      <PageHeader
+        eyebrow={bi('Player Portal | Schedule', 'بوابة اللاعب | الجدول')}
+        title={bi('Schedule', 'الجدول')}
+        description={bi('Weekly training schedule preview — no live sessions.', 'جدول تدريبي أسبوعي تجريبي — لا توجد حصص مباشرة.')}
+        actions={
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button className="admin-secondary-button" onClick={() => setViewMode('week')}>
+              <BilingualText value={bi('Week', 'أسبوع')} />
+            </button>
+            <button className="admin-secondary-button" onClick={() => setViewMode('list')}>
+              <BilingualText value={bi('List', 'قائمة')} />
+            </button>
+            <span className="preview-badge"><BilingualText value={bi('Preview Data', 'بيانات تجريبية')} /></span>
           </div>
+        }
+      />
 
-          <div className="flex flex-wrap gap-2 text-xs">
-            <div className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-slate-300 flex items-center gap-1.5">
-              <Users size={14} className="text-amber-400" />
-              <span><BilingualText value={group ? group.name : bi('Group', 'المجموعة')} /></span>
-            </div>
-            <div className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-slate-300 flex items-center gap-1.5">
-              <User size={14} className="text-amber-400" />
-              <span>
-                <BilingualText value={bi('Coach:', 'المدرب:')} /> {coach?.nameEn || <BilingualText value={bi('Not assigned', 'غير معين')} />}
-              </span>
-            </div>
+      <section className="schedule-toolbar" aria-label="Schedule navigation">
+        <div className="schedule-nav">
+          <button className="nav-btn" onClick={() => setCurrentWeek(w => w - 1)} aria-label={bi('Previous week', 'الأسبوع السابق')}>
+            <ChevronLeft size={18} />
+          </button>
+          <div className="week-range">
+            <BilingualText value={{
+              en: `${weekDays[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${weekDays[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`,
+              ar: `${weekDays[0].toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' })} – ${weekDays[6].toLocaleDateString('ar-SA', { month: 'short', day: 'numeric', year: 'numeric' })}`
+            }} />
           </div>
-        </div>
-
-        {/* Filter Tabs */}
-        <div className="flex items-center gap-2 mt-6 pt-5 border-t border-white/10">
-          <button
-            onClick={() => setSelectedTab('all')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-              selectedTab === 'all'
-                ? 'bg-amber-400 text-black shadow-md shadow-amber-400/20'
-                : 'bg-white/5 text-slate-300 hover:bg-white/10'
-            }`}
-          >
-            <BilingualText value={bi('All Sessions', 'جميع الحصص')} /> ({sessions.length})
-          </button>
-          <button
-            onClick={() => setSelectedTab('upcoming')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-              selectedTab === 'upcoming'
-                ? 'bg-amber-400 text-black shadow-md shadow-amber-400/20'
-                : 'bg-white/5 text-slate-300 hover:bg-white/10'
-            }`}
-          >
-            <BilingualText value={bi('Upcoming', 'القادمة')} />
-          </button>
-          <button
-            onClick={() => setSelectedTab('completed')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-              selectedTab === 'completed'
-                ? 'bg-amber-400 text-black shadow-md shadow-amber-400/20'
-                : 'bg-white/5 text-slate-300 hover:bg-white/10'
-            }`}
-          >
-            <BilingualText value={bi('Past', 'السابقة')} />
+          <button className="nav-btn" onClick={() => setCurrentWeek(w => w + 1)} aria-label={bi('Next week', 'الأسبوع التالي')}>
+            <ChevronRight size={18} />
           </button>
         </div>
-      </div>
+        <button className="admin-secondary-button" onClick={() => setCurrentWeek(0)}>
+          <BilingualText value={bi('This Week', 'هذا الأسبوع')} />
+        </button>
+      </section>
 
-      {/* Sessions List */}
-      <div className="space-y-3" id="schedule-sessions-list">
-        {filteredSessions.length > 0 ? (
-          filteredSessions.map((session) => (
-            <PlayerSessionSummary
-              key={session.id}
-              sessionId={session.id}
-              onClick={() => setSelectedSession(session)}
-            />
-          ))
-        ) : (
-          <div className="athlete-glass-card p-12 text-center text-slate-400 space-y-3">
-            <Calendar size={32} className="mx-auto text-slate-500" />
-            <h3 className="text-sm font-bold text-slate-300">
-              <BilingualText value={bi('No sessions found in this view', 'لا توجد حصص في هذا العرض')} />
-            </h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              <BilingualText
-                value={bi(
-                  'Your training group calendar updates in accordance with organization schedule.',
-                  'يتم تحديث جدول مجموعتك التدريبية بالتوافق مع جدول الإدارة.'
-                )}
-              />
-            </p>
+      {viewMode === 'week' ? (
+        <section className="schedule-week-view" aria-label="Weekly schedule">
+          <div className="schedule-week-grid">
+            {weekDays.map((day, dayIndex) => {
+              const sessions = sessionsForDay(day);
+              const isToday = day.toDateString() === today.toDateString();
+              return (
+                <div key={dayIndex} className={`schedule-day-column ${isToday ? 'today' : ''}`}>
+                  <header>
+                    <div>
+                      <strong><BilingualText value={{ en: dayLabels[dayIndex], ar: dayLabelsAr[dayIndex] }} /></strong>
+                      <span><BilingualText value={{ en: day.toLocaleDateString('en-US', { day: 'numeric' }), ar: day.toLocaleDateString('ar-SA', { day: 'numeric' }) }} /></span>
+                    </div>
+                    {isToday && <span className="today-badge"><BilingualText value={bi('Today', 'اليوم')} /></span>}
+                  </header>
+                  <div className="day-sessions">
+                    {sessions.length > 0 ? (
+                      sessions.map((session) => (
+                        <article key={session.id} className="schedule-session-card">
+                          <div className="session-header">
+                            <span className="session-time">
+                              <Clock size={14} />
+                              <BilingualText value={{ en: formatTime(session.startsAt), ar: formatTimeAr(session.startsAt) }} />
+                            </span>
+                            <span className={`session-status ${session.status.en.includes('Scheduled') ? 'scheduled' : 'other'}`}>
+                              <BilingualText value={session.status} />
+                            </span>
+                          </div>
+                          <h4><BilingualText value={session.sportName} /></h4>
+                          <div className="session-meta">
+                            <span><Users size={12} /><BilingualText value={session.groupName} /></span>
+                            <span><MapPin size={12} /><BilingualText value={session.location} /></span>
+                          </div>
+                        </article>
+                      ))
+                    ) : (
+                      <div className="no-sessions">
+                        <BilingualText value={bi('No sessions scheduled', 'لا توجد حصص مجدولة')} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        )}
-      </div>
-
-      {/* Session Details Modal */}
-      {selectedSession && (
-        <div className="athlete-modal-overlay" onClick={() => setSelectedSession(null)}>
-          <div
-            className="athlete-modal-content !max-w-lg p-6 sm:p-7"
-            onClick={(e) => e.stopPropagation()}
-            id="session-detail-modal"
-          >
-            <div className="flex items-center justify-between pb-4 border-b border-white/10">
-              <div>
-                <span className="text-xs font-bold text-amber-400 uppercase">
-                  <BilingualText value={bi('Session Details', 'تفاصيل الحصة التدريبية')} />
-                </span>
-                <h3 className="text-base font-bold text-white mt-0.5">
-                  <BilingualText value={sport ? sport.name : bi('Training Session', 'حصة تدريبية')} />
-                </h3>
+        </section>
+      ) : (
+        <section className="schedule-list-view" aria-label="Schedule list">
+          <div className="schedule-list">
+            {enrichedSessions.map((session) => {
+              const date = new Date(session.startsAt);
+              return (
+                <article key={session.id} className="schedule-session-card list-card">
+                  <div className="list-session-date">
+                    <CalendarClock size={16} />
+                    <BilingualText value={{
+                      en: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+                      ar: date.toLocaleDateString('ar-SA', { weekday: 'short', month: 'short', day: 'numeric' })
+                    }} />
+                  </div>
+                  <div className="list-session-main">
+                    <h4><BilingualText value={session.sportName} /></h4>
+                    <div className="list-session-details">
+                      <span><Clock size={14} /><BilingualText value={{ en: formatTime(session.startsAt), ar: formatTimeAr(session.startsAt) }} /></span>
+                      <span><Users size={14} /><BilingualText value={session.groupName} /></span>
+                      <span><MapPin size={14} /><BilingualText value={session.location} /></span>
+                    </div>
+                  </div>
+                  <div className="list-session-status">
+                    <span className={`status-badge ${session.status.en.includes('Scheduled') ? 'status-scheduled' : 'status-other'}`}>
+                      <BilingualText value={session.status} />
+                    </span>
+                  </div>
+                </article>
+              );
+            })}
+            {enrichedSessions.length === 0 && (
+              <div className="admin-preview-card" style={{ padding: 32, textAlign: 'center' }}>
+                <CalendarClock size={48} style={{ color: 'var(--color-text-muted)', marginBottom: 12 }} />
+                <h3><BilingualText value={bi('No Sessions', 'لا توجد حصص')} /></h3>
+                <p><BilingualText value={bi('Preview schedule is empty. Real sessions will appear when connected to backend.', 'الجدول التجريبي فارغ. الحصص الحقيقية ستظهر عند الاتصال بالخادم.')} /></p>
               </div>
-              <button
-                onClick={() => setSelectedSession(null)}
-                className="p-1 text-slate-400 hover:text-white rounded-lg"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="py-4 space-y-4 text-xs text-slate-300">
-              <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-slate-400"><BilingualText value={bi('Start Time', 'وقت البدء')} /></span>
-                  <strong className="text-white font-mono">
-                    {new Date(selectedSession.startsAt).toLocaleString()}
-                  </strong>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400"><BilingualText value={bi('Group', 'المجموعة')} /></span>
-                  <strong className="text-white">
-                    <BilingualText value={group ? group.name : bi('Assigned Group', 'المجموعة')} />
-                  </strong>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400"><BilingualText value={bi('Supervising Coach', 'المدرب المشرف')} /></span>
-                  <strong className="text-white">{coach?.nameEn || <BilingualText value={bi('Not assigned', 'غير معين')} />}</strong>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400"><BilingualText value={bi('Status', 'الحالة')} /></span>
-                  <strong className="text-emerald-400"><BilingualText value={selectedSession.status} /></strong>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-3 border-t border-white/10 flex items-center justify-between gap-2">
-              <button
-                onClick={() => {
-                  const id = selectedSession.id;
-                  setSelectedSession(null);
-                  navigate(`/player/schedule/${id}`);
-                }}
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-400 hover:bg-amber-300 text-black transition-colors flex items-center gap-1.5"
-              >
-                <span><BilingualText value={bi('Open Dedicated Page', 'فتح الصفحة المخصصة')} /></span>
-                <ExternalLink size={13} />
-              </button>
-              <button
-                onClick={() => setSelectedSession(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-200 transition-colors"
-              >
-                <BilingualText value={bi('Close', 'إغلاق')} />
-              </button>
-            </div>
+            )}
           </div>
-        </div>
+        </section>
       )}
+
+      <section className="schedule-note" aria-label="Schedule note">
+        <div className="admin-preview-card" style={{ padding: 18 }}>
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
+            <BilingualText value={bi('Schedule is preview-only. Times, locations, and sessions are structural placeholders.', 'الجدول تجريبي فقط. الأوقات والمواقع والحصص هي بيانات هيكلية مؤقتة.')} />
+          </p>
+        </div>
+      </section>
     </div>
   );
 }

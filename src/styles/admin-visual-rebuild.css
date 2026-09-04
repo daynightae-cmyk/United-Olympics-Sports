@@ -239,3 +239,179 @@
   .admin-stat-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
   .groups-mobile-list{grid-template-columns:1fr}.groups-table-heading{align-items:flex-start;flex-direction:column}.groups-table-heading>span{display:none}
 }
+
+/* Dashboard Hero */
+.dashboard-hero {
+  position: relative;
+  overflow: hidden;
+}
+.dashboard-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 30% 20%, rgba(212,175,55,0.06), transparent 60%),
+              radial-gradient(ellipse at 70% 80%, rgba(212,175,55,0.04), transparent 50%);
+  pointer-events: none;
+}
+.dashboard-hero-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.hero-logo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 22px rgba(215,180,90,.25));
+  flex-shrink: 0;
+}
+.hero-metrics {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.hero-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 18px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.005));
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 200ms ease;
+}
+.hero-metric:hover {
+  transform: translateY(-2px);
+  border-color: rgba(212,175,55,0.28);
+  box-shadow: 0 12px 28px rgba(212,175,55,0.08);
+}
+.hero-metric-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #f4d98a;
+  line-height: 1;
+}
+.hero-metric-label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
+  white-space: nowrap;
+}
+
+/* Quick action cards with accent colors */
+.quick-action-card {
+  position: relative;
+  overflow: hidden;
+}
+.quick-action-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--accent-color, var(--uos-gold-highlight));
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+.quick-action-card:hover::before { opacity: 1; }
+.quick-action-card.accent-sports::before { --accent-color: #8eb34e; }
+.quick-action-card.accent-players::before { --accent-color: #f4d98a; }
+.quick-action-card.accent-schedules::before { --accent-color: #5aa8da; }
+.quick-action-card.accent-registrations::before { --accent-color: #df9349; }
+.quick-action-card.accent-branches::before { --accent-color: #a855f7; }
+.quick-action-card.accent-coaches::before { --accent-color: #ef7777; }
+
+/* Operational Pulse */
+.operational-pulse { }
+.pulse-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+.pulse-card {
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.005));
+  box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 200ms ease;
+}
+.pulse-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(212,175,55,0.28);
+  box-shadow: 0 14px 36px rgba(212,175,55,0.08);
+}
+.pulse-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  color: #f4d98a;
+  background: rgba(212,175,55,0.1);
+  border: 1px solid rgba(212,175,55,0.2);
+  flex-shrink: 0;
+}
+.pulse-icon svg { width: 22px; height: 22px; }
+.pulse-content { flex: 1; min-width: 0; }
+.pulse-content > BilingualText { display: block; font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+.pulse-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.pulse-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #d4b23a, #f0c75e);
+  transition: width 600ms ease-out;
+}
+.pulse-content small { font-size: 11px; color: rgba(255,255,255,0.65); line-height: 1.5; }
+
+/* Readiness grid - three columns */
+.readiness-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+/* Admin stat grid - 8 cards layout */
+.admin-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+.admin-stat-grid.compact {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* Responsive refinements for dashboard */
+@media (max-width: 1024px) {
+  .hero-metrics { justify-content: center; }
+  .readiness-grid { grid-template-columns: 1fr 1fr; }
+  .pulse-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 768px) {
+  .dashboard-hero-inner { flex-direction: column; align-items: stretch; text-align: center; }
+  .hero-metrics { justify-content: center; }
+  .readiness-grid { grid-template-columns: 1fr; }
+  .pulse-grid { grid-template-columns: 1fr; }
+  .pulse-card { flex-direction: column; align-items: center; text-align: center; }
+  .admin-stat-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 430px) {
+  .hero-metric { padding: 10px 14px; }
+  .hero-metric-value { font-size: 18px; }
+  .admin-stat-grid { grid-template-columns: 1fr; }
+  .quick-grid { grid-template-columns: 1fr; }
+}
