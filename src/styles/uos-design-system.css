@@ -5,9 +5,9 @@
    No !important. Additive only.
    ===================================================================== */
 :root{
-  --uos-font-en:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --uos-font-ar:"Cairo","DM Sans",system-ui,sans-serif;
-  --uos-font-mono:"DM Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --uos-font-en:"DM Sans","Outfit",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --uos-font-ar:"Cairo","Tajawal","DM Sans",system-ui,sans-serif;
+  --uos-font-mono:"DM Mono","DM Sans",ui-monospace,SFMono-Regular,Menlo,monospace;
   --uos-radius-sm:10px;--uos-radius-md:14px;--uos-radius-lg:18px;--uos-radius-xl:22px;
   --uos-motion-fast:140ms;--uos-motion-base:200ms;--uos-motion-slow:300ms;
   --uos-ease:cubic-bezier(.22,.61,.21,1);

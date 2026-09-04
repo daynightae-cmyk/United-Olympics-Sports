@@ -90,7 +90,7 @@ export function ParentPortalMessagesPage() {
         <aside className="messages-sidebar" aria-label="Message threads">
           <div className="messages-header">
             <h3><BilingualText value={bi('Conversations', 'المحادثات')} /></h3>
-            <button className="compose-btn" aria-label={bi('New message', 'رسالة جديدة')}>
+            <button className="compose-btn" aria-label={bi('New message', 'رسالة جديدة').en}>
               <Send size={18} />
               <span className="compose-text"><BilingualText value={bi('New Message', 'رسالة جديدة')} /></span>
             </button>
@@ -110,7 +110,7 @@ export function ParentPortalMessagesPage() {
                     ) : (
                       <span className="avatar-admin" aria-hidden="true">A</span>
                     )}
-                    {!msg.read && <span className="unread-dot" aria-label={bi('Unread', 'غير مقروء')} />}
+                    {!msg.read && <span className="unread-dot" aria-label={bi('Unread', 'غير مقروء').en} />}
                   </div>
                   <div className="thread-content">
                     <div className="thread-header">

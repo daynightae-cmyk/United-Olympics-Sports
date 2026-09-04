@@ -81,7 +81,7 @@ export function PlayerPortalSchedulePage() {
 
       <section className="schedule-toolbar" aria-label="Schedule navigation">
         <div className="schedule-nav">
-          <button className="nav-btn" onClick={() => setCurrentWeek(w => w - 1)} aria-label={bi('Previous week', 'الأسبوع السابق')}>
+          <button className="nav-btn" onClick={() => setCurrentWeek(w => w - 1)} aria-label={bi('Previous week', 'الأسبوع السابق').en}>
             <ChevronLeft size={18} />
           </button>
           <div className="week-range">
@@ -90,7 +90,7 @@ export function PlayerPortalSchedulePage() {
               ar: `${weekDays[0].toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' })} – ${weekDays[6].toLocaleDateString('ar-SA', { month: 'short', day: 'numeric', year: 'numeric' })}`
             }} />
           </div>
-          <button className="nav-btn" onClick={() => setCurrentWeek(w => w + 1)} aria-label={bi('Next week', 'الأسبوع التالي')}>
+          <button className="nav-btn" onClick={() => setCurrentWeek(w => w + 1)} aria-label={bi('Next week', 'الأسبوع التالي').en}>
             <ChevronRight size={18} />
           </button>
         </div>

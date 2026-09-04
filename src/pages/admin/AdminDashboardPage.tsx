@@ -53,8 +53,8 @@ export function AdminDashboardPage() {
       <StatCard label={bi('Coaches', 'المدربون')} value={coachCount} icon={ShieldCheck} note={bi('Verified preview', 'معاينة موثقة')} />
       <StatCard label={bi('Programs', 'البرامج')} value={programCount} icon={BarChart3} note={bi('Linked to sports', 'مرتبطة بالرياضات')} />
       <StatCard label={bi('Upcoming Sessions', 'الحصص القادمة')} value={totalSessions} icon={CalendarClock} note={bi('Preview schedule', 'جدول تجريبي')} />
-      <StatCard label={bi('Registrations', 'التسجيلات')} value={bi('Preview', 'تجريبي')} icon={Target} note={bi('Awaiting live data', 'بانتظار بيانات حقيقية')} />
-      <StatCard label={bi('Achievements', 'الإنجازات')} value={bi('Preview', 'تجريبي')} icon={Flag} note={bi('Empty state', 'حالة فارغة')} />
+      <StatCard label={bi('Registrations', 'التسجيلات')} value="—" icon={Target} note={bi('Awaiting live data', 'بانتظار بيانات حقيقية')} />
+      <StatCard label={bi('Achievements', 'الإنجازات')} value="—" icon={Flag} note={bi('Empty state', 'حالة فارغة')} />
     </section>
 
     <section className="admin-dashboard-grid" aria-label="Dashboard sections | أقسام لوحة التحكم">

@@ -13,7 +13,7 @@ export function AuthLoginPage() {
       <Sports3DStage>
         <div className="auth-card">
           <div className="auth-brand">
-            <Sports3DIcon className="auth-brand-icon" />
+            <Sports3DIcon sport="trophy" className="auth-brand-icon" />
             <h1><BilingualText value={bi('United Olympics Sports', 'يونايتد أوليمبيكس سبورت')} /></h1>
             <p><BilingualText value={bi('Athlete Portal Access', 'الدخول إلى بوابة اللاعب')} /></p>
           </div>

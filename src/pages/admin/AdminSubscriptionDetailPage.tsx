@@ -14,7 +14,8 @@ export function AdminSubscriptionDetailPage() {
   if (!sub) return <div className="admin-page"><PageHeader eyebrow={bi('Not Found', 'غير موجود')} title={bi('Subscription not found', 'الاشتراك غير موجود')} description={bi('-', '-')} /></div>;
   return <div className="admin-page">
     <Link to="/admin/subscriptions" className="admin-back-link"><ArrowLeft size={16} /><BilingualText value={bi('Back to Subscriptions', 'العودة للاشتراكات')} /></Link>
-    <PageHeader eyebrow={bi('Finance', 'المالية')} title={bi('Subscription', 'الاشتراك')} description={bi(sub.id, sub.id)} />
+    <PageHeader eyebrow={bi('Finance', 'المالية')} title={bi('Subscription', 'الاشتراك')} description={bi('Subscription preview — no processing claim.', 'معاينة اشتراك — لا يُدّعى وجود معالجة.')} />
+    <div className="preview-badge" style={{ marginBottom: 16 }}><BilingualText value={bi('Preview Data — No live billing gateway', 'بيانات تجريبية — لا يوجد بوابة دفع حقيقية')} /></div>
     <div className="admin-detail-grid">
       <section className="admin-detail-card"><h3><CreditCard size={18} /> <BilingualText value={bi('Plan Details', 'تفاصيل الخطة')} /></h3>
         <p><strong><BilingualText value={bi('Plan', 'الخطة')} /></strong> <BilingualText value={sub.plan} /></p>

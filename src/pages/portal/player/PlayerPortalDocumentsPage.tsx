@@ -67,10 +67,10 @@ export function PlayerPortalDocumentsPage() {
               </div>
             </div>
             <div className="document-actions">
-              <button className="doc-action-btn" aria-label={bi('View', 'عرض')} title={bi('View', 'عرض')}>
+              <button className="doc-action-btn" aria-label={bi('View', 'عرض').en} title={bi('View', 'عرض').en}>
                 <Eye size={16} />
               </button>
-              <button className="doc-action-btn" aria-label={bi('Download', 'تحميل')} title={bi('Download', 'تحميل')}>
+              <button className="doc-action-btn" aria-label={bi('Download', 'تحميل').en} title={bi('Download', 'تحميل').en}>
                 <Download size={16} />
               </button>
             </div>
