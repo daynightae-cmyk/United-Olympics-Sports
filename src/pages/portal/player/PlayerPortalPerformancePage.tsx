@@ -1,42 +1,44 @@
 import { Activity, ArrowDownRight, ArrowUpRight, Info, ShieldCheck, TrendingUp, Zap } from 'lucide-react';
-import { useMemo } from 'react';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
 import { usePlayerSession } from '../../../portals/player/PlayerSessionContext';
+
+type AvailableMetric = ReturnType<typeof usePlayerSession>['metrics'][number];
+
+function buildRadar(availableMetrics: AvailableMetric[]) {
+  if (availableMetrics.length < 3) return null;
+  const center = 150;
+  const maxRadius = 92;
+  const points = availableMetrics.map((metric, index) => {
+    const value = metric.current!.value;
+    const angle = (Math.PI * 2 * index) / availableMetrics.length - Math.PI / 2;
+    const radius = maxRadius * (Math.min(100, Math.max(0, value)) / 100);
+    const labelRadius = maxRadius + 34;
+    return {
+      x: center + Math.cos(angle) * radius,
+      y: center + Math.sin(angle) * radius,
+      lx: center + Math.cos(angle) * labelRadius,
+      ly: center + Math.sin(angle) * labelRadius,
+      label: metric.definition.name,
+    };
+  });
+  const grid = [0.25, 0.5, 0.75, 1].map((level) => availableMetrics.map((_, index) => {
+    const angle = (Math.PI * 2 * index) / availableMetrics.length - Math.PI / 2;
+    const radius = maxRadius * level;
+    return `${center + Math.cos(angle) * radius},${center + Math.sin(angle) * radius}`;
+  }).join(' '));
+  return { center, points, grid, polygon: points.map((point) => `${point.x},${point.y}`).join(' ') };
+}
 
 export function PlayerPortalPerformancePage() {
   const { player, sport, metrics, overallScore } = usePlayerSession();
   if (!player) return null;
 
-  const availableMetrics = useMemo(() => metrics.filter((metric) => typeof metric.current?.value === 'number'), [metrics]);
-  const latestRecord = useMemo(() => availableMetrics
+  const availableMetrics = metrics.filter((metric) => typeof metric.current?.value === 'number');
+  const latestRecord = availableMetrics
     .filter((metric) => metric.current?.recordedAt)
     .sort((a, b) => new Date(b.current!.recordedAt).getTime() - new Date(a.current!.recordedAt).getTime())
-    .at(0)?.current ?? null, [availableMetrics]);
-
-  const radar = useMemo(() => {
-    if (availableMetrics.length < 3) return null;
-    const center = 150;
-    const maxRadius = 92;
-    const points = availableMetrics.map((metric, index) => {
-      const value = metric.current!.value;
-      const angle = (Math.PI * 2 * index) / availableMetrics.length - Math.PI / 2;
-      const radius = maxRadius * (Math.min(100, Math.max(0, value)) / 100);
-      const labelRadius = maxRadius + 34;
-      return {
-        x: center + Math.cos(angle) * radius,
-        y: center + Math.sin(angle) * radius,
-        lx: center + Math.cos(angle) * labelRadius,
-        ly: center + Math.sin(angle) * labelRadius,
-        label: metric.definition.name,
-      };
-    });
-    const grid = [0.25, 0.5, 0.75, 1].map((level) => availableMetrics.map((_, index) => {
-      const angle = (Math.PI * 2 * index) / availableMetrics.length - Math.PI / 2;
-      const radius = maxRadius * level;
-      return `${center + Math.cos(angle) * radius},${center + Math.sin(angle) * radius}`;
-    }).join(' '));
-    return { center, points, grid, polygon: points.map((point) => `${point.x},${point.y}`).join(' ') };
-  }, [availableMetrics]);
+    .at(0)?.current ?? null;
+  const radar = buildRadar(availableMetrics);
 
   return (
     <div className="space-y-6" id="player-performance-page">
