@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
-  Activity, Award, CalendarDays, CheckCircle2, ChevronLeft, CreditCard, FileText,
-  Home, IdCard, Menu, MessageSquareText, ShieldCheck, Target, UserRound, UsersRound, X,
+  Activity, Award, Bell, CalendarDays, CheckCircle2, ChevronLeft, CreditCard, FileText,
+  Home, IdCard, Menu, MessageSquareText, Settings, ShieldCheck, Target, UserRound, UsersRound, X,
   type LucideIcon,
 } from 'lucide-react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
@@ -34,13 +34,16 @@ const portalMeta: Record<PortalKind, { title: BilingualValue; role: BilingualVal
       { path: '', label: bi('Overview', 'نظرة عامة'), icon: Home },
       { path: 'children', label: bi('Children', 'الأبناء'), icon: UsersRound },
       { path: 'schedule', label: bi('Schedule', 'الجدول'), icon: CalendarDays },
+      { path: 'attendance', label: bi('Attendance', 'الحضور'), icon: CheckCircle2 },
       { path: 'performance', label: bi('Performance', 'الأداء'), icon: Activity },
       { path: 'feedback', label: bi('Feedback', 'الملاحظات'), icon: MessageSquareText },
       { path: 'subscriptions', label: bi('Subscriptions', 'الاشتراكات'), icon: ShieldCheck },
       { path: 'payments', label: bi('Payments', 'المدفوعات'), icon: CreditCard },
       { path: 'documents', label: bi('Documents', 'المستندات'), icon: FileText },
       { path: 'messages', label: bi('Messages', 'الرسائل'), icon: MessageSquareText },
+      { path: 'notifications', label: bi('Notifications', 'الإشعارات'), icon: Bell },
       { path: 'profile', label: bi('Profile', 'الملف الشخصي'), icon: UserRound },
+      { path: 'settings', label: bi('Settings', 'الإعدادات'), icon: Settings },
     ],
   },
   coach: {
