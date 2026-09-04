@@ -1,5 +1,5 @@
 import { Award, Bell, Calendar, CheckCheck, CheckCircle2, MessageSquare, Sparkles } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { usePlayerSession, type PlayerNotificationItem } from '../../../portals/player/PlayerSessionContext';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
@@ -22,11 +22,11 @@ export function PlayerPortalNotificationsPage() {
   if (!player) return null;
 
   const unreadCount = notifications.filter((item) => !item.isRead).length;
-  const filteredNotifications = useMemo(() => notifications.filter((item) => {
+  const filteredNotifications = notifications.filter((item) => {
     if (filter === 'all') return true;
     if (filter === 'unread') return !item.isRead;
     return item.category === filter;
-  }), [filter, notifications]);
+  });
 
   return (
     <div className="space-y-6" id="player-notifications-page">
