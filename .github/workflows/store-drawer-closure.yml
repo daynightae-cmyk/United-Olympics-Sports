@@ -1,3 +1,4 @@
+# Final closure round: commit source changes only after the full browser Golden Master passes.
 name: Store Drawer Closure
 
 on:
