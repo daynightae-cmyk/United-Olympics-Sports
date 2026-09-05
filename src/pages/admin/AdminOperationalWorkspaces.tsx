@@ -65,6 +65,7 @@ const toneFor = (status: string): "active" | "warning" | "danger" | "info" | "ne
 export function AdminAttendancePage() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
+  const [sessionId, setSessionId] = useState("all");
   const [marks, setMarks] = useState<Record<string, string>>({});
   const records = useMemo(
     () =>
@@ -79,7 +80,8 @@ export function AdminAttendancePage() {
       `${record.player.nameEn} ${record.player.nameAr} ${record.player.id}`
         .toLowerCase()
         .includes(query.toLowerCase()) &&
-      (status === "all" || currentStatus === status)
+      (status === "all" || currentStatus === status) &&
+      (sessionId === "all" || demoSessions.find((session) => session.id === sessionId)?.groupId === record.player.groupId)
     );
   });
   const counts = records.reduce<Record<string, number>>((result, record) => {
@@ -149,9 +151,9 @@ export function AdminAttendancePage() {
               ]}
             />
             <EnterpriseSelect
-              label={bi("Session", "الجلسة")}
-              value="all"
-              onChange={() => {}}
+              label={bi("Scheduled session group", "مجموعة الجلسة المجدولة")}
+              value={sessionId}
+              onChange={setSessionId}
               options={[
                 { value: "all", label: bi("All sessions", "كل الجلسات") },
                 ...demoSessions.map((session) => ({
@@ -235,6 +237,7 @@ export function AdminAttendancePage() {
               onClick={() => {
                 setQuery("");
                 setStatus("all");
+                setSessionId("all");
               }}
             >
               <BilingualText value={bi("Reset filters", "إعادة ضبط الفلاتر")} />

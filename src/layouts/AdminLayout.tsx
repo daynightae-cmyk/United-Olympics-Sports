@@ -6,7 +6,6 @@ import { AdminTopbar } from '../components/admin/AdminTopbar';
 import { bi } from '../components/bilingual/BilingualText';
 import { getBranch, getCoach, getCountry, getGroup, getParent, getPlayer, getProgram, getSport } from '../data/demo/selectors';
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
-import { AdminFutureModulePage } from '../pages/admin/AdminFutureModulePage';
 import { AdminGroupDetailPage } from '../pages/admin/AdminGroupDetailPage';
 import { AdminGroupsPage } from '../pages/admin/AdminGroupsPage';
 import { AdminPlayerDetailPage } from '../pages/admin/AdminPlayerDetailPage';
@@ -47,6 +46,7 @@ import { AdminAnnouncementsDetailPage } from '../pages/admin/AdminAnnouncementsD
 import { AdminMessagesPage } from '../pages/admin/AdminMessagesPage';
 import { AdminMessagesDetailPage } from '../pages/admin/AdminMessagesDetailPage';
 import { AdminAuditActivityPage } from '../pages/admin/AdminAuditActivityPage';
+import { AdminUserDetailPage, AdminAuditActivityDetailPage } from '../pages/admin/AdminAccessDetailPages';
 import { useUiSettings } from '../ui/theme/useUiSettings';
 import { StoreAdminRouter } from '../store/admin/StoreAdminPages';
 import '../styles/admin.css';
@@ -124,6 +124,7 @@ export function AdminLayout() {
       <Route path="content" element={<AdminContentPage />} />
       <Route path="content/:contentId" element={<AdminContentDetailPage />} />
       <Route path="users" element={<AdminUsersPage />} />
+      <Route path="users/:userId" element={<AdminUserDetailPage />} />
       <Route path="registrations" element={<AdminRegistrationsPage />} />
       <Route path="registrations/:registrationId" element={<AdminRegistrationsDetailPage />} />
       <Route path="achievements" element={<AdminAchievementsPage />} />
@@ -135,7 +136,7 @@ export function AdminLayout() {
       <Route path="messages" element={<AdminMessagesPage />} />
       <Route path="messages/:messageId" element={<AdminMessagesDetailPage />} />
       <Route path="audit-activity" element={<AdminAuditActivityPage />} />
-      {Object.keys(routeLabels).filter((path) => !['sports','groups','players','settings','countries','branches','programs','parents','coaches','schedules','attendance','performance','subscriptions','payments','reports','content','users','registrations','achievements','events','announcements','messages','audit-activity','store'].includes(path)).map((path) => <Route key={path} path={path} element={<AdminFutureModulePage />} />)}
+      <Route path="audit-activity/:activityId" element={<AdminAuditActivityDetailPage />} />
       <Route path="*" element={<Navigate to="/admin" replace />} />
     </Routes></main></div>
   </div>;

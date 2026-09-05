@@ -6,7 +6,6 @@ import type { AdminDataMode } from './queryTypes';
 interface AdminDataContextValue {
   gateway: AdminDataGateway;
   mode: AdminDataMode;
-  setMode: (mode: AdminDataMode) => void;
   resetPreview: () => void;
 }
 
@@ -19,7 +18,6 @@ export function AdminDataProvider({ children, initialMode = 'preview' }: { child
   const value = useMemo(() => ({
     gateway,
     mode,
-    setMode: () => {},
     resetPreview: resetPreviewData,
   }), [gateway, mode]);
 

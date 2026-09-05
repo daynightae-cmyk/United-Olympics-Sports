@@ -1,0 +1,12 @@
+import { chromium } from 'playwright';
+const base=process.env.UOS_BASE_URL||'http://127.0.0.1:4173';
+const routes=['/admin','/admin/countries','/admin/branches','/admin/sports','/admin/programs','/admin/players','/admin/parents','/admin/coaches','/admin/groups','/admin/schedules','/admin/attendance','/admin/registrations','/admin/performance','/admin/achievements','/admin/events','/admin/subscriptions','/admin/payments','/admin/reports','/admin/announcements','/admin/messages','/admin/content','/admin/users','/admin/settings','/admin/audit-activity','/admin/store','/admin/store/orders','/admin/store/products','/admin/store/categories','/admin/store/inventory','/admin/store/collections','/admin/store/discounts','/admin/store/settings'];
+const browser=await chromium.launch({headless:true});
+for(const width of [390,1440]) for(const theme of ['light','dark']) for(const dir of ['ltr','rtl']){
+  const page=await browser.newPage({viewport:{width,height:900}}); await page.addInitScript(({theme,dir})=>{localStorage.setItem('uos-ui-settings-v1',JSON.stringify({appearance:theme,bilingualOrder:dir==='rtl'?'ar-first':'en-first'})); document.documentElement.dir=dir;},{theme,dir});
+  for(const route of routes){ await page.goto(base+route,{waitUntil:'networkidle'}); const body=await page.locator('body').innerText(); if(!body.trim()) throw new Error(`blank ${route}`); const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>document.documentElement.clientWidth+2); if(overflow) throw new Error(`horizontal overflow ${width} ${route}`); }
+  await page.close();
+}
+const page=await browser.newPage({viewport:{width:1440,height:900}}); await page.goto(base+'/admin/users',{waitUntil:'networkidle'}); const userLink=page.locator('a[href^="/admin/users/"]').first(); if(await userLink.count()){const href=await userLink.getAttribute('href'); await page.goto(base+href,{waitUntil:'networkidle'}); if(page.url().endsWith('/admin')) throw new Error('user detail redirected to dashboard');}
+await page.goto(base+'/admin/audit-activity',{waitUntil:'networkidle'}); const auditLink=page.locator('a[href^="/admin/audit-activity/"]').first(); if(await auditLink.count()){const href=await auditLink.getAttribute('href'); await page.goto(base+href,{waitUntil:'networkidle'}); if(page.url().endsWith('/admin')) throw new Error('audit detail redirected to dashboard');}
+await browser.close(); console.log('Admin operational route/responsive QA passed.');
