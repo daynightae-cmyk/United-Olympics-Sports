@@ -131,7 +131,7 @@ export function AdminBranchesPage() {
 
     <div style={{ marginTop: '16px' }}>
       {loading && <BmLoadingTable rows={5} />}
-      {error && <BmErrorState onRetry={() => window.location.reload()} />}
+      {error && <BmErrorState onRetry={() => globalThis.location.reload()} />}
       {!loading && !error && (
         <BmDataTable<BranchViewModel>
           columns={columns}

@@ -95,7 +95,8 @@ function AttendanceStrip({ player }: { player: Player }) {
 }
 
 export function PlayerPreviewPage() {
-  const player = getPlayer("player-demo-001") ?? demoPlayers[0];
+  const player = getPlayer("player-demo-001") ?? demoPlayers.find((item) => item.id === "player-demo-001");
+  if (!player) return null;
   const overall = getPlayerOverall(player.id);
   const feedback = player.coachFeedback.at(-1);
   return (
@@ -180,7 +181,8 @@ export function PlayerPreviewPage() {
 const parentPreviewChildren = ["player-demo-001", "player-demo-003"];
 export function ParentPreviewPage() {
   const [selectedId, setSelectedId] = useState(parentPreviewChildren[0]);
-  const player = getPlayer(selectedId) ?? demoPlayers[0];
+  const player = getPlayer(selectedId) ?? demoPlayers.find((item) => item.id === selectedId);
+  if (!player) return null;
   const sport = getSport(player.sportId);
   const overall = getPlayerOverall(player.id);
   const feedback = player.coachFeedback.at(-1);

@@ -76,6 +76,7 @@ type DemoRow = {
 };
 
 export function BenchmarkShowcasePage() {
+  const benchmarkPlayer = demoPlayers.find((player) => Boolean(player));
   const [modalOpen, setModalOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -207,12 +208,12 @@ export function BenchmarkShowcasePage() {
         <div className="bm-grid bm-grid-2" style={{ marginBottom: 'clamp(28px, 4vw, 44px)' }}>
           <BmIdentityCard
             avatar={<UserRound aria-hidden="true" />}
-            name={{ en: demoPlayers[0].nameEn, ar: demoPlayers[0].nameAr }}
-            id={demoPlayers[0].id}
+            name={benchmarkPlayer ? { en: benchmarkPlayer.nameEn, ar: benchmarkPlayer.nameAr } : bi('Preview Player', 'لاعب تجريبي')}
+            id={benchmarkPlayer?.id ?? 'preview-player'}
             fields={[
-              { label: bi('Sport', 'الرياضة'), value: <BilingualText value={getSport(demoPlayers[0].sportId)?.name ?? bi('—', '—')} /> },
-              { label: bi('Age', 'العمر'), value: demoPlayers[0].age ?? '—' },
-              { label: bi('Level', 'المستوى'), value: <BilingualText value={demoPlayers[0].level} /> },
+              { label: bi('Sport', 'الرياضة'), value: <BilingualText value={benchmarkPlayer ? (getSport(benchmarkPlayer.sportId)?.name ?? bi('—', '—')) : bi('—', '—')} /> },
+              { label: bi('Age', 'العمر'), value: benchmarkPlayer?.age ?? '—' },
+              { label: bi('Level', 'المستوى'), value: <BilingualText value={benchmarkPlayer?.level ?? bi('—', '—')} /> },
               { label: bi('Status', 'الحالة'), value: <BmBadge tone="success" label={bi('Active', 'نشط')} /> },
             ]}
           />

@@ -28,7 +28,7 @@ export function UpdateToast() {
       <div className="uos-update-banner" role="alert">
         <strong><BilingualText value={bi('Update required', 'يلزم التحديث')} /></strong>
         <p><BilingualText value={status.latest.notes ?? bi('A newer version is required to continue.', 'يلزم إصدار أحدث للمتابعة.')} /></p>
-        <button type="button" className="uos-btn-primary uos-touch" onClick={() => window.location.reload()}>
+        <button type="button" className="uos-btn-primary uos-touch" onClick={() => globalThis.location.reload()}>
           <RefreshCw size={15} /><BilingualText value={bi('Update', 'تحديث')} />
         </button>
       </div>
@@ -39,7 +39,7 @@ export function UpdateToast() {
       <strong><BilingualText value={bi('New update available', 'يتوفر تحديث جديد')} /></strong>
       <p><BilingualText value={status.latest.notes ?? bi('Improvements are ready.', 'تحسينات جديدة أصبحت متاحة.')} /></p>
       <div className="uos-update-actions">
-        <button type="button" className="uos-btn-primary uos-touch" onClick={() => window.location.reload()}>
+        <button type="button" className="uos-btn-primary uos-touch" onClick={() => globalThis.location.reload()}>
           <BilingualText value={bi('Update', 'تحديث')} />
         </button>
         <button type="button" className="uos-btn-ghost uos-touch" onClick={() => setDismissed(true)}>
