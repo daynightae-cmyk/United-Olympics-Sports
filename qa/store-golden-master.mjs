@@ -58,7 +58,6 @@ async function visit(page, errors, route) {
 
 async function screenshot(page, name) {
   if (!evidence) return;
-  // Load secondary media through actual scrolling before capturing the full page.
   await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 700) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 35)); } scrollTo(0, 0); });
   await page.waitForTimeout(150);
   await page.screenshot({ path: `${evidence}/${name}.png`, fullPage: true });
@@ -69,7 +68,6 @@ async function clickExposedBackdrop(page, backdrop, panel) {
   const panelBox = await panel.boundingBox();
   assert(backdropBox, 'drawer backdrop has no measurable box');
   assert(panelBox, 'drawer panel has no measurable box');
-
   const margin = 8;
   const candidates = [
     { x: backdropBox.x + margin, y: backdropBox.y + margin },
@@ -80,6 +78,29 @@ async function clickExposedBackdrop(page, backdrop, panel) {
   const outside = candidates.find(({ x, y }) => x < panelBox.x || x > panelBox.x + panelBox.width || y < panelBox.y || y > panelBox.y + panelBox.height);
   assert(outside, 'drawer backdrop has no exposed clickable area');
   await page.mouse.click(outside.x, outside.y);
+}
+
+async function clickOutsideOverlay(page, overlay) {
+  const overlayBox = await overlay.boundingBox();
+  const viewport = page.viewportSize();
+  assert(overlayBox, 'overlay has no measurable box');
+  assert(viewport, 'viewport is unavailable');
+  const margin = 8;
+  const candidates = [
+    { x: margin, y: viewport.height - margin },
+    { x: viewport.width - margin, y: viewport.height - margin },
+    { x: margin, y: Math.round(viewport.height / 2) },
+    { x: viewport.width - margin, y: Math.round(viewport.height / 2) },
+  ];
+  for (const point of candidates) {
+    const outside = point.x < overlayBox.x || point.x > overlayBox.x + overlayBox.width || point.y < overlayBox.y || point.y > overlayBox.y + overlayBox.height;
+    if (!outside) continue;
+    const interactive = await page.evaluate(({ x, y }) => Boolean(document.elementFromPoint(x, y)?.closest('a,button,input,select,textarea,[role="button"]')), point);
+    if (interactive) continue;
+    await page.mouse.click(point.x, point.y);
+    return;
+  }
+  assert.fail('search results have no safe exposed outside-click area');
 }
 
 async function modalChecks(page, selector, trigger, close) {
@@ -116,8 +137,9 @@ async function interactions(browser, name, rtl) {
     assert(await search.evaluate((e) => e === document.activeElement), 'search focus restoration failed');
     await search.fill('unmatched-query-xyz');
     await page.locator('.store-search-results p').waitFor();
-    await page.locator('.store-page-heading').click();
-    await page.locator('#store-search-results').waitFor({ state: 'hidden' });
+    const searchResults = page.locator('#store-search-results');
+    await clickOutsideOverlay(page, searchResults);
+    await searchResults.waitFor({ state: 'hidden' });
     await search.fill('swim');
     await search.press('Enter');
     await page.waitForURL('**/store/search?q=swim');
