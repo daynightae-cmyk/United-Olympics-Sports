@@ -1,0 +1,119 @@
+name: Admin Branch Operations Closure V2
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/admin-branch-closure-v2.yml'
+permissions:
+  contents: write
+jobs:
+  close-branch-operations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v5
+        with: { node-version: '22', cache: npm }
+      - name: Reapply verified branch product patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          src=Path('.github/workflows/admin-branch-closure.yml').read_text(encoding='utf-8')
+          names=['Close branch directory create flow','Replace branch cockpit placeholders with live Admin Data']
+          for n,name in enumerate(names,1):
+              marker=f'      - name: {name}\n'
+              start=src.index(marker)
+              run=src.index('        run: |\n',start)+len('        run: |\n')
+              end=src.find('      - name:',run)
+              if end<0: end=src.find('      - run:',run)
+              block=src[run:end]
+              lines=[line[10:] if line.startswith('          ') else line for line in block.splitlines()]
+              Path(f'/tmp/branch-patch-{n}.sh').write_text('\n'.join(lines)+'\n',encoding='utf-8')
+          PY
+          bash /tmp/branch-patch-1.sh
+          bash /tmp/branch-patch-2.sh
+      - name: Create diagnostic branch QA
+        shell: bash
+        run: |
+          cat > qa/admin-branch-operational.mjs <<'JS'
+          import { chromium } from 'playwright';
+          const base=process.env.UOS_BASE_URL||'http://127.0.0.1:4173';
+          const browser=await chromium.launch({headless:true});
+          const page=await browser.newPage({viewport:{width:1440,height:900}});
+          await page.goto(base+'/admin/branches',{waitUntil:'networkidle'});
+          await page.getByText('Add Branch',{exact:true}).click();
+          let dialog=page.locator('[role="dialog"]').last();
+          await dialog.waitFor({state:'visible'});
+          await dialog.locator('input[placeholder="Branch name"]').fill('QA Operations Branch');
+          await dialog.locator('input[placeholder="اسم الفرع"]').fill('فرع اختبار التشغيل');
+          await dialog.getByText('Continue',{exact:true}).click();
+          dialog=page.locator('[role="dialog"]').last();
+          const selects=dialog.locator('select');
+          if(await selects.count()!==2) throw new Error(`expected 2 wizard selects, got ${await selects.count()}`);
+          for(let i=0;i<2;i++){
+            const sel=selects.nth(i);
+            const opts=await sel.locator('option').evaluateAll(os=>os.map(o=>({v:o.value,d:o.disabled})).filter(x=>x.v&&!x.d));
+            if(!opts.length) throw new Error(`wizard select ${i} has no real option`);
+            await sel.selectOption(opts[0].v);
+          }
+          await dialog.getByText('Continue',{exact:true}).click();
+          dialog=page.locator('[role="dialog"]').last();
+          await dialog.getByText('Save Branch',{exact:true}).click();
+          await dialog.waitFor({state:'hidden'});
+          const stored=await page.evaluate(()=>{
+            const raw=localStorage.getItem('uos-admin-preview-data-v1');
+            if(!raw) return null;
+            const parsed=JSON.parse(raw);
+            return parsed.branches?.find(b=>b.name?.en==='QA Operations Branch')??null;
+          });
+          if(!stored) throw new Error('branch was not persisted to Preview localStorage after Save');
+          if(!stored.id || stored.status!=='active' || !Array.isArray(stored.sportIds) || stored.sportIds.length!==1) throw new Error(`persisted branch shape invalid: ${JSON.stringify(stored)}`);
+          await page.getByText('QA Operations Branch',{exact:true}).first().waitFor({state:'visible'});
+          await page.reload({waitUntil:'networkidle'});
+          await page.getByText('QA Operations Branch',{exact:true}).first().waitFor({state:'visible'});
+          const row=page.locator('tr').filter({hasText:'QA Operations Branch'}).first();
+          const link=row.locator('a[href^="/admin/branches/"]').first();
+          const href=await link.getAttribute('href');
+          if(!href) throw new Error('new branch detail link missing');
+          await page.goto(base+href,{waitUntil:'networkidle'});
+          await page.getByText('Branch Controls',{exact:true}).waitFor();
+          const text=await page.locator('body').innerText();
+          if(/Sport branch-|Coach branch-|Player branch-|will be linked to branch groups/i.test(text)) throw new Error('branch cockpit still contains fabricated relationship placeholders');
+          const status=page.locator('section.admin-panel').filter({hasText:'Branch Controls'}).locator('select').first();
+          await status.selectOption('inactive');
+          await page.reload({waitUntil:'networkidle'});
+          const current=await page.locator('section.admin-panel').filter({hasText:'Branch Controls'}).locator('select').first().inputValue();
+          if(current!=='inactive') throw new Error('branch operating status did not persist after reload');
+          await browser.close();
+          console.log('Admin branch create/localStorage/reload/cockpit/status QA passed.');
+          JS
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: git diff --check
+      - run: npx playwright install --with-deps chromium
+      - name: Start preview
+        shell: bash
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/branch-preview.log 2>&1 &
+          for i in {1..40}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/branch-preview.log; exit 1
+      - name: Branch persistence browser QA
+        env: { UOS_BASE_URL: 'http://127.0.0.1:4173' }
+        run: node qa/admin-branch-operational.mjs
+      - name: Existing Admin QA
+        env: { UOS_BASE_URL: 'http://127.0.0.1:4173' }
+        run: node qa/admin-operational.mjs
+      - name: Commit verified branch closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" || { echo 'origin/main moved; refusing overwrite'; exit 1; }
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/pages/admin/AdminBranchesPage.tsx src/pages/admin/AdminBranchDetailPage.tsx qa/admin-branch-operational.mjs
+          git diff --cached --check
+          git commit -m 'fix: close admin branch operating cockpit'
+          git push origin HEAD:main
