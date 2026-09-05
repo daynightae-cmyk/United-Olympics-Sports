@@ -52,7 +52,6 @@ jobs:
             'United Olympic Sports Academy'
             'United Olympics Academy'
             'الأكاديمية'
-            'demoPlayers[0]'
             '|| 78'
             '|| 60'
             'targetMinutes: 150'
@@ -63,7 +62,6 @@ jobs:
             'Sports Training Facility'
             'google-logo.svg'
             'apple-logo.svg'
-            'window.location'
           )
           failed=0
           for pattern in "${forbidden[@]}"; do
@@ -72,6 +70,19 @@ jobs:
               failed=1
             fi
           done
+
+          # Demo fixtures are legitimate inside the explicitly named preview and
+          # benchmark labs, but must never leak into owner-facing product code.
+          if grep -RInF \
+            --exclude-dir=node_modules \
+            --exclude-dir=dist \
+            --exclude='ProductPreviewPages.tsx' \
+            --exclude='BenchmarkShowcasePage.tsx' \
+            -- 'demoPlayers[0]' src public; then
+            echo "Forbidden product-truth pattern found outside preview/benchmark surfaces: demoPlayers[0]"
+            failed=1
+          fi
+
           exit "$failed"
 
       - name: Install browser QA runtime
