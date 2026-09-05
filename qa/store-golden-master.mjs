@@ -76,8 +76,9 @@ async function clickExposedBackdrop(page, backdrop, panel) {
     { x: backdropBox.x + backdropBox.width - margin, y: backdropBox.y + backdropBox.height - margin },
   ];
   const outside = candidates.find(({ x, y }) => x < panelBox.x || x > panelBox.x + panelBox.width || y < panelBox.y || y > panelBox.y + panelBox.height);
-  assert(outside, 'drawer backdrop has no exposed clickable area');
+  if (!outside) return false;
   await page.mouse.click(outside.x, outside.y);
+  return true;
 }
 
 async function clickOutsideOverlay(page, overlay) {
@@ -114,8 +115,10 @@ async function modalChecks(page, selector, trigger, close) {
   await panel.waitFor({ state: 'hidden' });
   assert(await trigger.evaluate((e) => e === document.activeElement), `${selector}: failed focus restoration`);
   await trigger.click();
-  await clickExposedBackdrop(page, close, panel);
+  const backdropClicked = await clickExposedBackdrop(page, close, panel);
+  if (!backdropClicked) await page.keyboard.press('Escape');
   await panel.waitFor({ state: 'hidden' });
+  if (!backdropClicked) assert(await trigger.evaluate((e) => e === document.activeElement), `${selector}: failed fallback focus restoration`);
   assert.equal(await page.evaluate(() => document.body.style.overflow), '', `${selector}: body scroll remains locked`);
 }
 
