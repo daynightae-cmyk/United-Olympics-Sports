@@ -351,3 +351,232 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ================================================================
+   SECTION 09: Home hero dead-space closure + first-viewport peek
+   ================================================================ */
+
+.page.home {
+  padding-top: 70px;
+}
+
+.page.home .hero {
+  min-height: 560px;
+  padding-top: 30px;
+  padding-bottom: 28px;
+}
+
+.page.home .hero-content .eyebrow {
+  margin-bottom: 2px;
+}
+
+.page.home .hero h1 {
+  margin-top: 18px;
+  margin-bottom: 16px;
+}
+
+.page.home .hero-content > p {
+  max-width: 560px;
+}
+
+.page.home .hero-actions {
+  margin-top: 22px;
+}
+
+.page.home .hero-art {
+  height: 470px;
+}
+
+.page.home .hero-art .official-logo {
+  width: 260px;
+  height: 260px;
+}
+
+.page.home > .section:nth-of-type(1) {
+  padding-top: 70px;
+}
+
+.page.home .cta-band {
+  margin-top: 18px;
+  padding: 36px 38px;
+}
+
+/* ================================================================
+   SECTION 12: Cross-route consistency + spacing hierarchy
+   ================================================================ */
+
+.page-intro {
+  margin-bottom: 56px;
+}
+
+.page-intro h1 {
+  margin-top: 18px;
+  margin-bottom: 16px;
+}
+
+.page-intro > p {
+  max-width: 640px;
+}
+
+.section-heading {
+  margin-bottom: 32px;
+}
+
+.section-heading h2 {
+  margin-top: 10px;
+  margin-bottom: 14px;
+}
+
+.feature-grid,
+.card-grid {
+  gap: 18px;
+}
+
+/* Consistent card radius hierarchy across public surfaces */
+.sport-card,
+.feature-card,
+.contact-form,
+.contact-note {
+  border-radius: 18px;
+}
+
+.od-program-card,
+.od-path-stage,
+.od-pillar-list article,
+.od-session-flow article,
+.od-coach-approach,
+.od-owner-cta,
+.od-program-teaser,
+.od-sport-concept,
+.od-coach-role-grid article {
+  border-radius: 18px;
+}
+
+.od-sport-filter button {
+  border-radius: 14px;
+}
+
+/* Headline / description / CTA stack gaps (avoid 40-60px voids) */
+.hero-content > p,
+.page-intro > p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.football-hero-content > p,
+.swim-hero-content > p,
+.basketball-hero-content > p {
+  margin-bottom: 0;
+}
+
+.football-actions,
+.basketball-actions,
+.od-concept-actions {
+  margin-top: 24px;
+}
+
+/* Hero-art: no competing 3D foreground objects — rings stay subtle background */
+.hero-ring {
+  opacity: 0.6;
+}
+
+.hero-ring.ring-two {
+  opacity: 0.38;
+}
+
+/* Program/coach hero spacing — keep consistent with public page-intro */
+.od-programs-hero {
+  min-height: 560px;
+  padding: 60px 5.5% 68px;
+  gap: 44px;
+}
+
+.od-programs-hero h1,
+.od-concept-hero h1,
+.od-coaches-hero h1 {
+  margin: 14px 0 18px;
+}
+
+.od-concept-hero {
+  min-height: 560px;
+  padding: 60px 5.5% 68px;
+  gap: 44px;
+}
+
+.od-coaches-hero {
+  min-height: 460px;
+  padding: 60px 5.5%;
+  gap: 44px;
+}
+
+.od-program-catalogue,
+.od-coach-role-section,
+.od-coaching-system,
+.od-detail-section {
+  padding: 68px 5.5%;
+}
+
+/* Mobile first-viewport tightening */
+@media (max-width: 820px) {
+  .page.home {
+    padding-top: 54px;
+  }
+  .page.home .hero {
+    min-height: auto;
+    padding-top: 26px;
+    padding-bottom: 26px;
+  }
+  .page.home .hero-art {
+    height: 300px;
+  }
+  .page.home .hero-art .official-logo {
+    width: 195px;
+    height: 195px;
+  }
+  .page.home > .section:nth-of-type(1) {
+    padding-top: 54px;
+  }
+  .page-intro {
+    margin-bottom: 44px;
+  }
+  .od-programs-hero,
+  .od-concept-hero,
+  .od-coaches-hero {
+    padding: 44px 5% 52px;
+  }
+  .od-program-catalogue,
+  .od-coach-role-section,
+  .od-coaching-system,
+  .od-detail-section {
+    padding: 52px 5%;
+  }
+}
+
+@media (max-width: 480px) {
+  .page.home {
+    padding-top: 40px;
+  }
+  .page.home .hero {
+    padding: 22px 18px;
+  }
+  .page.home .hero-actions {
+    margin-top: 20px;
+  }
+  .page.home > .section:nth-of-type(1) {
+    padding-top: 44px;
+  }
+  .page-intro {
+    margin-bottom: 36px;
+  }
+  .od-programs-hero,
+  .od-concept-hero,
+  .od-coaches-hero {
+    padding: 38px 18px 44px;
+  }
+  .od-program-catalogue,
+  .od-coach-role-section,
+  .od-coaching-system,
+  .od-detail-section {
+    padding: 44px 18px;
+  }
+}

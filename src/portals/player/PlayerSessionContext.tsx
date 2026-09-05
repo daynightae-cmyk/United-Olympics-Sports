@@ -55,8 +55,8 @@ export interface PlayerAchievementItem {
   id: string;
   title: BilingualText;
   description: BilingualText;
-  tier: 'gold' | 'silver' | 'bronze' | 'diamond';
-  category: BilingualText;
+  tier: 'gold' | 'silver' | 'bronze' | 'diamond' | null;
+  category: BilingualText | null;
   awardedAt?: string;
   isLocked: boolean;
   criteria?: BilingualText;
@@ -231,11 +231,11 @@ export function PlayerSessionProvider({ children }: { children: React.ReactNode 
       id: `ach-earned-${idx}`,
       title: ach,
       description: {
-        en: 'Milestone noted on athlete development record.',
-        ar: 'إنجاز مسجل في سجل تطوير الرياضي.',
+        en: 'Not recorded',
+        ar: 'غير مسجل',
       },
-      tier: 'gold' as const,
-      category: { en: 'Development', ar: 'تطوير' },
+      tier: null,
+      category: null,
       isLocked: false,
     }));
   }, [player]);

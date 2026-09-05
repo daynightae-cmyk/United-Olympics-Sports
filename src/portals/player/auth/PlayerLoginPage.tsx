@@ -217,11 +217,7 @@ export function PlayerLoginPage() {
                   aria-disabled={!productionAuthGateway.isProductionConfigured()}
                   className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl bg-white text-slate-900 font-semibold text-xs hover:bg-slate-100 transition-all shadow-md active:scale-[0.99]"
                 >
-                  {productionAuthGateway.isProductionConfigured() ? (
-                    <img src="/brand/google-logo.svg" alt="Google" className="w-4 h-4" />
-                  ) : (
-                    <span className="w-4 h-4 text-[11px] text-slate-500">G</span>
-                  )}
+                  <span className="w-4 h-4 text-[11px] text-slate-500 flex items-center justify-center font-bold">G</span>
                   <span>
                     <BilingualText
                       value={
@@ -240,11 +236,7 @@ export function PlayerLoginPage() {
                   aria-disabled={!productionAuthGateway.isProductionConfigured()}
                   className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl bg-black text-white font-semibold text-xs hover:bg-slate-900 border border-white/20 transition-all shadow-md active:scale-[0.99]"
                 >
-                  {productionAuthGateway.isProductionConfigured() ? (
-                    <img src="/brand/apple-logo.svg" alt="Apple" className="w-4 h-4 text-white" />
-                  ) : (
-                    <span className="w-4 h-4 text-[11px] text-slate-500"></span>
-                  )}
+                  <span className="w-4 h-4 text-[14px] text-slate-500 flex items-center justify-center"></span>
                   <span>
                     <BilingualText
                       value={

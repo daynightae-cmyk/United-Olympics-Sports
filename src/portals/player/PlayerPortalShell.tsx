@@ -31,6 +31,7 @@ import { usePlayerSession } from "./PlayerSessionContext";
 import { BilingualText, bi } from "../../components/bilingual/BilingualText";
 import { PlayerPortrait } from "./components/PlayerPortrait";
 import { useUiSettings } from "../../ui/theme/useUiSettings";
+import SafeBrandLogo from "../../components/ui/SafeBrandLogo";
 
 interface NavItemDef {
   path: string;

@@ -67,9 +67,11 @@ export function PlayerPortalAchievementsPage() {
                     <Award size={24} />
                   </div>
 
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded uppercase border bg-amber-400/10 text-amber-300 border-amber-400/30">
-                    <BilingualText value={badge.category} />
-                  </span>
+                  {badge.category && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded uppercase border bg-amber-400/10 text-amber-300 border-amber-400/30">
+                      <BilingualText value={badge.category} />
+                    </span>
+                  )}
                 </div>
 
                 <strong className="text-sm font-bold text-white block mb-1">
@@ -135,9 +137,11 @@ export function PlayerPortalAchievementsPage() {
               <Award size={40} />
             </div>
 
-            <span className="inline-block text-[11px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full bg-amber-400/10 text-amber-300 border border-amber-400/30 mb-2">
-              <BilingualText value={selectedBadge.category} />
-            </span>
+            {selectedBadge.category && (
+              <span className="inline-block text-[11px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full bg-amber-400/10 text-amber-300 border border-amber-400/30 mb-2">
+                <BilingualText value={selectedBadge.category} />
+              </span>
+            )}
 
             <h3 className="text-lg font-bold text-white">
               <BilingualText value={selectedBadge.title} />

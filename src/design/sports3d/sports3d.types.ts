@@ -3,13 +3,14 @@ export type Sport3DKey =
   | "basketball"
   | "swimming"
   | "tennis"
+  | "gymnastics"
+  | "martial-arts"
   | "trophy"
   | "stopwatch"
   | string;
 
 export interface Sport3DEntry {
   key: Sport3DKey;
-  // local public path to an image or staged 3D preview asset. Optional.
   assetPath?: string | null;
   licenseSource?: string | null;
   licenseStatus?: "ok" | "review-required" | "unavailable";
