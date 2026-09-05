@@ -90,6 +90,11 @@ jobs:
           UOS_BASE_URL: http://127.0.0.1:4173
         run: node qa/interface-smoke.mjs
 
+      - name: Store Golden Master QA (production)
+        env:
+          UOS_BASE_URL: http://127.0.0.1:4173
+        run: node qa/store-golden-master.mjs
+
       - name: Upload preview log on failure
         if: failure()
         uses: actions/upload-artifact@v6
