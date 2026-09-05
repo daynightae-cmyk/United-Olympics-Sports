@@ -1,48 +1,13 @@
-import { ShieldCheck, CalendarDays } from 'lucide-react';
+import { Activity, CalendarDays, ShieldCheck, UsersRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { PageHeader } from '../../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
-import { demoParents } from '../../../data/demo/parents';
-import { getPlayer } from '../../../data/demo/selectors';
+import { getChildAttendance, getChildPerformance, getLinkedChildren, getSport } from '../../../portals/parent/parentData';
 
-export function ParentPortalChildrenPage() {
-  const parent = demoParents[0];
-  const children = (parent.playerIds ?? []).map(id => getPlayer(id)).filter((p): p is NonNullable<typeof p> => !!p);
-  return (
-    <div className="admin-page">
-      <PageHeader
-        eyebrow={bi('Parent Portal | Children', 'بوابة ولي الأمر | الأطفال')}
-        title={bi('Children', 'الأطفال')}
-        description={bi('Truthful preview of linked children only.', 'معاينة صادقة للأطفال المرتبطين فقط.')}
-        actions={<span className="preview-badge"><BilingualText value={bi('Preview Data', 'بيانات تجريبية')} /></span>}
-      />
-      <section aria-label="Children list">
-        <div style={{ display: 'grid', gap: 12 }}>
-          {children.length ? children.map(child => (
-            <Link key={child.id} to={`/parent/children/${child.id}`} className="player-preview-grid" style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <span style={{ width: 48, height: 48, borderRadius: 14, border: '1px solid var(--color-border)', display: 'grid', placeItems: 'center', background: 'rgba(212,175,55,0.06)' }}>
-                  <ShieldCheck size={22} style={{ color: '#d4b23a' }} />
-                </span>
-                <div style={{ minWidth: 0 }}>
-                  <strong>{child.nameEn}<span lang="ar" dir="rtl"> · {child.nameAr}</span></strong>
-                  <small style={{ display: 'block', color: 'var(--color-text-muted)', fontSize: 11 }}>
-                    <BilingualText value={child.groupId ? bi('Group', 'المجموعة') : bi('No group', 'لا مجموعة')} />
-                    <span style={{ marginLeft: 6 }}>{child.groupId ?? '—'}</span>
-                  </small>
-                </div>
-                <CalendarDays size={18} style={{ marginLeft: 'auto', color: 'var(--color-text-muted)' }} />
-              </div>
-            </Link>
-          )) : (
-            <div className="admin-preview-card" style={{ padding: 18 }}>
-              <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)' }}>
-                <BilingualText value={bi('No verified children linked yet.', 'لا يوجد أطفال موثقون مرتبطون بعد.')} />
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
-    </div>
-  );
+export function ParentPortalChildrenPage(){
+  const children=getLinkedChildren();
+  return <div className="parent-page"><section className="parent-hero"><div className="parent-hero-row"><div><span className="parent-kicker"><UsersRound size={18}/><BilingualText value={bi('Linked Athlete Profiles','ملفات اللاعبين المرتبطين')}/></span><h1><BilingualText value={bi('Children','الأبناء')}/></h1><p><BilingualText value={bi('Only player profiles explicitly linked to the active parent record are visible here.','تظهر هنا فقط ملفات اللاعبين المرتبطة صراحةً بسجل ولي الأمر النشط.')}/></p></div><span className="parent-scope"><ShieldCheck size={12}/><BilingualText value={bi('Relationship-scoped view','عرض محكوم بالعلاقة')}/></span></div><div className="parent-metrics"><Metric label={bi('Linked children','الأبناء المرتبطون')} value={String(children.length)} tone="gold"/><Metric label={bi('Sports','الرياضات')} value={String(new Set(children.map(c=>c.sportId)).size)}/><Metric label={bi('With groups','لديهم مجموعات')} value={String(children.filter(c=>c.groupId).length)} tone="green"/><Metric label={bi('With feedback','لديهم ملاحظات')} value={String(children.filter(c=>c.coachFeedback?.length).length)}/></div></section>
+    {children.length?<section className="parent-grid-2">{children.map(child=>{const attendance=getChildAttendance(child);const performance=getChildPerformance(child);return <Link key={child.id} to={`/parent/children/${child.id}`} className="parent-panel" style={{textDecoration:'none'}}><div className="parent-card-head"><span className="parent-avatar">{child.nameEn.charAt(0)}</span><div style={{minWidth:0}}><h2>{child.nameEn}</h2><small lang="ar" dir="rtl">{child.nameAr}</small></div><span className="parent-status good" style={{marginInlineStart:'auto'}}><BilingualText value={bi('Linked','مرتبط')}/></span></div><div className="parent-field-grid" style={{marginTop:14}}><Field label={bi('Sport','الرياضة')} value={getSport(child.sportId)?.name.en}/><Field label={bi('Level','المستوى')} value={`${child.level.en} · ${child.level.ar}`}/><Field label={bi('Attendance','الحضور')} value={attendance.rate===null?undefined:`${attendance.rate}%`}/><Field label={bi('Performance','الأداء')} value={performance.score===null?undefined:`${performance.score}/100`}/></div><div className="parent-actions" style={{marginTop:14}}><span className="parent-secondary-action"><CalendarDays size={13}/><BilingualText value={bi('Open full record','فتح السجل الكامل')}/></span><span className="parent-status neutral"><Activity size={11}/>{child.id}</span></div></Link>})}</section>:<div className="parent-empty"><div><UsersRound/><h3><BilingualText value={bi('No linked children','لا يوجد أبناء مرتبطون')}/></h3><p><BilingualText value={bi('No player relationship exists in the active parent record.','لا توجد علاقة لاعب في سجل ولي الأمر النشط.')}/></p></div></div>}
+  </div>;
 }
+function Metric({label,value,tone='' }:{label:{en:string;ar:string};value:string;tone?:string}){return <div className="parent-metric"><span><BilingualText value={label}/></span><strong className={tone}>{value}</strong></div>}
+function Field({label,value}:{label:{en:string;ar:string};value?:string}){return <div className="parent-field"><span><BilingualText value={label}/></span><strong className={value?'':'missing'}>{value??<BilingualText value={bi('Not recorded','غير مسجل')}/>}</strong></div>}

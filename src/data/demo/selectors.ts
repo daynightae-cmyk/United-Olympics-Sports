@@ -23,9 +23,9 @@ export const getLatestPlayerMetrics = (playerId: string) => {
     return { definition, current: records.at(-1), previous: records.at(-2) };
   });
 };
-export const getPlayerOverall = (playerId: string) => {
+export const getPlayerOverall = (playerId: string): number | null => {
   const metrics = getLatestPlayerMetrics(playerId).map(item => item.current?.value).filter((value): value is number => typeof value === 'number');
-  return metrics.length ? Math.round(metrics.reduce((sum, value) => sum + value, 0) / metrics.length) : 0;
+  return metrics.length ? Math.round(metrics.reduce((sum, value) => sum + value, 0) / metrics.length) : null;
 };
 
 /* ── Business entity selectors ── */

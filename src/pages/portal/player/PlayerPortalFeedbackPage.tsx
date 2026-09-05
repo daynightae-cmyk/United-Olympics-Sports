@@ -1,195 +1,83 @@
-import React, { useState } from 'react';
+import { CheckCircle2, Clock, MessageCircle, MessageSquareText, ShieldCheck, Sparkles, Target, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import {
-  MessageSquareText,
-  CheckCircle2,
-  Target,
-  Sparkles,
-  User,
-  ArrowUpRight,
-  MessageCircle,
-  Clock,
-  ShieldCheck,
-} from 'lucide-react';
 import { usePlayerSession } from '../../../portals/player/PlayerSessionContext';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
 
 export function PlayerPortalFeedbackPage() {
-  const { player, sport, coach, feedback } = usePlayerSession();
-
+  const { player, sport, coach, feedback, messages } = usePlayerSession();
   if (!player) return null;
+
+  const canMessage = messages.length > 0;
+  const strengthCount = feedback.reduce((sum, item) => sum + item.strengths.length, 0);
+  const focusCount = feedback.reduce((sum, item) => sum + item.focusAreas.length, 0);
 
   return (
     <div className="space-y-6" id="player-feedback-page">
-      {/* Header Banner */}
-      <div className="athlete-glass-card p-6 border-amber-400/25">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
+      <section className="athlete-glass-card p-6 border-amber-400/25">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="space-y-1 max-w-3xl">
             <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-amber-400/10 text-amber-400">
-                <MessageSquareText size={18} />
-              </span>
-              <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">
-                <BilingualText value={bi('Technical Coaching Directives', 'التوجيهات والتقييمات الفنية')} />
-              </span>
+              <span className="p-1.5 rounded-lg bg-amber-400/10 text-amber-400"><MessageSquareText size={18} /></span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-amber-400"><BilingualText value={bi('Recorded Coaching Feedback', 'ملاحظات التدريب المسجلة')} /></span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-white">
-              <BilingualText value={bi('Coach Feedback & Evaluations', 'ملاحظات وتقييمات المدرب')} />
-            </h1>
-            <p className="text-xs text-slate-300">
-              <BilingualText
-                value={bi(
-                  `Direct technical reviews and training focus targets from your coaching staff.`,
-                  `مراجعات فنية مباشرة ومحاور تركيز تدريبية من كادر التدريب.`
-                )}
-              />
-            </p>
+            <h1 className="text-xl sm:text-2xl font-bold text-white"><BilingualText value={bi('Coach Feedback & Development Focus', 'ملاحظات المدرب ومحاور التطوير')} /></h1>
+            <p className="text-xs text-slate-300 leading-6"><BilingualText value={bi('Only feedback records already linked to this athlete are shown. No future review, message, or coaching action is implied when a record does not exist.', 'يتم عرض سجلات الملاحظات المرتبطة بهذا اللاعب فقط. ولا يتم افتراض تقييم مستقبلي أو رسالة أو إجراء تدريبي عند عدم وجود سجل فعلي.')} /></p>
           </div>
-
-          <Link
-            to="/player/messages"
-            className="px-4 py-2 rounded-xl bg-amber-400 text-black font-bold text-xs shadow-md shadow-amber-400/20 hover:bg-amber-300 transition-all flex items-center gap-2 self-start sm:self-auto"
-          >
-            <MessageCircle size={15} />
-            <span><BilingualText value={bi('Chat with Coach', 'مراسلة المدرب')} /></span>
-          </Link>
+          {canMessage ? (
+            <Link to="/player/messages" className="athlete-action-primary self-start"><MessageCircle size={15} /><BilingualText value={bi('Open Messages', 'فتح الرسائل')} /></Link>
+          ) : (
+            <span className="athlete-action-disabled self-start" aria-disabled="true"><MessageCircle size={15} /><BilingualText value={bi('Messaging not connected', 'المراسلة غير متصلة')} /></span>
+          )}
         </div>
 
-        {/* Metrics Summary */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-5 border-t border-white/10">
-          <div className="athlete-stat-pill">
-            <span><BilingualText value={bi('Total Evaluations', 'إجمالي التقييمات')} /></span>
-            <strong className="text-white text-xl font-bold">{feedback.length}</strong>
-          </div>
-          <div className="athlete-stat-pill">
-            <span><BilingualText value={bi('Primary Coach', 'المدرب المشرف')} /></span>
-            <strong className="text-amber-400 text-sm sm:text-base font-bold truncate">
-              {coach?.nameEn || <BilingualText value={bi('Not assigned', 'غير معين')} />}
-            </strong>
-          </div>
-          <div className="athlete-stat-pill">
-            <span><BilingualText value={bi('Highlighted Strengths', 'نقاط القوة المسجلة')} /></span>
-            <strong className="text-emerald-400 text-xl font-bold">
-              {feedback.reduce((acc, f) => acc + f.strengths.length, 0)}
-            </strong>
-          </div>
-          <div className="athlete-stat-pill">
-            <span><BilingualText value={bi('Active Focus Targets', 'أهداف التطوير الحالية')} /></span>
-            <strong className="text-amber-400 text-xl font-bold">
-              {feedback.reduce((acc, f) => acc + f.focusAreas.length, 0)}
-            </strong>
-          </div>
+          <FeedbackStat label={bi('Recorded evaluations', 'التقييمات المسجلة')} value={String(feedback.length)} />
+          <FeedbackStat label={bi('Primary coach', 'المدرب المشرف')} value={coach ? `${coach.nameEn} · ${coach.nameAr}` : undefined} />
+          <FeedbackStat label={bi('Recorded strengths', 'نقاط القوة المسجلة')} value={strengthCount ? String(strengthCount) : undefined} />
+          <FeedbackStat label={bi('Recorded focus areas', 'محاور التطوير المسجلة')} value={focusCount ? String(focusCount) : undefined} />
         </div>
-      </div>
+      </section>
 
-      {/* Feedback Feed */}
-      <div className="space-y-4" id="coach-feedback-feed">
-        {feedback.length > 0 ? (
-          feedback.map((item) => (
-            <div
-              key={item.id}
-              className="athlete-glass-card p-6 border-amber-400/20 space-y-4"
-            >
-              {/* Card Header: Coach info & Timestamp */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-400/15 border border-amber-400/30 text-amber-400 flex items-center justify-center font-bold text-sm">
-                    {coach?.nameEn?.charAt(0) || 'C'}
-                  </div>
-                  <div>
-                    <strong className="text-sm font-bold text-white block">
-                      <BilingualText value={bi('Coach', 'المدرب')} /> {coach?.nameEn || <BilingualText value={bi('Not assigned', 'غير معين')} />}
-                    </strong>
-                    <span className="text-xs text-amber-400 font-medium">
-                      <BilingualText value={sport ? sport.name : bi('Sport', 'الرياضة')} /> · <BilingualText value={bi('Training Review', 'تقييم تدريبي')} />
-                    </span>
+      {feedback.length > 0 ? (
+        <section className="space-y-4" id="coach-feedback-feed" aria-label="Recorded coach feedback | ملاحظات المدرب المسجلة">
+          {feedback.map((item) => (
+            <article key={item.id} className="athlete-glass-card p-5 sm:p-6 border-amber-400/20 space-y-4">
+              <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-11 h-11 rounded-xl bg-amber-400/12 border border-amber-400/25 text-amber-300 flex items-center justify-center flex-shrink-0"><User size={19} /></div>
+                  <div className="min-w-0">
+                    <strong className="text-sm font-bold text-white block truncate">{coach ? `${coach.nameEn} · ${coach.nameAr}` : <BilingualText value={bi('Coach not assigned', 'المدرب غير معين')} />}</strong>
+                    <span className="text-[11px] text-amber-300"><BilingualText value={sport?.name ?? bi('Sport not assigned', 'الرياضة غير معينة')} /> · <BilingualText value={bi('Recorded review', 'مراجعة مسجلة')} /></span>
                   </div>
                 </div>
+                <span className="flex items-center gap-1.5 text-[11px] text-slate-400"><Clock size={13} /><BilingualText value={bi('Recorded', 'مسجل')} /> · <span className="font-mono">{item.createdAt}</span></span>
+              </header>
 
-                <div className="flex items-center gap-2 text-xs text-slate-400">
-                  <Clock size={13} className="text-slate-400" />
-                  <span className="font-mono">{item.createdAt}</span>
-                </div>
+              <div className="rounded-2xl border border-white/8 bg-white/[.025] p-4 text-xs sm:text-sm leading-7 text-slate-200"><BilingualText value={item.summary} /></div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <section className="rounded-2xl border border-emerald-500/15 bg-emerald-500/[.04] p-4">
+                  <h2 className="text-xs font-bold text-emerald-400 flex items-center gap-1.5"><CheckCircle2 size={14} /><BilingualText value={bi('Recorded Strengths', 'نقاط القوة المسجلة')} /></h2>
+                  {item.strengths.length ? <div className="mt-3 flex flex-wrap gap-2">{item.strengths.map((value) => <span key={value.en} className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/12 text-emerald-300 border border-emerald-500/20"><BilingualText value={value} /></span>)}</div> : <p className="mt-3 text-xs text-slate-500"><BilingualText value={bi('No strengths recorded in this review.', 'لا توجد نقاط قوة مسجلة في هذه المراجعة.')} /></p>}
+                </section>
+
+                <section className="rounded-2xl border border-amber-400/15 bg-amber-400/[.04] p-4">
+                  <h2 className="text-xs font-bold text-amber-400 flex items-center gap-1.5"><Target size={14} /><BilingualText value={bi('Recorded Development Focus', 'محاور التطوير المسجلة')} /></h2>
+                  {item.focusAreas.length ? <div className="mt-3 flex flex-wrap gap-2">{item.focusAreas.map((value) => <span key={value.en} className="text-xs px-2.5 py-1 rounded-full bg-amber-400/12 text-amber-300 border border-amber-400/20"><Sparkles size={11} className="inline me-1" /><BilingualText value={value} /></span>)}</div> : <p className="mt-3 text-xs text-slate-500"><BilingualText value={bi('No development focus recorded in this review.', 'لا توجد محاور تطوير مسجلة في هذه المراجعة.')} /></p>}
+                </section>
               </div>
 
-              {/* Coach Summary Text */}
-              <div className="p-4 rounded-xl bg-white/5 border border-white/5 text-slate-200 text-xs sm:text-sm leading-relaxed">
-                <BilingualText value={item.summary} />
-              </div>
-
-              {/* Strengths and Focus Areas Dual Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-                {/* Strengths */}
-                <div className="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/15 space-y-2">
-                  <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                    <CheckCircle2 size={14} />
-                    <BilingualText value={bi('Demonstrated Strengths', 'نقاط القوة المتميزة')} />
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {item.strengths.map((str, sIdx) => (
-                      <span
-                        key={sIdx}
-                        className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1"
-                      >
-                        <ArrowUpRight size={12} />
-                        <BilingualText value={str} />
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Focus Targets */}
-                <div className="p-3.5 rounded-xl bg-amber-400/5 border border-amber-400/15 space-y-2">
-                  <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
-                    <Target size={14} />
-                    <BilingualText value={bi('Target Focus in Next Sessions', 'أهداف التطوير للحصص القادمة')} />
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {item.focusAreas.map((fa, fIdx) => (
-                      <span
-                        key={fIdx}
-                        className="text-xs px-2.5 py-1 rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/30 flex items-center gap-1"
-                      >
-                        <Sparkles size={12} />
-                        <BilingualText value={fa} />
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Card Footer: Discuss with Coach action */}
-              <div className="pt-3 border-t border-white/5 flex items-center justify-between text-xs text-slate-400">
-                <span>
-                  <BilingualText value={bi('Record provided by United Olympics Sports training staff', 'سجل مقدم من فريق التدريب في يونايتد أوليمبيكس سبورت')} />
-                </span>
-                <Link
-                  to="/player/messages"
-                  className="text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1"
-                >
-                  <MessageCircle size={13} />
-                  <span><BilingualText value={bi('Reply / Ask Coach', 'الرد / سؤال المدرب')} /></span>
-                </Link>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="athlete-glass-card p-12 text-center text-slate-400 space-y-3">
-            <MessageSquareText size={32} className="mx-auto text-slate-500" />
-            <h3 className="text-sm font-bold text-slate-300">
-              <BilingualText value={bi('No feedback notes yet', 'لا توجد ملاحظات تدريبية بعد')} />
-            </h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              <BilingualText
-                value={bi(
-                  'Your coach will file detailed performance observations after your upcoming training match.',
-                  'سيقوم مدربك بتسجيل الملاحظات الفنية المفصلة بعد الحصة أو المباراة القادمة.'
-                )}
-              />
-            </p>
-          </div>
-        )}
-      </div>
+              <footer className="athlete-truth-note"><ShieldCheck size={14} className="text-amber-400 flex-shrink-0 mt-0.5" /><BilingualText value={bi('This card reflects the stored preview feedback record only; it does not create a new evaluation or certify a result.', 'تعكس هذه البطاقة سجل الملاحظات التجريبي المخزن فقط؛ ولا تنشئ تقييمًا جديدًا ولا تعتمد نتيجة.')} /></footer>
+            </article>
+          ))}
+        </section>
+      ) : (
+        <section className="athlete-empty-system"><div><MessageSquareText size={34} className="mx-auto text-slate-500" /><h2 className="mt-4 text-base font-bold text-white"><BilingualText value={bi('No coach feedback is recorded yet', 'لا توجد ملاحظات مدرب مسجلة حتى الآن')} /></h2><p className="mt-2 text-xs leading-6 text-slate-400"><BilingualText value={bi('This area remains empty until a feedback record is linked to the athlete. Nothing is generated to simulate a coaching review.', 'تبقى هذه المساحة فارغة حتى يتم ربط سجل ملاحظات باللاعب. ولا يتم إنشاء أي بيانات لمحاكاة تقييم تدريبي.')} /></p></div></section>
+      )}
     </div>
   );
+}
+
+function FeedbackStat({ label, value }: { label: { en: string; ar: string }; value?: string }) {
+  return <div className="athlete-stat-pill"><span><BilingualText value={label} /></span><strong className={value ? 'text-white text-sm font-bold' : 'text-slate-500 text-xs font-semibold'}>{value ?? <BilingualText value={bi('Not recorded', 'غير مسجل')} />}</strong></div>;
 }

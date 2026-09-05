@@ -1,42 +1,62 @@
-import React, { useState } from 'react';
+import { Bell, Check, Eye, Globe, LogOut, Monitor, RotateCcw, Settings, Shield, Type, User } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Settings,
-  Globe,
-  Bell,
-  User,
-  LogOut,
-  Shield,
-  Smartphone,
-  Check,
-  ChevronRight,
-  Info,
-} from 'lucide-react';
 import { usePlayerSession } from '../../../portals/player/PlayerSessionContext';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
 import { useUiSettings } from '../../../ui/theme/useUiSettings';
 
-export function PlayerPortalSettingsPage() {
-  const { player, parent, allPlayers, switchPlayer, logout } = usePlayerSession();
-  const { bilingualOrder, appearance, setSetting } = useUiSettings();
-  const navigate = useNavigate();
+const PREF_KEY = 'uos:player-portal:notification-preferences:v1';
+type NotificationPrefs = { sessionReminders: boolean; evaluationAlerts: boolean; recordAlerts: boolean };
+const defaultPrefs: NotificationPrefs = { sessionReminders: true, evaluationAlerts: true, recordAlerts: true };
 
+function loadPrefs(): NotificationPrefs {
+  if (typeof window === 'undefined') return defaultPrefs;
+  try {
+    const parsed = JSON.parse(localStorage.getItem(PREF_KEY) ?? '') as Partial<NotificationPrefs>;
+    return {
+      sessionReminders: typeof parsed.sessionReminders === 'boolean' ? parsed.sessionReminders : true,
+      evaluationAlerts: typeof parsed.evaluationAlerts === 'boolean' ? parsed.evaluationAlerts : true,
+      recordAlerts: typeof parsed.recordAlerts === 'boolean' ? parsed.recordAlerts : true,
+    };
+  } catch {
+    return defaultPrefs;
+  }
+}
+
+function readPreviewSession() {
+  if (typeof window === 'undefined') return false;
+  try {
+    const raw = localStorage.getItem('uos:player-portal:session');
+    if (!raw) return false;
+    return (JSON.parse(raw) as { provider?: string }).provider === 'preview';
+  } catch {
+    return false;
+  }
+}
+
+export function PlayerPortalSettingsPage() {
+  const { player, allPlayers, switchPlayer, logout } = usePlayerSession();
+  const { appearance, bilingualOrder, density, motion, fontScale, setAppearance, setSetting, resetSettings } = useUiSettings();
+  const navigate = useNavigate();
+  const [prefs, setPrefs] = useState<NotificationPrefs>(() => loadPrefs());
   if (!player) return null;
 
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [sessionReminders, setSessionReminders] = useState(true);
-  const [evaluationAlerts, setEvaluationAlerts] = useState(true);
+  const isPreviewSession = readPreviewSession();
 
-  const handleLanguageChange = (lang: 'en' | 'ar') => {
-    if (lang === 'ar') {
-      setSetting('bilingualOrder', 'ar-first');
-      document.documentElement.lang = 'ar';
-      document.documentElement.dir = 'rtl';
-    } else {
-      setSetting('bilingualOrder', 'en-first');
-      document.documentElement.lang = 'en';
-      document.documentElement.dir = 'ltr';
-    }
+  const savePrefs = (next: NotificationPrefs) => {
+    setPrefs(next);
+    try { localStorage.setItem(PREF_KEY, JSON.stringify(next)); } catch { /* local preference storage may be unavailable */ }
+  };
+
+  const setLanguage = (language: 'en' | 'ar') => {
+    setSetting('bilingualOrder', language === 'ar' ? 'ar-first' : 'en-first');
+    document.documentElement.lang = language;
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+  };
+
+  const handleReset = () => {
+    resetSettings();
+    savePrefs(defaultPrefs);
   };
 
   const handleLogout = () => {
@@ -46,186 +66,74 @@ export function PlayerPortalSettingsPage() {
 
   return (
     <div className="space-y-6" id="player-settings-page">
-      {/* Header Banner */}
-      <div className="athlete-glass-card p-6 border-amber-400/25">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-amber-400/10 text-amber-400">
-              <Settings size={18} />
-            </span>
-            <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">
-              <BilingualText value={bi('Portal Configurations', 'إعدادات البوابة وتفضيلات الحساب')} />
-            </span>
-          </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white">
-            <BilingualText value={bi('Athlete Settings & Preferences', 'إعدادات حساب الرياضي')} />
-          </h1>
-          <p className="text-xs text-slate-300">
-            <BilingualText
-              value={bi(
-                'Manage bilingual display, communication preferences, and active athlete profile.',
-                'إدارة لغة العرض، وتفضيلات الإشعارات، وملف الرياضي النشط.'
-              )}
-            />
-          </p>
+      <section className="athlete-glass-card p-6 border-amber-400/25">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="max-w-3xl"><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-400"><Settings size={18} /><BilingualText value={bi('Player Portal Preferences', 'تفضيلات بوابة اللاعب')} /></div><h1 className="mt-2 text-xl sm:text-2xl font-bold text-white"><BilingualText value={bi('Appearance, Language & Local Preferences', 'المظهر واللغة والتفضيلات المحلية')} /></h1><p className="mt-1 text-xs leading-6 text-slate-300"><BilingualText value={bi('Display preferences persist on this browser. Notification toggles are local product preferences until a notification delivery backend is connected.', 'تستمر تفضيلات العرض في هذا المتصفح. وتظل مفاتيح الإشعارات تفضيلات محلية للمنتج حتى يتم ربط خدمة إرسال إشعارات خلفية.')} /></p></div>
+          <span className="athlete-data-scope"><Shield size={13} /><BilingualText value={bi('Device-local settings', 'إعدادات محلية للجهاز')} /></span>
         </div>
-      </div>
+      </section>
 
-      {/* Settings Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Language & Regional Settings */}
-        <div className="athlete-glass-card p-6 space-y-4">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2 pb-3 border-b border-white/10">
-            <Globe size={16} className="text-amber-400" />
-            <BilingualText value={bi('Language & Regional Display', 'اللغة وعرض البوابة')} />
-          </h3>
-
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+        <SettingCard icon={<Globe size={16} />} title={bi('Language & Direction', 'اللغة واتجاه العرض')}>
           <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => handleLanguageChange('en')}
-              className={`p-3.5 rounded-xl border text-center transition-all ${
-                bilingualOrder === 'en-first'
-                  ? 'bg-amber-400 text-black font-bold border-amber-400 shadow-md shadow-amber-400/20'
-                  : 'bg-white/5 text-slate-300 border-white/10 hover:bg-white/10'
-              }`}
-            >
-              <span className="text-sm font-bold block">English</span>
-              <span className="text-[10px] opacity-80">Default LTR</span>
-            </button>
-            <button
-              onClick={() => handleLanguageChange('ar')}
-              className={`p-3.5 rounded-xl border text-center transition-all ${
-                bilingualOrder === 'ar-first'
-                  ? 'bg-amber-400 text-black font-bold border-amber-400 shadow-md shadow-amber-400/20'
-                  : 'bg-white/5 text-slate-300 border-white/10 hover:bg-white/10'
-              }`}
-            >
-              <span className="text-sm font-bold block">العربية</span>
-              <span className="text-[10px] opacity-80">واجهة عربية كاملة RTL</span>
-            </button>
+            <ChoiceButton active={bilingualOrder === 'en-first'} onClick={() => setLanguage('en')} title="English · الإنجليزية" description="LTR · من اليسار لليمين" />
+            <ChoiceButton active={bilingualOrder === 'ar-first'} onClick={() => setLanguage('ar')} title="العربية · Arabic" description="RTL · من اليمين لليسار" />
           </div>
+        </SettingCard>
 
-          <p className="text-[11px] text-slate-400 leading-relaxed">
-            <BilingualText
-              value={bi(
-                'United Olympics Sports treats Arabic and English as equal first-class languages across all portal views.',
-                'تعتمد يونايتد أوليمبيكس سبورت اللغتين العربية والإنجليزية كلغات رئيسية متساوية في كافة صفحات البوابة.'
-              )}
-            />
-          </p>
-        </div>
+        <SettingCard icon={<Monitor size={16} />} title={bi('Appearance', 'المظهر')}>
+          <div className="grid grid-cols-3 gap-2">
+            {(['system', 'dark', 'light'] as const).map((value) => <ChoiceButton key={value} active={appearance === value} onClick={() => setAppearance(value)} title={value === 'system' ? 'System · النظام' : value === 'dark' ? 'Dark · داكن' : 'Light · فاتح'} compact />)}
+          </div>
+        </SettingCard>
 
-        {/* Multi-Athlete / Sibling Switcher */}
-        <div className="athlete-glass-card p-6 space-y-4">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2 pb-3 border-b border-white/10">
-            <User size={16} className="text-amber-400" />
-            <BilingualText value={bi('Switch Active Athlete Profile', 'تبديل ملف الرياضي النشط')} />
-          </h3>
+        <SettingCard icon={<Eye size={16} />} title={bi('Reading Density & Motion', 'كثافة العرض والحركة')}>
+          <div className="space-y-4">
+            <div><span className="text-[11px] text-slate-400"><BilingualText value={bi('Content density', 'كثافة المحتوى')} /></span><div className="grid grid-cols-2 gap-2 mt-2"><ChoiceButton active={density === 'comfortable'} onClick={() => setSetting('density', 'comfortable')} title="Comfortable · مريح" compact /><ChoiceButton active={density === 'compact'} onClick={() => setSetting('density', 'compact')} title="Compact · مضغوط" compact /></div></div>
+            <div><span className="text-[11px] text-slate-400"><BilingualText value={bi('Motion', 'الحركة')} /></span><div className="grid grid-cols-2 gap-2 mt-2"><ChoiceButton active={motion === 'system'} onClick={() => setSetting('motion', 'system')} title="System · النظام" compact /><ChoiceButton active={motion === 'reduced'} onClick={() => setSetting('motion', 'reduced')} title="Reduced · مخففة" compact /></div></div>
+          </div>
+        </SettingCard>
 
+        <SettingCard icon={<Type size={16} />} title={bi('Text Size', 'حجم النص')}>
+          <div className="grid grid-cols-2 gap-2"><ChoiceButton active={fontScale === 'default'} onClick={() => setSetting('fontScale', 'default')} title="Default · افتراضي" compact /><ChoiceButton active={fontScale === 'large'} onClick={() => setSetting('fontScale', 'large')} title="Large · كبير" compact /></div>
+        </SettingCard>
+
+        <SettingCard icon={<Bell size={16} />} title={bi('Notification Preferences', 'تفضيلات الإشعارات')}>
           <div className="space-y-2">
-            {allPlayers.map((p) => {
-              const isActive = p.id === player.id;
-              return (
-                <div
-                  key={p.id}
-                  onClick={() => switchPlayer(p.id)}
-                  className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
-                    isActive
-                      ? 'bg-amber-400/10 border-amber-400/40 text-white'
-                      : 'bg-white/5 border-white/5 text-slate-300 hover:bg-white/10'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-amber-400/20 text-amber-400 font-bold text-xs flex items-center justify-center">
-                      {p.nameEn.charAt(0)}
-                    </div>
-                    <div>
-                      <strong className="text-xs font-bold block">{p.nameEn}</strong>
-                      <span className="text-[10px] text-amber-400/80">{p.nameAr}</span>
-                    </div>
-                  </div>
-
-                  {isActive ? (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-400 text-black">
-                      <BilingualText value={bi('Active', 'النشط')} />
-                    </span>
-                  ) : (
-                    <span className="text-[11px] text-slate-400 hover:text-white">
-                      <BilingualText value={bi('Switch', 'اختيار')} />
-                    </span>
-                  )}
-                </div>
-              );
-            })}
+            <ToggleRow checked={prefs.sessionReminders} onChange={(value) => savePrefs({ ...prefs, sessionReminders: value })} label={bi('Training session reminders', 'تذكيرات الحصص التدريبية')} />
+            <ToggleRow checked={prefs.evaluationAlerts} onChange={(value) => savePrefs({ ...prefs, evaluationAlerts: value })} label={bi('Recorded feedback alerts', 'تنبيهات الملاحظات المسجلة')} />
+            <ToggleRow checked={prefs.recordAlerts} onChange={(value) => savePrefs({ ...prefs, recordAlerts: value })} label={bi('Player record updates', 'تحديثات سجل اللاعب')} />
           </div>
-        </div>
+          <div className="athlete-truth-note mt-4"><Bell size={14} className="text-amber-400 flex-shrink-0 mt-0.5" /><BilingualText value={bi('These preferences are saved locally; push, SMS and email delivery are not claimed.', 'يتم حفظ هذه التفضيلات محليًا؛ ولا يتم ادعاء وجود إرسال Push أو SMS أو بريد إلكتروني.')} /></div>
+        </SettingCard>
 
-        {/* Notifications Preferences */}
-        <div className="athlete-glass-card p-6 space-y-4">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2 pb-3 border-b border-white/10">
-            <Bell size={16} className="text-amber-400" />
-            <BilingualText value={bi('Alerts & Notification Preferences', 'تفضيلات التنبيهات والإشعارات')} />
-          </h3>
-
-          <div className="space-y-3 text-xs">
-            <label className="flex items-center justify-between p-3 rounded-xl bg-white/5 cursor-pointer">
-              <span><BilingualText value={bi('Training Session Reminders', 'تنبيهات مواعيد الحصص التدريبية')} /></span>
-              <input
-                type="checkbox"
-                checked={sessionReminders}
-                onChange={(e) => setSessionReminders(e.target.checked)}
-                className="w-4 h-4 accent-amber-400 rounded"
-              />
-            </label>
-            <label className="flex items-center justify-between p-3 rounded-xl bg-white/5 cursor-pointer">
-              <span><BilingualText value={bi('New Coach Evaluation Alerts', 'إشعارات التقييمات الفنية الجديدة')} /></span>
-              <input
-                type="checkbox"
-                checked={evaluationAlerts}
-                onChange={(e) => setEvaluationAlerts(e.target.checked)}
-                className="w-4 h-4 accent-amber-400 rounded"
-              />
-            </label>
-            <label className="flex items-center justify-between p-3 rounded-xl bg-white/5 cursor-pointer">
-              <span><BilingualText value={bi('Administrative Announcements', 'تعميمات وإعلانات الإدارة')} /></span>
-              <input
-                type="checkbox"
-                checked={notificationsEnabled}
-                onChange={(e) => setNotificationsEnabled(e.target.checked)}
-                className="w-4 h-4 accent-amber-400 rounded"
-              />
-            </label>
-          </div>
-        </div>
-
-        {/* Organization Support & Signout */}
-        <div className="athlete-glass-card p-6 space-y-4 flex flex-col justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-2 pb-3 border-b border-white/10">
-              <Shield size={16} className="text-amber-400" />
-              <BilingualText value={bi('Administration & Support', 'الدعم والإدارة')} />
-            </h3>            <div className="py-3 text-xs text-slate-300">
-              <div className="flex items-start gap-2 rounded-xl border border-white/10 bg-white/5 p-3">
-                <Info size={14} className="text-amber-400 flex-shrink-0 mt-0.5" />
-                <BilingualText value={bi(
-                  'Support contact is not configured yet.',
-                  'بيانات التواصل مع الدعم غير متاحة بعد.'
-                )} />
-              </div>
+        <SettingCard icon={<User size={16} />} title={bi('Active Preview Athlete', 'لاعب المعاينة النشط')}>
+          {isPreviewSession ? (
+            <div className="max-h-72 overflow-y-auto space-y-2 pr-1 rtl:pr-0 rtl:pl-1">
+              {allPlayers.map((item) => {
+                const active = item.id === player.id;
+                return <button key={item.id} type="button" onClick={() => switchPlayer(item.id)} className={`w-full min-h-14 p-3 rounded-xl border flex items-center justify-between gap-3 text-left rtl:text-right ${active ? 'bg-amber-400/10 border-amber-400/35' : 'bg-white/[.025] border-white/8 hover:bg-white/5'}`}><div className="min-w-0"><strong className="block text-xs text-white truncate">{item.nameEn}</strong><span lang="ar" dir="rtl" className="block text-[10px] text-amber-300 truncate">{item.nameAr}</span></div>{active ? <span className="athlete-data-scope"><Check size={12} /><BilingualText value={bi('Active', 'نشط')} /></span> : <span className="text-[10px] text-slate-500"><BilingualText value={bi('Switch', 'تبديل')} /></span>}</button>;
+              })}
             </div>
-          </div>
-
-          <div className="pt-4 border-t border-white/10">
-            <button
-              onClick={handleLogout}
-              className="w-full py-2.5 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-300 font-semibold text-xs flex items-center justify-center gap-2 transition-colors"
-            >
-              <LogOut size={15} />
-              <span><BilingualText value={bi('Sign Out of Athlete Portal', 'تسجيل الخروج من بوابة اللاعب')} /></span>
-            </button>
-          </div>
-        </div>
+          ) : <div className="athlete-truth-note"><Shield size={14} className="text-amber-400 flex-shrink-0 mt-0.5" /><BilingualText value={bi('Athlete switching is available only for explicit Preview Athlete sessions.', 'تبديل اللاعب متاح فقط في جلسات معاينة اللاعب الصريحة.')} /></div>}
+        </SettingCard>
       </div>
+
+      <section className="athlete-glass-card p-5 sm:p-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4"><div><span className="text-[10px] uppercase tracking-[.16em] text-amber-400 font-black"><BilingualText value={bi('Session controls', 'إدارة الجلسة')} /></span><h2 className="mt-1 text-base font-black text-white"><BilingualText value={bi('Reset & Sign Out', 'إعادة الضبط وتسجيل الخروج')} /></h2><p className="mt-1 text-xs text-slate-400"><BilingualText value={bi('Support contact is not configured, so no phone, email or chat destination is invented here.', 'بيانات الدعم غير مهيأة، لذلك لا يتم اختلاق هاتف أو بريد أو وجهة محادثة هنا.')} /></p></div><div className="athlete-action-row"><button type="button" onClick={handleReset} className="athlete-action-secondary"><RotateCcw size={14} /><BilingualText value={bi('Reset local preferences', 'إعادة ضبط التفضيلات المحلية')} /></button><button type="button" onClick={handleLogout} className="inline-flex min-h-11 items-center justify-center gap-2 px-4 rounded-xl border border-red-500/25 bg-red-500/10 text-red-300 text-xs font-bold"><LogOut size={14} /><BilingualText value={bi('Sign out', 'تسجيل الخروج')} /></button></div></div>
+      </section>
     </div>
   );
+}
+
+function SettingCard({ icon, title, children }: { icon: ReactNode; title: { en: string; ar: string }; children: ReactNode }) {
+  return <section className="athlete-glass-card p-5 sm:p-6"><header className="flex items-center gap-2 pb-4 border-b border-white/10 text-amber-400">{icon}<h2 className="text-sm font-bold text-white"><BilingualText value={title} /></h2></header><div className="mt-4">{children}</div></section>;
+}
+
+function ChoiceButton({ active, onClick, title, description, compact = false }: { active: boolean; onClick: () => void; title: string; description?: string; compact?: boolean }) {
+  return <button type="button" onClick={onClick} aria-pressed={active} className={`${compact ? 'min-h-11 px-3' : 'min-h-16 p-3'} rounded-xl border text-center transition-all ${active ? 'bg-amber-400 text-black border-amber-400 shadow-md shadow-amber-400/15' : 'bg-white/[.025] text-slate-300 border-white/10 hover:bg-white/5'}`}><strong className="block text-xs">{title}</strong>{description && <span className="block mt-1 text-[9px] opacity-70">{description}</span>}</button>;
+}
+
+function ToggleRow({ checked, onChange, label }: { checked: boolean; onChange: (value: boolean) => void; label: { en: string; ar: string } }) {
+  return <label className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/[.025] px-3 cursor-pointer"><span className="text-xs text-slate-300"><BilingualText value={label} /></span><input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} className="w-4 h-4 accent-amber-400" /></label>;
 }

@@ -1,255 +1,82 @@
-import React, { useState } from 'react';
-import {
-  CheckCircle2,
-  Clock,
-  Flame,
-  AlertCircle,
-  Calendar,
-  ShieldCheck,
-  TrendingUp,
-  Filter,
-  Check,
-  XCircle,
-} from 'lucide-react';
+import { AlertCircle, Calendar, Check, CheckCircle2, Clock, Flame, XCircle } from 'lucide-react';
+import { useState } from 'react';
 import { usePlayerSession } from '../../../portals/player/PlayerSessionContext';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
+import type { AttendanceStatus } from '../../../domain/contracts';
+
+type AttendanceFilter = 'all' | AttendanceStatus;
+const filters: Array<{ id: AttendanceFilter; label: { en: string; ar: string } }> = [
+  { id: 'all', label: bi('All', 'الكل') },
+  { id: 'present', label: bi('Present', 'حاضر') },
+  { id: 'late', label: bi('Late', 'متأخر') },
+  { id: 'excused', label: bi('Excused', 'معذور') },
+  { id: 'absent', label: bi('Absent', 'غائب') },
+];
 
 export function PlayerPortalAttendancePage() {
   const { player, attendanceRecords, attendanceStats } = usePlayerSession();
-  const [filter, setFilter] = useState<'all' | 'present' | 'late' | 'excused' | 'absent'>('all');
-
+  const [filter, setFilter] = useState<AttendanceFilter>('all');
   if (!player) return null;
 
-  const filteredRecords = attendanceRecords.filter((rec) => {
-    if (filter === 'all') return true;
-    return rec.status === filter;
-  });
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'present':
-        return (
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-            <Check size={12} />
-            <BilingualText value={bi('Present · On Time', 'حاضر · في الموعد')} />
-          </span>
-        );
-      case 'late':
-        return (
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-400/15 text-amber-300 border border-amber-400/30 flex items-center gap-1">
-            <Clock size={12} />
-            <BilingualText value={bi('Late Arrival', 'حضور متأخر')} />
-          </span>
-        );
-      case 'excused':
-        return (
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/30 flex items-center gap-1">
-            <AlertCircle size={12} />
-            <BilingualText value={bi('Excused Absence', 'غياب معذور')} />
-          </span>
-        );
-      case 'absent':
-      default:
-        return (
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/15 text-red-400 border border-red-500/30 flex items-center gap-1">
-            <XCircle size={12} />
-            <BilingualText value={bi('Unexcused Absence', 'غياب غير معذور')} />
-          </span>
-        );
-    }
-  };
+  const filteredRecords = attendanceRecords.filter((record) => filter === 'all' || record.status === filter);
 
   return (
     <div className="space-y-6" id="player-attendance-page">
-      {/* Header Banner */}
-      <div className="athlete-glass-card p-6 border-amber-400/25">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
-                <CheckCircle2 size={18} />
-              </span>
-              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
-                <BilingualText value={bi('Habit & Consistency Track', 'مسار الالتزام والانضباط')} />
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-white">
-              <BilingualText value={bi('Attendance Journey', 'مسيرة الحضور التدريبي')} />
-            </h1>
-            <p className="text-xs text-slate-300">
-              <BilingualText
-                value={bi(
-                  `Attendance records for athlete ${player.nameEn}`,
-                  `سجل الحضور للرياضي ${player.nameAr}`
-                )}
-              />
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1.5 rounded-xl bg-amber-400/10 text-amber-300 border border-amber-400/30 text-xs font-bold flex items-center gap-1.5 shadow-sm">
-              <Flame size={15} className="text-amber-400" />
-              <span>{attendanceStats.streak} <BilingualText value={bi('Sessions Streak', 'حصص متتالية')} /></span>
-            </span>
-          </div>
+      <section className="athlete-glass-card p-6 border-amber-400/25">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="max-w-3xl"><div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-400"><CheckCircle2 size={18} /><BilingualText value={bi('Recorded Attendance', 'الحضور المسجل')} /></div><h1 className="mt-2 text-xl sm:text-2xl font-bold text-white"><BilingualText value={bi('Attendance Journey', 'مسيرة الحضور')} /></h1><p className="mt-1 text-xs leading-6 text-slate-300"><BilingualText value={bi(`Attendance records linked to athlete ${player.nameEn}. Missing attendance data is never interpreted as zero attendance.`, `سجلات الحضور المرتبطة باللاعب ${player.nameAr}. ولا يتم تفسير غياب بيانات الحضور على أنه حضور بنسبة صفر.`)} /></p></div>
+          <span className="athlete-data-scope"><Flame size={13} />{attendanceStats.total === 0 ? <BilingualText value={bi('No streak recorded', 'لا يوجد تسلسل مسجل')} /> : <><span>{attendanceStats.streak}</span><BilingualText value={bi('session streak', 'حصص متتالية')} /></>}</span>
         </div>
 
-        {/* Metrics Quad */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-5 border-t border-white/10">
-          <div className="athlete-stat-pill">
-            <span><BilingualText value={bi('Overall Attendance Rate', 'نسبة الحضور الإجمالية')} /></span>
-            <strong className="text-emerald-400 text-xl font-bold">
-              {attendanceStats.rate}%
-            </strong>
-          </div>
-          <div className="athlete-stat-pill">
-            <span><BilingualText value={bi('Present (On Time)', 'حاضر (في الموعد)')} /></span>
-            <strong className="text-white text-xl font-bold">
-              {attendanceStats.present}
-            </strong>
-          </div>
-          <div className="athlete-stat-pill">
-            <span><BilingualText value={bi('Late Arrivals', 'حضور متأخر')} /></span>
-            <strong className="text-amber-400 text-xl font-bold">
-              {attendanceStats.late}
-            </strong>
-          </div>
-          <div className="athlete-stat-pill">
-            <span><BilingualText value={bi('Total Scheduled Sessions', 'إجمالي الحصص المسجلة')} /></span>
-            <strong className="text-slate-300 text-xl font-bold">
-              {attendanceStats.total}
-            </strong>
-          </div>
+          <Stat label={bi('Attendance rate', 'نسبة الحضور')} value={attendanceStats.rate === null ? undefined : `${attendanceStats.rate}%`} />
+          <Stat label={bi('Present', 'حاضر')} value={attendanceStats.total ? String(attendanceStats.present) : undefined} />
+          <Stat label={bi('Late', 'متأخر')} value={attendanceStats.total ? String(attendanceStats.late) : undefined} />
+          <Stat label={bi('Recorded sessions', 'الحصص المسجلة')} value={attendanceStats.total ? String(attendanceStats.total) : undefined} />
         </div>
-      </div>
+      </section>
 
-      {/* Monthly Rhythm Heatmap */}
-      <div className="athlete-glass-card p-6">
-        <h3 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
-          <Calendar size={16} className="text-amber-400" />
-          <BilingualText value={bi('Session Rhythm & Attendance Pulse', 'نبض وإيقاع الحضور التدريبي')} />
-        </h3>
-        <p className="text-xs text-slate-400 mb-5">
-          <BilingualText
-            value={bi(
-              'Visual representation of your consecutive training attendance across recorded dates.',
-              'تمثيل بصري لتسلسل حضورك في الحصص التدريبية عبر التواريخ المسجلة.'
-            )}
-          />
-        </p>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {attendanceRecords.map((record) => {
-            const dateObj = new Date(record.date);
-            const dateStr = dateObj.toLocaleDateString(undefined, {
-              weekday: 'short',
-              month: 'short',
-              day: 'numeric',
-            });
-            const isPresent = record.status === 'present';
-            const isLate = record.status === 'late';
-
-            return (
-              <div
-                key={record.id}
-                className={`p-3.5 rounded-xl border flex flex-col justify-between gap-2 transition-all ${
-                  isPresent
-                    ? 'bg-emerald-500/5 border-emerald-500/20'
-                    : isLate
-                    ? 'bg-amber-400/5 border-amber-400/20'
-                    : 'bg-white/5 border-white/10'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-200">{dateStr}</span>
-                  <span
-                    className={`w-2.5 h-2.5 rounded-full ${
-                      isPresent
-                        ? 'bg-emerald-400 shadow-sm shadow-emerald-400/50'
-                        : isLate
-                        ? 'bg-amber-400'
-                        : 'bg-blue-400'
-                    }`}
-                  />
-                </div>
-                <div className="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-white/5">
-                  <span><BilingualText value={bi('Training Session', 'حصة تدريبية')} /></span>
-                  <span className="font-semibold capitalize text-slate-300">
-                    {record.status}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Attendance History Table */}
-      <div className="athlete-glass-card p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
-          <div>
-            <h3 className="text-sm font-bold text-white">
-              <BilingualText value={bi('Attendance Records', 'سجلات الحضور')} />
-            </h3>
-            <p className="text-xs text-slate-400 mt-0.5">
-              <BilingualText value={bi('Attendance history for the current season', 'سجل الحضور للموسم الحالي')} />
-            </p>
+      <section className="athlete-glass-card p-5 sm:p-6">
+        <header><span className="text-[10px] uppercase tracking-[.16em] text-amber-400 font-black"><BilingualText value={bi('Attendance pulse', 'نبض الحضور')} /></span><h2 className="mt-1 text-base font-black text-white"><BilingualText value={bi('Recorded Session Rhythm', 'إيقاع الحصص المسجلة')} /></h2><p className="mt-1 text-xs text-slate-400"><BilingualText value={bi('Each tile represents an attendance record that actually exists for the athlete.', 'تمثل كل بطاقة سجل حضور موجودًا فعليًا للاعب.')} /></p></header>
+        {attendanceRecords.length ? (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
+            {attendanceRecords.map((record) => <article key={record.id} className="rounded-2xl border border-white/10 bg-white/[.025] p-3.5"><div className="flex items-center justify-between gap-2"><strong className="text-xs text-slate-200">{formatDate(record.date)}</strong><StatusDot status={record.status} /></div><div className="mt-3 pt-3 border-t border-white/5"><StatusBadge status={record.status} /></div></article>)}
           </div>
+        ) : <div className="athlete-empty-system mt-5"><div><Calendar size={32} className="mx-auto text-slate-500" /><h3 className="mt-4 text-base font-bold text-white"><BilingualText value={bi('No attendance record yet', 'لا يوجد سجل حضور حتى الآن')} /></h3><p className="mt-2 text-xs leading-6 text-slate-400"><BilingualText value={bi('Rates, streaks and session counts stay unrecorded until attendance data exists.', 'تظل النسب والتسلسل وعدد الحصص غير مسجلة حتى تتوفر بيانات حضور.')} /></p></div></div>}
+      </section>
 
-          {/* Filter Pills */}
-          <div className="flex flex-wrap gap-1.5 text-xs">
-            {(['all', 'present', 'late', 'excused'] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-3 py-1 rounded-xl text-xs font-semibold capitalize transition-all ${
-                  filter === f
-                    ? 'bg-amber-400 text-black shadow-sm'
-                    : 'bg-white/5 text-slate-300 hover:bg-white/10'
-                }`}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="divide-y divide-white/5 my-2">
-          {filteredRecords.length > 0 ? (
-            filteredRecords.map((rec) => (
-              <div
-                key={rec.id}
-                className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-white/[0.02] px-2 rounded-lg transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-white/5 text-slate-300">
-                    <Calendar size={16} />
-                  </div>
-                  <div>
-                    <strong className="text-xs font-bold text-slate-100 block">
-                      {new Date(rec.date).toLocaleDateString(undefined, {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
-                    </strong>
-                    <span className="text-[11px] text-slate-400">
-                      <BilingualText value={bi('Squad Training Session', 'حصة تدريب الفريق')} />
-                    </span>
-                  </div>
-                </div>
-
-                <div>{getStatusBadge(rec.status)}</div>
-              </div>
-            ))
-          ) : (
-            <div className="py-8 text-center text-slate-400 text-xs">
-              <BilingualText value={bi('No attendance records match the selected filter.', 'لا توجد سجلات حضور تطابق الفلتر المحدد.')} />
-            </div>
-          )}
-        </div>
-      </div>
+      <section className="athlete-glass-card p-5 sm:p-6">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10"><div><span className="text-[10px] uppercase tracking-[.16em] text-amber-400 font-black"><BilingualText value={bi('History', 'السجل')} /></span><h2 className="mt-1 text-base font-black text-white"><BilingualText value={bi('Attendance Records', 'سجلات الحضور')} /></h2></div><div className="flex flex-wrap gap-2" role="tablist" aria-label="Attendance filters | فلاتر الحضور">{filters.map((item) => <button key={item.id} type="button" role="tab" aria-selected={filter === item.id} onClick={() => setFilter(item.id)} className={`px-3 py-1.5 rounded-xl text-xs font-semibold ${filter === item.id ? 'bg-amber-400 text-black' : 'bg-white/5 text-slate-300 hover:bg-white/10'}`}><BilingualText value={item.label} /></button>)}</div></header>
+        {filteredRecords.length ? <div className="mt-3 divide-y divide-white/5">{filteredRecords.map((record) => <div key={record.id} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"><div className="flex items-center gap-3"><span className="w-9 h-9 rounded-xl bg-white/5 border border-white/8 grid place-items-center text-amber-400"><Calendar size={15} /></span><div><strong className="text-xs text-white block">{formatDateLong(record.date)}</strong><span className="text-[10px] text-slate-500"><BilingualText value={bi('Training session attendance', 'حضور الحصة التدريبية')} /></span></div></div><StatusBadge status={record.status} /></div>)}</div> : <div className="athlete-empty-system mt-4"><div><Calendar size={30} className="mx-auto text-slate-500" /><h3 className="mt-3 text-sm font-bold text-white"><BilingualText value={filter === 'all' ? bi('No attendance records', 'لا توجد سجلات حضور') : bi('No records match this filter', 'لا توجد سجلات تطابق هذا الفلتر')} /></h3></div></div>}
+      </section>
     </div>
   );
+}
+
+function Stat({ label, value }: { label: { en: string; ar: string }; value?: string }) {
+  return <div className="athlete-stat-pill"><span><BilingualText value={label} /></span><strong className={value ? 'text-white text-xl font-bold' : 'text-slate-500 text-xs font-semibold'}>{value ?? <BilingualText value={bi('Not recorded', 'غير مسجل')} />}</strong></div>;
+}
+
+function StatusBadge({ status }: { status: AttendanceStatus }) {
+  if (status === 'present') return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20"><Check size={11} /><BilingualText value={bi('Present', 'حاضر')} /></span>;
+  if (status === 'late') return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-400/10 text-amber-300 border border-amber-400/20"><Clock size={11} /><BilingualText value={bi('Late', 'متأخر')} /></span>;
+  if (status === 'excused') return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-300 border border-blue-500/20"><AlertCircle size={11} /><BilingualText value={bi('Excused', 'معذور')} /></span>;
+  return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-500/10 text-red-300 border border-red-500/20"><XCircle size={11} /><BilingualText value={bi('Absent', 'غائب')} /></span>;
+}
+
+function StatusDot({ status }: { status: AttendanceStatus }) {
+  const tone = status === 'present' ? 'bg-emerald-400' : status === 'late' ? 'bg-amber-400' : status === 'excused' ? 'bg-blue-400' : 'bg-red-400';
+  return <span className={`w-2.5 h-2.5 rounded-full ${tone}`} aria-hidden="true" />;
+}
+
+function formatDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return `${date.toLocaleDateString('en', { month: 'short', day: 'numeric' })} · ${date.toLocaleDateString('ar', { month: 'short', day: 'numeric' })}`;
+}
+
+function formatDateLong(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return `${date.toLocaleDateString('en', { year: 'numeric', month: 'long', day: 'numeric' })} · ${date.toLocaleDateString('ar', { year: 'numeric', month: 'long', day: 'numeric' })}`;
 }

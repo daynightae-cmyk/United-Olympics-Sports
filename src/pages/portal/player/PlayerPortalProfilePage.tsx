@@ -119,13 +119,21 @@ export function PlayerPortalProfilePage() {
             <div className="flex justify-between py-1.5 border-b border-white/5">
               <span className="text-slate-400"><BilingualText value={bi('Contact Phone', 'هاتف التواصل')} /></span>
               <strong className="text-amber-300 font-mono">
-                {parent?.phone || <BilingualText value={bi('Not available', 'غير متاح')} />}
+                {(parent?.phone && parent.phone !== '-') || false ? (
+                  parent?.phone
+                ) : (
+                  <BilingualText value={bi('Not recorded', 'غير مسجل')} />
+                )}
               </strong>
             </div>
             <div className="flex justify-between py-1.5">
               <span className="text-slate-400"><BilingualText value={bi('Registered Email', 'البريد الإلكتروني')} /></span>
               <strong className="text-slate-200 font-mono">
-                {parent?.email || <BilingualText value={bi('Not available', 'غير متاح')} />}
+                {(parent?.email && parent.email !== '-') || false ? (
+                  parent?.email
+                ) : (
+                  <BilingualText value={bi('Not recorded', 'غير مسجل')} />
+                )}
               </strong>
             </div>
           </div>

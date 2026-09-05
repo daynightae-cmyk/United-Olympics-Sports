@@ -6,20 +6,94 @@ on:
     branches:
       - main
 
+concurrency:
+  group: verify-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
+  build-and-interface-qa:
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/checkout@v7
         with:
-          node-version: 20
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
           cache: npm
+
       - name: Install dependencies
         run: npm ci
+
       - name: TypeScript
         run: npm run lint
-      - name: Build
+
+      - name: Production build
         run: npm run build
+
+      - name: Diff check
+        shell: bash
+        run: |
+          git diff --check
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git diff --check "${{ github.event.pull_request.base.sha }}...HEAD"
+          fi
+
+      - name: Static product truth gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          forbidden=(
+            'United Olympics Sports Academy'
+            'United Olympic Sports Academy'
+            'United Olympics Academy'
+            'الأكاديمية'
+            'demoPlayers[0]'
+            '|| 78'
+            '|| 60'
+            'targetMinutes: 150'
+            '+971 4 200 0000'
+            'portal@unitedolympicssports.ae'
+            'Main Training Pitch'
+            'Branch Complex'
+            'Sports Training Facility'
+            'google-logo.svg'
+            'apple-logo.svg'
+            'window.location'
+          )
+          failed=0
+          for pattern in "${forbidden[@]}"; do
+            if grep -RInF --exclude-dir=node_modules --exclude-dir=dist -- "$pattern" src public; then
+              echo "Forbidden product-truth pattern found: $pattern"
+              failed=1
+            fi
+          done
+          exit "$failed"
+
+      - name: Install browser QA runtime
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium firefox webkit
+
+      - name: Start production preview
+        shell: bash
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/uos-vite-preview.log 2>&1 &
+          echo $! > /tmp/uos-vite-preview.pid
+
+      - name: Browser route and responsive smoke matrix
+        env:
+          UOS_BASE_URL: http://127.0.0.1:4173
+        run: node qa/interface-smoke.mjs
+
+      - name: Upload preview log on failure
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: uos-vite-preview-log
+          path: /tmp/uos-vite-preview.log
+          if-no-files-found: ignore
