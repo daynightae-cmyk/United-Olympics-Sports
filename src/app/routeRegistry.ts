@@ -5,6 +5,12 @@ export const publicRouteRegistry = {
   programs: { path: "/programs", label: { en: "Programs", ar: "البرامج" } },
   coaches: { path: "/coaches", label: { en: "Coaches", ar: "المدربون" } },
   contact: { path: "/contact", label: { en: "Contact", ar: "تواصل معنا" } },
+  store: { path: "/store", label: { en: "Store", ar: "المتجر" } },
+  storeShop: { path: "/store/shop", label: { en: "Shop", ar: "تسوق" } },
+  storeCategories: { path: "/store/categories", label: { en: "Store Categories", ar: "فئات المتجر" } },
+  storeCart: { path: "/store/cart", label: { en: "Cart", ar: "السلة" } },
+  storeCheckout: { path: "/store/checkout", label: { en: "Checkout", ar: "إتمام الطلب" } },
+  storeAccount: { path: "/store/account", label: { en: "Store Account", ar: "حساب المتجر" } },
 } as const;
 
 export const adminRouteRegistry = {
@@ -32,6 +38,14 @@ export const adminRouteRegistry = {
   users: { path: "/admin/users", label: { en: "Users & Roles", ar: "المستخدمون والصلاحيات" } },
   settings: { path: "/admin/settings", label: { en: "Settings", ar: "الإعدادات" } },
   auditActivity: { path: "/admin/audit-activity", label: { en: "Audit Activity", ar: "سجل النشاط" } },
+  store: { path: "/admin/store", label: { en: "Store Dashboard", ar: "لوحة المتجر" } },
+  storeProducts: { path: "/admin/store/products", label: { en: "Store Products", ar: "منتجات المتجر" } },
+  storeCategories: { path: "/admin/store/categories", label: { en: "Store Categories", ar: "فئات المتجر" } },
+  storeOrders: { path: "/admin/store/orders", label: { en: "Store Orders", ar: "طلبات المتجر" } },
+  storeInventory: { path: "/admin/store/inventory", label: { en: "Store Inventory", ar: "مخزون المتجر" } },
+  storeCollections: { path: "/admin/store/collections", label: { en: "Store Collections", ar: "مجموعات المتجر" } },
+  storeDiscounts: { path: "/admin/store/discounts", label: { en: "Store Discounts", ar: "خصومات المتجر" } },
+  storeSettings: { path: "/admin/store/settings", label: { en: "Store Settings", ar: "إعدادات المتجر" } },
 } as const;
 
 export type AdminRouteKey = keyof typeof adminRouteRegistry;

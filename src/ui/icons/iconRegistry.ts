@@ -17,10 +17,14 @@ import {
   ShieldCheck,
   Trophy,
   UsersRound,
+  ShoppingBag,
+  PackageSearch,
+  Boxes,
+  Tags,
   type LucideIcon,
 } from 'lucide-react';
 
-export type AdminIconKey = 'dashboard' | 'sports' | 'groups' | 'players' | 'parents' | 'coaches' | 'programs' | 'schedules' | 'attendance' | 'performance' | 'countries' | 'branches' | 'subscriptions' | 'payments' | 'reports' | 'content' | 'users' | 'settings' | 'registrations' | 'achievements' | 'events' | 'announcements' | 'messages' | 'audit';
+export type AdminIconKey = 'dashboard' | 'sports' | 'groups' | 'players' | 'parents' | 'coaches' | 'programs' | 'schedules' | 'attendance' | 'performance' | 'countries' | 'branches' | 'subscriptions' | 'payments' | 'reports' | 'content' | 'users' | 'settings' | 'registrations' | 'achievements' | 'events' | 'announcements' | 'messages' | 'audit' | 'store' | 'products' | 'inventory' | 'collections' | 'discounts' | 'orders';
 
 export const adminIconRegistry: Record<AdminIconKey, LucideIcon> = {
   dashboard: LayoutDashboard,
@@ -47,4 +51,10 @@ export const adminIconRegistry: Record<AdminIconKey, LucideIcon> = {
   announcements: Megaphone,
   messages: MessageSquare,
   audit: ShieldCheck,
+  store: ShoppingBag,
+  products: PackageSearch,
+  inventory: Boxes,
+  collections: Layers3,
+  discounts: Tags,
+  orders: ClipboardList,
 };

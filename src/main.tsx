@@ -15,6 +15,8 @@ import './styles/portal-experience.css';
 import './styles/portal-closure.css';
 import './styles/admin-directory-v2.css';
 import './styles/uos-benchmark.css';
+import './styles/player-portal.css';
+import './styles/portal-unification.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -48,11 +48,12 @@ import { AdminMessagesPage } from '../pages/admin/AdminMessagesPage';
 import { AdminMessagesDetailPage } from '../pages/admin/AdminMessagesDetailPage';
 import { AdminAuditActivityPage } from '../pages/admin/AdminAuditActivityPage';
 import { useUiSettings } from '../ui/theme/useUiSettings';
+import { StoreAdminRouter } from '../store/admin/StoreAdminPages';
 import '../styles/admin.css';
 import '../styles/admin-visual-rebuild.css';
 
 const routeLabels: Record<string, { en: string; ar: string }> = {
-  sports: bi('Sports', 'الرياضات'), players: bi('Players', 'اللاعبون'), groups: bi('Training Groups', 'مجموعات التدريب'), parents: bi('Parents', 'أولياء الأمور'), coaches: bi('Coaches', 'المدربون'), programs: bi('Programs', 'البرامج'), schedules: bi('Schedules', 'الجداول'), attendance: bi('Attendance', 'الحضور'), performance: bi('Performance', 'الأداء'), countries: bi('Countries', 'الدول'), branches: bi('Branches', 'الفروع'), subscriptions: bi('Subscriptions', 'الاشتراكات'), payments: bi('Payments', 'المدفوعات'), reports: bi('Reports', 'التقارير'), content: bi('Content', 'المحتوى'), users: bi('Users & Roles', 'المستخدمون والصلاحيات'), settings: bi('Settings', 'الإعدادات'), registrations: bi('Registrations', 'التسجيلات'), achievements: bi('Achievements', 'الإنجازات'), events: bi('Events', 'الفعاليات'), announcements: bi('Announcements', 'الإعلانات'), messages: bi('Messages', 'الرسائل'), 'audit-activity': bi('Audit Activity', 'سجل النشاط'),
+  sports: bi('Sports', 'الرياضات'), players: bi('Players', 'اللاعبون'), groups: bi('Training Groups', 'مجموعات التدريب'), parents: bi('Parents', 'أولياء الأمور'), coaches: bi('Coaches', 'المدربون'), programs: bi('Programs', 'البرامج'), schedules: bi('Schedules', 'الجداول'), attendance: bi('Attendance', 'الحضور'), performance: bi('Performance', 'الأداء'), countries: bi('Countries', 'الدول'), branches: bi('Branches', 'الفروع'), subscriptions: bi('Subscriptions', 'الاشتراكات'), payments: bi('Payments', 'المدفوعات'), reports: bi('Reports', 'التقارير'), content: bi('Content', 'المحتوى'), users: bi('Users & Roles', 'المستخدمون والصلاحيات'), settings: bi('Settings', 'الإعدادات'), registrations: bi('Registrations', 'التسجيلات'), achievements: bi('Achievements', 'الإنجازات'), events: bi('Events', 'الفعاليات'), announcements: bi('Announcements', 'الإعلانات'), messages: bi('Messages', 'الرسائل'), 'audit-activity': bi('Audit Activity', 'سجل النشاط'), store: bi('Store Dashboard', 'لوحة المتجر'), products: bi('Products', 'المنتجات'), categories: bi('Categories', 'الفئات'), orders: bi('Store Orders', 'طلبات المتجر'), inventory: bi('Inventory', 'المخزون'), collections: bi('Collections', 'المجموعات'), discounts: bi('Discounts', 'الخصومات'),
 };
 
 function usePageTitle() {
@@ -118,6 +119,7 @@ export function AdminLayout() {
       <Route path="subscriptions/:subscriptionId" element={<AdminSubscriptionDetailPage />} />
       <Route path="payments" element={<AdminPaymentsPage />} />
       <Route path="payments/:paymentId" element={<AdminPaymentDetailPage />} />
+      <Route path="store/*" element={<StoreAdminRouter />} />
       <Route path="reports" element={<AdminReportsPage />} />
       <Route path="content" element={<AdminContentPage />} />
       <Route path="content/:contentId" element={<AdminContentDetailPage />} />
@@ -133,7 +135,7 @@ export function AdminLayout() {
       <Route path="messages" element={<AdminMessagesPage />} />
       <Route path="messages/:messageId" element={<AdminMessagesDetailPage />} />
       <Route path="audit-activity" element={<AdminAuditActivityPage />} />
-      {Object.keys(routeLabels).filter((path) => !['sports','groups','players','settings','countries','branches','programs','parents','coaches','schedules','attendance','performance','subscriptions','payments','reports','content','users','registrations','achievements','events','announcements','messages','audit-activity'].includes(path)).map((path) => <Route key={path} path={path} element={<AdminFutureModulePage />} />)}
+      {Object.keys(routeLabels).filter((path) => !['sports','groups','players','settings','countries','branches','programs','parents','coaches','schedules','attendance','performance','subscriptions','payments','reports','content','users','registrations','achievements','events','announcements','messages','audit-activity','store'].includes(path)).map((path) => <Route key={path} path={path} element={<AdminFutureModulePage />} />)}
       <Route path="*" element={<Navigate to="/admin" replace />} />
     </Routes></main></div>
   </div>;

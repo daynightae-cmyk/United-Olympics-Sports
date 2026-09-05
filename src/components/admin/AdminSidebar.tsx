@@ -32,6 +32,16 @@ const sections: Array<{ title: { en: string; ar: string }; items: NavItem[] }> =
     { to: '/admin/subscriptions', label: bi('Subscriptions', 'الاشتراكات'), icon: 'subscriptions' },
     { to: '/admin/payments', label: bi('Payments', 'المدفوعات'), icon: 'payments' },
   ] },
+  { title: bi('Store Commerce', 'تجارة المتجر'), items: [
+    { to: '/admin/store', exact: true, label: bi('Store Dashboard', 'لوحة المتجر'), icon: 'store' },
+    { to: '/admin/store/orders', label: bi('Store Orders', 'طلبات المتجر'), icon: 'orders' },
+    { to: '/admin/store/products', label: bi('Products', 'المنتجات'), icon: 'products' },
+    { to: '/admin/store/categories', label: bi('Categories', 'الفئات'), icon: 'sports' },
+    { to: '/admin/store/inventory', label: bi('Inventory', 'المخزون'), icon: 'inventory' },
+    { to: '/admin/store/collections', label: bi('Collections', 'المجموعات'), icon: 'collections' },
+    { to: '/admin/store/discounts', label: bi('Discounts', 'الخصومات'), icon: 'discounts' },
+    { to: '/admin/store/settings', label: bi('Store Settings', 'إعدادات المتجر'), icon: 'settings' },
+  ] },
   { title: bi('Communications', 'التواصل'), items: [
     { to: '/admin/announcements', label: bi('Announcements', 'الإعلانات'), icon: 'announcements' },
     { to: '/admin/messages', label: bi('Messages', 'الرسائل'), icon: 'messages' },

@@ -99,6 +99,9 @@ export function applyUiSettingsToDocument(
   root.dataset.fontScale = settings.fontScale;
   root.dataset.motion = settings.motion;
   root.dataset.sidebarDefault = settings.sidebarDefault;
+  const isArabicFirst = settings.bilingualOrder === 'ar-first';
+  root.lang = isArabicFirst ? 'ar' : 'en';
+  root.dir = isArabicFirst ? 'rtl' : 'ltr';
   root.style.colorScheme = mode;
 
   const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]') ?? document.createElement('meta');

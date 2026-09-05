@@ -1,0 +1,35 @@
+import { bi } from '../components/bilingual/BilingualText';
+import type { StoreCategory, StoreProduct } from './storeTypes';
+
+/**
+ * Development-only fixtures. The StoreProvider never exposes these in a
+ * production build. They exist solely to qualify layout and interactions.
+ */
+export const previewCategories: StoreCategory[] = [
+  { slug: 'swimming', name: bi('Swimming', 'السباحة'), description: bi('Technique-led equipment and training essentials.', 'معدات ومستلزمات تدريب تركز على تطوير التقنية.'), accent: '#58b9c5', hero: '/media/sports/swimming/swimming-06-hero.webp' },
+  { slug: 'football', name: bi('Football', 'كرة القدم'), description: bi('Team training essentials for disciplined performance.', 'مستلزمات تدريب جماعي لأداء منضبط.'), accent: '#3f9b66', hero: '/media/sports/football/football-01-hero.webp' },
+  { slug: 'basketball', name: bi('Basketball', 'كرة السلة'), description: bi('Court equipment and athlete essentials.', 'معدات الملعب ومستلزمات الرياضيين.'), accent: '#c77a3b', hero: '/media/sports/basketball/basketball-01-shooting-technique.webp' },
+  { slug: 'tennis', name: bi('Tennis', 'التنس'), description: bi('Rackets, grips and training accessories.', 'مضارب وقبضات وإكسسوارات التدريب.'), accent: '#9cbf45' },
+  { slug: 'gymnastics', name: bi('Gymnastics', 'الجمباز'), description: bi('Apparel and foundational training accessories.', 'ملابس وإكسسوارات التدريب الأساسي.'), accent: '#8a66b6' },
+  { slug: 'martial-arts', name: bi('Martial Arts', 'الفنون القتالية'), description: bi('Uniforms, protection and controlled practice gear.', 'زي ومعدات حماية للتدريب المنضبط.'), accent: '#a95151' },
+  { slug: 'apparel', name: bi('Apparel', 'الملابس'), description: bi('Performance layers designed for movement.', 'ملابس أداء مصممة للحركة.'), accent: '#9a6c15' },
+  { slug: 'equipment', name: bi('Equipment', 'المعدات'), description: bi('Training equipment across every discipline.', 'معدات تدريب لمختلف الرياضات.'), accent: '#9a6c15' },
+  { slug: 'accessories', name: bi('Accessories', 'الإكسسوارات'), description: bi('Bags, bottles and daily training essentials.', 'حقائب وزجاجات ومستلزمات التدريب اليومية.'), accent: '#9a6c15' },
+];
+
+const colors = [bi('Black / Gold', 'أسود / ذهبي'), bi('Ivory / Gold', 'عاجي / ذهبي')];
+
+export const previewProducts: StoreProduct[] = [
+  { id: 'preview-swim-goggles', slug: 'elite-swim-goggles', name: bi('Elite Swim Goggles', 'نظارة سباحة إيليت'), description: bi('A visual-development product fixture for the swimming collection.', 'منتج تجريبي بصري لتطوير مجموعة السباحة.'), category: 'swimming', type: bi('Goggles', 'نظارات سباحة'), price: 120, currency: 'AED', sku: 'PREVIEW-SW-001', badge: 'preview', colors },
+  { id: 'preview-swim-cap', slug: 'silicone-swim-cap', name: bi('Silicone Swim Cap', 'قبعة سباحة سيليكون'), description: bi('A visual-development product fixture for the swimming collection.', 'منتج تجريبي بصري لتطوير مجموعة السباحة.'), category: 'swimming', type: bi('Caps', 'قبعات'), price: 45, currency: 'AED', sku: 'PREVIEW-SW-002', badge: 'preview', colors },
+  { id: 'preview-training-fins', slug: 'training-fins', name: bi('Training Fins', 'زعانف تدريب'), description: bi('A visual-development product fixture for the swimming collection.', 'منتج تجريبي بصري لتطوير مجموعة السباحة.'), category: 'swimming', type: bi('Training Equipment', 'معدات تدريب'), price: 210, currency: 'AED', sku: 'PREVIEW-SW-003', badge: 'preview', colors },
+  { id: 'preview-football', slug: 'training-football', name: bi('Training Football', 'كرة قدم للتدريب'), description: bi('A visual-development product fixture for the football collection.', 'منتج تجريبي بصري لتطوير مجموعة كرة القدم.'), category: 'football', type: bi('Balls', 'كرات'), price: 89, currency: 'AED', sku: 'PREVIEW-FB-001', badge: 'preview', colors },
+  { id: 'preview-shin-guards', slug: 'performance-shin-guards', name: bi('Performance Shin Guards', 'واقيات ساق للأداء'), description: bi('A visual-development product fixture for the football collection.', 'منتج تجريبي بصري لتطوير مجموعة كرة القدم.'), category: 'football', type: bi('Protection', 'حماية'), price: 65, currency: 'AED', sku: 'PREVIEW-FB-002', badge: 'preview', colors },
+  { id: 'preview-basketball', slug: 'competition-basketball', name: bi('Competition Basketball', 'كرة سلة للمنافسات'), description: bi('A visual-development product fixture for the basketball collection.', 'منتج تجريبي بصري لتطوير مجموعة كرة السلة.'), category: 'basketball', type: bi('Balls', 'كرات'), price: 129, currency: 'AED', sku: 'PREVIEW-BB-001', badge: 'preview', colors },
+  { id: 'preview-tennis-racket', slug: 'performance-tennis-racket', name: bi('Performance Tennis Racket', 'مضرب تنس للأداء'), description: bi('A visual-development product fixture for the tennis collection.', 'منتج تجريبي بصري لتطوير مجموعة التنس.'), category: 'tennis', type: bi('Rackets', 'مضارب'), price: 320, currency: 'AED', sku: 'PREVIEW-TN-001', badge: 'preview', colors },
+  { id: 'preview-training-top', slug: 'performance-training-top', name: bi('Performance Training Top', 'قميص تدريب للأداء'), description: bi('A visual-development product fixture for the apparel collection.', 'منتج تجريبي بصري لتطوير مجموعة الملابس.'), category: 'apparel', type: bi('Training Apparel', 'ملابس تدريب'), price: 149, currency: 'AED', sku: 'PREVIEW-AP-001', badge: 'preview', sizes: ['S', 'M', 'L', 'XL', 'XXL'], colors },
+  { id: 'preview-training-shorts', slug: 'performance-training-shorts', name: bi('Performance Training Shorts', 'شورت تدريب للأداء'), description: bi('A visual-development product fixture for the apparel collection.', 'منتج تجريبي بصري لتطوير مجموعة الملابس.'), category: 'apparel', type: bi('Training Apparel', 'ملابس تدريب'), price: 99, currency: 'AED', sku: 'PREVIEW-AP-002', badge: 'preview', sizes: ['S', 'M', 'L', 'XL'], colors },
+  { id: 'preview-gym-bag', slug: 'athlete-gym-bag', name: bi('Athlete Gym Bag', 'حقيبة رياضي'), description: bi('A visual-development product fixture for the accessories collection.', 'منتج تجريبي بصري لتطوير مجموعة الإكسسوارات.'), category: 'accessories', type: bi('Bags', 'حقائب'), price: 179, currency: 'AED', sku: 'PREVIEW-AC-001', badge: 'preview', colors },
+  { id: 'preview-bottle', slug: 'insulated-training-bottle', name: bi('Insulated Training Bottle', 'زجاجة تدريب معزولة'), description: bi('A visual-development product fixture for the accessories collection.', 'منتج تجريبي بصري لتطوير مجموعة الإكسسوارات.'), category: 'accessories', type: bi('Bottles', 'زجاجات'), price: 69, currency: 'AED', sku: 'PREVIEW-AC-002', badge: 'preview', colors },
+  { id: 'preview-kickboard', slug: 'training-kickboard', name: bi('Training Kickboard', 'لوح تدريب سباحة'), description: bi('A visual-development product fixture for the equipment collection.', 'منتج تجريبي بصري لتطوير مجموعة المعدات.'), category: 'equipment', type: bi('Training Equipment', 'معدات تدريب'), price: 85, currency: 'AED', sku: 'PREVIEW-EQ-001', badge: 'preview', colors },
+];

@@ -7,6 +7,7 @@ import {
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { BilingualText, bi } from '../components/bilingual/BilingualText';
 import { ThemeToggle } from '../components/ui/ThemeToggle';
+import { LanguageOrderToggle } from '../components/ui/LanguageOrderToggle';
 import type { BilingualText as BilingualValue } from '../domain/contracts';
 import '../styles/admin.css';
 import '../styles/portal-shell.css';
@@ -77,7 +78,7 @@ export function PortalLayout({ portal, children }: { portal: PortalKind; childre
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
-  return <div className={`portal-shell portal-${portal}`}>
+  return <div className={`portal-shell portal-${portal}`} data-portal={portal}>
     <aside className={`portal-sidebar ${open ? 'is-open' : ''}`} aria-label={`${meta.title.en} navigation | تنقل ${meta.title.ar}`}>
       <div className="portal-brand">
         <img src="/brand/united-olympics-sports-logo.png" alt="United Olympics Sports | يونايتد أوليمبيكس سبورت" />
@@ -94,6 +95,7 @@ export function PortalLayout({ portal, children }: { portal: PortalKind; childre
         <button type="button" className="portal-icon-button portal-mobile-only" onClick={() => setOpen(true)} aria-label="Open navigation | فتح القائمة"><Menu /></button>
         <div><small><BilingualText value={meta.title} /></small><strong><BilingualText value={current.label} /></strong></div>
         <span className="portal-preview-badge"><span /><BilingualText value={bi('Preview Data', 'بيانات تجريبية')} /></span>
+        <LanguageOrderToggle compact />
         <ThemeToggle compact />
       </header>
       <main className="portal-main">{children}</main>

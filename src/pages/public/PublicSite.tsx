@@ -209,10 +209,12 @@ function PublicHeader() {
   const [open, setOpen] = useState(false);
   const nav = [
     { to: "/", value: { en: "Home", ar: "الرئيسية" } },
+    { to: "/store", value: { en: "Store", ar: "المتجر" } },
     { to: "/about", value: { en: "About", ar: "من نحن" } },
     { to: "/sports", value: { en: "Sports", ar: "الرياضات" } },
     { to: "/programs", value: { en: "Programs", ar: "البرامج" } },
     { to: "/coaches", value: { en: "Coaches", ar: "المدربون" } },
+    { to: "/store", value: { en: "Store", ar: "المتجر" } },
     { to: "/contact", value: { en: "Contact", ar: "تواصل معنا" } },
   ];
   return (
