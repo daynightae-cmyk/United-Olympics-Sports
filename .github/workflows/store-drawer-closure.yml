@@ -20,18 +20,29 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Fix mobile filter backdrop hit area
+      - name: Fix Store drawer backdrop hit areas
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
           path = Path('src/styles/store-commerce.css')
           text = path.read_text(encoding='utf-8')
-          old = '.store-filter-layer>.store-filters{display:block;position:absolute;inset-block:0;inset-inline-start:0;width:min(360px,90%);border-radius:0;overflow-y:auto}'
-          new = '.store-filter-layer>.store-filters{display:block;position:absolute;z-index:2;inset-block:0;inset-inline-start:0;width:min(360px,90%);border-radius:0;overflow-y:auto}.store-filter-layer>.store-drawer-backdrop{z-index:1;inset-inline-start:min(360px,90%)!important;width:auto!important}'
-          if old not in text:
+
+          filter_old = '.store-filter-layer>.store-filters{display:block;position:absolute;inset-block:0;inset-inline-start:0;width:min(360px,90%);border-radius:0;overflow-y:auto}'
+          filter_new = '.store-filter-layer>.store-filters{display:block;position:absolute;z-index:2;inset-block:0;inset-inline-start:0;width:min(360px,90%);border-radius:0;overflow-y:auto}.store-filter-layer>.store-drawer-backdrop{z-index:1;inset-inline-start:min(360px,90%)!important;width:auto!important}'
+          if filter_old in text:
+              text = text.replace(filter_old, filter_new, 1)
+          elif filter_new not in text:
               raise SystemExit('Expected mobile Store filter drawer rule not found')
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          cart_old = '.store-mini-cart{position:absolute;top:0;bottom:0;inset-inline-end:0;width:min(470px,100%);background:var(--store-surface);box-shadow:-30px 0 90px rgba(0,0,0,.25);display:flex;flex-direction:column;outline:0}'
+          cart_new = '.store-mini-cart{position:absolute;z-index:2;top:0;bottom:0;inset-inline-end:0;width:min(470px,100%);background:var(--store-surface);box-shadow:-30px 0 90px rgba(0,0,0,.25);display:flex;flex-direction:column;outline:0}.store-drawer-layer>.store-drawer-backdrop{z-index:1;inset-inline-end:min(470px,100%)!important;width:auto!important}'
+          if cart_old in text:
+              text = text.replace(cart_old, cart_new, 1)
+          elif cart_new not in text:
+              raise SystemExit('Expected Store mini-cart rule not found')
+
+          path.write_text(text, encoding='utf-8')
           PY
 
       - name: Install dependencies
@@ -75,5 +86,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/styles/store-commerce.css
           git diff --cached --check
-          git commit -m "fix: restore Store mobile filter backdrop interaction"
+          git commit -m "fix: restore Store drawer backdrop interactions"
           git push origin HEAD:main
