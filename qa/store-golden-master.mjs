@@ -64,6 +64,24 @@ async function screenshot(page, name) {
   await page.screenshot({ path: `${evidence}/${name}.png`, fullPage: true });
 }
 
+async function clickExposedBackdrop(page, backdrop, panel) {
+  const backdropBox = await backdrop.boundingBox();
+  const panelBox = await panel.boundingBox();
+  assert(backdropBox, 'drawer backdrop has no measurable box');
+  assert(panelBox, 'drawer panel has no measurable box');
+
+  const margin = 8;
+  const candidates = [
+    { x: backdropBox.x + margin, y: backdropBox.y + margin },
+    { x: backdropBox.x + backdropBox.width - margin, y: backdropBox.y + margin },
+    { x: backdropBox.x + margin, y: backdropBox.y + backdropBox.height - margin },
+    { x: backdropBox.x + backdropBox.width - margin, y: backdropBox.y + backdropBox.height - margin },
+  ];
+  const outside = candidates.find(({ x, y }) => x < panelBox.x || x > panelBox.x + panelBox.width || y < panelBox.y || y > panelBox.y + panelBox.height);
+  assert(outside, 'drawer backdrop has no exposed clickable area');
+  await page.mouse.click(outside.x, outside.y);
+}
+
 async function modalChecks(page, selector, trigger, close) {
   await trigger.click();
   const panel = page.locator(selector);
@@ -75,7 +93,7 @@ async function modalChecks(page, selector, trigger, close) {
   await panel.waitFor({ state: 'hidden' });
   assert(await trigger.evaluate((e) => e === document.activeElement), `${selector}: failed focus restoration`);
   await trigger.click();
-  await close.click({ position: { x: 5, y: 5 } });
+  await clickExposedBackdrop(page, close, panel);
   await panel.waitFor({ state: 'hidden' });
   assert.equal(await page.evaluate(() => document.body.style.overflow), '', `${selector}: body scroll remains locked`);
 }
