@@ -22,6 +22,12 @@ export function useStoreDialog(open: boolean, panel: RefObject<HTMLElement | nul
       const current = panel.current;
       if (current && !current.contains(document.activeElement)) current.focus({ preventScroll: true });
     });
+    const onFocusIn = (event: FocusEvent) => {
+      const current = panel.current;
+      if (!current || current.contains(event.target as Node)) return;
+      current.focus({ preventScroll: true });
+    };
+    document.addEventListener('focusin', onFocusIn);
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { event.preventDefault(); closeRef.current(); }
       if (event.key !== 'Tab') return;
@@ -32,6 +38,6 @@ export function useStoreDialog(open: boolean, panel: RefObject<HTMLElement | nul
       else if (!event.shiftKey && (document.activeElement === last || document.activeElement === panel.current)) { event.preventDefault(); first.focus(); }
     };
     document.addEventListener('keydown', onKey);
-    return () => { cancelAnimationFrame(frame); document.removeEventListener('keydown', onKey); document.body.style.overflow = overflow; inertNodes.forEach(({ node, inert }) => { node.inert = inert; }); if (restore instanceof HTMLElement && restore.isConnected) restore.focus(); };
+    return () => { cancelAnimationFrame(frame); document.removeEventListener('focusin', onFocusIn); document.removeEventListener('keydown', onKey); document.body.style.overflow = overflow; inertNodes.forEach(({ node, inert }) => { node.inert = inert; }); if (restore instanceof HTMLElement && restore.isConnected) restore.focus(); };
   }, [open, panel]);
 }
