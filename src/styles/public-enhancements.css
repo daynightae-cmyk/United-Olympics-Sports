@@ -18,3 +18,535 @@
 @media(max-width:1024px){.card-grid.sports-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media(max-width:640px){.card-grid.sports-grid{grid-template-columns:1fr;gap:14px;}.sport-card-body{padding:20px;}}
 @media(max-width:900px){.page.home .hero{min-height:auto;padding-top:56px;}}
+
+/* ===================================================================
+   Mission 10V — Premium Public Site Visual Rebuild Layer
+   Adds glass depth, refined gold hierarchy, premium typography,
+   responsive refinements, pulse indicators, trust signals.
+   =================================================================== */
+
+:root {
+  --uos-glass-strong: rgba(18, 22, 29, 0.82);
+  --uos-glass-medium: rgba(18, 22, 29, 0.62);
+  --uos-glass-soft: rgba(18, 22, 29, 0.42);
+  --uos-gold-glow: rgba(212, 175, 55, 0.18);
+  --uos-gold-line: rgba(212, 175, 55, 0.36);
+  --uos-card-border: rgba(255, 255, 255, 0.08);
+  --uos-inner-highlight: rgba(255, 255, 255, 0.035);
+}
+
+/* Hero Premium */
+.hero-premium {
+  position: relative;
+  overflow: hidden;
+}
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.hero-gradient-ring {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  animation: heroRingFloat 20s ease-in-out infinite;
+}
+.hero-gradient-ring.ring-one {
+  width: 400px;
+  height: 400px;
+  top: -100px;
+  right: -100px;
+  background: radial-gradient(circle, rgba(212,175,55,0.15), transparent 70%);
+  animation-delay: 0s;
+}
+.hero-gradient-ring.ring-two {
+  width: 300px;
+  height: 300px;
+  bottom: -50px;
+  left: -50px;
+  background: radial-gradient(circle, rgba(90,168,218,0.12), transparent 70%);
+  animation-delay: -7s;
+}
+.hero-gradient-ring.ring-three {
+  width: 250px;
+  height: 250px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(142,179,78,0.1), transparent 70%);
+  animation-delay: -14s;
+}
+@keyframes heroRingFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.05); }
+  66% { transform: translate(-20px, 30px) scale(0.95); }
+}
+.hero-premium .hero-content {
+  position: relative;
+  z-index: 2;
+}
+.hero-premium .hero-art {
+  position: relative;
+  z-index: 1;
+}
+.eyebrow-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border: 1px solid rgba(212,175,55,0.22);
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(212,175,55,0.08), rgba(255,255,255,0.02));
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f4d98a;
+  backdrop-filter: blur(8px);
+}
+.hero-trust {
+  display: flex;
+  gap: 24px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+.trust-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+}
+.trust-item CheckCircle {
+  color: #67cf8b;
+  flex-shrink: 0;
+}
+.button-premium {
+  position: relative;
+  overflow: hidden;
+  transition: transform 180ms ease, box-shadow 200ms ease, border-color 180ms ease !important;
+}
+.button-premium::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent 50%);
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+.button-premium:hover::before { opacity: 1; }
+.button-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(212,175,55,0.25) !important;
+}
+.button-premium:active { transform: translateY(0); }
+
+/* Feature Grid Premium */
+.section-premium {
+  position: relative;
+}
+.section-premium::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,175,55,0.2), transparent);
+}
+.feature-grid-premium {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.feature-card {
+  position: relative;
+  padding: 28px 24px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.025), rgba(255,255,255,0.005));
+  box-shadow: 0 10px 28px rgba(0,0,0,0.22), 0 0 0 1px rgba(212,175,55,0.04) inset;
+  transition: transform 200ms ease, border-color 200ms ease, box-shadow 250ms ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.feature-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(212,175,55,0.28);
+  box-shadow: 0 20px 48px rgba(0,0,0,0.32), 0 0 0 1px rgba(212,175,55,0.1) inset;
+}
+.feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  color: #f4d98a;
+  background: rgba(212,175,55,0.1);
+  border: 1px solid rgba(212,175,55,0.18);
+}
+.feature-icon svg { width: 26px; height: 26px; }
+.feature-card h3 { margin: 0 0 10px; font-size: 17px; font-weight: 700; color: rgba(255,255,255,0.95); }
+.feature-card p { margin: 0; font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.65); }
+.feature-underline {
+  position: absolute;
+  bottom: 0;
+  left: 24px;
+  right: 24px;
+  height: 3px;
+  border-radius: 0 0 20px 20px;
+  background: linear-gradient(90deg, var(--accent-color, #d4b23a), transparent);
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: opacity 200ms ease, transform 300ms ease;
+}
+.feature-card:hover .feature-underline {
+  opacity: 1;
+  transform: scaleX(1);
+}
+.feature-card.accent-training .feature-icon { --accent-color: #8eb34e; background: rgba(142,179,78,0.1); border-color: rgba(142,179,78,0.2); color: #8eb34e; }
+.feature-card.accent-discipline .feature-icon { --accent-color: #a855f7; background: rgba(168,85,247,0.1); border-color: rgba(168,85,247,0.2); color: #a855f7; }
+.feature-card.accent-performance .feature-icon { --accent-color: #f4d98a; background: rgba(212,175,55,0.1); border-color: rgba(212,175,55,0.18); color: #f4d98a; }
+.feature-card.accent-teamwork .feature-icon { --accent-color: #5aa8da; background: rgba(90,168,218,0.1); border-color: rgba(90,168,218,0.2); color: #5aa8da; }
+.feature-card.accent-focus .feature-icon { --accent-color: #ef7777; background: rgba(239,119,119,0.1); border-color: rgba(239,119,119,0.2); color: #ef7777; }
+.feature-card.accent-progress .feature-icon { --accent-color: #67cf8b; background: rgba(103,207,139,0.1); border-color: rgba(103,207,139,0.2); color: #67cf8b; }
+
+/* Sports Grid Premium */
+.sports-grid-premium {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.sport-card-premium {
+  position: relative;
+  overflow: hidden;
+}
+.sport-card-premium::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--sport-color, #d4b23a), transparent);
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+.sport-card-premium:hover::before { opacity: 1; }
+.sport-card-premium .sport-card-body {
+  position: relative;
+  z-index: 2;
+}
+.sport-card-premium .sport-icon {
+  position: relative;
+  z-index: 3;
+}
+.sport-card-pulse {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 4px;
+  pointer-events: none;
+  z-index: 4;
+}
+.pulse-ring {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f4d98a;
+  opacity: 0.6;
+  animation: pulseRing 2s ease-out infinite;
+}
+.pulse-ring:nth-child(2) { animation-delay: 0.3s; }
+.pulse-ring:nth-child(3) { animation-delay: 0.6s; }
+@keyframes pulseRing {
+  0% { transform: scale(0.8); opacity: 0.6; }
+  50% { transform: scale(1.4); opacity: 0.2; }
+  100% { transform: scale(0.8); opacity: 0.6; }
+}
+.sport-card-premium.sport-football { --sport-color: #8eb34e; }
+.sport-card-premium.sport-swimming { --sport-color: #5aa8da; }
+.sport-card-premium.sport-basketball { --sport-color: #df9349; }
+.sport-card-premium.sport-tennis { --sport-color: #ef7777; }
+.sport-card-premium.sport-gymnastics { --sport-color: #a855f7; }
+.sport-card-premium.sport-martial-arts { --sport-color: #e8a87c; }
+
+/* Pulse Section */
+.pulse-section {
+  padding-top: 60px;
+  padding-bottom: 60px;
+  background: linear-gradient(180deg, transparent, rgba(212,175,55,0.03), transparent);
+}
+.pulse-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+.pulse-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.02), rgba(255,255,255,0.005));
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 200ms ease;
+}
+.pulse-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(212,175,55,0.25);
+  box-shadow: 0 16px 40px rgba(212,175,55,0.08);
+}
+.pulse-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  color: #f4d98a;
+  background: rgba(212,175,55,0.1);
+  border: 1px solid rgba(212,175,55,0.18);
+}
+.pulse-icon svg { width: 22px; height: 22px; }
+.pulse-content { flex: 1; }
+.pulse-content > span { display: block; font-weight: 600; font-size: 14px; margin-bottom: 10px; color: rgba(255,255,255,0.9); }
+.pulse-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.pulse-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #d4b23a, #f0c75e);
+  transition: width 800ms ease-out;
+}
+.pulse-content small { font-size: 11px; color: rgba(255,255,255,0.6); line-height: 1.4; }
+.pulse-grid-about { grid-template-columns: repeat(4, 1fr); }
+
+/* About Grid Premium */
+.about-grid-premium {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: start;
+}
+.about-statement { padding-right: 40px; }
+.about-statement .big-number {
+  display: inline-block;
+  font-size: 64px;
+  font-weight: 800;
+  color: rgba(212,175,55,0.15);
+  line-height: 1;
+  margin-bottom: 16px;
+}
+.about-statement h2 { font-size: clamp(28px, 4vw, 42px); line-height: 1.15; margin: 0 0 16px; color: rgba(255,255,255,0.95); }
+.about-statement p { font-size: 15px; line-height: 1.8; color: rgba(255,255,255,0.65); }
+.about-values { display: grid; gap: 16px; }
+.value-row-premium {
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.02), rgba(255,255,255,0.005));
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 200ms ease;
+}
+.value-row-premium:hover {
+  transform: translateX(4px);
+  border-color: rgba(212,175,55,0.22);
+  box-shadow: 0 8px 24px rgba(212,175,55,0.06);
+}
+.value-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  color: #f4d98a;
+  background: rgba(212,175,55,0.1);
+  border: 1px solid rgba(212,175,55,0.18);
+  flex-shrink: 0;
+}
+.value-content { flex: 1; min-width: 0; }
+.value-content h3 { margin: 0 0 6px; font-size: 15px; font-weight: 700; color: rgba(255,255,255,0.95); }
+.value-content p { margin: 0; font-size: 12px; line-height: 1.6; color: rgba(255,255,255,0.6); }
+
+/* About Pulse */
+.about-pulse { padding-top: 40px; }
+
+/* Sports Grid Section */
+.sports-grid-section { padding-top: 40px; }
+
+/* Sports Integrity */
+.sports-integrity { padding: 40px 0; }
+.integrity-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.integrity-card {
+  display: flex;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.02), rgba(255,255,255,0.005));
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 200ms ease;
+}
+.integrity-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(212,175,55,0.22);
+  box-shadow: 0 12px 32px rgba(212,175,55,0.06);
+}
+.integrity-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  color: #67cf8b;
+  background: rgba(103,207,139,0.1);
+  border: 1px solid rgba(103,207,139,0.18);
+  flex-shrink: 0;
+}
+.integrity-icon svg { width: 20px; height: 20px; }
+.integrity-card h3 { margin: 0 0 4px; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.9); }
+.integrity-card p { margin: 0; font-size: 11px; color: rgba(255,255,255,0.6); line-height: 1.5; }
+
+/* CTA Band Premium */
+.cta-band-premium {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 48px;
+  border: 1px solid rgba(212,175,55,0.18);
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(212,175,55,0.08), transparent 40%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.005));
+  box-shadow: 0 18px 48px rgba(0,0,0,0.28), 0 0 0 1px rgba(212,175,55,0.08) inset;
+  position: relative;
+  overflow: hidden;
+}
+.cta-band-premium::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 30% 50%, rgba(212,175,55,0.06), transparent 60%);
+  pointer-events: none;
+}
+.cta-band-premium > div { position: relative; z-index: 2; }
+.cta-band-premium .eyebrow-premium { margin-bottom: 12px; }
+.cta-band-premium h2 { margin: 0; font-size: clamp(28px, 4vw, 42px); line-height: 1.15; color: rgba(255,255,255,0.95); }
+.cta-band-premium .button-premium { flex-shrink: 0; }
+
+/* Contact Layout Premium */
+.contact-layout-premium {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 40px;
+}
+.contact-form-premium { padding: 32px; }
+.form-note-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  border: 1px solid rgba(103,207,139,0.25);
+  border-radius: 12px;
+  background: rgba(103,207,139,0.08);
+  color: #67cf8b;
+  font-size: 12px;
+}
+.contact-note-premium {
+  padding: 32px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.025), rgba(255,255,255,0.005));
+  box-shadow: 0 12px 32px rgba(0,0,0,0.22);
+  text-align: center;
+}
+.contact-note-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  margin-bottom: 16px;
+  color: #5aa8da;
+  background: rgba(90,168,218,0.1);
+  border: 1px solid rgba(90,168,218,0.18);
+}
+.contact-note-premium h3 { margin: 0 0 12px; font-size: 18px; font-weight: 700; color: rgba(255,255,255,0.95); }
+.contact-note-premium > p { margin: 0 0 24px; font-size: 13px; line-height: 1.7; color: rgba(255,255,255,0.65); }
+.contact-integrity { display: grid; gap: 10px; text-align: left; }
+.integrity-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.015);
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
+}
+.integrity-item CheckCircle { color: #67cf8b; flex-shrink: 0; }
+
+/* Responsive Refinements */
+@media (max-width: 1200px) {
+  .feature-grid-premium { grid-template-columns: repeat(3, 1fr); }
+  .sports-grid-premium { grid-template-columns: repeat(2, 1fr); }
+  .pulse-grid { grid-template-columns: repeat(2, 1fr); }
+  .pulse-grid-about { grid-template-columns: repeat(2, 1fr); }
+  .integrity-grid { grid-template-columns: repeat(2, 1fr); }
+  .about-grid-premium { grid-template-columns: 1fr; }
+  .about-statement { padding-right: 0; }
+  .contact-layout-premium { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  .feature-grid-premium { grid-template-columns: 1fr 1fr; gap: 14px; }
+  .feature-card { padding: 20px 18px; }
+  .feature-icon { width: 48px; height: 48px; }
+  .feature-icon svg { width: 22px; height: 22px; }
+  .sports-grid-premium { grid-template-columns: 1fr; }
+  .pulse-grid { grid-template-columns: 1fr; }
+  .pulse-grid-about { grid-template-columns: 1fr; }
+  .integrity-grid { grid-template-columns: 1fr; }
+  .cta-band-premium { flex-direction: column; text-align: center; padding: 32px 24px; }
+  .cta-band-premium .eyebrow-premium { justify-content: center; }
+  .hero-trust { justify-content: center; }
+  .hero-gradient-ring.ring-one { width: 280px; height: 280px; }
+  .hero-gradient-ring.ring-two { width: 220px; height: 220px; }
+  .hero-gradient-ring.ring-three { width: 180px; height: 180px; }
+}
+@media (max-width: 480px) {
+  .feature-grid-premium { grid-template-columns: 1fr; }
+  .feature-card { padding: 18px 16px; }
+  .page.home .hero { min-height: auto; padding-top: 48px; padding-bottom: 40px; }
+  .hero-trust { flex-direction: column; gap: 12px; }
+  .pulse-card { padding: 18px; }
+  .value-row-premium { padding: 16px; flex-direction: column; align-items: flex-start; gap: 12px; }
+  .value-icon { width: 40px; height: 40px; }
+  .integrity-card { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .integrity-icon { width: 36px; height: 36px; }
+}

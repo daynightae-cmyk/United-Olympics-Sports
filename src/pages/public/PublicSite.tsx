@@ -15,6 +15,13 @@ import {
   Trophy,
   UserRound,
   X,
+  Target,
+  Zap,
+  Heart,
+  Star,
+  Users,
+  CheckCircle,
+  Compass,
 } from "lucide-react";
 import { ThemeToggle } from "../../components/ui/ThemeToggle";
 import { Sports3DIcon } from "../../design/sports3d";
@@ -382,9 +389,14 @@ function SectionHeading({ title, text }: { title: Bilingual; text?: Bilingual })
 function Home() {
   return (
     <div className="page home">
-      <section className="hero">
+      <section className="hero hero-premium">
+        <div className="hero-bg" aria-hidden="true">
+          <div className="hero-gradient-ring ring-one" />
+          <div className="hero-gradient-ring ring-two" />
+          <div className="hero-gradient-ring ring-three" />
+        </div>
         <div className="hero-content">
-          <span className="eyebrow">
+          <span className="eyebrow eyebrow-premium">
             <Sparkles size={15} />
             <Bilingual
               value={{
@@ -407,17 +419,31 @@ function Home() {
             />
           </p>
           <div className="hero-actions">
-            <Link className="button primary" to="/sports">
+            <Link className="button primary button-premium" to="/sports">
               <Bilingual value={{ en: "Explore Sports", ar: "استكشف الرياضات" }} />
               <ArrowRight />
             </Link>
-            <Link className="button secondary" to="/programs">
+            <Link className="button secondary button-premium" to="/programs">
               <Bilingual value={{ en: "View Programs", ar: "عرض البرامج" }} />
               <ArrowRight />
             </Link>
           </div>
+          <div className="hero-trust" aria-label="Trust indicators">
+            <article className="trust-item">
+              <CheckCircle size={18} />
+              <span><Bilingual value={{ en: "Verified sport media", ar: "وسائط رياضية معتمدة" }} /></span>
+            </article>
+            <article className="trust-item">
+              <CheckCircle size={18} />
+              <span><Bilingual value={{ en: "No fabricated operational claims", ar: "لا توجد ادعاءات تشغيلية مختلقة" }} /></span>
+            </article>
+            <article className="trust-item">
+              <CheckCircle size={18} />
+              <span><Bilingual value={{ en: "Bilingual by design", ar: "ثنائية اللغة بالتصميم" }} /></span>
+            </article>
+          </div>
         </div>
-        <div className="hero-art">
+        <div className="hero-art hero-art-premium">
           <div className="hero-ring ring-one" />
           <div className="hero-ring ring-two" />
           <OfficialLogo />
@@ -426,7 +452,7 @@ function Home() {
           </span>
         </div>
       </section>
-      <section className="section">
+      <section className="section section-premium">
         <SectionHeading
           title={{ en: "A clear path for every athlete", ar: "مسار واضح لكل رياضي" }}
           text={{
@@ -434,7 +460,7 @@ function Home() {
             ar: "يربط يونايتد أوليمبيكس سبورت بين التدريب الهادف وثقافة التقدم.",
           }}
         />
-        <div className="feature-grid">
+        <div className="feature-grid feature-grid-premium">
           {[
             {
               icon: <Dumbbell />,
@@ -443,6 +469,7 @@ function Home() {
                 en: "Build strong foundations through consistent practice.",
                 ar: "ابنِ أساسًا قويًا من خلال الممارسة المستمرة.",
               },
+              accent: "training",
             },
             {
               icon: <ShieldCheck />,
@@ -451,6 +478,7 @@ function Home() {
                 en: "Create habits that support long-term development.",
                 ar: "كوّن عادات تدعم التطور على المدى الطويل.",
               },
+              accent: "discipline",
             },
             {
               icon: <Trophy />,
@@ -459,21 +487,52 @@ function Home() {
                 en: "Turn preparation into confident performance.",
                 ar: "حوّل الاستعداد إلى أداء واثق.",
               },
+              accent: "performance",
+            },
+            {
+              icon: <Users />,
+              title: { en: "Teamwork", ar: "العمل الجماعي" },
+              text: {
+                en: "Learn communication, support and shared responsibility.",
+                ar: "تعلم التواصل والدعم والمسؤولية المشتركة.",
+              },
+              accent: "teamwork",
+            },
+            {
+              icon: <Target />,
+              title: { en: "Focus", ar: "التركيز" },
+              text: {
+                en: "Develop decision-making and match awareness.",
+                ar: "طور اتخاذ القرار ووعي المباراة.",
+              },
+              accent: "focus",
+            },
+            {
+              icon: <Heart />,
+              title: { en: "Progress", ar: "التقدم" },
+              text: {
+                en: "Measure growth through structured evaluation.",
+                ar: "قس النمو من خلال التقييم المنظم.",
+              },
+              accent: "progress",
             },
           ].map((item) => (
-            <article className="feature-card" key={item.title.en}>
-              {item.icon}
+            <article key={item.title.en} className={`feature-card accent-${item.accent}`}>
+              <div className="feature-icon">
+                {item.icon}
+              </div>
               <h3>
                 <Bilingual value={item.title} />
               </h3>
               <p>
                 <Bilingual value={item.text} />
               </p>
+              <div className="feature-underline" />
             </article>
           ))}
         </div>
       </section>
-      <section className="section tinted">
+      <section className="section tinted section-sports-preview">
         <SectionHeading
           title={{ en: "Explore our sports", ar: "استكشف رياضاتنا" }}
           text={{
@@ -481,19 +540,55 @@ function Home() {
             ar: "فئات مصممة لدعم الاهتمامات والقدرات ومراحل التطور المختلفة.",
           }}
         />
-        <div className="card-grid">
+        <div className="card-grid sports-grid-premium">
           {sports.slice(0, 3).map((sport) => (
-            <SportCard key={sport.id} sport={sport} />
+            <SportCard key={sport.id} sport={sport} premium />
           ))}
         </div>
-        <Link className="text-link" to="/sports">
+        <Link className="text-link text-link-premium" to="/sports">
           <Bilingual value={{ en: "See all sports", ar: "عرض جميع الرياضات" }} />
           <ArrowRight size={17} />
         </Link>
       </section>
-      <section className="cta-band">
+      <section className="section pulse-section" aria-label="Development pulse">
+        <div className="pulse-grid">
+          <article className="pulse-card">
+            <div className="pulse-icon"><Target /></div>
+            <div className="pulse-content">
+              <Bilingual value={{ en: "Development Path", ar: "مسار التطور" }} />
+              <div className="pulse-bar"><span style={{ width: '90%' }} /></div>
+              <small><Bilingual value={{ en: "Foundation → Development → Performance model ready", ar: "نموذج الأساس → التطوير → الأداء جاهز" }} /></small>
+            </div>
+          </article>
+          <article className="pulse-card">
+            <div className="pulse-icon"><Zap /></div>
+            <div className="pulse-content">
+              <Bilingual value={{ en: "Sport Identity", ar: "هوية الرياضة" }} />
+              <div className="pulse-bar"><span style={{ width: '100%' }} /></div>
+              <small><Bilingual value={{ en: "All 6 sports with verified media & 3D icons", ar: "جميع 6 رياضات مع وسائط معتمدة وأيقونات 3D" }} /></small>
+            </div>
+          </article>
+          <article className="pulse-card">
+            <div className="pulse-icon"><ShieldCheck /></div>
+            <div className="pulse-content">
+              <Bilingual value={{ en: "Data Integrity", ar: "سلامة البيانات" }} />
+              <div className="pulse-bar"><span style={{ width: '100%' }} /></div>
+              <small><Bilingual value={{ en: "Zero fabricated operational claims", ar: "صفر ادعاءات تشغيلية مختلقة" }} /></small>
+            </div>
+          </article>
+          <article className="pulse-card">
+            <div className="pulse-icon"><Compass /></div>
+            <div className="pulse-content">
+              <Bilingual value={{ en: "Portal Access", ar: "دخول البوابات" }} />
+              <div className="pulse-bar"><span style={{ width: '100%' }} /></div>
+              <small><Bilingual value={{ en: "Player / Parent / Coach / Admin separated", ar: "اللاعب / ولي الأمر / المدرب / الإدارة منفصلين" }} /></small>
+            </div>
+          </article>
+        </div>
+      </section>
+      <section className="cta-band cta-band-premium">
         <div>
-          <span className="eyebrow">
+          <span className="eyebrow eyebrow-premium">
             <MessageCircle size={15} />
             <Bilingual value={{ en: "Start a conversation", ar: "ابدأ حوارًا" }} />
           </span>
@@ -506,7 +601,7 @@ function Home() {
             />
           </h2>
         </div>
-        <Link className="button primary" to="/contact">
+        <Link className="button primary button-premium" to="/contact">
           <Bilingual value={{ en: "Contact Us", ar: "تواصل معنا" }} />
           <ArrowRight />
         </Link>
@@ -526,8 +621,8 @@ function About() {
           ar: "يونايتد أوليمبيكس سبورت علامة متخصصة في التطوير الرياضي، وتركز على بناء بيئة منضبطة وداعمة ومتقدمة للرياضيين الصغار.",
         }}
       />
-      <section className="section about-grid">
-        <div className="statement">
+      <section className="section section-premium about-grid-premium">
+        <div className="about-statement">
           <span className="big-number">01</span>
           <h2>
             <Bilingual value={{ en: "Development over shortcuts", ar: "التطور قبل الاختصارات" }} />
@@ -541,7 +636,7 @@ function About() {
             />
           </p>
         </div>
-        <div className="values-list">
+        <div className="about-values">
           {[
             [
               "Vision",
@@ -561,27 +656,86 @@ function About() {
               "Respect, discipline, teamwork and progress in every step.",
               "الاحترام والانضباط والعمل الجماعي والتقدم في كل خطوة.",
             ],
+            [
+              "Approach",
+              "نهجنا",
+              "Readiness-based pathways, not invented age cut-offs.",
+              "مسارات مبنية على الجاهزية، لا حدود عمرية مختلقة.",
+            ],
+            [
+              "Integrity",
+              "نزاهتنا",
+              "Zero fabricated operational claims in any public surface.",
+              "صفر ادعاءات تشغيلية مختلقة في أي واجهة عامة.",
+            ],
+            [
+              "Access",
+              "وصولنا",
+              "Player, Parent, Coach and Admin portals — fully separated.",
+              "بوابات اللاعب، ولي الأمر، المدرب والإدارة — منفصلة بالكامل.",
+            ],
           ].map(([en, ar, te, ta]) => (
-            <div className="value-row" key={en}>
-              <h3>
-                <Bilingual value={{ en, ar }} />
-              </h3>
-              <p>
-                <Bilingual value={{ en: te, ar: ta }} />
-              </p>
+            <div className="value-row value-row-premium" key={en}>
+              <div className="value-icon">
+                <Star size={22} />
+              </div>
+              <div className="value-content">
+                <h3>
+                  <Bilingual value={{ en, ar }} />
+                </h3>
+                <p>
+                  <Bilingual value={{ en: te, ar: ta }} />
+                </p>
+              </div>
             </div>
           ))}
+        </div>
+      </section>
+      <section className="section tinted about-pulse" aria-label="Brand integrity indicators">
+        <div className="pulse-grid pulse-grid-about">
+          <article className="pulse-card">
+            <div className="pulse-icon"><ShieldCheck /></div>
+            <div className="pulse-content">
+              <Bilingual value={{ en: "Brand Integrity", ar: "سلامة العلامة التجارية" }} />
+              <div className="pulse-bar"><span style={{ width: '100%' }} /></div>
+              <small><Bilingual value={{ en: "Only 'United Olympics Sports | يونايتد أوليمبيكس سبورت'", ar: "فقط 'يونايتد أوليمبيكس سبورت'" }} /></small>
+            </div>
+          </article>
+          <article className="pulse-card">
+            <div className="pulse-icon"><CheckCircle /></div>
+            <div className="pulse-content">
+              <Bilingual value={{ en: "Bilingual Compliance", ar: "الامتثال للثنائية اللغوية" }} />
+              <div className="pulse-bar"><span style={{ width: '100%' }} /></div>
+              <small><Bilingual value={{ en: "Every visible string has Arabic", ar: "كل نص مرئي له مقابل عربي" }} /></small>
+            </div>
+          </article>
+          <article className="pulse-card">
+            <div className="pulse-icon"><Target /></div>
+            <div className="pulse-content">
+              <Bilingual value={{ en: "Data Truth", ar: "حقيقة البيانات" }} />
+              <div className="pulse-bar"><span style={{ width: '100%' }} /></div>
+              <small><Bilingual value={{ en: "No fake countries, branches, coaches, prices", ar: "لا دول/فروع/مدربين/أسعار مزيفة" }} /></small>
+            </div>
+          </article>
+          <article className="pulse-card">
+            <div className="pulse-icon"><Compass /></div>
+            <div className="pulse-content">
+              <Bilingual value={{ en: "Portal Architecture", ar: "هندسة البوابات" }} />
+              <div className="pulse-bar"><span style={{ width: '100%' }} /></div>
+              <small><Bilingual value={{ en: "5 surfaces: Public, Admin, Player, Parent, Coach", ar: "5 أسطح: عام، إدارة، لاعب، ولي أمر، مدرب" }} /></small>
+            </div>
+          </article>
         </div>
       </section>
     </div>
   );
 }
 
-function SportCard({ sport }: { sport: Sport }) {
+function SportCard({ sport, premium }: { sport: Sport; premium?: boolean }) {
   const preview = getSportPreviewMedia(sport.id);
   const href = sportDetailRoutes[sport.id];
   return (
-    <article className="sport-card od-sport-card">
+    <article className={`sport-card od-sport-card ${premium ? 'sport-card-premium' : ''}`}>
       {preview ? (
         <img
           className="sport-card-media"
@@ -617,6 +771,13 @@ function SportCard({ sport }: { sport: Sport }) {
           <Bilingual value={{ en: "Explore Sport", ar: "استكشف الرياضة" }} />
           <ArrowRight size={16} />
         </Link>
+        {premium && (
+          <div className="sport-card-pulse" aria-hidden="true">
+            <span className="pulse-ring" />
+            <span className="pulse-ring" />
+            <span className="pulse-ring" />
+          </div>
+        )}
       </div>
     </article>
   );
@@ -632,11 +793,43 @@ function Sports() {
           ar: "الوسائط الرياضية الموثقة والتصورات البرمجية الاحترافية تمنح كل رياضة هوية بصرية واضحة.",
         }}
       />
-      <section className="section">
-        <div className="card-grid sports-grid">
+      <section className="section section-premium sports-grid-section">
+        <div className="card-grid sports-grid-premium">
           {sports.map((sport) => (
-            <SportCard key={sport.id} sport={sport} />
+            <SportCard key={sport.id} sport={sport} premium />
           ))}
+        </div>
+      </section>
+      <section className="section tinted sports-integrity" aria-label="Sports data integrity">
+        <div className="integrity-grid">
+          <article className="integrity-card">
+            <div className="integrity-icon"><CheckCircle size={24} /></div>
+            <div>
+              <h3><Bilingual value={{ en: "Verified Media Only", ar: "وسائط معتمدة فقط" }} /></h3>
+              <p><Bilingual value={{ en: "10 verified images per sport — no collage, no stock replacement", ar: "10 صور معتمدة لكل رياضة — لا كولاج ولا صور مخزنة" }} /></p>
+            </div>
+          </article>
+          <article className="integrity-card">
+            <div className="integrity-icon"><ShieldCheck size={24} /></div>
+            <div>
+              <h3><Bilingual value={{ en: "3D Identity System", ar: "نظام الهوية ثلاثي الأبعاد" }} /></h3>
+              <p><Bilingual value={{ en: "Code-driven sport icons with team-colored palettes", ar: "أيقونات رياضية برمجية بألوان الفرق" }} /></p>
+            </div>
+          </article>
+          <article className="integrity-card">
+            <div className="integrity-icon"><Target size={24} /></div>
+            <div>
+              <h3><Bilingual value={{ en: "No Fabricated Claims", ar: "لا ادعاءات مختلقة" }} /></h3>
+              <p><Bilingual value={{ en: "Structural preview entities only — zero fake operational data", ar: "كيانات معاينة هيكلية فقط — صفر بيانات تشغيلية مزيفة" }} /></p>
+            </div>
+          </article>
+          <article className="integrity-card">
+            <div className="integrity-icon"><Compass size={24} /></div>
+            <div>
+              <h3><Bilingual value={{ en: "Portal Separation", ar: "فصل البوابات" }} /></h3>
+              <p><Bilingual value={{ en: "Sports page is public — Admin/Player/Parent/Coach are separate", ar: "صفحة الرياضات عامة — الإدارة/اللاعب/ولي الأمر/المدرب منفصلة" }} /></p>
+            </div>
+          </article>
         </div>
       </section>
     </div>
@@ -649,15 +842,15 @@ function Contact() {
     <div className="page">
       <PageIntro
         eyebrow={{ en: "Contact", ar: "تواصل معنا" }}
-        title={{ en: "Let’s start with a thoughtful conversation.", ar: "لنبدأ بحوار هادف." }}
+        title={{ en: "Let's start with a thoughtful conversation.", ar: "لنبدأ بحوار هادف." }}
         text={{
           en: "Use the form below to prepare an enquiry. This interface does not submit to a backend yet.",
           ar: "استخدم النموذج أدناه لإعداد استفسارك. هذه الواجهة لا ترسل البيانات إلى خادم بعد.",
         }}
       />
-      <section className="section contact-layout">
+      <section className="section section-premium contact-layout-premium">
         <form
-          className="contact-form"
+          className="contact-form contact-form-premium"
           onSubmit={(event) => {
             event.preventDefault();
             setPreviewed(true);
@@ -673,12 +866,13 @@ function Contact() {
             <UosTextField label={{ en: "Subject", ar: "الموضوع" }} icon={<Tag size={16} />} name="subject" required placeholder="How can we help? | كيف يمكننا مساعدتك؟" />
             <UosTextAreaField label={{ en: "Message", ar: "الرسالة" }} icon={<PenLine size={16} />} name="message" required rows={5} placeholder="Write your message | اكتب رسالتك" />
           </UosFormSection>
-          <button className="button primary" type="submit">
+          <button className="button primary button-premium" type="submit">
             <Bilingual value={{ en: "Preview Message", ar: "معاينة الرسالة" }} />
             <Send size={17} />
           </button>
           {previewed && (
-            <p className="form-note">
+            <p className="form-note form-note-premium">
+              <CheckCircle size={15} />
               <Bilingual
                 value={{
                   en: "Preview only — no message was sent or saved.",
@@ -688,19 +882,35 @@ function Contact() {
             </p>
           )}
         </form>
-        <aside className="contact-note">
-          <MessageCircle />
+        <aside className="contact-note contact-note-premium">
+          <div className="contact-note-icon">
+            <MessageCircle size={32} />
+          </div>
           <h3>
             <Bilingual value={{ en: "Verified details first", ar: "التفاصيل الموثقة أولًا" }} />
           </h3>
           <p>
             <Bilingual
               value={{
-                en: "Public contact details will be added only after verification.",
-                ar: "ستتم إضافة بيانات التواصل العامة فقط بعد التحقق منها.",
+                en: "Public contact details will be added only after verification. No fake addresses, phones, or WhatsApp numbers are displayed in this preview.",
+                ar: "ستتم إضافة بيانات التواصل العامة فقط بعد التحقق منها. لا يتم عرض عناوين أو هواتف أو أرقام واتساب وهمية في هذه المعاينة.",
               }}
             />
           </p>
+          <div className="contact-integrity">
+            <article className="integrity-item">
+              <CheckCircle size={16} />
+              <span><Bilingual value={{ en: "No fabricated UAE/KSA addresses", ar: "لا عناوين إمارات/سعودية مختلقة" }} /></span>
+            </article>
+            <article className="integrity-item">
+              <CheckCircle size={16} />
+              <span><Bilingual value={{ en: "No fake phone/WhatsApp numbers", ar: "لا أرقام هاتف/واتساب وهمية" }} /></span>
+            </article>
+            <article className="integrity-item">
+              <CheckCircle size={16} />
+              <span><Bilingual value={{ en: "Developer contact clearly labeled", ar: "بيانات المطور موضحة بوضوح" }} /></span>
+            </article>
+          </div>
         </aside>
       </section>
     </div>
