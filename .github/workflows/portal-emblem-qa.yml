@@ -12,7 +12,7 @@ permissions:
 jobs:
   portal-emblem-acceptance:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -29,8 +29,8 @@ jobs:
       - name: Diff integrity
         run: git diff --check
 
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Install Playwright browser matrix
+        run: npx playwright install --with-deps
 
       - name: Start production preview
         shell: bash
