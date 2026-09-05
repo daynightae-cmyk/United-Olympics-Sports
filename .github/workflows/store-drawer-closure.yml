@@ -1,0 +1,79 @@
+name: Store Drawer Closure
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/store-drawer-closure.yml
+
+permissions:
+  contents: write
+
+jobs:
+  close-store-drawer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Fix mobile filter backdrop hit area
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('src/styles/store-commerce.css')
+          text = path.read_text(encoding='utf-8')
+          old = '.store-filter-layer>.store-filters{display:block;position:absolute;inset-block:0;inset-inline-start:0;width:min(360px,90%);border-radius:0;overflow-y:auto}'
+          new = '.store-filter-layer>.store-filters{display:block;position:absolute;z-index:2;inset-block:0;inset-inline-start:0;width:min(360px,90%);border-radius:0;overflow-y:auto}.store-filter-layer>.store-drawer-backdrop{z-index:1;inset-inline-start:min(360px,90%)!important;width:auto!important}'
+          if old not in text:
+              raise SystemExit('Expected mobile Store filter drawer rule not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint and typecheck
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build
+
+      - name: Diff integrity
+        run: git diff --check
+
+      - name: Install browser matrix
+        run: npx playwright install --with-deps
+
+      - name: Start production preview
+        shell: bash
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/uos-store-preview.log 2>&1 &
+          for attempt in {1..40}; do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/uos-store-preview.log
+          exit 1
+
+      - name: Store Golden Master
+        env:
+          UOS_BASE_URL: http://127.0.0.1:4173
+        run: node qa/store-golden-master.mjs
+
+      - name: Commit verified Store fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" || { echo "origin/main moved; refusing to overwrite newer work"; exit 1; }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/styles/store-commerce.css
+          git diff --cached --check
+          git commit -m "fix: restore Store mobile filter backdrop interaction"
+          git push origin HEAD:main
