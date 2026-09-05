@@ -28,6 +28,7 @@ export function StoreApp() {
     <Route path="shop" element={<CatalogPage />} />
     <Route path="categories" element={<CatalogPage categoriesOnly />} />
     <Route path="category/:slug" element={<CategoryPage />} />
+    <Route path="product" element={<ProductDetailPage />} />
     <Route path="product/:slug" element={<ProductDetailPage />} />
     <Route path="search" element={<SearchResultsPage />} />
     <Route path="cart" element={<CartPage />} />
