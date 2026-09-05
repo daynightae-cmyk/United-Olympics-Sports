@@ -36,23 +36,26 @@ jobs:
               '.store-filter-layer>.store-filters { z-index:2; }\n'
               '.store-filter-layer>.store-drawer-backdrop { z-index:3; inset-block:0!important; inset-inline-start:auto!important; inset-inline-end:0!important; width:10%!important; height:auto!important; background:transparent!important; backdrop-filter:none; }'
           )
-          if css_old not in css:
+          if css_old in css:
+              css = css.replace(css_old, css_new, 1)
+          elif css_new not in css:
               raise SystemExit('Expected final Store mini-cart override not found')
-          css_path.write_text(css.replace(css_old, css_new, 1), encoding='utf-8')
+          css_path.write_text(css, encoding='utf-8')
 
           hook_path = Path('src/store/components/useStoreDialog.ts')
           hook = hook_path.read_text(encoding='utf-8')
-          hook = hook.replace(
-              "import { useEffect, useRef, type RefObject } from 'react';",
-              "import { useLayoutEffect, useRef, type RefObject } from 'react';",
-              1,
-          )
-          hook = hook.replace('  useEffect(() => {', '  useLayoutEffect(() => {', 1)
-          focus_old = "    document.body.style.overflow = 'hidden';\n    const frame = requestAnimationFrame(() => panel.current?.focus());"
-          focus_new = "    document.body.style.overflow = 'hidden';\n    panel.current.focus({ preventScroll: true });\n    const frame = requestAnimationFrame(() => {\n      const current = panel.current;\n      if (current && !current.contains(document.activeElement)) current.focus({ preventScroll: true });\n    });"
-          if focus_old not in hook:
-              raise SystemExit('Expected Store dialog focus block not found')
-          hook = hook.replace(focus_old, focus_new, 1)
+          focus_anchor = "    const frame = requestAnimationFrame(() => {\n      const current = panel.current;\n      if (current && !current.contains(document.activeElement)) current.focus({ preventScroll: true });\n    });\n"
+          focus_extra = "    const onFocusIn = (event: FocusEvent) => {\n      const current = panel.current;\n      if (!current || current.contains(event.target as Node)) return;\n      current.focus({ preventScroll: true });\n    };\n    document.addEventListener('focusin', onFocusIn);\n"
+          if focus_extra not in hook:
+              if focus_anchor not in hook:
+                  raise SystemExit('Expected Store dialog focus anchor not found')
+              hook = hook.replace(focus_anchor, focus_anchor + focus_extra, 1)
+          cleanup_old = "    return () => { cancelAnimationFrame(frame); document.removeEventListener('keydown', onKey); document.body.style.overflow = overflow; inertNodes.forEach(({ node, inert }) => { node.inert = inert; }); if (restore instanceof HTMLElement && restore.isConnected) restore.focus(); };"
+          cleanup_new = "    return () => { cancelAnimationFrame(frame); document.removeEventListener('focusin', onFocusIn); document.removeEventListener('keydown', onKey); document.body.style.overflow = overflow; inertNodes.forEach(({ node, inert }) => { node.inert = inert; }); if (restore instanceof HTMLElement && restore.isConnected) restore.focus(); };"
+          if cleanup_new not in hook:
+              if cleanup_old not in hook:
+                  raise SystemExit('Expected Store dialog cleanup block not found')
+              hook = hook.replace(cleanup_old, cleanup_new, 1)
           hook_path.write_text(hook, encoding='utf-8')
           PY
 
