@@ -98,7 +98,15 @@ async function createCheckedPage(browser, options = {}) {
   const runtimeErrors = [];
   page.on('pageerror', (error) => runtimeErrors.push(`pageerror: ${error.message}`));
   page.on('console', (message) => {
-    if (message.type() === 'error') runtimeErrors.push(`console: ${message.text()}`);
+    const text = message.text();
+    const ignorableExternalFontFailure =
+      message.type() === 'error'
+      && text.includes('downloadable font: download failed')
+      && text.includes('https://fonts.gstatic.com/');
+
+    if (message.type() === 'error' && !ignorableExternalFontFailure) {
+      runtimeErrors.push(`console: ${text}`);
+    }
   });
   return { context, page, runtimeErrors };
 }

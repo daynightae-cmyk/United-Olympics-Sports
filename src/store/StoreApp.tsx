@@ -20,6 +20,7 @@ import {
   WishlistPage,
 } from './StorePages';
 import '../styles/store-commerce.css';
+import '../styles/store-factory6-enhancements.css';
 
 export function StoreApp() {
   return <StoreProvider><StoreLayout><Routes>

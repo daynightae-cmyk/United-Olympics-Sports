@@ -9,12 +9,14 @@ import { BenchmarkShowcasePage } from '../pages/benchmark/BenchmarkShowcasePage'
 import { UnitedAssistant } from '../assistant/UnitedAssistant';
 import { UpdateToast } from '../platform/UpdateToast';
 import { PortalAuthPage } from '../components/auth/PortalAuthPage';
+import { OlympicRouteTransition } from '../components/navigation/OlympicRouteTransition';
 
 const StoreApp = lazy(() => import('../store/StoreApp').then((module) => ({ default: module.StoreApp })));
 
 export function AppRouter() {
   return (
     <BrowserRouter>
+      <OlympicRouteTransition />
       <Routes>
         <Route path="/benchmark" element={<BenchmarkShowcasePage />} />
         <Route path="/admin/login" element={<PortalAuthPage portal="admin" />} />
