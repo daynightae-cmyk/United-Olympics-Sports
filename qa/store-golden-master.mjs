@@ -58,10 +58,50 @@ async function visit(page, errors, route) {
 
 async function screenshot(page, name) {
   if (!evidence) return;
-  // Load secondary media through actual scrolling before capturing the full page.
   await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 700) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 35)); } scrollTo(0, 0); });
   await page.waitForTimeout(150);
   await page.screenshot({ path: `${evidence}/${name}.png`, fullPage: true });
+}
+
+async function clickExposedBackdrop(page, backdrop, panel) {
+  const backdropBox = await backdrop.boundingBox();
+  const panelBox = await panel.boundingBox();
+  assert(backdropBox, 'drawer backdrop has no measurable box');
+  assert(panelBox, 'drawer panel has no measurable box');
+  const margin = 8;
+  const candidates = [
+    { x: backdropBox.x + margin, y: backdropBox.y + margin },
+    { x: backdropBox.x + backdropBox.width - margin, y: backdropBox.y + margin },
+    { x: backdropBox.x + margin, y: backdropBox.y + backdropBox.height - margin },
+    { x: backdropBox.x + backdropBox.width - margin, y: backdropBox.y + backdropBox.height - margin },
+  ];
+  const outside = candidates.find(({ x, y }) => x < panelBox.x || x > panelBox.x + panelBox.width || y < panelBox.y || y > panelBox.y + panelBox.height);
+  if (!outside) return false;
+  await page.mouse.click(outside.x, outside.y);
+  return true;
+}
+
+async function clickOutsideOverlay(page, overlay) {
+  const overlayBox = await overlay.boundingBox();
+  const viewport = page.viewportSize();
+  assert(overlayBox, 'overlay has no measurable box');
+  assert(viewport, 'viewport is unavailable');
+  const margin = 8;
+  const candidates = [
+    { x: margin, y: viewport.height - margin },
+    { x: viewport.width - margin, y: viewport.height - margin },
+    { x: margin, y: Math.round(viewport.height / 2) },
+    { x: viewport.width - margin, y: Math.round(viewport.height / 2) },
+  ];
+  for (const point of candidates) {
+    const outside = point.x < overlayBox.x || point.x > overlayBox.x + overlayBox.width || point.y < overlayBox.y || point.y > overlayBox.y + overlayBox.height;
+    if (!outside) continue;
+    const interactive = await page.evaluate(({ x, y }) => Boolean(document.elementFromPoint(x, y)?.closest('a,button,input,select,textarea,[role="button"]')), point);
+    if (interactive) continue;
+    await page.mouse.click(point.x, point.y);
+    return;
+  }
+  assert.fail('search results have no safe exposed outside-click area');
 }
 
 async function modalChecks(page, selector, trigger, close) {
@@ -75,8 +115,10 @@ async function modalChecks(page, selector, trigger, close) {
   await panel.waitFor({ state: 'hidden' });
   assert(await trigger.evaluate((e) => e === document.activeElement), `${selector}: failed focus restoration`);
   await trigger.click();
-  await close.click({ position: { x: 5, y: 5 } });
+  const backdropClicked = await clickExposedBackdrop(page, close, panel);
+  if (!backdropClicked) await page.keyboard.press('Escape');
   await panel.waitFor({ state: 'hidden' });
+  if (!backdropClicked) assert(await trigger.evaluate((e) => e === document.activeElement), `${selector}: failed fallback focus restoration`);
   assert.equal(await page.evaluate(() => document.body.style.overflow), '', `${selector}: body scroll remains locked`);
 }
 
@@ -98,8 +140,9 @@ async function interactions(browser, name, rtl) {
     assert(await search.evaluate((e) => e === document.activeElement), 'search focus restoration failed');
     await search.fill('unmatched-query-xyz');
     await page.locator('.store-search-results p').waitFor();
-    await page.locator('.store-page-heading').click();
-    await page.locator('#store-search-results').waitFor({ state: 'hidden' });
+    const searchResults = page.locator('#store-search-results');
+    await clickOutsideOverlay(page, searchResults);
+    await searchResults.waitFor({ state: 'hidden' });
     await search.fill('swim');
     await search.press('Enter');
     await page.waitForURL('**/store/search?q=swim');
