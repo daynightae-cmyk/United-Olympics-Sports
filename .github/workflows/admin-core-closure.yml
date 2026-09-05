@@ -1,0 +1,177 @@
+name: Admin Core Closure
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/admin-core-closure.yml'
+permissions:
+  contents: write
+jobs:
+  close-admin-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Apply admin core fixes
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          # 1) Remove impossible mode switch API: preview is the only truthful gateway today.
+          p=Path('src/admin/data/AdminDataProvider.tsx')
+          s=p.read_text()
+          s=s.replace('  setMode: (mode: AdminDataMode) => void;\n','')
+          s=s.replace('    setMode: () => {},\n','')
+          p.write_text(s)
+
+          # 2) Attendance: wire the visible session filter instead of a no-op.
+          p=Path('src/pages/admin/AdminOperationalWorkspaces.tsx')
+          s=p.read_text()
+          s=s.replace('  const [status, setStatus] = useState("all");\n  const [marks, setMarks] = useState<Record<string, string>>({});', '  const [status, setStatus] = useState("all");\n  const [sessionId, setSessionId] = useState("all");\n  const [marks, setMarks] = useState<Record<string, string>>({});', 1)
+          s=s.replace('      (status === "all" || currentStatus === status)\n    );', '      (status === "all" || currentStatus === status) &&\n      (sessionId === "all" || record.sessionId === sessionId)\n    );', 1)
+          s=s.replace('              value="all"\n              onChange={() => {}}', '              value={sessionId}\n              onChange={setSessionId}', 1)
+          s=s.replace('                setStatus("all");', '                setStatus("all");\n                setSessionId("all");', 1)
+          p.write_text(s)
+
+          # 3) Finance: remove fake actions; only expose actions that actually work.
+          p=Path('src/pages/admin/AdminFinanceWorkspaces.tsx')
+          s=p.read_text()
+          s=s.replace(", { label: bi('Mark reviewed locally', 'تحديد كمراجع محليًا'), onClick: () => {} }", '')
+          s=s.replace(", { label: bi('Mark reconciled locally', 'تحديد كمسوى محليًا'), onClick: () => {} }", '')
+          p.write_text(s)
+
+          # 4) Admin routes: remove phantom FutureModule fallback and add real access detail routes.
+          p=Path('src/layouts/AdminLayout.tsx')
+          s=p.read_text()
+          s=s.replace("import { AdminFutureModulePage } from '../pages/admin/AdminFutureModulePage';\n", '')
+          anchor="import { AdminAuditActivityPage } from '../pages/admin/AdminAuditActivityPage';\n"
+          add="import { AdminUserDetailPage, AdminAuditActivityDetailPage } from '../pages/admin/AdminAccessDetailPages';\n"
+          if add not in s: s=s.replace(anchor, anchor+add)
+          s=s.replace('      <Route path="users" element={<AdminUsersPage />} />', '      <Route path="users" element={<AdminUsersPage />} />\n      <Route path="users/:userId" element={<AdminUserDetailPage />} />')
+          s=s.replace('      <Route path="audit-activity" element={<AdminAuditActivityPage />} />', '      <Route path="audit-activity" element={<AdminAuditActivityPage />} />\n      <Route path="audit-activity/:activityId" element={<AdminAuditActivityDetailPage />} />')
+          start='      {Object.keys(routeLabels).filter((path) => !['
+          idx=s.find(start)
+          if idx!=-1:
+              end=s.find('      <Route path="*"',idx)
+              if end==-1: raise SystemExit('Could not locate FutureModule route block end')
+              s=s[:idx]+s[end:]
+          p.write_text(s)
+          PY
+
+          cat > src/pages/admin/AdminAccessDetailPages.tsx <<'TS'
+          import { ArrowLeft, ShieldCheck, Trash2, UserRound, Activity, Clock } from 'lucide-react';
+          import { Link, useNavigate, useParams } from 'react-router-dom';
+          import { useAuditActivityItem, useDeleteUser, useUpdateUser, useUser } from '../../admin/data/adminHooks';
+          import { PageHeader, StatusBadge } from '../../components/admin/AdminUI';
+          import { BilingualText, bi } from '../../components/bilingual/BilingualText';
+          import { UiButton, UiPreviewState } from '../../components/ui/UiPrimitives';
+
+          export function AdminUserDetailPage() {
+            const { userId } = useParams();
+            const navigate = useNavigate();
+            const { item: user, loading, error, refetch } = useUser(userId);
+            const { update, loading: updating } = useUpdateUser();
+            const { delete: remove, loading: deleting } = useDeleteUser();
+            if (loading) return <div className="admin-page"><UiPreviewState title={bi('Loading user', 'جارٍ تحميل المستخدم')} description={bi('Reading the access record.', 'جارٍ قراءة سجل الوصول.')} /></div>;
+            if (error || !user) return <div className="admin-page"><PageHeader icon={UserRound} eyebrow={bi('Access Management', 'إدارة الوصول')} title={bi('User not found', 'المستخدم غير موجود')} description={bi('Choose a valid user from Users & Roles.', 'اختر مستخدمًا صالحًا من المستخدمين والصلاحيات.')} actions={<Link className="admin-secondary-button" to="/admin/users"><ArrowLeft/><BilingualText value={bi('Back', 'عودة')} /></Link>} /></div>;
+            const setStatus=async(status:'active'|'inactive')=>{ await update(user.id,{status}); await refetch(); };
+            const deleteUser=async()=>{ if(!window.confirm('Delete this preview user? | حذف مستخدم المعاينة؟')) return; await remove(user.id); navigate('/admin/users'); };
+            return <div className="admin-page">
+              <PageHeader icon={UserRound} eyebrow={bi('Access Management', 'إدارة الوصول')} title={user.name} description={bi('Administrative identity, roles and access state. Changes persist in the browser preview store.', 'هوية الإدارة والأدوار وحالة الوصول. تستمر التغييرات في مخزن المعاينة بالمتصفح.')} actions={<Link className="admin-secondary-button" to="/admin/users"><ArrowLeft/><BilingualText value={bi('Back to Users', 'العودة للمستخدمين')} /></Link>} />
+              <section className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Access Record', 'سجل الوصول')} /><ShieldCheck/></div><dl className="detail-list"><div><dt>ID</dt><dd><code>{user.id}</code></dd></div><div><dt><BilingualText value={bi('Email', 'البريد')} /></dt><dd><code>{user.email}</code></dd></div><div><dt><BilingualText value={bi('Roles', 'الأدوار')} /></dt><dd>{user.roles.join(', ')}</dd></div><div><dt><BilingualText value={bi('Status', 'الحالة')} /></dt><dd><StatusBadge active={user.status==='active'} /></dd></div><div><dt><BilingualText value={bi('Last Login', 'آخر دخول')} /></dt><dd>{user.lastLogin ? new Date(user.lastLogin).toLocaleString() : '—'}</dd></div></dl></section>
+              <section className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Operational Actions', 'الإجراءات التشغيلية')} /><ShieldCheck/></div><div className="preview-form-grid"><label><BilingualText value={bi('Access status', 'حالة الوصول')} /><select value={user.status} disabled={updating} onChange={e=>void setStatus(e.target.value as 'active'|'inactive')}><option value="active">Active | نشط</option><option value="inactive">Inactive | غير نشط</option></select></label></div><div className="page-actions"><UiButton variant="danger" disabled={deleting} onClick={()=>void deleteUser()}><Trash2/><BilingualText value={bi(deleting?'Deleting…':'Delete preview user', deleting?'جارٍ الحذف…':'حذف مستخدم المعاينة')} /></UiButton></div></section>
+            </div>;
+          }
+
+          export function AdminAuditActivityDetailPage() {
+            const { activityId } = useParams();
+            const { item, loading, error } = useAuditActivityItem(activityId);
+            if (loading) return <div className="admin-page"><UiPreviewState title={bi('Loading audit event', 'جارٍ تحميل حدث التدقيق')} description={bi('Reading governance history.', 'جارٍ قراءة سجل الحوكمة.')} /></div>;
+            if (error || !item) return <div className="admin-page"><PageHeader icon={Activity} eyebrow={bi('Governance', 'الحوكمة')} title={bi('Audit event not found', 'حدث التدقيق غير موجود')} description={bi('Choose a valid event from Audit Activity.', 'اختر حدثًا صالحًا من سجل النشاط.')} actions={<Link className="admin-secondary-button" to="/admin/audit-activity"><ArrowLeft/><BilingualText value={bi('Back', 'عودة')} /></Link>} /></div>;
+            return <div className="admin-page"><PageHeader icon={Activity} eyebrow={bi('Insights & Governance', 'الرؤى والحوكمة')} title={item.action} description={item.details} actions={<Link className="admin-secondary-button" to="/admin/audit-activity"><ArrowLeft/><BilingualText value={bi('Back to Audit Activity', 'العودة لسجل النشاط')} /></Link>} /><section className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Immutable Audit Record', 'سجل تدقيق غير قابل للتعديل')} /><ShieldCheck/></div><dl className="detail-list"><div><dt><BilingualText value={bi('Event ID', 'معرف الحدث')} /></dt><dd><code>{item.id}</code></dd></div><div><dt><BilingualText value={bi('Actor', 'الفاعل')} /></dt><dd><BilingualText value={item.actorName}/></dd></div><div><dt><BilingualText value={bi('Entity', 'الكيان')} /></dt><dd><BilingualText value={item.entityType}/> · <code>{item.entityId}</code></dd></div><div><dt><BilingualText value={bi('Time', 'الوقت')} /></dt><dd><Clock size={15}/> {new Date(item.timestamp).toLocaleString()}</dd></div><div><dt>IP</dt><dd><code>{item.ip || '—'}</code></dd></div><div><dt><BilingualText value={bi('Details', 'التفاصيل')} /></dt><dd><BilingualText value={item.details}/></dd></div></dl></section></div>;
+          }
+          TS
+
+          # 5) Replace Users page with actually wired preview CRUD rather than a dead form.
+          cat > src/pages/admin/AdminUsersPage.tsx <<'TS'
+          import { ArrowRight, Filter, Plus, Search, SlidersHorizontal, X, Trash2, Power } from 'lucide-react';
+          import { FormEvent, useMemo, useState } from 'react';
+          import { Link } from 'react-router-dom';
+          import { PageHeader, StatusBadge, UserAvatar } from '../../components/admin/AdminUI';
+          import { BilingualText, bi } from '../../components/bilingual/BilingualText';
+          import { useUsers, useCreateUser, useUpdateUser, useDeleteUser } from '../../admin/data/adminHooks';
+          import { UiButton } from '../../components/ui/UiPrimitives';
+
+          export function AdminUsersPage() {
+            const [query,setQuery]=useState(''); const [role,setRole]=useState('all'); const [status,setStatus]=useState('all'); const [showForm,setShowForm]=useState(false); const [filtersOpen,setFiltersOpen]=useState(false); const [feedback,setFeedback]=useState('');
+            const { data, loading, refetch }=useUsers({page:1,pageSize:100});
+            const { create, loading:createLoading }=useCreateUser(); const { update, loading:updateLoading }=useUpdateUser(); const { delete:deleteFn, loading:deleteLoading }=useDeleteUser();
+            const users=useMemo(()=>data?.items.filter(user=>`${user.name.en} ${user.name.ar} ${user.email}`.toLowerCase().includes(query.toLowerCase())&&(role==='all'||user.roles.some(r=>r.toLowerCase()===role))&&(status==='all'||user.status===status))??[],[data,query,role,status]);
+            const submit=async(e:FormEvent<HTMLFormElement>)=>{e.preventDefault(); const fd=new FormData(e.currentTarget); const nameEn=String(fd.get('nameEn')||'').trim(); const nameAr=String(fd.get('nameAr')||'').trim(); const email=String(fd.get('email')||'').trim(); const selectedRole=String(fd.get('role')||'viewer'); const nextStatus=String(fd.get('status')||'active') as 'active'|'inactive'; if(!nameEn||!nameAr||!email){setFeedback('Name and email are required | الاسم والبريد مطلوبان');return;} await create({name:{en:nameEn,ar:nameAr},email,roles:[selectedRole],status:nextStatus}); await refetch(); setShowForm(false); setFeedback('User created in preview store | تم إنشاء المستخدم في مخزن المعاينة');};
+            const toggle=async(id:string,current:'active'|'inactive')=>{await update(id,{status:current==='active'?'inactive':'active'}); await refetch();};
+            const remove=async(id:string)=>{if(!window.confirm('Delete this preview user? | حذف مستخدم المعاينة؟'))return; await deleteFn(id); await refetch();};
+            return <div className="admin-page"><PageHeader eyebrow={bi('Access Management','إدارة الوصول')} title={bi('Users & Roles','المستخدمون والصلاحيات')} description={bi('Operational preview access directory. Creates, status changes and deletions persist in this browser.','دليل وصول تشغيلي للمعاينة. الإنشاء وتغيير الحالة والحذف تستمر في هذا المتصفح.')} actions={<button className="admin-primary-button" onClick={()=>setShowForm(true)}><Plus/><BilingualText value={bi('Add User','إضافة مستخدم')}/></button>}/>{feedback&&<p className="preview-warning" role="status">{feedback}</p>}
+              <section className="player-filter-bar"><label className="filter-search"><Search/><span className="sr-only">Search Users | البحث عن المستخدمين</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search Users | البحث عن المستخدمين"/></label><button className="filter-drawer-button" onClick={()=>setFiltersOpen(!filtersOpen)}><Filter/><BilingualText value={bi('Filters','الفلاتر')}/></button><div className={`filter-fields ${filtersOpen?'open':''}`}><label><BilingualText value={bi('Role','الدور')}/><select value={role} onChange={e=>setRole(e.target.value)}><option value="all">All Roles | كل الأدوار</option><option value="admin">Admin | مدير</option><option value="manager">Manager | مشرف</option><option value="coach">Coach | مدرب</option><option value="viewer">Viewer | مشاهد</option></select></label><label><BilingualText value={bi('Status','الحالة')}/><select value={status} onChange={e=>setStatus(e.target.value)}><option value="all">All Statuses | كل الحالات</option><option value="active">Active | نشط</option><option value="inactive">Inactive | غير نشط</option></select></label><span className="result-count"><SlidersHorizontal/><BilingualText value={bi(`${users.length} records`,`${users.length} سجل`)}/></span></div></section>
+              {loading?<p><BilingualText value={bi('Loading users…','جارٍ تحميل المستخدمين…')}/></p>:<><section className="player-table-wrap"><table className="player-table"><caption className="sr-only">Users Directory | دليل المستخدمين</caption><thead><tr>{[bi('Avatar','الصورة'),bi('Name','الاسم'),bi('Email','البريد'),bi('Roles','الأدوار'),bi('Status','الحالة'),bi('Last Login','آخر دخول'),bi('Actions','الإجراءات')].map(l=><th key={l.en}><BilingualText value={l}/></th>)}</tr></thead><tbody>{users.map(user=><tr key={user.id}><td><UserAvatar name={user.name.en}/></td><td><BilingualText value={user.name}/></td><td><code>{user.email}</code></td><td>{user.roles.join(', ')}</td><td><StatusBadge active={user.status==='active'}/></td><td>{user.lastLogin?new Date(user.lastLogin).toLocaleDateString():'—'}</td><td><div className="page-actions"><Link className="row-action" to={`/admin/users/${user.id}`} aria-label={`Open ${user.name.en}`}><ArrowRight/></Link><button className="row-action" disabled={updateLoading} onClick={()=>void toggle(user.id,user.status)} aria-label="Toggle access"><Power/></button><button className="row-action" disabled={deleteLoading} onClick={()=>void remove(user.id)} aria-label="Delete preview user"><Trash2/></button></div></td></tr>)}</tbody></table></section><section className="player-mobile-list">{users.map(user=><article className="player-mobile-card" key={user.id}><div className="mobile-player-head"><UserAvatar name={user.name.en}/><BilingualText value={user.name}/><StatusBadge active={user.status==='active'}/></div><div className="mobile-player-meta"><span><BilingualText value={bi('Email','البريد')}/><code>{user.email}</code></span><span><BilingualText value={bi('Roles','الأدوار')}/>{user.roles.join(', ')}</span></div><Link className="admin-link-button" to={`/admin/users/${user.id}`}><BilingualText value={bi('Open User Record','فتح سجل المستخدم')}/><ArrowRight/></Link></article>)}</section></>}
+              {showForm&&<div className="admin-modal-backdrop" role="presentation" onMouseDown={()=>setShowForm(false)}><section className="admin-modal" role="dialog" aria-modal="true" aria-label="Add User" onMouseDown={e=>e.stopPropagation()}><div className="modal-head"><div><BilingualText value={bi('Add User','إضافة مستخدم')}/><small><BilingualText value={bi('Browser-persistent preview record','سجل معاينة محفوظ في المتصفح')}/></small></div><button className="admin-icon-button" onClick={()=>setShowForm(false)} aria-label="Close | إغلاق"><X/></button></div><form onSubmit={e=>void submit(e)}><div className="preview-form-grid"><label>English name<input name="nameEn" required/></label><label>الاسم العربي<input name="nameAr" required dir="rtl"/></label><label>Email<input name="email" type="email" required/></label><label><BilingualText value={bi('Role','الدور')}/><select name="role"><option value="admin">Admin</option><option value="manager">Manager</option><option value="coach">Coach</option><option value="viewer">Viewer</option></select></label><label><BilingualText value={bi('Status','الحالة')}/><select name="status"><option value="active">Active | نشط</option><option value="inactive">Inactive | غير نشط</option></select></label></div><div className="ui-dialog-actions"><UiButton type="button" variant="ghost" onClick={()=>setShowForm(false)}><BilingualText value={bi('Cancel','إلغاء')}/></UiButton><UiButton type="submit" disabled={createLoading}><BilingualText value={bi(createLoading?'Saving…':'Create User',createLoading?'جارٍ الحفظ…':'إنشاء المستخدم')}/></UiButton></div></form></section></div>}
+            </div>;
+          }
+          TS
+
+          # 6) Dedicated Admin browser QA: known routes and detail links must not redirect to dashboard.
+          cat > qa/admin-operational.mjs <<'JS'
+          import { chromium } from 'playwright';
+          const base=process.env.UOS_BASE_URL||'http://127.0.0.1:4173';
+          const routes=['/admin','/admin/countries','/admin/branches','/admin/sports','/admin/programs','/admin/players','/admin/parents','/admin/coaches','/admin/groups','/admin/schedules','/admin/attendance','/admin/registrations','/admin/performance','/admin/achievements','/admin/events','/admin/subscriptions','/admin/payments','/admin/reports','/admin/announcements','/admin/messages','/admin/content','/admin/users','/admin/settings','/admin/audit-activity','/admin/store','/admin/store/orders','/admin/store/products','/admin/store/categories','/admin/store/inventory','/admin/store/collections','/admin/store/discounts','/admin/store/settings'];
+          const browser=await chromium.launch({headless:true});
+          for(const width of [390,1440]) for(const theme of ['light','dark']) for(const dir of ['ltr','rtl']){
+            const page=await browser.newPage({viewport:{width,height:900}}); await page.addInitScript(({theme,dir})=>{localStorage.setItem('uos-ui-settings-v1',JSON.stringify({appearance:theme,bilingualOrder:dir==='rtl'?'ar-first':'en-first'})); document.documentElement.dir=dir;},{theme,dir});
+            for(const route of routes){ await page.goto(base+route,{waitUntil:'networkidle'}); const body=await page.locator('body').innerText(); if(!body.trim()) throw new Error(`blank ${route}`); const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>document.documentElement.clientWidth+2); if(overflow) throw new Error(`horizontal overflow ${width} ${route}`); }
+            await page.close();
+          }
+          const page=await browser.newPage({viewport:{width:1440,height:900}}); await page.goto(base+'/admin/users',{waitUntil:'networkidle'}); const userLink=page.locator('a[href^="/admin/users/"]').first(); if(await userLink.count()){const href=await userLink.getAttribute('href'); await page.goto(base+href,{waitUntil:'networkidle'}); if(page.url().endsWith('/admin')) throw new Error('user detail redirected to dashboard');}
+          await page.goto(base+'/admin/audit-activity',{waitUntil:'networkidle'}); const auditLink=page.locator('a[href^="/admin/audit-activity/"]').first(); if(await auditLink.count()){const href=await auditLink.getAttribute('href'); await page.goto(base+href,{waitUntil:'networkidle'}); if(page.url().endsWith('/admin')) throw new Error('audit detail redirected to dashboard');}
+          await browser.close(); console.log('Admin operational route/responsive QA passed.');
+          JS
+      - run: npm ci
+      - name: Static no-op gate
+        shell: bash
+        run: |
+          ! grep -R -n -E 'on(Change|Click)=?\{?\(\) => \{\}\}|onClick: \(\) => \{\}' src/pages/admin src/components/admin src/layouts
+          ! grep -n 'AdminFutureModulePage' src/layouts/AdminLayout.tsx
+      - name: TypeScript gate
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+      - name: Diff integrity
+        run: git diff --check
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start preview
+        shell: bash
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/admin-preview.log 2>&1 &
+          for i in {1..40}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/admin-preview.log; exit 1
+      - name: Admin browser QA
+        env:
+          UOS_BASE_URL: http://127.0.0.1:4173
+        run: node qa/admin-operational.mjs
+      - name: Commit verified core closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" || { echo 'origin/main moved; refusing overwrite'; exit 1; }
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/admin/data/AdminDataProvider.tsx src/pages/admin/AdminOperationalWorkspaces.tsx src/pages/admin/AdminFinanceWorkspaces.tsx src/layouts/AdminLayout.tsx src/pages/admin/AdminAccessDetailPages.tsx src/pages/admin/AdminUsersPage.tsx qa/admin-operational.mjs
+          git diff --cached --check
+          git commit -m 'fix: close admin core operational gaps'
+          git push origin HEAD:main
