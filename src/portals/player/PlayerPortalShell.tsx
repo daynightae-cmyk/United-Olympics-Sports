@@ -32,6 +32,7 @@ import { BilingualText, bi } from "../../components/bilingual/BilingualText";
 import { PlayerPortrait } from "./components/PlayerPortrait";
 import { useUiSettings } from "../../ui/theme/useUiSettings";
 import SafeBrandLogo from "../../components/ui/SafeBrandLogo";
+import { PortalEmblem } from "../../components/brand/PortalEmblem";
 
 interface NavItemDef {
   path: string;
@@ -234,6 +235,7 @@ export function PlayerPortalShell({ children }: { children: React.ReactNode }) {
         {/* Brand Header */}
         <div className="athlete-sidebar-header">
           <SafeBrandLogo className="athlete-sidebar-logo" />
+          <PortalEmblem portal="player" size="compact" decorative className="athlete-sidebar-portal-emblem" />
           <div className="min-w-0">
             <h1 className="athlete-sidebar-brand-title">UNITED OLYMPICS SPORTS</h1>
             <span className="athlete-sidebar-brand-subtitle">يونايتد أوليمبيكس سبورت</span>

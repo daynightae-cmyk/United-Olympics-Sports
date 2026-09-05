@@ -23,6 +23,7 @@ import type { LucideIcon } from 'lucide-react';
 import { BilingualText, bi } from '../bilingual/BilingualText';
 import { LanguageOrderToggle } from '../ui/LanguageOrderToggle';
 import { ThemeToggle } from '../ui/ThemeToggle';
+import { PortalEmblem } from '../brand/PortalEmblem';
 
 export type PortalAuthKind = 'admin' | 'store' | 'player' | 'parent' | 'coach';
 export type PortalAuthProvider = 'phone' | 'google' | 'apple' | 'biometric';
@@ -203,6 +204,7 @@ export function PortalAuthPage({ portal, busy = false, extraContent, onProvider,
 
       <div className="portal-auth-layout">
         <section className="portal-auth-visual" aria-labelledby={`portal-${portal}-visual-title`}>
+          <PortalEmblem portal={portal} size="hero" decorative priority />
           <div className="portal-auth-visual-copy">
             <span className="portal-auth-eyebrow"><BilingualText value={config.eyebrow} /></span>
             <h1 id={`portal-${portal}-visual-title`}><BilingualText value={config.visualTitle} /></h1>
@@ -221,7 +223,7 @@ export function PortalAuthPage({ portal, busy = false, extraContent, onProvider,
         <section className="portal-auth-panel" aria-labelledby={`portal-${portal}-title`}>
           <div className="portal-auth-card">
             <div className="portal-auth-identity">
-              <img src="/brand/united-olympics-sports-logo.png" alt="United Olympics Sports | يونايتد أوليمبيكس سبورت" />
+              <PortalEmblem portal={portal} size="auth" priority />
               <h2 id={`portal-${portal}-title`}><BilingualText value={config.title} /></h2>
               <p className="portal-auth-supporting"><BilingualText value={config.supporting} /></p>
             </div>
@@ -294,6 +296,7 @@ export function PortalAuthPage({ portal, busy = false, extraContent, onProvider,
       <nav className="portal-auth-switcher" aria-label="Portal login destinations | وجهات تسجيل الدخول">
         {portalLinks.map((item) => (
           <Link key={item.kind} className={item.kind === portal ? 'is-active' : ''} aria-current={item.kind === portal ? 'page' : undefined} to={item.to}>
+            <PortalEmblem portal={item.kind} size="compact" decorative preloadAlternate={false} role="selector" />
             <BilingualText value={item.label} />
           </Link>
         ))}

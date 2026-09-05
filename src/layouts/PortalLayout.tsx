@@ -8,6 +8,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { BilingualText, bi } from '../components/bilingual/BilingualText';
 import { ThemeToggle } from '../components/ui/ThemeToggle';
 import { LanguageOrderToggle } from '../components/ui/LanguageOrderToggle';
+import { PortalEmblem } from '../components/brand/PortalEmblem';
 import type { BilingualText as BilingualValue } from '../domain/contracts';
 import '../styles/admin.css';
 import '../styles/portal-shell.css';
@@ -85,7 +86,7 @@ export function PortalLayout({ portal, children }: { portal: PortalKind; childre
         <div><strong>United Olympics Sports</strong><span lang="ar" dir="rtl">يونايتد أوليمبيكس سبورت</span></div>
         <button type="button" onClick={() => setOpen(false)} className="portal-icon-button portal-mobile-only" aria-label="Close navigation | إغلاق القائمة"><X /></button>
       </div>
-      <div className="portal-role"><small><BilingualText value={bi('Preview Product', 'منتج تجريبي')} /></small><BilingualText value={meta.title} /><span><BilingualText value={meta.role} /></span></div>
+      <div className="portal-role"><PortalEmblem portal={portal} size="header" className="portal-shell-emblem" /><small><BilingualText value={bi('Preview Product', 'منتج تجريبي')} /></small><BilingualText value={meta.title} /><span><BilingualText value={meta.role} /></span></div>
       <nav className="portal-nav">{meta.nav.map(({ path, label, icon: Icon }) => <NavLink key={path || 'overview'} to={path ? `${base}/${path}` : base} end={!path}><Icon /><BilingualText value={label} /><ChevronLeft /></NavLink>)}</nav>
       <Link className="portal-public-link" to="/"><ChevronLeft /><BilingualText value={bi('Public Website', 'الموقع العام')} /></Link>
     </aside>
