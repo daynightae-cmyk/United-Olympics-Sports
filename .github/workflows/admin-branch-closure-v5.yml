@@ -1,0 +1,130 @@
+name: Admin Branch Operations Closure V5
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/admin-branch-closure-v5.yml'
+permissions:
+  contents: write
+jobs:
+  close-branch-operations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v5
+        with: { node-version: '22', cache: npm }
+      - name: Apply branch product patch, hydration and synchronization
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          src=Path('.github/workflows/admin-branch-closure.yml').read_text(encoding='utf-8')
+          for n,name in enumerate(['Close branch directory create flow','Replace branch cockpit placeholders with live Admin Data'],1):
+              start=src.index(f'      - name: {name}\n')
+              run=src.index('        run: |\n',start)+len('        run: |\n')
+              end=src.find('      - name:',run)
+              if end<0: end=src.find('      - run:',run)
+              lines=[line[10:] if line.startswith('          ') else line for line in src[run:end].splitlines()]
+              Path(f'/tmp/p{n}.sh').write_text('\n'.join(lines)+'\n')
+          PY
+          bash /tmp/p1.sh
+          bash /tmp/p2.sh
+          python3 - <<'PY'
+          from pathlib import Path
+          # Central list/detail mutation synchronization.
+          p=Path('src/admin/data/adminHooks.ts'); s=p.read_text()
+          a="  useEffect(() => {\n    void load();\n    return () => {\n      requestRef.current += 1;\n    };\n  }, [load]);\n\n  return { data, loading, error, params, setParams, refetch: load };"
+          b="  useEffect(() => {\n    void load();\n    return () => {\n      requestRef.current += 1;\n    };\n  }, [load]);\n\n  useEffect(() => {\n    if (typeof window === 'undefined') return;\n    const onDataChanged = () => { void load(); };\n    window.addEventListener(ADMIN_DATA_CHANGED, onDataChanged);\n    return () => window.removeEventListener(ADMIN_DATA_CHANGED, onDataChanged);\n  }, [load]);\n\n  return { data, loading, error, params, setParams, refetch: load };"
+          if a in s: s=s.replace(a,b,1)
+          a2="  useEffect(() => {\n    void load();\n    return () => {\n      requestRef.current += 1;\n    };\n  }, [load]);\n\n  return { item, loading, error, refetch: load };"
+          b2="  useEffect(() => {\n    void load();\n    return () => {\n      requestRef.current += 1;\n    };\n  }, [load]);\n\n  useEffect(() => {\n    if (typeof window === 'undefined') return;\n    const onDataChanged = () => { void load(); };\n    window.addEventListener(ADMIN_DATA_CHANGED, onDataChanged);\n    return () => window.removeEventListener(ADMIN_DATA_CHANGED, onDataChanged);\n  }, [load]);\n\n  return { item, loading, error, refetch: load };"
+          if a2 in s: s=s.replace(a2,b2,1)
+          p.write_text(s)
+
+          # The preview store wrote localStorage but never hydrated it on module load.
+          p=Path('src/admin/data/previewAdminGateway.ts'); s=p.read_text()
+          marker='};\n\nconst previewDelay = () => Promise.resolve();'
+          if marker not in s: raise SystemExit('previewSessionData marker missing')
+          s=s.replace(marker,'};\n\nhydratePreviewData();\n\nconst previewDelay = () => Promise.resolve();',1)
+          p.write_text(s)
+
+          # Guarantee immediate visible creation while generic refetch synchronization catches up.
+          p=Path('src/pages/admin/AdminBranchesPage.tsx'); s=p.read_text()
+          s=s.replace("  const [notice, setNotice] = useState(false);", "  const [notice, setNotice] = useState(false);\n  const [optimisticBranches, setOptimisticBranches] = useState<BranchViewModel[]>([]);")
+          old="    const items = (data?.items ?? []).filter(branch =>"
+          new="    const source = [...(data?.items ?? []), ...optimisticBranches.filter(local => !(data?.items ?? []).some(remote => remote.id === local.id))];\n    const items = source.filter(branch =>"
+          if old not in s: raise SystemExit('branch items anchor missing')
+          s=s.replace(old,new,1)
+          s=s.replace("  }, [data, query, country, sortBy, sortDir]);", "  }, [data, optimisticBranches, query, country, sortBy, sortDir]);",1)
+          oldcreate="    await create({\n      name: { en: draftNameEn.trim(), ar: draftNameAr.trim() },"
+          newcreate="    const result = await create({\n      name: { en: draftNameEn.trim(), ar: draftNameAr.trim() },"
+          if oldcreate not in s: raise SystemExit('create call anchor missing')
+          s=s.replace(oldcreate,newcreate,1)
+          oldafter="      status: 'active',\n    });\n    await refetch();"
+          newafter="      status: 'active',\n    });\n    setOptimisticBranches(current => [...current.filter(item => item.id !== result.item.id), result.item]);\n    await refetch();"
+          if oldafter not in s: raise SystemExit('create result anchor missing')
+          s=s.replace(oldafter,newafter,1)
+          p.write_text(s)
+          PY
+      - name: Write branch persistence QA
+        shell: bash
+        run: |
+          cat > qa/admin-branch-operational.mjs <<'JS'
+          import { chromium } from 'playwright';
+          const base=process.env.UOS_BASE_URL||'http://127.0.0.1:4173';
+          const browser=await chromium.launch({headless:true});
+          const page=await browser.newPage({viewport:{width:1440,height:900}});
+          await page.goto(base+'/admin/branches',{waitUntil:'networkidle'});
+          await page.getByText('Add Branch',{exact:true}).click();
+          let dialog=page.locator('[role="dialog"]').last(); await dialog.waitFor();
+          await dialog.locator('input[placeholder="Branch name"]').fill('QA Operations Branch');
+          await dialog.locator('input[placeholder="اسم الفرع"]').fill('فرع اختبار التشغيل');
+          await dialog.getByText('Continue',{exact:true}).click();
+          dialog=page.locator('[role="dialog"]').last(); const selects=dialog.locator('select');
+          if(await selects.count()!==2) throw new Error('wizard selects missing');
+          for(let i=0;i<2;i++){const sel=selects.nth(i);const opts=await sel.locator('option').evaluateAll(os=>os.map(o=>({v:o.value,d:o.disabled})).filter(x=>x.v&&!x.d));if(!opts.length)throw new Error(`select ${i} empty`);await sel.selectOption(opts[0].v);}
+          await dialog.getByText('Continue',{exact:true}).click(); dialog=page.locator('[role="dialog"]').last();
+          await dialog.getByText('Save Branch',{exact:true}).click(); await dialog.waitFor({state:'hidden'});
+          const stored=await page.evaluate(()=>{const raw=localStorage.getItem('uos-admin-preview-data-v1');if(!raw)return null;return JSON.parse(raw).branches?.find(b=>b.name?.en==='QA Operations Branch')??null;});
+          if(!stored?.id) throw new Error('branch not persisted'); const href=`/admin/branches/${stored.id}`;
+          if(await page.locator(`a[href="${href}"]`).count()<1) throw new Error('created branch not rendered immediately');
+          await page.reload({waitUntil:'networkidle'});
+          if(await page.locator(`a[href="${href}"]`).count()<1) throw new Error('created branch not hydrated after reload');
+          await page.goto(base+href,{waitUntil:'networkidle'}); await page.getByText('Branch Controls',{exact:true}).waitFor();
+          const body=await page.locator('body').innerText(); if(/Sport branch-|Coach branch-|Player branch-|will be linked to branch groups/i.test(body))throw new Error('fabricated cockpit placeholder remains');
+          let status=page.locator('section.admin-panel').filter({hasText:'Branch Controls'}).locator('select').first(); await status.selectOption('inactive');
+          await page.waitForTimeout(50); await page.reload({waitUntil:'networkidle'});
+          status=page.locator('section.admin-panel').filter({hasText:'Branch Controls'}).locator('select').first(); if(await status.inputValue()!=='inactive')throw new Error('branch status not persisted');
+          await browser.close(); console.log('Admin branch create/render/hydrate/cockpit/status QA passed.');
+          JS
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: git diff --check
+      - name: Preview hydration static gate
+        shell: bash
+        run: |
+          grep -q '^hydratePreviewData();$' src/admin/data/previewAdminGateway.ts
+          grep -q 'optimisticBranches' src/pages/admin/AdminBranchesPage.tsx
+      - run: npx playwright install --with-deps chromium
+      - name: Start preview
+        shell: bash
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/preview.log 2>&1 &
+          for i in {1..40}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/preview.log; exit 1
+      - name: Branch QA
+        env: { UOS_BASE_URL: 'http://127.0.0.1:4173' }
+        run: node qa/admin-branch-operational.mjs
+      - name: Existing Admin QA
+        env: { UOS_BASE_URL: 'http://127.0.0.1:4173' }
+        run: node qa/admin-operational.mjs
+      - name: Commit verified closure
+        shell: bash
+        run: |
+          set -euo pipefail; git fetch origin main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" || { echo 'origin/main moved'; exit 1; }
+          git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/admin/data/adminHooks.ts src/admin/data/previewAdminGateway.ts src/pages/admin/AdminBranchesPage.tsx src/pages/admin/AdminBranchDetailPage.tsx qa/admin-branch-operational.mjs
+          git diff --cached --check; git commit -m 'fix: hydrate admin preview data and close branch operations'; git push origin HEAD:main
