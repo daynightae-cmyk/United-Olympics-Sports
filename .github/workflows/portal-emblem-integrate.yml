@@ -56,7 +56,7 @@ jobs:
         run: |
           set -euo pipefail
           git fetch origin main
-          git rebase origin/main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" || { echo "origin/main moved during integration; refusing to overwrite newer work"; exit 1; }
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/brand/portalEmblems.ts src/components/brand/PortalEmblem.tsx src/styles/portal-emblems.css src/components/auth/PortalAuthPage.tsx src/layouts/PortalLayout.tsx src/components/admin/AdminSidebar.tsx src/portals/player/PlayerPortalShell.tsx src/store/StoreComponents.tsx qa/portal-emblems.mjs .github/workflows/verify.yml
