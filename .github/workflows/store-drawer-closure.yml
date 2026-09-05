@@ -20,29 +20,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Fix Store drawer backdrop hit areas
+      - name: Fix Store drawer geometry in final style layer
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          path = Path('src/styles/store-commerce.css')
+          path = Path('src/styles/store-factory6-enhancements.css')
           text = path.read_text(encoding='utf-8')
-
-          filter_old = '.store-filter-layer>.store-filters{display:block;position:absolute;inset-block:0;inset-inline-start:0;width:min(360px,90%);border-radius:0;overflow-y:auto}'
-          filter_new = '.store-filter-layer>.store-filters{display:block;position:absolute;z-index:2;inset-block:0;inset-inline-start:0;width:min(360px,90%);border-radius:0;overflow-y:auto}.store-filter-layer>.store-drawer-backdrop{z-index:1;inset-block:0!important;inset-inline-start:min(360px,90%)!important;inset-inline-end:0!important;width:auto!important;height:auto!important}'
-          if filter_old in text:
-              text = text.replace(filter_old, filter_new, 1)
-          elif filter_new not in text:
-              raise SystemExit('Expected mobile Store filter drawer rule not found')
-
-          cart_old = '.store-mini-cart{position:absolute;top:0;bottom:0;inset-inline-end:0;width:min(470px,100%);background:var(--store-surface);box-shadow:-30px 0 90px rgba(0,0,0,.25);display:flex;flex-direction:column;outline:0}'
-          cart_new = '.store-mini-cart{position:absolute;z-index:2;top:0;bottom:0;inset-inline-end:0;width:min(470px,calc(100% - 24px));background:var(--store-surface);box-shadow:-30px 0 90px rgba(0,0,0,.25);display:flex;flex-direction:column;outline:0}.store-drawer-layer>.store-drawer-backdrop{z-index:1;inset-block:0!important;inset-inline-start:0!important;inset-inline-end:min(470px,calc(100% - 24px))!important;width:auto!important;height:auto!important}'
-          if cart_old in text:
-              text = text.replace(cart_old, cart_new, 1)
-          elif cart_new not in text:
-              raise SystemExit('Expected Store mini-cart rule not found')
-
-          path.write_text(text, encoding='utf-8')
+          old = '.store-mini-cart { max-width:100vw; height:100dvh; width:min(460px,100vw); }'
+          new = '''.store-drawer-layer::before,.store-filter-layer::before { content:""; position:absolute; inset:0; z-index:0; background:rgba(0,0,0,.62); backdrop-filter:blur(3px); pointer-events:none; }
+.store-drawer-layer>.store-drawer-backdrop { z-index:3; inset-block:0!important; inset-inline-start:0!important; inset-inline-end:auto!important; width:24px!important; height:auto!important; background:transparent!important; backdrop-filter:none; }
+.store-mini-cart { z-index:2; max-width:calc(100vw - 24px); height:100dvh; width:min(460px,calc(100vw - 24px)); }
+.store-filter-layer>.store-filters { z-index:2; }
+.store-filter-layer>.store-drawer-backdrop { z-index:3; inset-block:0!important; inset-inline-start:auto!important; inset-inline-end:0!important; width:10%!important; height:auto!important; background:transparent!important; backdrop-filter:none; }'''
+          if old not in text:
+              raise SystemExit('Expected final Store mini-cart override not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
           PY
 
       - name: Install dependencies
@@ -84,7 +77,7 @@ jobs:
           test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" || { echo "origin/main moved; refusing to overwrite newer work"; exit 1; }
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/styles/store-commerce.css
+          git add src/styles/store-factory6-enhancements.css
           git diff --cached --check
           git commit -m "fix: restore Store drawer backdrop interactions"
           git push origin HEAD:main
