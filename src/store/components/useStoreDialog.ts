@@ -1,10 +1,10 @@
-import { useEffect, useRef, type RefObject } from 'react';
+import { useLayoutEffect, useRef, type RefObject } from 'react';
 
 /** One dialog lifecycle for cart, filters and gallery: focus, inert siblings and scroll. */
 export function useStoreDialog(open: boolean, panel: RefObject<HTMLElement | null>, close: () => void) {
   const closeRef = useRef(close);
   closeRef.current = close;
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open || !panel.current) return;
     const restore = document.activeElement;
     const overflow = document.body.style.overflow;
@@ -17,7 +17,11 @@ export function useStoreDialog(open: boolean, panel: RefObject<HTMLElement | nul
       branch = parent;
     }
     document.body.style.overflow = 'hidden';
-    const frame = requestAnimationFrame(() => panel.current?.focus());
+    panel.current.focus({ preventScroll: true });
+    const frame = requestAnimationFrame(() => {
+      const current = panel.current;
+      if (current && !current.contains(document.activeElement)) current.focus({ preventScroll: true });
+    });
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { event.preventDefault(); closeRef.current(); }
       if (event.key !== 'Tab') return;
