@@ -1,0 +1,78 @@
+name: Portal Emblem QA
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portal-emblem-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint and typecheck
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Diff integrity
+        run: git diff --check
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Start production preview
+        shell: bash
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/uos-portal-preview.log 2>&1 &
+          echo $! > /tmp/uos-portal-preview.pid
+          for attempt in {1..40}; do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/uos-portal-preview.log
+          exit 1
+
+      - name: Existing interface smoke
+        env:
+          UOS_BASE_URL: http://127.0.0.1:4173
+        run: node qa/interface-smoke.mjs
+
+      - name: Existing Store Golden Master
+        env:
+          UOS_BASE_URL: http://127.0.0.1:4173
+        run: node qa/store-golden-master.mjs
+
+      - name: Portal route theme RTL and visual QA
+        env:
+          UOS_BASE_URL: http://127.0.0.1:4173
+        run: node qa/portal-emblems.mjs
+
+      - name: Upload portal screenshots
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: portal-emblem-screenshots
+          path: test-results/portal-emblems
+          if-no-files-found: ignore
+
+      - name: Upload preview log on failure
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: portal-preview-log
+          path: /tmp/uos-portal-preview.log
+          if-no-files-found: ignore
