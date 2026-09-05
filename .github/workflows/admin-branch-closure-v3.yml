@@ -1,0 +1,97 @@
+name: Admin Branch Operations Closure V3
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/admin-branch-closure-v3.yml'
+permissions:
+  contents: write
+jobs:
+  close-branch-operations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v5
+        with: { node-version: '22', cache: npm }
+      - name: Reapply branch patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          src=Path('.github/workflows/admin-branch-closure.yml').read_text(encoding='utf-8')
+          names=['Close branch directory create flow','Replace branch cockpit placeholders with live Admin Data']
+          for n,name in enumerate(names,1):
+              start=src.index(f'      - name: {name}\n')
+              run=src.index('        run: |\n',start)+len('        run: |\n')
+              end=src.find('      - name:',run)
+              if end<0: end=src.find('      - run:',run)
+              block=src[run:end]
+              lines=[line[10:] if line.startswith('          ') else line for line in block.splitlines()]
+              Path(f'/tmp/branch-patch-{n}.sh').write_text('\n'.join(lines)+'\n',encoding='utf-8')
+          PY
+          bash /tmp/branch-patch-1.sh
+          bash /tmp/branch-patch-2.sh
+      - name: Make Admin lists/details react to mutations
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/admin/data/adminHooks.ts')
+          s=p.read_text(encoding='utf-8')
+          list_anchor="  useEffect(() => {\n    void load();\n    return () => {\n      requestRef.current += 1;\n    };\n  }, [load]);\n\n  return { data, loading, error, params, setParams, refetch: load };"
+          list_new="  useEffect(() => {\n    void load();\n    return () => {\n      requestRef.current += 1;\n    };\n  }, [load]);\n\n  useEffect(() => {\n    if (typeof window === 'undefined') return;\n    const onDataChanged = () => { void load(); };\n    window.addEventListener(ADMIN_DATA_CHANGED, onDataChanged);\n    return () => window.removeEventListener(ADMIN_DATA_CHANGED, onDataChanged);\n  }, [load]);\n\n  return { data, loading, error, params, setParams, refetch: load };"
+          if list_anchor not in s: raise SystemExit('useList anchor not found')
+          s=s.replace(list_anchor,list_new,1)
+          detail_anchor="  useEffect(() => {\n    void load();\n    return () => {\n      requestRef.current += 1;\n    };\n  }, [load]);\n\n  return { item, loading, error, refetch: load };"
+          detail_new="  useEffect(() => {\n    void load();\n    return () => {\n      requestRef.current += 1;\n    };\n  }, [load]);\n\n  useEffect(() => {\n    if (typeof window === 'undefined') return;\n    const onDataChanged = () => { void load(); };\n    window.addEventListener(ADMIN_DATA_CHANGED, onDataChanged);\n    return () => window.removeEventListener(ADMIN_DATA_CHANGED, onDataChanged);\n  }, [load]);\n\n  return { item, loading, error, refetch: load };"
+          if detail_anchor not in s: raise SystemExit('useDetail anchor not found')
+          s=s.replace(detail_anchor,detail_new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Create branch persistence QA
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          src=Path('.github/workflows/admin-branch-closure-v2.yml').read_text(encoding='utf-8')
+          start=src.index("          cat > qa/admin-branch-operational.mjs <<'JS'\n")+len("          cat > qa/admin-branch-operational.mjs <<'JS'\n")
+          end=src.index('\n          JS',start)
+          lines=[]
+          for line in src[start:end].splitlines(): lines.append(line[10:] if line.startswith('          ') else line)
+          Path('qa/admin-branch-operational.mjs').write_text('\n'.join(lines)+'\n',encoding='utf-8')
+          PY
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: git diff --check
+      - name: Static synchronization gate
+        shell: bash
+        run: |
+          grep -q "addEventListener(ADMIN_DATA_CHANGED" src/admin/data/adminHooks.ts
+          test "$(grep -c "addEventListener(ADMIN_DATA_CHANGED" src/admin/data/adminHooks.ts)" -ge 2
+      - run: npx playwright install --with-deps chromium
+      - name: Start preview
+        shell: bash
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/branch-preview.log 2>&1 &
+          for i in {1..40}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/branch-preview.log; exit 1
+      - name: Branch persistence browser QA
+        env: { UOS_BASE_URL: 'http://127.0.0.1:4173' }
+        run: node qa/admin-branch-operational.mjs
+      - name: Existing Admin QA
+        env: { UOS_BASE_URL: 'http://127.0.0.1:4173' }
+        run: node qa/admin-operational.mjs
+      - name: Commit verified branch and sync closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" || { echo 'origin/main moved; refusing overwrite'; exit 1; }
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/admin/data/adminHooks.ts src/pages/admin/AdminBranchesPage.tsx src/pages/admin/AdminBranchDetailPage.tsx qa/admin-branch-operational.mjs
+          git diff --cached --check
+          git commit -m 'fix: synchronize admin mutations and close branch operations'
+          git push origin HEAD:main
