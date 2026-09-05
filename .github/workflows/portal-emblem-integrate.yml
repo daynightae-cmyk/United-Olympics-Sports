@@ -20,8 +20,24 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Repair transient QA generator newline
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('.github/scripts/apply_portal_emblems.py')
+          text = path.read_text(encoding='utf-8')
+          old = r"console.error(errors.join('\n'));"
+          new = "console.error(errors.join(String.fromCharCode(10)));"
+          if old not in text:
+              raise SystemExit('Expected transient QA generator line not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
       - name: Apply portal emblem integration
-        run: python3 .github/scripts/apply_portal_emblems.py
+        run: |
+          python3 .github/scripts/apply_portal_emblems.py
+          git restore .github/scripts/apply_portal_emblems.py
 
       - name: Install dependencies
         run: npm ci
