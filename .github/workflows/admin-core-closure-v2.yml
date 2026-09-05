@@ -1,0 +1,84 @@
+name: Admin Core Closure V2
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/admin-core-closure-v2.yml'
+permissions:
+  contents: write
+jobs:
+  close-admin-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Reuse core patch with attendance model correction
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          source=Path('.github/workflows/admin-core-closure.yml').read_text(encoding='utf-8')
+          marker='      - name: Apply admin core fixes\n'
+          begin=source.index(marker)
+          begin=source.index('        run: |\n', begin)+len('        run: |\n')
+          end=source.index('      - run: npm ci', begin)
+          lines=[]
+          for line in source[begin:end].splitlines():
+              lines.append(line[10:] if line.startswith('          ') else line)
+          script='\n'.join(lines)+'\n'
+          wrong='(sessionId === "all" || record.sessionId === sessionId)'
+          right='(sessionId === "all" || demoSessions.find((session) => session.id === sessionId)?.groupId === record.player.groupId)'
+          if wrong not in script:
+              raise SystemExit('Attendance patch anchor missing')
+          script=script.replace(wrong,right,1)
+          Path('/tmp/apply-admin-core.sh').write_text(script,encoding='utf-8')
+          PY
+          bash /tmp/apply-admin-core.sh
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/pages/admin/AdminOperationalWorkspaces.tsx')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('label={bi("Session", "الجلسة")}', 'label={bi("Scheduled session group", "مجموعة الجلسة المجدولة")}', 1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - run: npm ci
+      - name: Static no-op and phantom-route gate
+        shell: bash
+        run: |
+          ! grep -R -n -E 'on(Change|Click)=?\{?\(\) => \{\}\}|onClick: \(\) => \{\}' src/pages/admin src/components/admin src/layouts
+          ! grep -n 'AdminFutureModulePage' src/layouts/AdminLayout.tsx
+      - name: TypeScript gate
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+      - name: Diff integrity
+        run: git diff --check
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start preview
+        shell: bash
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/admin-preview.log 2>&1 &
+          for i in {1..40}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/admin-preview.log; exit 1
+      - name: Admin browser QA
+        env:
+          UOS_BASE_URL: http://127.0.0.1:4173
+        run: node qa/admin-operational.mjs
+      - name: Commit verified core closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" || { echo 'origin/main moved; refusing overwrite'; exit 1; }
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/admin/data/AdminDataProvider.tsx src/pages/admin/AdminOperationalWorkspaces.tsx src/pages/admin/AdminFinanceWorkspaces.tsx src/layouts/AdminLayout.tsx src/pages/admin/AdminAccessDetailPages.tsx src/pages/admin/AdminUsersPage.tsx qa/admin-operational.mjs
+          git diff --cached --check
+          git commit -m 'fix: close admin core operational gaps'
+          git push origin HEAD:main
