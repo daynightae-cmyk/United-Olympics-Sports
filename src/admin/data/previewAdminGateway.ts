@@ -74,6 +74,8 @@ let previewSessionData = {
   auditActivity: [...previewAuditActivity],
 };
 
+hydratePreviewData();
+
 const previewDelay = () => Promise.resolve();
 
 function paginate<T>(items: T[], params?: ListQueryParams): ListResult<T> {

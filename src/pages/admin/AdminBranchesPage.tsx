@@ -1,14 +1,12 @@
 import { ArrowRight, Building2, CheckCircle2, Globe2, Plus, SlidersHorizontal } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useBranches } from '../../admin/data/adminHooks';
+import { useBranches, useCreateBranch, useCountries, useSports } from '../../admin/data/adminHooks';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { BmBadge, BmButton, BmDataTable, BmDrawer, BmEmptyState, BmErrorState, BmFilterBar, BmFilterSelect, BmLoadingTable, BmPageHeader, type BmColumn } from '../../components/benchmark/BenchmarkComponents';
 import { UosFormSection, UosSelectField, UosSteps, UosTextField } from '../../components/fields/UosFields';
 import { UiDialog } from '../../components/ui/UiPrimitives';
 import type { BranchViewModel } from '../../admin/data/viewModels';
-import { demoCountries } from '../../data/demo/business';
-import { demoSports } from '../../data/demo/sports';
 
 function sortText(value: unknown): string {
   if (typeof value === 'string') return value;
@@ -29,15 +27,22 @@ export function AdminBranchesPage() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardStep, setWizardStep] = useState(0);
   const [notice, setNotice] = useState(false);
+  const [optimisticBranches, setOptimisticBranches] = useState<BranchViewModel[]>([]);
   const [draftNameEn, setDraftNameEn] = useState('');
   const [draftNameAr, setDraftNameAr] = useState('');
   const [draftCountry, setDraftCountry] = useState('');
   const [draftSport, setDraftSport] = useState('');
   const [draftError, setDraftError] = useState<{ en: string; ar: string } | null>(null);
-  const { data, loading, error } = useBranches({ page: 1, pageSize: 50 });
+  const { data, loading, error, refetch } = useBranches({ page: 1, pageSize: 100 });
+  const { data: countriesData } = useCountries({ page: 1, pageSize: 100 });
+  const { data: sportsData } = useSports({ page: 1, pageSize: 100 });
+  const { create, loading: createLoading } = useCreateBranch();
+  const countries = countriesData?.items ?? [];
+  const sportsCatalog = sportsData?.items ?? [];
 
   const branches = useMemo(() => {
-    const items = (data?.items ?? []).filter(branch =>
+    const source = [...(data?.items ?? []), ...optimisticBranches.filter(local => !(data?.items ?? []).some(remote => remote.id === local.id))];
+    const items = source.filter(branch =>
       (country === 'all' || branch.countryId === country) &&
       `${branch.name.en} ${branch.name.ar} ${branch.id}`.toLowerCase().includes(query.toLowerCase())
     );
@@ -46,7 +51,7 @@ export function AdminBranchesPage() {
       const bv = sortText(b[sortBy as keyof BranchViewModel]);
       return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
     });
-  }, [data, query, country, sortBy, sortDir]);
+  }, [data, optimisticBranches, query, country, sortBy, sortDir]);
 
   const allSelected = branches.length > 0 && branches.every(b => selected.includes(b.id));
   const toggleAll = () => setSelected(allSelected ? [] : branches.map(b => b.id));
@@ -73,9 +78,20 @@ export function AdminBranchesPage() {
     setWizardStep((step) => Math.min(step + 1, WIZARD_STEPS.length - 1));
   };
 
-  const preparePreview = () => {
-    setWizardOpen(false);
-    setNotice(true);
+  const createBranch = async () => {
+    if (!draftNameEn.trim() || !draftNameAr.trim() || !draftCountry || !draftSport) return;
+    const result = await create({
+      name: { en: draftNameEn.trim(), ar: draftNameAr.trim() },
+      countryId: draftCountry,
+      organizationId: 'org-united-olympics',
+      sportIds: [draftSport], programIds: [], groupIds: [], coachIds: [], playerIds: [],
+      sportCount: 1, programCount: 0, groupCount: 0, coachCount: 0, playerCount: 0,
+      status: 'active',
+    });
+    setOptimisticBranches(current => [...current.filter(item => item.id !== result.item.id), result.item]);
+    await refetch();
+    setWizardOpen(false); setNotice(true);
+    setDraftNameEn(''); setDraftNameAr(''); setDraftCountry(''); setDraftSport(''); setWizardStep(0);
   };
 
   const columns: BmColumn<BranchViewModel>[] = [
@@ -97,7 +113,7 @@ export function AdminBranchesPage() {
         </div>
       ),
     },
-    { key: 'countryId', label: bi('Country', 'الدولة'), sortable: true, render: (b) => <BilingualText value={demoCountries.find(c => c.id === b.countryId)?.name ?? bi(b.countryId, b.countryId)} /> },
+    { key: 'countryId', label: bi('Country', 'الدولة'), sortable: true, render: (b) => <BilingualText value={countries.find(c => c.id === b.countryId)?.name ?? bi(b.countryId, b.countryId)} /> },
     { key: 'playerCount', label: bi('Players', 'اللاعبون'), sortable: true, render: (b) => <span className="bm-cell-strong">{b.playerCount}</span> },
     { key: 'coachCount', label: bi('Coaches', 'المدربون'), sortable: true, render: (b) => <span className="bm-cell-strong">{b.coachCount}</span> },
     { key: 'programCount', label: bi('Programs', 'البرامج'), sortable: true, render: (b) => b.programCount },
@@ -119,13 +135,13 @@ export function AdminBranchesPage() {
       actions={<BmButton variant="primary" onClick={startWizard}><Plus aria-hidden="true" /><BilingualText value={bi('Add Branch', 'إضافة فرع')} /></BmButton>}
     />
 
-    {notice && <div className="bm-badge bm-badge-info" style={{ marginBottom: '16px' }} role="status"><BilingualText value={bi('Branch preview prepared locally — not saved to any backend.', 'تم تجهيز معاينة الفرع محليًا — دون حفظ في أي نظام خلفي.')} /></div>}
+    {notice && <div className="bm-badge bm-badge-info" style={{ marginBottom: '16px' }} role="status"><BilingualText value={bi('Branch saved in the browser preview store — no production backend write was made.', 'تم حفظ الفرع في مخزن المعاينة بالمتصفح — دون كتابة في نظام خلفي إنتاجي.')} /></div>}
 
     <BmFilterBar
       searchValue={query}
       onSearchChange={setQuery}
       searchPlaceholder={bi('Search branches or IDs', 'البحث عن الفروع أو المعرفات')}
-      filters={<BmFilterSelect label={bi('Country', 'الدولة')} value={country} onChange={setCountry} options={[{ value: 'all', label: bi('All countries', 'كل الدول') }, ...demoCountries.map(c => ({ value: c.id, label: c.name }))]} />}
+      filters={<BmFilterSelect label={bi('Country', 'الدولة')} value={country} onChange={setCountry} options={[{ value: 'all', label: bi('All countries', 'كل الدول') }, ...countries.map(c => ({ value: c.id, label: c.name }))]} />}
       onMobileOpen={() => setDrawerOpen(true)}
     />
 
@@ -145,7 +161,6 @@ export function AdminBranchesPage() {
           onSort={onSort}
           bulkActions={
             <>
-              <BmButton variant="tertiary" onClick={() => setSelected([])}><CheckCircle2 aria-hidden="true" /><BilingualText value={bi('Mark reviewed', 'تحديد كمراجع')} /></BmButton>
               <BmButton variant="ghost" onClick={() => setSelected([])}><BilingualText value={bi('Clear', 'مسح')} /></BmButton>
             </>
           }
@@ -172,14 +187,14 @@ export function AdminBranchesPage() {
         <label className="bm-field-label" htmlFor="branch-drawer-search"><BilingualText value={bi('Search', 'البحث')} /></label>
         <input id="branch-drawer-search" className="bm-field-input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search branches or IDs | البحث عن الفروع أو المعرفات" />
       </div>
-      <BmFilterSelect label={bi('Country', 'الدولة')} value={country} onChange={setCountry} options={[{ value: 'all', label: bi('All countries', 'كل الدول') }, ...demoCountries.map(c => ({ value: c.id, label: c.name }))]} />
+      <BmFilterSelect label={bi('Country', 'الدولة')} value={country} onChange={setCountry} options={[{ value: 'all', label: bi('All countries', 'كل الدول') }, ...countries.map(c => ({ value: c.id, label: c.name }))]} />
     </BmDrawer>
 
     <UiDialog
       open={wizardOpen}
       onClose={() => setWizardOpen(false)}
-      title={bi('Add Branch Preview', 'معاينة إضافة فرع')}
-      description={bi('A local intake preview. Nothing is saved to a backend.', 'معاينة إدخال محلية. لا يتم حفظ أي شيء في نظام خلفي.')}
+      title={bi('Add Branch', 'إضافة فرع')}
+      description={bi('Creates a browser-persistent preview branch. It does not write to a production backend.', 'ينشئ فرع معاينة محفوظًا في المتصفح. لا يكتب في نظام خلفي إنتاجي.')}
     >
       <UosSteps steps={WIZARD_STEPS} current={wizardStep} />
       {wizardStep === 0 && (
@@ -190,25 +205,25 @@ export function AdminBranchesPage() {
       )}
       {wizardStep === 1 && (
         <UosFormSection title={bi('Location & Sports', 'الموقع والرياضات')} icon={<Globe2 size={17} />} description={bi('Country scope and the primary sport for this preview record.', 'نطاق الدولة والرياضة الأساسية لسجل المعاينة هذا.')}>
-          <UosSelectField label={bi('Country', 'الدولة')} icon={<Globe2 size={16} />} value={draftCountry} onChange={(event) => setDraftCountry(event.target.value)} required placeholder={bi('Choose country', 'اختر الدولة')} options={demoCountries.map((c) => ({ value: c.id, label: c.name }))} error={draftError} />
-          <UosSelectField label={bi('Primary sport', 'الرياضة الأساسية')} value={draftSport} onChange={(event) => setDraftSport(event.target.value)} required placeholder={bi('Choose sport', 'اختر الرياضة')} options={demoSports.map((s) => ({ value: s.id, label: s.name }))} />
+          <UosSelectField label={bi('Country', 'الدولة')} icon={<Globe2 size={16} />} value={draftCountry} onChange={(event) => setDraftCountry(event.target.value)} required placeholder={bi('Choose country', 'اختر الدولة')} options={countries.map((c) => ({ value: c.id, label: c.name }))} error={draftError} />
+          <UosSelectField label={bi('Primary sport', 'الرياضة الأساسية')} value={draftSport} onChange={(event) => setDraftSport(event.target.value)} required placeholder={bi('Choose sport', 'اختر الرياضة')} options={sportsCatalog.map((s) => ({ value: s.id, label: s.name }))} />
         </UosFormSection>
       )}
       {wizardStep === 2 && (
-        <UosFormSection title={bi('Review', 'المراجعة')} icon={<CheckCircle2 size={17} />} description={bi('Confirm the preview record before preparing it locally.', 'أكد سجل المعاينة قبل تجهيزه محليًا.')}>
+        <UosFormSection title={bi('Review', 'المراجعة')} icon={<CheckCircle2 size={17} />} description={bi('Confirm the branch before saving it to the browser preview store.', 'أكد بيانات الفرع قبل حفظها في مخزن المعاينة بالمتصفح.')}>
           <div className="uos-review-list">
             <div><span><BilingualText value={bi('Name', 'الاسم')} /></span><strong>{draftNameEn || '—'} · {draftNameAr || '—'}</strong></div>
-            <div><span><BilingualText value={bi('Country', 'الدولة')} /></span><strong>{demoCountries.find((c) => c.id === draftCountry)?.name.en ?? '—'}</strong></div>
-            <div><span><BilingualText value={bi('Sport', 'الرياضة')} /></span><strong>{demoSports.find((s) => s.id === draftSport)?.name.en ?? '—'}</strong></div>
+            <div><span><BilingualText value={bi('Country', 'الدولة')} /></span><strong>{countries.find((c) => c.id === draftCountry)?.name.en ?? '—'}</strong></div>
+            <div><span><BilingualText value={bi('Sport', 'الرياضة')} /></span><strong>{sportsCatalog.find((s) => s.id === draftSport)?.name.en ?? '—'}</strong></div>
           </div>
-          <p className="uos-field-helper"><BilingualText value={bi('Preparing stores nothing outside this browser session.', 'التجهيز لا يحفظ أي شيء خارج جلسة المتصفح هذه.')} /></p>
+          <p className="uos-field-helper"><BilingualText value={bi('Saving persists this branch in the browser preview store until preview data is reset.', 'الحفظ يبقي هذا الفرع في مخزن المعاينة بالمتصفح حتى إعادة ضبط بيانات المعاينة.')} /></p>
         </UosFormSection>
       )}
       <div className="dialog-actions" style={{ display: 'flex', gap: 8, marginTop: 16 }}>
         {wizardStep > 0 && <UiButtonSafeSecondary onClick={() => { setDraftError(null); setWizardStep((step) => step - 1); }} label={bi('Back', 'رجوع')} />}
         {wizardStep < WIZARD_STEPS.length - 1
           ? <PrimaryNext onClick={nextWizard} />
-          : <PrimaryPrepare onClick={preparePreview} />}
+          : <PrimaryPrepare onClick={() => void createBranch()} loading={createLoading} />}
       </div>
     </UiDialog>
   </div>;
@@ -222,6 +237,6 @@ function PrimaryNext({ onClick }: { onClick: () => void }) {
   return <button type="button" className="uos-btn-primary uos-touch" onClick={onClick}><BilingualText value={bi('Continue', 'متابعة')} /></button>;
 }
 
-function PrimaryPrepare({ onClick }: { onClick: () => void }) {
-  return <button type="button" className="uos-btn-primary uos-touch" onClick={onClick}><BilingualText value={bi('Prepare Preview', 'تجهيز المعاينة')} /></button>;
+function PrimaryPrepare({ onClick, loading }: { onClick: () => void; loading: boolean }) {
+  return <button type="button" className="uos-btn-primary uos-touch" disabled={loading} onClick={onClick}><BilingualText value={bi(loading ? 'Saving…' : 'Save Branch', loading ? 'جارٍ الحفظ…' : 'حفظ الفرع')} /></button>;
 }

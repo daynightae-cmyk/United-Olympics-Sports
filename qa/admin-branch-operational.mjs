@@ -1,0 +1,26 @@
+import { chromium } from 'playwright';
+const base=process.env.UOS_BASE_URL||'http://127.0.0.1:4173';
+const browser=await chromium.launch({headless:true});
+const page=await browser.newPage({viewport:{width:1440,height:900}});
+await page.goto(base+'/admin/branches',{waitUntil:'networkidle'});
+await page.getByText('Add Branch',{exact:true}).click();
+let dialog=page.locator('[role="dialog"]').last(); await dialog.waitFor();
+await dialog.locator('input[placeholder="Branch name"]').fill('QA Operations Branch');
+await dialog.locator('input[placeholder="اسم الفرع"]').fill('فرع اختبار التشغيل');
+await dialog.getByText('Continue',{exact:true}).click();
+dialog=page.locator('[role="dialog"]').last(); const selects=dialog.locator('select');
+if(await selects.count()!==2) throw new Error('wizard selects missing');
+for(let i=0;i<2;i++){const sel=selects.nth(i);const opts=await sel.locator('option').evaluateAll(os=>os.map(o=>({v:o.value,d:o.disabled})).filter(x=>x.v&&!x.d));if(!opts.length)throw new Error(`select ${i} empty`);await sel.selectOption(opts[0].v);}
+await dialog.getByText('Continue',{exact:true}).click(); dialog=page.locator('[role="dialog"]').last();
+await dialog.getByText('Save Branch',{exact:true}).click(); await dialog.waitFor({state:'hidden'});
+const stored=await page.evaluate(()=>{const raw=localStorage.getItem('uos-admin-preview-data-v1');if(!raw)return null;return JSON.parse(raw).branches?.find(b=>b.name?.en==='QA Operations Branch')??null;});
+if(!stored?.id) throw new Error('branch not persisted'); const href=`/admin/branches/${stored.id}`;
+if(await page.locator(`a[href="${href}"]`).count()<1) throw new Error('created branch not rendered immediately');
+await page.reload({waitUntil:'networkidle'});
+if(await page.locator(`a[href="${href}"]`).count()<1) throw new Error('created branch not hydrated after reload');
+await page.goto(base+href,{waitUntil:'networkidle'}); await page.getByText('Branch Controls',{exact:true}).waitFor();
+const body=await page.locator('body').innerText(); if(/Sport branch-|Coach branch-|Player branch-|will be linked to branch groups/i.test(body))throw new Error('fabricated cockpit placeholder remains');
+let status=page.locator('section.admin-panel').filter({hasText:'Branch Controls'}).locator('select').first(); await status.selectOption('inactive');
+await page.waitForTimeout(50); await page.reload({waitUntil:'networkidle'});
+status=page.locator('section.admin-panel').filter({hasText:'Branch Controls'}).locator('select').first(); if(await status.inputValue()!=='inactive')throw new Error('branch status not persisted');
+await browser.close(); console.log('Admin branch create/render/hydrate/cockpit/status QA passed.');

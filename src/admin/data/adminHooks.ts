@@ -72,6 +72,13 @@ function useList<T>(fetch: (params?: ListQueryParams) => Promise<ListResult<T>>,
     };
   }, [load]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onDataChanged = () => { void load(); };
+    window.addEventListener(ADMIN_DATA_CHANGED, onDataChanged);
+    return () => window.removeEventListener(ADMIN_DATA_CHANGED, onDataChanged);
+  }, [load]);
+
   return { data, loading, error, params, setParams, refetch: load };
 }
 
@@ -117,6 +124,13 @@ function useDetail<T>(fetch: (id: string) => Promise<T | null>, id?: string) {
     return () => {
       requestRef.current += 1;
     };
+  }, [load]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onDataChanged = () => { void load(); };
+    window.addEventListener(ADMIN_DATA_CHANGED, onDataChanged);
+    return () => window.removeEventListener(ADMIN_DATA_CHANGED, onDataChanged);
   }, [load]);
 
   return { item, loading, error, refetch: load };

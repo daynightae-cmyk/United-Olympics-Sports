@@ -1,179 +1,43 @@
-import { BarChart3, Building2, CalendarCheck, DollarSign, FileText, FolderCog, Gamepad2, Globe, MapPin, Medal, ShieldCheck, Users } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { FuturePanel, PageHeader, StatusBadge, Tabs } from '../../components/admin/AdminUI';
+import { BarChart3, Building2, CalendarCheck, DollarSign, FileText, FolderCog, Gamepad2, Medal, ShieldCheck, Trash2, Users } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { PageHeader, StatusBadge, Tabs } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
-import { useBranch } from '../../admin/data/adminHooks';
+import { useBranch, useCoaches, useCountries, useDeleteBranch, useGroups, usePayments, usePlayers, usePrograms, useSessions, useSports, useSubscriptions, useUpdateBranch } from '../../admin/data/adminHooks';
+import { UiButton, UiPreviewState } from '../../components/ui/UiPrimitives';
 
-const tabs = [
-  { id: 'overview', label: bi('Overview', 'نظرة عامة') },
-  { id: 'sports', label: bi('Sports', 'الرياضات') },
-  { id: 'programs', label: bi('Programs', 'البرامج') },
-  { id: 'groups', label: bi('Groups', 'المجموعات') },
-  { id: 'coaches', label: bi('Coaches', 'المدربون') },
-  { id: 'players', label: bi('Players', 'اللاعبون') },
-  { id: 'schedule', label: bi('Schedule', 'الجدول') },
-  { id: 'attendance', label: bi('Attendance', 'الحضور') },
-  { id: 'performance', label: bi('Performance', 'الأداء') },
-  { id: 'subscriptions', label: bi('Subscriptions', 'الاشتراكات') },
-  { id: 'payments', label: bi('Payments', 'المدفوعات') },
-  { id: 'reports', label: bi('Reports', 'التقارير') },
-  { id: 'content', label: bi('Content', 'المحتوى') },
+const tabs=[
+  {id:'overview',label:bi('Overview','نظرة عامة')},{id:'sports',label:bi('Sports','الرياضات')},{id:'programs',label:bi('Programs','البرامج')},{id:'groups',label:bi('Groups','المجموعات')},{id:'coaches',label:bi('Coaches','المدربون')},{id:'players',label:bi('Players','اللاعبون')},{id:'schedule',label:bi('Schedule','الجدول')},{id:'attendance',label:bi('Attendance','الحضور')},{id:'performance',label:bi('Performance','الأداء')},{id:'subscriptions',label:bi('Subscriptions','الاشتراكات')},{id:'payments',label:bi('Payments','المدفوعات')},{id:'reports',label:bi('Reports','التقارير')},{id:'content',label:bi('Content','المحتوى')},
 ];
+const PreviewList=({children,empty}:{children:React.ReactNode;empty:{en:string;ar:string}})=><div className="preview-list">{children || <p className="empty-message"><BilingualText value={empty}/></p>}</div>;
 
-export function AdminBranchDetailPage() {
-  const { branchId } = useParams();
-  const { item: branch, loading, error } = useBranch(branchId);
-  const [active, setActive] = useState('overview');
-
-  if (loading) return <div className="admin-page"><PageHeader icon={Building2} eyebrow={bi('Branch Cockpit', 'مركز تحكم الفرع')} title={bi('Loading...', 'جاري التحميل...')} description={bi('Loading branch preview.', 'جاري تحميل معاينة الفرع.')} /></div>;
-  if (error || !branch) return <FuturePanel
-    title={bi('Branch not found', 'الفرع غير موجود')}
-    description={bi('Choose a valid branch from the Branches directory.', 'اختر فرعاً صالحاً من دليل الفروع.')}
-  />;
-
-  const sports = branch.sportIds.map(id => ({ id, name: { en: `Sport ${id}`, ar: `رياضة ${id}` } }));
-  const programs = branch.programIds.map(id => ({ id, name: { en: `Program ${id}`, ar: `برنامج ${id}` } }));
-  const groups = branch.groupIds.map(id => ({ id, name: { en: `Group ${id}`, ar: `مجموعة ${id}` }, sportId: branch.sportIds[0] ?? '' }));
-  const coaches = branch.coachIds.map(id => ({ id, nameEn: `Coach ${id}`, nameAr: `مدرب ${id}` }));
-  const players = branch.playerIds.map(id => ({ id, nameEn: `Player ${id}`, nameAr: `لاعب ${id}` }));
-
-  return <div className="admin-page">
-    <PageHeader
-      icon={Building2}
-      eyebrow={bi('Branch Cockpit', 'مركز تحكم الفرع')}
-      title={branch.name}
-      description={bi('A centralised preview cockpit for all branch operations.', 'مركز تحكم مركزي تجريبي لجميع عمليات الفرع.')}
-      actions={<StatusBadge active={branch.status === 'active'} />}
-    />
-
-    <section className="branch-identity-card">
-      <div className="branch-identity-main">
-        <Building2 />
-        <h2><BilingualText value={branch.name} /></h2>
-      </div>
-      <dl>
-            <div><dt><BilingualText value={bi('Country', 'الدولة')} /></dt><dd>{branch.countryId ? <BilingualText value={{ en: `Country ${branch.countryId}`, ar: `الدولة ${branch.countryId}` }} /> : <BilingualText value={bi('Unknown', 'غير معروف')} />}</dd></div>
-        {branch.address && <div><dt><BilingualText value={bi('Address', 'العنوان')} /></dt><dd><BilingualText value={branch.address} /></dd></div>}
-        <div><dt><BilingualText value={bi('Sports', 'الرياضات')} /></dt><dd>{sports.length}</dd></div>
-        <div><dt><BilingualText value={bi('Programs', 'البرامج')} /></dt><dd>{programs.length}</dd></div>
-        <div><dt><BilingualText value={bi('Groups', 'المجموعات')} /></dt><dd>{groups.length}</dd></div>
-        <div><dt><BilingualText value={bi('Coaches', 'المدربون')} /></dt><dd>{coaches.length}</dd></div>
-        <div><dt><BilingualText value={bi('Players', 'اللاعبون')} /></dt><dd>{players.length}</dd></div>
-      </dl>
+export function AdminBranchDetailPage(){
+  const {branchId}=useParams(); const navigate=useNavigate(); const [active,setActive]=useState('overview');
+  const {item:branch,loading,error,refetch}=useBranch(branchId); const {update,loading:updating}=useUpdateBranch(); const {delete:remove,loading:deleting}=useDeleteBranch();
+  const {data:countries}=useCountries({page:1,pageSize:100}); const {data:sportsData}=useSports({page:1,pageSize:200}); const {data:programsData}=usePrograms({page:1,pageSize:200}); const {data:groupsData}=useGroups({page:1,pageSize:200}); const {data:coachesData}=useCoaches({page:1,pageSize:200}); const {data:playersData}=usePlayers({page:1,pageSize:500}); const {data:sessionsData}=useSessions({page:1,pageSize:500}); const {data:subsData}=useSubscriptions({page:1,pageSize:500}); const {data:paymentsData}=usePayments({page:1,pageSize:500});
+  const related=useMemo(()=>{ if(!branch)return null; const sports=(sportsData?.items??[]).filter(x=>branch.sportIds.includes(x.id)); const programs=(programsData?.items??[]).filter(x=>branch.programIds.includes(x.id)); const groups=(groupsData?.items??[]).filter(x=>branch.groupIds.includes(x.id)); const coaches=(coachesData?.items??[]).filter(x=>branch.coachIds.includes(x.id)); const players=(playersData?.items??[]).filter(x=>branch.playerIds.includes(x.id)); const sessions=(sessionsData?.items??[]).filter(x=>branch.groupIds.includes(x.groupId)); const subscriptions=(subsData?.items??[]).filter(x=>x.branchId===branch.id); const subIds=new Set(subscriptions.map(x=>x.id)); const payments=(paymentsData?.items??[]).filter(x=>subIds.has(x.subscriptionId)); return {sports,programs,groups,coaches,players,sessions,subscriptions,payments}; },[branch,sportsData,programsData,groupsData,coachesData,playersData,sessionsData,subsData,paymentsData]);
+  if(loading)return <div className="admin-page"><UiPreviewState title={bi('Loading branch','جارٍ تحميل الفرع')} description={bi('Reading branch operations.','جارٍ قراءة عمليات الفرع.')}/></div>;
+  if(error||!branch||!related)return <div className="admin-page"><PageHeader icon={Building2} eyebrow={bi('Branch Cockpit','مركز تحكم الفرع')} title={bi('Branch not found','الفرع غير موجود')} description={bi('Choose a valid branch from the Branches directory.','اختر فرعًا صالحًا من دليل الفروع.')}/></div>;
+  const country=countries?.items.find(x=>x.id===branch.countryId); const avgAttendance=related.players.length?Math.round(related.players.reduce((n,p)=>n+p.attendanceRate,0)/related.players.length):null; const scored=related.players.filter(p=>p.performanceScore!==null); const avgPerformance=scored.length?Math.round(scored.reduce((n,p)=>n+(p.performanceScore??0),0)/scored.length):null; const paidTotal=related.payments.filter(p=>p.status==='completed').reduce((n,p)=>n+p.amount,0); const currency=related.payments[0]?.currency??related.subscriptions[0]?.currency??'AED';
+  const setStatus=async(status:'active'|'inactive')=>{await update(branch.id,{status});await refetch();}; const deleteBranch=async()=>{if(!window.confirm('Delete this preview branch? | حذف فرع المعاينة؟'))return;await remove(branch.id);navigate('/admin/branches');};
+  return <div className="admin-page"><PageHeader icon={Building2} eyebrow={bi('Branch Cockpit','مركز تحكم الفرع')} title={branch.name} description={bi('Live browser-preview cockpit assembled from the Admin data gateway.','مركز تحكم حي للمعاينة بالمتصفح مجمع من بوابة بيانات الإدارة.')} actions={<StatusBadge active={branch.status==='active'}/>}/>
+    <section className="branch-identity-card"><div className="branch-identity-main"><Building2/><h2><BilingualText value={branch.name}/></h2></div><dl><div><dt><BilingualText value={bi('Country','الدولة')}/></dt><dd>{country?<BilingualText value={country.name}/>:<code>{branch.countryId}</code>}</dd></div><div><dt><BilingualText value={bi('Sports','الرياضات')}/></dt><dd>{related.sports.length}</dd></div><div><dt><BilingualText value={bi('Programs','البرامج')}/></dt><dd>{related.programs.length}</dd></div><div><dt><BilingualText value={bi('Groups','المجموعات')}/></dt><dd>{related.groups.length}</dd></div><div><dt><BilingualText value={bi('Coaches','المدربون')}/></dt><dd>{related.coaches.length}</dd></div><div><dt><BilingualText value={bi('Players','اللاعبون')}/></dt><dd>{related.players.length}</dd></div></dl></section>
+    <section className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Branch Controls','ضوابط الفرع')}/><ShieldCheck/></div><div className="preview-form-grid"><label><BilingualText value={bi('Operating status','حالة التشغيل')}/><select value={branch.status} disabled={updating} onChange={e=>void setStatus(e.target.value as 'active'|'inactive')}><option value="active">Active | نشط</option><option value="inactive">Inactive | غير نشط</option></select></label></div><p className="preview-warning"><BilingualText value={bi('Changes persist in the browser preview store; no production backend write is claimed.','تستمر التغييرات في مخزن المعاينة بالمتصفح؛ ولا يتم الادعاء بكتابة في نظام إنتاجي.')}/></p></section>
+    <Tabs items={tabs} active={active} onChange={setActive}/><section className="admin-tab-panel" role="tabpanel">
+      {active==='overview'&&<div className="branch-overview-grid"><section className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Operational Snapshot','لقطة التشغيل')}/><Building2/></div><dl className="detail-list"><div><dt>ID</dt><dd><code>{branch.id}</code></dd></div><div><dt><BilingualText value={bi('Scheduled sessions','الجلسات المجدولة')}/></dt><dd>{related.sessions.length}</dd></div><div><dt><BilingualText value={bi('Active subscriptions','الاشتراكات النشطة')}/></dt><dd>{related.subscriptions.filter(x=>x.status==='active').length}</dd></div><div><dt><BilingualText value={bi('Completed payments','المدفوعات المكتملة')}/></dt><dd>{related.payments.filter(x=>x.status==='completed').length}</dd></div><div><dt><BilingualText value={bi('Collected value','القيمة المحصلة')}/></dt><dd>{paidTotal.toLocaleString()} {currency}</dd></div></dl></section><section className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Development Indicators','مؤشرات التطور')}/><BarChart3/></div><dl className="detail-list"><div><dt><BilingualText value={bi('Average attendance','متوسط الحضور')}/></dt><dd>{avgAttendance===null?'—':`${avgAttendance}%`}</dd></div><div><dt><BilingualText value={bi('Average performance','متوسط الأداء')}/></dt><dd>{avgPerformance===null?'—':avgPerformance}</dd></div></dl></section></div>}
+      {active==='sports'&&<PreviewList empty={bi('No sports assigned.','لا توجد رياضات مخصصة.')}>{related.sports.map(x=><div className="preview-line" key={x.id}><Gamepad2/><BilingualText value={x.name}/><StatusBadge active={x.status==='active'}/><Link className="admin-link-button small" to={`/admin/sports/${x.id}`}><BilingualText value={bi('Open','فتح')}/></Link></div>)}</PreviewList>}
+      {active==='programs'&&<PreviewList empty={bi('No programs assigned.','لا توجد برامج مخصصة.')}>{related.programs.map(x=><div className="preview-line" key={x.id}><FolderCog/><BilingualText value={x.name}/><StatusBadge active={x.status==='active'}/><Link className="admin-link-button small" to={`/admin/programs/${x.id}`}><BilingualText value={bi('Open','فتح')}/></Link></div>)}</PreviewList>}
+      {active==='groups'&&<PreviewList empty={bi('No training groups assigned.','لا توجد مجموعات تدريب مخصصة.')}>{related.groups.map(x=><div className="preview-line" key={x.id}><Users/><BilingualText value={x.name}/><StatusBadge active={x.status==='active'}/><Link className="admin-link-button small" to={`/admin/sports/${x.sportId}/groups/${x.id}`}><BilingualText value={bi('Open','فتح')}/></Link></div>)}</PreviewList>}
+      {active==='coaches'&&<PreviewList empty={bi('No coaches assigned.','لا يوجد مدربون معينون.')}>{related.coaches.map(x=><div className="preview-line" key={x.id}><Medal/><span>{x.nameEn} | {x.nameAr}</span><StatusBadge active={x.status==='active'}/><Link className="admin-link-button small" to={`/admin/coaches/${x.id}`}><BilingualText value={bi('Open','فتح')}/></Link></div>)}</PreviewList>}
+      {active==='players'&&<PreviewList empty={bi('No players enrolled.','لا يوجد لاعبون مسجلون.')}>{related.players.map(x=><div className="preview-line" key={x.id}><Users/><span>{x.nameEn} | {x.nameAr}</span><Link className="admin-link-button small" to={`/admin/players/${x.id}`}><BilingualText value={bi('Open','فتح')}/></Link></div>)}</PreviewList>}
+      {active==='schedule'&&<PreviewList empty={bi('No sessions for assigned branch groups.','لا توجد جلسات لمجموعات الفرع المخصصة.')}>{related.sessions.map(x=><div className="preview-line" key={x.id}><CalendarCheck/><span>{new Date(x.startsAt).toLocaleString()}</span><BilingualText value={x.status}/><Link className="admin-link-button small" to={`/admin/schedules/${x.id}`}><BilingualText value={bi('Open','فتح')}/></Link></div>)}</PreviewList>}
+      {active==='attendance'&&<section className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Attendance Overview','نظرة عامة على الحضور')}/><BarChart3/></div><p><BilingualText value={avgAttendance===null?bi('No player attendance data for this branch.','لا توجد بيانات حضور للاعبي هذا الفرع.'):bi(`Average attendance across ${related.players.length} linked players: ${avgAttendance}%`,`متوسط الحضور عبر ${related.players.length} لاعبًا مرتبطًا: ${avgAttendance}%`)}/></p><Link className="admin-link-button" to="/admin/attendance"><BilingualText value={bi('Open Attendance Operations','فتح عمليات الحضور')}/></Link></section>}
+      {active==='performance'&&<section className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Performance Overview','نظرة عامة على الأداء')}/><BarChart3/></div><p><BilingualText value={avgPerformance===null?bi('No scored players for this branch.','لا يوجد لاعبون ذوو تقييم في هذا الفرع.'):bi(`Average score across ${scored.length} scored players: ${avgPerformance}`,`متوسط التقييم عبر ${scored.length} لاعبًا: ${avgPerformance}`)}/></p><Link className="admin-link-button" to="/admin/performance"><BilingualText value={bi('Open Performance Operations','فتح عمليات الأداء')}/></Link></section>}
+      {active==='subscriptions'&&<PreviewList empty={bi('No subscriptions for this branch.','لا توجد اشتراكات لهذا الفرع.')}>{related.subscriptions.map(x=><div className="preview-line" key={x.id}><DollarSign/><BilingualText value={x.plan}/><span>{x.amount} {x.currency}</span><Link className="admin-link-button small" to={`/admin/subscriptions/${x.id}`}><BilingualText value={bi('Open','فتح')}/></Link></div>)}</PreviewList>}
+      {active==='payments'&&<PreviewList empty={bi('No payments linked to this branch subscriptions.','لا توجد مدفوعات مرتبطة باشتراكات هذا الفرع.')}>{related.payments.map(x=><div className="preview-line" key={x.id}><DollarSign/><span>{x.amount} {x.currency}</span><span>{x.status}</span><Link className="admin-link-button small" to={`/admin/payments/${x.id}`}><BilingualText value={bi('Open','فتح')}/></Link></div>)}</PreviewList>}
+      {active==='reports'&&<section className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Reports','التقارير')}/><FileText/></div><p><BilingualText value={bi('The current report model has no branch relation, so this cockpit does not fabricate branch-specific reports.','نموذج التقارير الحالي لا يحتوي علاقة بالفرع، لذلك لا يختلق مركز التحكم تقارير خاصة بالفرع.')}/></p><Link className="admin-link-button" to="/admin/reports"><BilingualText value={bi('Open Central Reports','فتح التقارير المركزية')}/></Link></section>}
+      {active==='content'&&<section className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Content','المحتوى')}/><FileText/></div><p><BilingualText value={bi('Content records are currently organization-level; branch scoping is not represented in the data contract.','سجلات المحتوى حاليًا على مستوى المؤسسة؛ نطاق الفرع غير ممثل في عقد البيانات.')}/></p><Link className="admin-link-button" to="/admin/content"><BilingualText value={bi('Open Central Content','فتح المحتوى المركزي')}/></Link></section>}
     </section>
-
-    <Tabs items={tabs} active={active} onChange={setActive} />
-    <section className="admin-tab-panel" role="tabpanel">
-      {active === 'overview' && <div className="branch-overview-grid">
-        <section className="admin-panel">
-          <div className="panel-heading">
-            <div><BilingualText value={bi('Branch Information', 'معلومات الفرع')} /><small><BilingualText value={bi('Preview fixture', 'بيانات تجريبية')} /></small></div>
-            <Building2 />
-          </div>
-          <dl className="detail-list">
-            <div><dt><BilingualText value={bi('Branch ID', 'معرف الفرع')} /></dt><dd><code>{branch.id}</code></dd></div>
-        <div><dt><BilingualText value={bi('Country', 'الدولة')} /></dt><dd>{branch.countryId ? <BilingualText value={{ en: `Country ${branch.countryId}`, ar: `الدولة ${branch.countryId}` }} /> : <BilingualText value={bi('Unknown', 'غير معروف')} />}</dd></div>
-            <div><dt><BilingualText value={bi('Organization', 'المنظمة')} /></dt><dd>{branch.organizationId}</dd></div>
-            <div><dt><BilingualText value={bi('Players', 'اللاعبون')} /></dt><dd>{branch.playerIds.length}</dd></div>
-            <div><dt><BilingualText value={bi('Coaches', 'المدربون')} /></dt><dd>{branch.coachIds.length}</dd></div>
-          </dl>
-        </section>
-        <section className="admin-panel pipeline-card">
-          <div className="panel-heading"><BilingualText value={bi('Operational Pipeline', 'خط التشغيل')} /><ShieldCheck /></div>
-          <div className="pipeline-flow">
-            {[bi('Branch Operations', 'عمليات الفرع'), bi('Sports Management', 'إدارة الرياضات'), bi('Training Delivery', 'تقديم التدريب'), bi('Player Development', 'تطوير اللاعبين')].map((item, index) => <span key={item.en}><BilingualText value={item} />{index < 3 && <i>→</i>}</span>)}
-          </div>
-        </section>
-      </div>}
-
-      {active === 'sports' && <div className="preview-list">
-        {sports.map(sport => <div className="preview-line" key={sport.id}>
-          <Gamepad2 /><BilingualText value={sport.name} />
-          <span className="preview-badge"><BilingualText value={bi('Connected', 'متصل')} /></span>
-          <Link className="admin-link-button small" to={`/admin/sports/${sport.id}`}><BilingualText value={bi('Open', 'فتح')} /></Link>
-        </div>)}
-        {sports.length === 0 && <p className="empty-message"><BilingualText value={bi('No sports configured.', 'لا توجد رياضات مكونة.')} /></p>}
-      </div>}
-
-      {active === 'programs' && <div className="preview-list">
-        {programs.map(program => <div className="preview-line" key={program.id}>
-          <FolderCog /><BilingualText value={program.name} />
-          <span className="preview-badge"><BilingualText value={bi('Preview', 'معاينة')} /></span>
-        </div>)}
-        {programs.length === 0 && <p className="empty-message"><BilingualText value={bi('No programs assigned.', 'لا توجد برامج مخصصة.')} /></p>}
-      </div>}
-
-      {active === 'groups' && <div className="preview-list">
-        {groups.map(group => <div className="preview-line" key={group.id}>
-          <Users /><BilingualText value={group.name} />
-          <span className="preview-badge"><BilingualText value={bi('Active', 'نشط')} /></span>
-          <Link className="admin-link-button small" to={`/admin/sports/${group.sportId}/groups/${group.id}`}><BilingualText value={bi('Open', 'فتح')} /></Link>
-        </div>)}
-        {groups.length === 0 && <p className="empty-message"><BilingualText value={bi('No training groups.', 'لا توجد مجموعات تدريب.')} /></p>}
-      </div>}
-
-      {active === 'coaches' && <div className="preview-list">
-        {coaches.map(coach => <div className="preview-line" key={coach.id}>
-          <Medal /><span>{coach.nameEn} | {coach.nameAr}</span>
-          <span className="preview-badge"><BilingualText value={bi('Assigned', 'مُعين')} /></span>
-          <Link className="admin-link-button small" to={`/admin/coaches/${coach.id}`}><BilingualText value={bi('Open', 'فتح')} /></Link>
-        </div>)}
-        {coaches.length === 0 && <p className="empty-message"><BilingualText value={bi('No coaches assigned.', 'لا يوجد مدربون معينون.')} /></p>}
-      </div>}
-
-      {active === 'players' && <div className="preview-list">
-        {players.map(player => <div className="preview-line" key={player.id}>
-          <Users /><code>{player.id}</code><span>{player.nameEn} | {player.nameAr}</span>
-          <Link className="admin-link-button small" to={`/admin/players/${player.id}`}><BilingualText value={bi('Open', 'فتح')} /></Link>
-        </div>)}
-        {players.length === 0 && <p className="empty-message"><BilingualText value={bi('No players enrolled.', 'لا يوجد لاعبون مسجلون.')} /></p>}
-      </div>}
-
-      {active === 'schedule' && <div className="admin-panel">
-        <div className="panel-heading"><BilingualText value={bi('Schedule Preview', 'معاينة الجدول')} /><CalendarCheck /></div>
-        <p><BilingualText value={bi('Session schedule will be linked to branch groups and training blocks.', 'سيتم ربط جدول الحصص بمجموعات الفرع وكتل التدريب.')} /></p>
-        <div className="preview-line"><BilingualText value={bi('Morning Block', 'الكتلة الصباحية')} /><span className="preview-badge"><BilingualText value={bi('Preview', 'معاينة')} /></span></div>
-        <div className="preview-line"><BilingualText value={bi('Evening Block', 'الكتلة المسائية')} /><span className="preview-badge"><BilingualText value={bi('Preview', 'معاينة')} /></span></div>
-      </div>}
-
-      {active === 'attendance' && <div className="admin-panel">
-        <div className="panel-heading"><BilingualText value={bi('Attendance Overview', 'نظرة عامة على الحضور')} /><BarChart3 /></div>
-        <p><BilingualText value={bi('Aggregate attendance data across all branch groups and sessions.', 'بيانات الحضور الإجمالية عبر جميع مجموعات الفرع والحصص.')} /></p>
-        <p className="empty-message"><BilingualText value={bi('No attendance data available in preview.', 'لا توجد بيانات حضور في المعاينة.')} /></p>
-      </div>}
-
-      {active === 'performance' && <div className="admin-panel">
-        <div className="panel-heading"><BilingualText value={bi('Performance Overview', 'نظرة عامة على الأداء')} /><BarChart3 /></div>
-        <p><BilingualText value={bi('Aggregate performance metrics across all branch sports and programmes.', 'مقاييس الأداء الإجمالية عبر جميع رياضات وبرامج الفرع.')} /></p>
-        <p className="empty-message"><BilingualText value={bi('No performance data available in preview.', 'لا توجد بيانات أداء في المعاينة.')} /></p>
-      </div>}
-
-      {active === 'subscriptions' && <div className="admin-panel">
-        <div className="panel-heading"><BilingualText value={bi('Subscriptions', 'الاشتراكات')} /><DollarSign /></div>
-        <p><BilingualText value={bi('Subscription management overview for this branch.', 'نظرة عامة على إدارة الاشتراكات لهذا الفرع.')} /></p>
-        <p className="empty-message"><BilingualText value={bi('No subscription data available in preview.', 'لا توجد بيانات اشتراكات في المعاينة.')} /></p>
-      </div>}
-
-      {active === 'payments' && <div className="admin-panel">
-        <div className="panel-heading"><BilingualText value={bi('Payment Records', 'سجلات الدفع')} /><DollarSign /></div>
-        <p><BilingualText value={bi('Payment records and transaction history for this branch.', 'سجلات الدفع وتاريخ المعاملات لهذا الفرع.')} /></p>
-        <p className="empty-message"><BilingualText value={bi('No payment data available in preview.', 'لا توجد بيانات دفع في المعاينة.')} /></p>
-      </div>}
-
-      {active === 'reports' && <div className="admin-panel">
-        <div className="panel-heading"><BilingualText value={bi('Branch Reports', 'تقارير الفرع')} /><FileText /></div>
-        <p><BilingualText value={bi('Operational and performance reports for this branch.', 'التقارير التشغيلية وتقارير الأداء لهذا الفرع.')} /></p>
-        <div className="preview-line"><BilingualText value={bi('Monthly Summary', 'الملخص الشهري')} /><span className="preview-badge"><BilingualText value={bi('Preview', 'معاينة')} /></span></div>
-        <div className="preview-line"><BilingualText value={bi('Performance Report', 'تقرير الأداء')} /><span className="preview-badge"><BilingualText value={bi('Preview', 'معاينة')} /></span></div>
-      </div>}
-
-      {active === 'content' && <div className="admin-panel">
-        <div className="panel-heading"><BilingualText value={bi('Branch Content', 'محتوى الفرع')} /><FileText /></div>
-        <p><BilingualText value={bi('Content and media assets for this branch.', 'المحتوى والوسائط لهذا الفرع.')} /></p>
-        <div className="preview-line"><BilingualText value={bi('Branch Gallery', 'معرض الفرع')} /><span className="preview-badge"><BilingualText value={bi('Preview', 'معاينة')} /></span></div>
-        <div className="preview-line"><BilingualText value={bi('Brand Assets', 'أصول العلامة التجارية')} /><span className="preview-badge"><BilingualText value={bi('Preview', 'معاينة')} /></span></div>
-      </div>}
-    </section>
+    <section className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Danger Zone','منطقة الخطر')}/><ShieldCheck/></div><UiButton variant="danger" disabled={deleting} onClick={()=>void deleteBranch()}><Trash2/><BilingualText value={bi(deleting?'Deleting…':'Delete preview branch',deleting?'جارٍ الحذف…':'حذف فرع المعاينة')}/></UiButton></section>
   </div>;
 }
