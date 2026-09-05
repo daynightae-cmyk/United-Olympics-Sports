@@ -1,0 +1,135 @@
+name: Admin Branch Operations Closure
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/admin-branch-closure.yml'
+permissions:
+  contents: write
+jobs:
+  close-branch-operations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v5
+        with: { node-version: '22', cache: npm }
+      - name: Close branch directory create flow
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/pages/admin/AdminBranchesPage.tsx')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace("import { useBranches } from '../../admin/data/adminHooks';", "import { useBranches, useCreateBranch, useCountries, useSports } from '../../admin/data/adminHooks';")
+          s=s.replace("import { demoCountries } from '../../data/demo/business';\nimport { demoSports } from '../../data/demo/sports';\n", '')
+          s=s.replace("  const { data, loading, error } = useBranches({ page: 1, pageSize: 50 });", "  const { data, loading, error, refetch } = useBranches({ page: 1, pageSize: 100 });\n  const { data: countriesData } = useCountries({ page: 1, pageSize: 100 });\n  const { data: sportsData } = useSports({ page: 1, pageSize: 100 });\n  const { create, loading: createLoading } = useCreateBranch();\n  const countries = countriesData?.items ?? [];\n  const sportsCatalog = sportsData?.items ?? [];")
+          s=s.replace("  const preparePreview = () => {\n    setWizardOpen(false);\n    setNotice(true);\n  };", "  const createBranch = async () => {\n    if (!draftNameEn.trim() || !draftNameAr.trim() || !draftCountry || !draftSport) return;\n    await create({\n      name: { en: draftNameEn.trim(), ar: draftNameAr.trim() },\n      countryId: draftCountry,\n      organizationId: 'org-united-olympics',\n      sportIds: [draftSport], programIds: [], groupIds: [], coachIds: [], playerIds: [],\n      sportCount: 1, programCount: 0, groupCount: 0, coachCount: 0, playerCount: 0,\n      status: 'active',\n    });\n    await refetch();\n    setWizardOpen(false); setNotice(true);\n    setDraftNameEn(''); setDraftNameAr(''); setDraftCountry(''); setDraftSport(''); setWizardStep(0);\n  };")
+          s=s.replace("demoCountries.find(c => c.id === b.countryId)?.name", "countries.find(c => c.id === b.countryId)?.name")
+          s=s.replace("...demoCountries.map(c => ({ value: c.id, label: c.name }))", "...countries.map(c => ({ value: c.id, label: c.name }))")
+          s=s.replace("options={demoCountries.map((c) => ({ value: c.id, label: c.name }))}", "options={countries.map((c) => ({ value: c.id, label: c.name }))}")
+          s=s.replace("options={demoSports.map((s) => ({ value: s.id, label: s.name }))}", "options={sportsCatalog.map((s) => ({ value: s.id, label: s.name }))}")
+          s=s.replace("demoCountries.find((c) => c.id === draftCountry)?.name.en", "countries.find((c) => c.id === draftCountry)?.name.en")
+          s=s.replace("demoSports.find((s) => s.id === draftSport)?.name.en", "sportsCatalog.find((s) => s.id === draftSport)?.name.en")
+          s=s.replace("Branch preview prepared locally — not saved to any backend.", "Branch saved in the browser preview store — no production backend write was made.")
+          s=s.replace("تم تجهيز معاينة الفرع محليًا — دون حفظ في أي نظام خلفي.", "تم حفظ الفرع في مخزن المعاينة بالمتصفح — دون كتابة في نظام خلفي إنتاجي.")
+          s=s.replace("title={bi('Add Branch Preview', 'معاينة إضافة فرع')}", "title={bi('Add Branch', 'إضافة فرع')}")
+          s=s.replace("description={bi('A local intake preview. Nothing is saved to a backend.', 'معاينة إدخال محلية. لا يتم حفظ أي شيء في نظام خلفي.')}", "description={bi('Creates a browser-persistent preview branch. It does not write to a production backend.', 'ينشئ فرع معاينة محفوظًا في المتصفح. لا يكتب في نظام خلفي إنتاجي.')}")
+          s=s.replace("Confirm the preview record before preparing it locally.", "Confirm the branch before saving it to the browser preview store.")
+          s=s.replace("أكد سجل المعاينة قبل تجهيزه محليًا.", "أكد بيانات الفرع قبل حفظها في مخزن المعاينة بالمتصفح.")
+          s=s.replace("Preparing stores nothing outside this browser session.", "Saving persists this branch in the browser preview store until preview data is reset.")
+          s=s.replace("التجهيز لا يحفظ أي شيء خارج جلسة المتصفح هذه.", "الحفظ يبقي هذا الفرع في مخزن المعاينة بالمتصفح حتى إعادة ضبط بيانات المعاينة.")
+          s=s.replace("<PrimaryPrepare onClick={preparePreview} />", "<PrimaryPrepare onClick={() => void createBranch()} loading={createLoading} />")
+          s=s.replace("function PrimaryPrepare({ onClick }: { onClick: () => void }) {\n  return <button type=\"button\" className=\"uos-btn-primary uos-touch\" onClick={onClick}><BilingualText value={bi('Prepare Preview', 'تجهيز المعاينة')} /></button>;\n}", "function PrimaryPrepare({ onClick, loading }: { onClick: () => void; loading: boolean }) {\n  return <button type=\"button\" className=\"uos-btn-primary uos-touch\" disabled={loading} onClick={onClick}><BilingualText value={bi(loading ? 'Saving…' : 'Save Branch', loading ? 'جارٍ الحفظ…' : 'حفظ الفرع')} /></button>;\n}")
+          s=s.replace("<BmButton variant=\"tertiary\" onClick={() => setSelected([])}><CheckCircle2 aria-hidden=\"true\" /><BilingualText value={bi('Mark reviewed', 'تحديد كمراجع')} /></BmButton>\n              ", '')
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Replace branch cockpit placeholders with live Admin Data
+        shell: bash
+        run: |
+          cat > src/pages/admin/AdminBranchDetailPage.tsx <<'TS'
+          import { BarChart3, Building2, CalendarCheck, DollarSign, FileText, FolderCog, Gamepad2, Medal, ShieldCheck, Trash2, Users } from 'lucide-react';
+          import { useMemo, useState } from 'react';
+          import { Link, useNavigate, useParams } from 'react-router-dom';
+          import { PageHeader, StatusBadge, Tabs } from '../../components/admin/AdminUI';
+          import { BilingualText, bi } from '../../components/bilingual/BilingualText';
+          import { useBranch, useCoaches, useCountries, useDeleteBranch, useGroups, usePayments, usePlayers, usePrograms, useSessions, useSports, useSubscriptions, useUpdateBranch } from '../../admin/data/adminHooks';
+          import { UiButton, UiPreviewState } from '../../components/ui/UiPrimitives';
+
+          const tabs=[
+            {id:'overview',label:bi('Overview','نظرة عامة')},{id:'sports',label:bi('Sports','الرياضات')},{id:'programs',label:bi('Programs','البرامج')},{id:'groups',label:bi('Groups','المجموعات')},{id:'coaches',label:bi('Coaches','المدربون')},{id:'players',label:bi('Players','اللاعبون')},{id:'schedule',label:bi('Schedule','الجدول')},{id:'attendance',label:bi('Attendance','الحضور')},{id:'performance',label:bi('Performance','الأداء')},{id:'subscriptions',label:bi('Subscriptions','الاشتراكات')},{id:'payments',label:bi('Payments','المدفوعات')},{id:'reports',label:bi('Reports','التقارير')},{id:'content',label:bi('Content','المحتوى')},
+          ];
+          const PreviewList=({children,empty}:{children:React.ReactNode;empty:{en:string;ar:string}})=><div className="preview-list">{children || <p className="empty-message"><BilingualText value={empty}/></p>}</div>;
+
+          export function AdminBranchDetailPage(){
+            const {branchId}=useParams(); const navigate=useNavigate(); const [active,setActive]=useState('overview');
+            const {item:branch,loading,error,refetch}=useBranch(branchId); const {update,loading:updating}=useUpdateBranch(); const {delete:remove,loading:deleting}=useDeleteBranch();
+            const {data:countries}=useCountries({page:1,pageSize:100}); const {data:sportsData}=useSports({page:1,pageSize:200}); const {data:programsData}=usePrograms({page:1,pageSize:200}); const {data:groupsData}=useGroups({page:1,pageSize:200}); const {data:coachesData}=useCoaches({page:1,pageSize:200}); const {data:playersData}=usePlayers({page:1,pageSize:500}); const {data:sessionsData}=useSessions({page:1,pageSize:500}); const {data:subsData}=useSubscriptions({page:1,pageSize:500}); const {data:paymentsData}=usePayments({page:1,pageSize:500});
+            const related=useMemo(()=>{ if(!branch)return null; const sports=(sportsData?.items??[]).filter(x=>branch.sportIds.includes(x.id)); const programs=(programsData?.items??[]).filter(x=>branch.programIds.includes(x.id)); const groups=(groupsData?.items??[]).filter(x=>branch.groupIds.includes(x.id)); const coaches=(coachesData?.items??[]).filter(x=>branch.coachIds.includes(x.id)); const players=(playersData?.items??[]).filter(x=>branch.playerIds.includes(x.id)); const sessions=(sessionsData?.items??[]).filter(x=>branch.groupIds.includes(x.groupId)); const subscriptions=(subsData?.items??[]).filter(x=>x.branchId===branch.id); const subIds=new Set(subscriptions.map(x=>x.id)); const payments=(paymentsData?.items??[]).filter(x=>subIds.has(x.subscriptionId)); return {sports,programs,groups,coaches,players,sessions,subscriptions,payments}; },[branch,sportsData,programsData,groupsData,coachesData,playersData,sessionsData,subsData,paymentsData]);
+            if(loading)return <div className="admin-page"><UiPreviewState title={bi('Loading branch','جارٍ تحميل الفرع')} description={bi('Reading branch operations.','جارٍ قراءة عمليات الفرع.')}/></div>;
+            if(error||!branch||!related)return <div className="admin-page"><PageHeader icon={Building2} eyebrow={bi('Branch Cockpit','مركز تحكم الفرع')} title={bi('Branch not found','الفرع غير موجود')} description={bi('Choose a valid branch from the Branches directory.','اختر فرعًا صالحًا من دليل الفروع.')}/></div>;
+            const country=countries?.items.find(x=>x.id===branch.countryId); const avgAttendance=related.players.length?Math.round(related.players.reduce((n,p)=>n+p.attendanceRate,0)/related.players.length):null; const scored=related.players.filter(p=>p.performanceScore!==null); const avgPerformance=scored.length?Math.round(scored.reduce((n,p)=>n+(p.performanceScore??0),0)/scored.length):null; const paidTotal=related.payments.filter(p=>p.status==='completed').reduce((n,p)=>n+p.amount,0); const currency=related.payments[0]?.currency??related.subscriptions[0]?.currency??'AED';
+            const setStatus=async(status:'active'|'inactive')=>{await update(branch.id,{status});await refetch();}; const deleteBranch=async()=>{if(!window.confirm('Delete this preview branch? | حذف فرع المعاينة؟'))return;await remove(branch.id);navigate('/admin/branches');};
+            return <div className="admin-page"><PageHeader icon={Building2} eyebrow={bi('Branch Cockpit','مركز تحكم الفرع')} title={branch.name} description={bi('Live browser-preview cockpit assembled from the Admin data gateway.','مركز تحكم حي للمعاينة بالمتصفح مجمع من بوابة بيانات الإدارة.')} actions={<StatusBadge active={branch.status==='active'}/>}/>
+              <section className="branch-identity-card"><div className="branch-identity-main"><Building2/><h2><BilingualText value={branch.name}/></h2></div><dl><div><dt><BilingualText value={bi('Country','الدولة')}/></dt><dd>{country?<BilingualText value={country.name}/>:<code>{branch.countryId}</code>}</dd></div><div><dt><BilingualText value={bi('Sports','الرياضات')}/></dt><dd>{related.sports.length}</dd></div><div><dt><BilingualText value={bi('Programs','البرامج')}/></dt><dd>{related.programs.length}</dd></div><div><dt><BilingualText value={bi('Groups','المجموعات')}/></dt><dd>{related.groups.length}</dd></div><div><dt><BilingualText value={bi('Coaches','المدربون')}/></dt><dd>{related.coaches.length}</dd></div><div><dt><BilingualText value={bi('Players','اللاعبون')}/></dt><dd>{related.players.length}</dd></div></dl></section>
+              <section className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Branch Controls','ضوابط الفرع')}/><ShieldCheck/></div><div className="preview-form-grid"><label><BilingualText value={bi('Operating status','حالة التشغيل')}/><select value={branch.status} disabled={updating} onChange={e=>void setStatus(e.target.value as 'active'|'inactive')}><option value="active">Active | نشط</option><option value="inactive">Inactive | غير نشط</option></select></label></div><p className="preview-warning"><BilingualText value={bi('Changes persist in the browser preview store; no production backend write is claimed.','تستمر التغييرات في مخزن المعاينة بالمتصفح؛ ولا يتم الادعاء بكتابة في نظام إنتاجي.')}/></p></section>
+              <Tabs items={tabs} active={active} onChange={setActive}/><section className="admin-tab-panel" role="tabpanel">
+                {active==='overview'&&<div className="branch-overview-grid"><section className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Operational Snapshot','لقطة التشغيل')}/><Building2/></div><dl className="detail-list"><div><dt>ID</dt><dd><code>{branch.id}</code></dd></div><div><dt><BilingualText value={bi('Scheduled sessions','الجلسات المجدولة')}/></dt><dd>{related.sessions.length}</dd></div><div><dt><BilingualText value={bi('Active subscriptions','الاشتراكات النشطة')}/></dt><dd>{related.subscriptions.filter(x=>x.status==='active').length}</dd></div><div><dt><BilingualText value={bi('Completed payments','المدفوعات المكتملة')}/></dt><dd>{related.payments.filter(x=>x.status==='completed').length}</dd></div><div><dt><BilingualText value={bi('Collected value','القيمة المحصلة')}/></dt><dd>{paidTotal.toLocaleString()} {currency}</dd></div></dl></section><section className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Development Indicators','مؤشرات التطور')}/><BarChart3/></div><dl className="detail-list"><div><dt><BilingualText value={bi('Average attendance','متوسط الحضور')}/></dt><dd>{avgAttendance===null?'—':`${avgAttendance}%`}</dd></div><div><dt><BilingualText value={bi('Average performance','متوسط الأداء')}/></dt><dd>{avgPerformance===null?'—':avgPerformance}</dd></div></dl></section></div>}
+                {active==='sports'&&<PreviewList empty={bi('No sports assigned.','لا توجد رياضات مخصصة.')}>{related.sports.map(x=><div className="preview-line" key={x.id}><Gamepad2/><BilingualText value={x.name}/><StatusBadge active={x.status==='active'}/><Link className="admin-link-button small" to={`/admin/sports/${x.id}`}><BilingualText value={bi('Open','فتح')}/></Link></div>)}</PreviewList>}
+                {active==='programs'&&<PreviewList empty={bi('No programs assigned.','لا توجد برامج مخصصة.')}>{related.programs.map(x=><div className="preview-line" key={x.id}><FolderCog/><BilingualText value={x.name}/><StatusBadge active={x.status==='active'}/><Link className="admin-link-button small" to={`/admin/programs/${x.id}`}><BilingualText value={bi('Open','فتح')}/></Link></div>)}</PreviewList>}
+                {active==='groups'&&<PreviewList empty={bi('No training groups assigned.','لا توجد مجموعات تدريب مخصصة.')}>{related.groups.map(x=><div className="preview-line" key={x.id}><Users/><BilingualText value={x.name}/><StatusBadge active={x.status==='active'}/><Link className="admin-link-button small" to={`/admin/sports/${x.sportId}/groups/${x.id}`}><BilingualText value={bi('Open','فتح')}/></Link></div>)}</PreviewList>}
+                {active==='coaches'&&<PreviewList empty={bi('No coaches assigned.','لا يوجد مدربون معينون.')}>{related.coaches.map(x=><div className="preview-line" key={x.id}><Medal/><span>{x.nameEn} | {x.nameAr}</span><StatusBadge active={x.status==='active'}/><Link className="admin-link-button small" to={`/admin/coaches/${x.id}`}><BilingualText value={bi('Open','فتح')}/></Link></div>)}</PreviewList>}
+                {active==='players'&&<PreviewList empty={bi('No players enrolled.','لا يوجد لاعبون مسجلون.')}>{related.players.map(x=><div className="preview-line" key={x.id}><Users/><span>{x.nameEn} | {x.nameAr}</span><Link className="admin-link-button small" to={`/admin/players/${x.id}`}><BilingualText value={bi('Open','فتح')}/></Link></div>)}</PreviewList>}
+                {active==='schedule'&&<PreviewList empty={bi('No sessions for assigned branch groups.','لا توجد جلسات لمجموعات الفرع المخصصة.')}>{related.sessions.map(x=><div className="preview-line" key={x.id}><CalendarCheck/><span>{new Date(x.startsAt).toLocaleString()}</span><BilingualText value={x.status}/><Link className="admin-link-button small" to={`/admin/schedules/${x.id}`}><BilingualText value={bi('Open','فتح')}/></Link></div>)}</PreviewList>}
+                {active==='attendance'&&<section className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Attendance Overview','نظرة عامة على الحضور')}/><BarChart3/></div><p><BilingualText value={avgAttendance===null?bi('No player attendance data for this branch.','لا توجد بيانات حضور للاعبي هذا الفرع.'):bi(`Average attendance across ${related.players.length} linked players: ${avgAttendance}%`,`متوسط الحضور عبر ${related.players.length} لاعبًا مرتبطًا: ${avgAttendance}%`)}/></p><Link className="admin-link-button" to="/admin/attendance"><BilingualText value={bi('Open Attendance Operations','فتح عمليات الحضور')}/></Link></section>}
+                {active==='performance'&&<section className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Performance Overview','نظرة عامة على الأداء')}/><BarChart3/></div><p><BilingualText value={avgPerformance===null?bi('No scored players for this branch.','لا يوجد لاعبون ذوو تقييم في هذا الفرع.'):bi(`Average score across ${scored.length} scored players: ${avgPerformance}`,`متوسط التقييم عبر ${scored.length} لاعبًا: ${avgPerformance}`)}/></p><Link className="admin-link-button" to="/admin/performance"><BilingualText value={bi('Open Performance Operations','فتح عمليات الأداء')}/></Link></section>}
+                {active==='subscriptions'&&<PreviewList empty={bi('No subscriptions for this branch.','لا توجد اشتراكات لهذا الفرع.')}>{related.subscriptions.map(x=><div className="preview-line" key={x.id}><DollarSign/><BilingualText value={x.plan}/><span>{x.amount} {x.currency}</span><Link className="admin-link-button small" to={`/admin/subscriptions/${x.id}`}><BilingualText value={bi('Open','فتح')}/></Link></div>)}</PreviewList>}
+                {active==='payments'&&<PreviewList empty={bi('No payments linked to this branch subscriptions.','لا توجد مدفوعات مرتبطة باشتراكات هذا الفرع.')}>{related.payments.map(x=><div className="preview-line" key={x.id}><DollarSign/><span>{x.amount} {x.currency}</span><span>{x.status}</span><Link className="admin-link-button small" to={`/admin/payments/${x.id}`}><BilingualText value={bi('Open','فتح')}/></Link></div>)}</PreviewList>}
+                {active==='reports'&&<section className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Reports','التقارير')}/><FileText/></div><p><BilingualText value={bi('The current report model has no branch relation, so this cockpit does not fabricate branch-specific reports.','نموذج التقارير الحالي لا يحتوي علاقة بالفرع، لذلك لا يختلق مركز التحكم تقارير خاصة بالفرع.')}/></p><Link className="admin-link-button" to="/admin/reports"><BilingualText value={bi('Open Central Reports','فتح التقارير المركزية')}/></Link></section>}
+                {active==='content'&&<section className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Content','المحتوى')}/><FileText/></div><p><BilingualText value={bi('Content records are currently organization-level; branch scoping is not represented in the data contract.','سجلات المحتوى حاليًا على مستوى المؤسسة؛ نطاق الفرع غير ممثل في عقد البيانات.')}/></p><Link className="admin-link-button" to="/admin/content"><BilingualText value={bi('Open Central Content','فتح المحتوى المركزي')}/></Link></section>}
+              </section>
+              <section className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Danger Zone','منطقة الخطر')}/><ShieldCheck/></div><UiButton variant="danger" disabled={deleting} onClick={()=>void deleteBranch()}><Trash2/><BilingualText value={bi(deleting?'Deleting…':'Delete preview branch',deleting?'جارٍ الحذف…':'حذف فرع المعاينة')}/></UiButton></section>
+            </div>;
+          }
+          TS
+      - name: Add branch CRUD persistence QA
+        shell: bash
+        run: |
+          cat > qa/admin-branch-operational.mjs <<'JS'
+          import { chromium } from 'playwright';
+          const base=process.env.UOS_BASE_URL||'http://127.0.0.1:4173'; const browser=await chromium.launch({headless:true}); const page=await browser.newPage({viewport:{width:1440,height:900}});
+          await page.goto(base+'/admin/branches',{waitUntil:'networkidle'}); await page.getByText('Add Branch',{exact:true}).click();
+          await page.locator('input[placeholder="Branch name"]').fill('QA Operations Branch'); await page.locator('input[placeholder="اسم الفرع"]').fill('فرع اختبار التشغيل'); await page.getByText('Continue',{exact:true}).click();
+          const selects=page.locator('select'); const count=await selects.count(); if(count<2) throw new Error('branch wizard country/sport selects missing');
+          for(let i=count-2;i<count;i++){const sel=selects.nth(i); const opts=await sel.locator('option').evaluateAll(os=>os.map(o=>({v:o.value,d:o.disabled})).filter(x=>x.v&&!x.d)); if(!opts.length) throw new Error('branch wizard select has no real option'); await sel.selectOption(opts[0].v);}
+          await page.getByText('Continue',{exact:true}).click(); await page.getByText('Save Branch',{exact:true}).click(); await page.getByText('QA Operations Branch',{exact:true}).first().waitFor();
+          await page.reload({waitUntil:'networkidle'}); await page.getByText('QA Operations Branch',{exact:true}).first().waitFor();
+          const row=page.locator('tr').filter({hasText:'QA Operations Branch'}).first(); const link=row.locator('a[href^="/admin/branches/"]').first(); const href=await link.getAttribute('href'); if(!href) throw new Error('new branch detail link missing'); await page.goto(base+href,{waitUntil:'networkidle'}); await page.getByText('Branch Controls',{exact:true}).waitFor();
+          const text=await page.locator('body').innerText(); if(/Sport branch-|Coach branch-|Player branch-|will be linked to branch groups/i.test(text)) throw new Error('branch cockpit still contains fabricated relationship placeholders');
+          await browser.close(); console.log('Admin branch create/reload/cockpit QA passed.');
+          JS
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: git diff --check
+      - run: npx playwright install --with-deps chromium
+      - name: Start preview
+        shell: bash
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/branch-preview.log 2>&1 &
+          for i in {1..40}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/branch-preview.log; exit 1
+      - name: Branch browser QA
+        env: { UOS_BASE_URL: 'http://127.0.0.1:4173' }
+        run: node qa/admin-branch-operational.mjs
+      - name: Existing Admin QA
+        env: { UOS_BASE_URL: 'http://127.0.0.1:4173' }
+        run: node qa/admin-operational.mjs
+      - name: Commit verified branch closure
+        shell: bash
+        run: |
+          set -euo pipefail; git fetch origin main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" || { echo 'origin/main moved; refusing overwrite'; exit 1; }
+          git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/pages/admin/AdminBranchesPage.tsx src/pages/admin/AdminBranchDetailPage.tsx qa/admin-branch-operational.mjs
+          git diff --cached --check; git commit -m 'fix: close admin branch operating cockpit'; git push origin HEAD:main
