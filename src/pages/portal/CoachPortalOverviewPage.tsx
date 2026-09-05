@@ -1,5 +1,0 @@
-import { Award, UsersRound, CalendarClock, ClipboardCheck, FileText, MessageSquare, User } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { PageHeader } from '../../components/admin/AdminUI';
-import { BilingualText, bi } from '../../components/bilingual/BilingualText';
-export function CoachPortalOverviewPage() { return <div className="admin-page"><PageHeader eyebrow={bi('Coach Portal', 'بوابة المدرب')} title={bi('Overview', 'نظرة عامة')} description={bi('Coach portal architecture.', 'هيكل بوابة المدرب.')} /><div className="admin-grid-cards"><section className="admin-preview-card"><CalendarClock size={24} /><h3><BilingualText value={bi('Schedule', 'الجدول')} /></h3></section><section className="admin-preview-card"><UsersRound size={24} /><h3><BilingualText value={bi('Groups', 'المجموعات')} /></h3></section><section className="admin-preview-card"><ClipboardCheck size={24} /><h3><BilingualText value={bi('Evaluations', 'التقييمات')} /></h3></section><section className="admin-preview-card"><FileText size={24} /><h3><BilingualText value={bi('Programs', 'البرامج')} /></h3></section></div></div>; }

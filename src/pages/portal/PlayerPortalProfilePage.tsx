@@ -1,4 +1,0 @@
-import { User } from 'lucide-react';
-import { PageHeader } from '../../components/admin/AdminUI';
-import { BilingualText, bi } from '../../components/bilingual/BilingualText';
-export function PlayerPortalProfilePage() { return <div className="admin-page"><PageHeader eyebrow={bi('Player Portal | Profile', 'بوابة اللاعب | الملف الشخصي')} title={bi('Profile', 'الملف الشخصي')} description={bi('Player profile preview.', 'معاينة الملف الشخصي للاعب.')} /><div className="admin-preview-card"><User size={32} /><h3><BilingualText value={bi('Profile', 'الملف الشخصي')} /></h3></div></div>; }

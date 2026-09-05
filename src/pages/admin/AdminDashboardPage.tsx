@@ -105,10 +105,13 @@ export function AdminDashboardPage() {
       </section>
     </section>
 
-    <section className="branch-readiness-preview admin-panel" aria-label="Branch Readiness Preview | معاينة جاهزية الفروع">
+    <section className="branch-readiness-preview admin-panel" aria-label="Composite Preview Index | مؤشر المعاينة المركب">
       <div className="panel-heading">
-        <BilingualText value={bi('Branch Readiness', 'جاهزية الفروع')} />
-        <small><BilingualText value={bi('Calculated from current preview fixtures', 'محسوبة من البيانات التجريبية الحالية')} /></small>
+        <div>
+          <BilingualText value={bi('Composite Preview Index', 'مؤشر المعاينة المركب')} />
+          <small><BilingualText value={bi('Synthetic composite values — not operational readiness facts', 'قيم مركبة تركيبية — ليست حقائق جاهزية تشغيلية')} /></small>
+        </div>
+        <span className="preview-badge"><BilingualText value={bi('Preview Only', 'معاينة فقط')} /></span>
       </div>
       <div className="readiness-grid">
         <article className="readiness-card">
@@ -151,6 +154,9 @@ export function AdminDashboardPage() {
           </div>
         </article>
       </div>
+      <p style={{ marginTop: 12, fontSize: 11, color: 'var(--color-text-muted, #a5a29c)' }}>
+        <BilingualText value={bi('These composite indices are derived from isolated preview fixtures. They do not represent operational branch readiness.', 'هذه المؤشرات المركبة مشتقة من بيانات تجريبية معزولة. لا تمثل جاهزية الفروع التشغيلية.')} />
+      </p>
     </section>
 
     <section className="admin-panel operational-pulse" aria-label="Operational Pulse | نبض العمليات">

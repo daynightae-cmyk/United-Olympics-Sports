@@ -1,7 +1,7 @@
 import { FileText, Download, Eye, FolderOpen, Shield, Award, Calendar } from 'lucide-react';
 import { PageHeader } from '../../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
-import { demoPlayers } from '../../../data/demo/players';
+import { usePlayerSession } from '../../../portals/player/PlayerSessionContext';
 
 type Document = {
   id: string;
@@ -13,7 +13,7 @@ type Document = {
   status: { en: string; ar: string };
 };
 
-const demoDocuments: Document[] = [
+const previewDocuments: Document[] = [
   { id: 'doc-001', name: { en: 'Medical Clearance Certificate', ar: 'شهادة اللياقة الطبية' }, category: { en: 'Medical', ar: 'طبية' }, icon: Shield, size: '245 KB', date: '2026-08-15', status: { en: 'Valid', ar: 'صالحة' } },
   { id: 'doc-002', name: { en: 'Player Registration Form', ar: 'نموذج تسجيل اللاعب' }, category: { en: 'Registration', ar: 'تسجيل' }, icon: FileText, size: '180 KB', date: '2026-08-10', status: { en: 'Submitted', ar: 'مُرسلة' } },
   { id: 'doc-003', name: { en: 'Parental Consent Form', ar: 'نموذج موافقة ولي الأمر' }, category: { en: 'Consent', ar: 'موافقة' }, icon: FolderOpen, size: '312 KB', date: '2026-07-28', status: { en: 'Signed', ar: 'موقعة' } },
@@ -22,13 +22,14 @@ const demoDocuments: Document[] = [
 ];
 
 export function PlayerPortalDocumentsPage() {
-  const player = demoPlayers[0];
+  const { player } = usePlayerSession();
+  const athleteId = player?.id ?? '—';
   return (
     <div className="admin-page">
       <PageHeader
         eyebrow={bi('Player Portal | Documents', 'بوابة اللاعب | الوثائق')}
         title={bi('Documents', 'الوثائق')}
-        description={bi('Player documents and certificates — preview data only.', 'وثائق وشهادات اللاعب — بيانات تجريبية فقط.')}
+        description={bi('Documents and certificates — shown only when a verified athlete record is connected.', 'وثائق وشهادات — تظهر فقط عند ربط سجل رياضي موثق.')}
         actions={<span className="preview-badge"><BilingualText value={bi('Preview Data', 'بيانات تجريبية')} /></span>}
       />
       <section className="documents-filter" aria-label="Document filters">
@@ -48,7 +49,7 @@ export function PlayerPortalDocumentsPage() {
         </div>
       </section>
       <section className="documents-grid" aria-label="Documents list">
-        {demoDocuments.map((doc) => (
+        {previewDocuments.map((doc) => (
           <article key={doc.id} className="document-card">
             <div className="document-icon">
               <doc.icon size={24} />
