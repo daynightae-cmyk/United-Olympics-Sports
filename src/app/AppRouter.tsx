@@ -8,6 +8,7 @@ import { PublicSite } from '../pages/public/PublicSite';
 import { BenchmarkShowcasePage } from '../pages/benchmark/BenchmarkShowcasePage';
 import { UnitedAssistant } from '../assistant/UnitedAssistant';
 import { UpdateToast } from '../platform/UpdateToast';
+import { PortalAuthPage } from '../components/auth/PortalAuthPage';
 
 const StoreApp = lazy(() => import('../store/StoreApp').then((module) => ({ default: module.StoreApp })));
 
@@ -16,6 +17,10 @@ export function AppRouter() {
     <BrowserRouter>
       <Routes>
         <Route path="/benchmark" element={<BenchmarkShowcasePage />} />
+        <Route path="/admin/login" element={<PortalAuthPage portal="admin" />} />
+        <Route path="/store/login" element={<PortalAuthPage portal="store" />} />
+        <Route path="/parent/login" element={<PortalAuthPage portal="parent" />} />
+        <Route path="/coach/login" element={<PortalAuthPage portal="coach" />} />
         <Route path="/store/*" element={<Suspense fallback={<div role="status" aria-live="polite" className="ui-skeleton"><i /><i /><i /></div>}><StoreApp /></Suspense>} />
         <Route path="/admin/*" element={<AdminLayout />} />
         <Route path="/player/*" element={<PlayerPortalRouter />} />

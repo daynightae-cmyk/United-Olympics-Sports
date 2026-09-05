@@ -52,7 +52,12 @@ export type AdminRouteKey = keyof typeof adminRouteRegistry;
 
 export const portalRouteRegistry = {
   player: { path: "/player", label: { en: "Player", ar: "اللاعب" } },
+  playerLogin: { path: "/player/login", label: { en: "Player Login", ar: "دخول اللاعب" } },
   parent: { path: "/parent", label: { en: "Parent", ar: "ولي الأمر" } },
+  parentLogin: { path: "/parent/login", label: { en: "Parent Login", ar: "دخول ولي الأمر" } },
   coach: { path: "/coach", label: { en: "Coach", ar: "المدرب" } },
+  coachLogin: { path: "/coach/login", label: { en: "Coach Login", ar: "دخول المدرب" } },
   admin: { path: "/admin", label: { en: "Admin", ar: "الإدارة" } },
+  adminLogin: { path: "/admin/login", label: { en: "Admin Login", ar: "دخول الإدارة" } },
+  storeLogin: { path: "/store/login", label: { en: "Store Login", ar: "دخول المتجر" } },
 } as const;

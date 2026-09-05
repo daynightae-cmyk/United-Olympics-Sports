@@ -249,10 +249,11 @@ function PublicHeader() {
           </span>
           <div className="portal-links">
             {[
-              ["/player", "Player", "اللاعب"],
-              ["/parent", "Parent", "ولي الأمر"],
-              ["/coach", "Coach", "المدرب"],
-              ["/admin", "Admin", "الإدارة"],
+              ["/player/login", "Player", "اللاعب"],
+              ["/parent/login", "Parent", "ولي الأمر"],
+              ["/coach/login", "Coach", "المدرب"],
+              ["/store/login", "Store", "المتجر"],
+              ["/admin/login", "Admin", "الإدارة"],
             ].map(([to, en, ar]) => (
               <Link key={to} to={to} onClick={() => setOpen(false)}>
                 <Bilingual value={{ en, ar }} />
@@ -583,7 +584,7 @@ function Home() {
             <div className="pulse-content">
               <Bilingual value={{ en: "Portal Access", ar: "دخول البوابات" }} />
               <div className="pulse-bar"><span style={{ width: '100%' }} /></div>
-              <small><Bilingual value={{ en: "Player / Parent / Coach / Admin separated", ar: "اللاعب / ولي الأمر / المدرب / الإدارة منفصلين" }} /></small>
+              <small><Bilingual value={{ en: "Player / Parent / Coach / Store / Admin separated", ar: "اللاعب / ولي الأمر / المدرب / المتجر / الإدارة منفصلين" }} /></small>
             </div>
           </article>
         </div>

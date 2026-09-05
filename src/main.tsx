@@ -17,6 +17,7 @@ import './styles/admin-directory-v2.css';
 import './styles/uos-benchmark.css';
 import './styles/player-portal.css';
 import './styles/portal-unification.css';
+import './styles/portal-auth.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
