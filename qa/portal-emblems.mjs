@@ -27,6 +27,12 @@ const viewports = [
   { name: '390', width: 390, height: 844 },
   { name: '1440', width: 1440, height: 1000 },
 ];
+const themeScenarios = [
+  { name: 'light', appearance: 'light', colorScheme: 'light', effective: 'light' },
+  { name: 'dark', appearance: 'dark', colorScheme: 'dark', effective: 'dark' },
+  { name: 'system-light', appearance: 'system', colorScheme: 'light', effective: 'light' },
+  { name: 'system-dark', appearance: 'system', colorScheme: 'dark', effective: 'dark' },
+];
 const settings = (appearance, bilingualOrder) => ({ appearance, bilingualOrder, density: 'comfortable', motion: 'system', fontScale: 'default', sidebarDefault: 'expanded' });
 
 await fs.mkdir(outputDir, { recursive: true });
@@ -34,27 +40,29 @@ const browser = await chromium.launch();
 const errors = [];
 try {
   for (const entry of cases) {
-    for (const appearance of ['light', 'dark']) {
+    for (const theme of themeScenarios) {
       for (const bilingualOrder of ['en-first', 'ar-first']) {
-        const context = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: appearance });
-        await context.addInitScript(({ payload }) => localStorage.setItem('uos:ui-settings:v1', JSON.stringify(payload)), { payload: settings(appearance, bilingualOrder) });
+        const context = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: theme.colorScheme });
+        await context.addInitScript(({ payload }) => localStorage.setItem('uos:ui-settings:v1', JSON.stringify(payload)), { payload: settings(theme.appearance, bilingualOrder) });
         const page = await context.newPage();
         const consoleErrors = [];
         page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
         await page.goto(`${baseUrl}${entry.route}`, { waitUntil: 'networkidle' });
         const primary = page.locator('[data-portal-emblem-role="primary"]');
-        if (await primary.count() < 1) errors.push(`${entry.route} ${appearance} ${bilingualOrder}: missing primary emblem`);
+        if (await primary.count() < 1) errors.push(`${entry.route} ${theme.name} ${bilingualOrder}: missing primary emblem`);
         const primaryPortals = await primary.evaluateAll((nodes) => [...new Set(nodes.map((node) => node.getAttribute('data-portal-emblem')))]);
-        if (primaryPortals.some((portal) => portal !== entry.portal)) errors.push(`${entry.route} ${appearance} ${bilingualOrder}: wrong primary emblem(s) ${primaryPortals.join(',')}`);
-        const expected = expectedPath[entry.portal][appearance];
+        if (primaryPortals.some((portal) => portal !== entry.portal)) errors.push(`${entry.route} ${theme.name} ${bilingualOrder}: wrong primary emblem(s) ${primaryPortals.join(',')}`);
+        const expected = expectedPath[entry.portal][theme.effective];
         const sources = await primary.locator('img').evaluateAll((nodes) => nodes.map((node) => node.getAttribute('src')));
-        if (!sources.some((src) => src?.endsWith(expected))) errors.push(`${entry.route} ${appearance} ${bilingualOrder}: expected ${expected}, got ${sources.join(',')}`);
+        if (!sources.some((src) => src?.endsWith(expected))) errors.push(`${entry.route} ${theme.name} ${bilingualOrder}: expected ${expected}, got ${sources.join(',')}`);
+        const resolvedThemes = await primary.evaluateAll((nodes) => [...new Set(nodes.map((node) => node.getAttribute('data-portal-theme')))]);
+        if (resolvedThemes.some((resolved) => resolved !== theme.effective)) errors.push(`${entry.route} ${theme.name}: resolved theme ${resolvedThemes.join(',')} expected ${theme.effective}`);
         const dir = await page.locator('html').getAttribute('dir');
         const expectedDir = bilingualOrder === 'ar-first' ? 'rtl' : 'ltr';
-        if (dir !== expectedDir) errors.push(`${entry.route} ${appearance} ${bilingualOrder}: dir=${dir}, expected ${expectedDir}`);
+        if (dir !== expectedDir) errors.push(`${entry.route} ${theme.name} ${bilingualOrder}: dir=${dir}, expected ${expectedDir}`);
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
-        if (overflow) errors.push(`${entry.route} ${appearance} ${bilingualOrder}: horizontal overflow at 390px`);
-        if (consoleErrors.length) errors.push(`${entry.route} ${appearance} ${bilingualOrder}: console errors: ${consoleErrors.join(' | ')}`);
+        if (overflow) errors.push(`${entry.route} ${theme.name} ${bilingualOrder}: horizontal overflow at 390px`);
+        if (consoleErrors.length) errors.push(`${entry.route} ${theme.name} ${bilingualOrder}: console errors: ${consoleErrors.join(' | ')}`);
         await context.close();
       }
     }
