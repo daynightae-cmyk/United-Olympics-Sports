@@ -1,4 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+
+const ADMIN_DATA_CHANGED = 'uos:admin-data-changed';
+function notifyAdminDataChanged() {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(ADMIN_DATA_CHANGED));
+}
 import { useAdminData } from './AdminDataProvider';
 import type { ListResult, ListQueryParams } from './queryTypes';
 import type {
@@ -143,7 +148,9 @@ export function useCreateCountry() {
   const create = useCallback(async (data: Partial<CountryViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.createCountry(data);
+      const result = await gateway.createCountry(data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -157,7 +164,9 @@ export function useUpdateCountry() {
   const update = useCallback(async (id: string, data: Partial<CountryViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.updateCountry(id, data);
+      const result = await gateway.updateCountry(id, data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -171,7 +180,9 @@ export function useDeleteCountry() {
   const deleteFn = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      return await gateway.deleteCountry(id);
+      const result = await gateway.deleteCountry(id);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -195,7 +206,9 @@ export function useCreateBranch() {
   const create = useCallback(async (data: Partial<BranchViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.createBranch(data);
+      const result = await gateway.createBranch(data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -209,7 +222,9 @@ export function useUpdateBranch() {
   const update = useCallback(async (id: string, data: Partial<BranchViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.updateBranch(id, data);
+      const result = await gateway.updateBranch(id, data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -223,7 +238,9 @@ export function useDeleteBranch() {
   const deleteFn = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      return await gateway.deleteBranch(id);
+      const result = await gateway.deleteBranch(id);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -247,7 +264,9 @@ export function useCreateSport() {
   const create = useCallback(async (data: Partial<SportViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.createSport(data);
+      const result = await gateway.createSport(data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -261,7 +280,9 @@ export function useUpdateSport() {
   const update = useCallback(async (id: string, data: Partial<SportViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.updateSport(id, data);
+      const result = await gateway.updateSport(id, data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -275,7 +296,9 @@ export function useDeleteSport() {
   const deleteFn = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      return await gateway.deleteSport(id);
+      const result = await gateway.deleteSport(id);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -299,7 +322,9 @@ export function useCreateProgram() {
   const create = useCallback(async (data: Partial<ProgramViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.createProgram(data);
+      const result = await gateway.createProgram(data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -313,7 +338,9 @@ export function useUpdateProgram() {
   const update = useCallback(async (id: string, data: Partial<ProgramViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.updateProgram(id, data);
+      const result = await gateway.updateProgram(id, data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -327,7 +354,9 @@ export function useDeleteProgram() {
   const deleteFn = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      return await gateway.deleteProgram(id);
+      const result = await gateway.deleteProgram(id);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -351,7 +380,9 @@ export function useCreateGroup() {
   const create = useCallback(async (data: Partial<TrainingGroupViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.createGroup(data);
+      const result = await gateway.createGroup(data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -365,7 +396,9 @@ export function useUpdateGroup() {
   const update = useCallback(async (id: string, data: Partial<TrainingGroupViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.updateGroup(id, data);
+      const result = await gateway.updateGroup(id, data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -379,7 +412,9 @@ export function useDeleteGroup() {
   const deleteFn = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      return await gateway.deleteGroup(id);
+      const result = await gateway.deleteGroup(id);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -403,7 +438,9 @@ export function useCreatePlayer() {
   const create = useCallback(async (data: Partial<PlayerViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.createPlayer(data);
+      const result = await gateway.createPlayer(data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -417,7 +454,9 @@ export function useUpdatePlayer() {
   const update = useCallback(async (id: string, data: Partial<PlayerViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.updatePlayer(id, data);
+      const result = await gateway.updatePlayer(id, data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -431,7 +470,9 @@ export function useDeletePlayer() {
   const deleteFn = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      return await gateway.deletePlayer(id);
+      const result = await gateway.deletePlayer(id);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -455,7 +496,9 @@ export function useCreateCoach() {
   const create = useCallback(async (data: Partial<CoachViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.createCoach(data);
+      const result = await gateway.createCoach(data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -469,7 +512,9 @@ export function useUpdateCoach() {
   const update = useCallback(async (id: string, data: Partial<CoachViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.updateCoach(id, data);
+      const result = await gateway.updateCoach(id, data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -483,7 +528,9 @@ export function useDeleteCoach() {
   const deleteFn = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      return await gateway.deleteCoach(id);
+      const result = await gateway.deleteCoach(id);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -507,7 +554,9 @@ export function useCreateParent() {
   const create = useCallback(async (data: Partial<ParentViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.createParent(data);
+      const result = await gateway.createParent(data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -521,7 +570,9 @@ export function useUpdateParent() {
   const update = useCallback(async (id: string, data: Partial<ParentViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.updateParent(id, data);
+      const result = await gateway.updateParent(id, data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -535,7 +586,9 @@ export function useDeleteParent() {
   const deleteFn = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      return await gateway.deleteParent(id);
+      const result = await gateway.deleteParent(id);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -559,7 +612,9 @@ export function useCreateSession() {
   const create = useCallback(async (data: Partial<SessionViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.createSession(data);
+      const result = await gateway.createSession(data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -573,7 +628,9 @@ export function useUpdateSession() {
   const update = useCallback(async (id: string, data: Partial<SessionViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.updateSession(id, data);
+      const result = await gateway.updateSession(id, data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -587,7 +644,9 @@ export function useDeleteSession() {
   const deleteFn = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      return await gateway.deleteSession(id);
+      const result = await gateway.deleteSession(id);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -611,7 +670,9 @@ export function useCreateSubscription() {
   const create = useCallback(async (data: Partial<SubscriptionViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.createSubscription(data);
+      const result = await gateway.createSubscription(data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -625,7 +686,9 @@ export function useUpdateSubscription() {
   const update = useCallback(async (id: string, data: Partial<SubscriptionViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.updateSubscription(id, data);
+      const result = await gateway.updateSubscription(id, data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -639,7 +702,9 @@ export function useDeleteSubscription() {
   const deleteFn = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      return await gateway.deleteSubscription(id);
+      const result = await gateway.deleteSubscription(id);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -663,7 +728,9 @@ export function useCreatePayment() {
   const create = useCallback(async (data: Partial<PaymentViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.createPayment(data);
+      const result = await gateway.createPayment(data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -677,7 +744,9 @@ export function useUpdatePayment() {
   const update = useCallback(async (id: string, data: Partial<PaymentViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.updatePayment(id, data);
+      const result = await gateway.updatePayment(id, data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -691,7 +760,9 @@ export function useDeletePayment() {
   const deleteFn = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      return await gateway.deletePayment(id);
+      const result = await gateway.deletePayment(id);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -739,7 +810,9 @@ export function useCreateContent() {
   const create = useCallback(async (data: Partial<ContentViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.createContent(data);
+      const result = await gateway.createContent(data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -753,7 +826,9 @@ export function useUpdateContent() {
   const update = useCallback(async (id: string, data: Partial<ContentViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.updateContent(id, data);
+      const result = await gateway.updateContent(id, data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -767,7 +842,9 @@ export function useDeleteContent() {
   const deleteFn = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      return await gateway.deleteContent(id);
+      const result = await gateway.deleteContent(id);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -791,7 +868,9 @@ export function useCreateUser() {
   const create = useCallback(async (data: Partial<UserViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.createUser(data);
+      const result = await gateway.createUser(data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -805,7 +884,9 @@ export function useUpdateUser() {
   const update = useCallback(async (id: string, data: Partial<UserViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.updateUser(id, data);
+      const result = await gateway.updateUser(id, data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -819,7 +900,9 @@ export function useDeleteUser() {
   const deleteFn = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      return await gateway.deleteUser(id);
+      const result = await gateway.deleteUser(id);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -843,7 +926,9 @@ export function useCreateRegistration() {
   const create = useCallback(async (data: Partial<RegistrationViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.createRegistration(data);
+      const result = await gateway.createRegistration(data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -857,7 +942,9 @@ export function useUpdateRegistration() {
   const update = useCallback(async (id: string, data: Partial<RegistrationViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.updateRegistration(id, data);
+      const result = await gateway.updateRegistration(id, data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -871,7 +958,9 @@ export function useDeleteRegistration() {
   const deleteFn = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      return await gateway.deleteRegistration(id);
+      const result = await gateway.deleteRegistration(id);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -895,7 +984,9 @@ export function useCreateAchievement() {
   const create = useCallback(async (data: Partial<AchievementViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.createAchievement(data);
+      const result = await gateway.createAchievement(data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -909,7 +1000,9 @@ export function useUpdateAchievement() {
   const update = useCallback(async (id: string, data: Partial<AchievementViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.updateAchievement(id, data);
+      const result = await gateway.updateAchievement(id, data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -923,7 +1016,9 @@ export function useDeleteAchievement() {
   const deleteFn = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      return await gateway.deleteAchievement(id);
+      const result = await gateway.deleteAchievement(id);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -947,7 +1042,9 @@ export function useCreateEvent() {
   const create = useCallback(async (data: Partial<EventViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.createEvent(data);
+      const result = await gateway.createEvent(data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -961,7 +1058,9 @@ export function useUpdateEvent() {
   const update = useCallback(async (id: string, data: Partial<EventViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.updateEvent(id, data);
+      const result = await gateway.updateEvent(id, data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -975,7 +1074,9 @@ export function useDeleteEvent() {
   const deleteFn = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      return await gateway.deleteEvent(id);
+      const result = await gateway.deleteEvent(id);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -999,7 +1100,9 @@ export function useCreateAnnouncement() {
   const create = useCallback(async (data: Partial<AnnouncementViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.createAnnouncement(data);
+      const result = await gateway.createAnnouncement(data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -1013,7 +1116,9 @@ export function useUpdateAnnouncement() {
   const update = useCallback(async (id: string, data: Partial<AnnouncementViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.updateAnnouncement(id, data);
+      const result = await gateway.updateAnnouncement(id, data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -1027,7 +1132,9 @@ export function useDeleteAnnouncement() {
   const deleteFn = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      return await gateway.deleteAnnouncement(id);
+      const result = await gateway.deleteAnnouncement(id);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -1051,7 +1158,9 @@ export function useCreateMessage() {
   const create = useCallback(async (data: Partial<MessageViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.createMessage(data);
+      const result = await gateway.createMessage(data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -1065,7 +1174,9 @@ export function useUpdateMessage() {
   const update = useCallback(async (id: string, data: Partial<MessageViewModel>) => {
     setLoading(true);
     try {
-      return await gateway.updateMessage(id, data);
+      const result = await gateway.updateMessage(id, data);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }
@@ -1079,7 +1190,9 @@ export function useDeleteMessage() {
   const deleteFn = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      return await gateway.deleteMessage(id);
+      const result = await gateway.deleteMessage(id);
+      notifyAdminDataChanged();
+      return result;
     } finally {
       setLoading(false);
     }

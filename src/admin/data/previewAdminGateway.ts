@@ -39,6 +39,18 @@ import { demoTrainingGroups } from '../../data/demo/trainingGroups';
 import { getPlayerOverall, getGroup, getSport, getBranch, getCountry, getCoach, getParent, getProgram } from '../../data/demo/selectors';
 import { previewAchievements, previewAnnouncements, previewAuditActivity, previewContent, previewEvents, previewMessages, previewPayments, previewRegistrations, previewReports, previewSubscriptions, previewUsers } from '../../data/demo/adminRecords';
 
+const PREVIEW_STORAGE_KEY = 'uos-admin-preview-data-v1';
+function persistPreviewData() {
+  if (typeof window === 'undefined') return;
+  try { window.localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(previewSessionData)); } catch { /* storage is optional */ }
+}
+function hydratePreviewData() {
+  if (typeof window === 'undefined') return;
+  try {
+    const raw = window.localStorage.getItem(PREVIEW_STORAGE_KEY);
+    if (raw) previewSessionData = { ...previewSessionData, ...JSON.parse(raw) };
+  } catch { /* invalid or unavailable storage falls back to demo data */ }
+}
 let previewSessionData = {
   countries: [...demoCountries],
   branches: [...demoBranches],
@@ -153,6 +165,7 @@ export const previewAdminGateway: AdminDataGateway = {
       status: (data.status as 'active' | 'inactive') ?? 'active',
     };
     previewSessionData.countries.push(newCountry as any);
+    persistPreviewData();
     return { item: newCountry, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };
   },
 
@@ -161,6 +174,7 @@ export const previewAdminGateway: AdminDataGateway = {
     const idx = previewSessionData.countries.findIndex(x => x.id === id);
     if (idx === -1) throw new Error('Country not found');
     previewSessionData.countries[idx] = { ...previewSessionData.countries[idx], ...data } as any;
+    persistPreviewData();
     const updated = await this.getCountry(id);
     return { item: updated!, message: 'Updated in preview data. | تم التحديث في بيانات المعاينة.' };
   },
@@ -168,6 +182,7 @@ export const previewAdminGateway: AdminDataGateway = {
   async deleteCountry(id: string): Promise<DeleteResult> {
     await previewDelay();
     previewSessionData.countries = previewSessionData.countries.filter(x => x.id !== id);
+    persistPreviewData();
     return { success: true, message: 'Archived in preview data. | تمت الأرشفة في بيانات المعاينة.' };
   },
 
@@ -246,6 +261,7 @@ export const previewAdminGateway: AdminDataGateway = {
       email: data.email,
     };
     previewSessionData.branches.push(newBranch as any);
+    persistPreviewData();
     return { item: newBranch, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };
   },
 
@@ -254,6 +270,7 @@ export const previewAdminGateway: AdminDataGateway = {
     const idx = previewSessionData.branches.findIndex(x => x.id === id);
     if (idx === -1) throw new Error('Branch not found');
     previewSessionData.branches[idx] = { ...previewSessionData.branches[idx], ...data } as any;
+    persistPreviewData();
     const updated = await this.getBranch(id);
     return { item: updated!, message: 'Updated in preview data. | تم التحديث في بيانات المعاينة.' };
   },
@@ -261,6 +278,7 @@ export const previewAdminGateway: AdminDataGateway = {
   async deleteBranch(id: string): Promise<DeleteResult> {
     await previewDelay();
     previewSessionData.branches = previewSessionData.branches.filter(x => x.id !== id);
+    persistPreviewData();
     return { success: true, message: 'Archived in preview data. | تمت الأرشفة في بيانات المعاينة.' };
   },
 
@@ -288,6 +306,7 @@ export const previewAdminGateway: AdminDataGateway = {
       status: (data.status as 'active' | 'inactive') ?? 'active',
     };
     previewSessionData.sports.push(newSport as any);
+    persistPreviewData();
     return { item: newSport, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };
   },
 
@@ -296,6 +315,7 @@ export const previewAdminGateway: AdminDataGateway = {
     const idx = previewSessionData.sports.findIndex(x => x.id === id);
     if (idx === -1) throw new Error('Sport not found');
     previewSessionData.sports[idx] = { ...previewSessionData.sports[idx], ...data };
+    persistPreviewData();
     const updated = await this.getSport(id);
     return { item: updated!, message: 'Updated in preview data. | تم التحديث في بيانات المعاينة.' };
   },
@@ -303,6 +323,7 @@ export const previewAdminGateway: AdminDataGateway = {
   async deleteSport(id: string): Promise<DeleteResult> {
     await previewDelay();
     previewSessionData.sports = previewSessionData.sports.filter(x => x.id !== id);
+    persistPreviewData();
     return { success: true, message: 'Archived in preview data. | تمت الأرشفة في بيانات المعاينة.' };
   },
 
@@ -348,6 +369,7 @@ export const previewAdminGateway: AdminDataGateway = {
       status: (data.status as 'active' | 'inactive') ?? 'active',
     };
     previewSessionData.programs.push(newProgram as any);
+    persistPreviewData();
     return { item: newProgram, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };
   },
 
@@ -356,6 +378,7 @@ export const previewAdminGateway: AdminDataGateway = {
     const idx = previewSessionData.programs.findIndex(x => x.id === id);
     if (idx === -1) throw new Error('Program not found');
     previewSessionData.programs[idx] = { ...previewSessionData.programs[idx], ...data } as any;
+    persistPreviewData();
     const updated = await this.getProgram(id);
     return { item: updated!, message: 'Updated in preview data. | تم التحديث في بيانات المعاينة.' };
   },
@@ -363,6 +386,7 @@ export const previewAdminGateway: AdminDataGateway = {
   async deleteProgram(id: string): Promise<DeleteResult> {
     await previewDelay();
     previewSessionData.programs = previewSessionData.programs.filter(x => x.id !== id);
+    persistPreviewData();
     return { success: true, message: 'Archived in preview data. | تمت الأرشفة في بيانات المعاينة.' };
   },
 
@@ -414,6 +438,7 @@ export const previewAdminGateway: AdminDataGateway = {
       status: (data.status as 'active' | 'inactive') ?? 'active',
     };
     previewSessionData.groups.push(newGroup as any);
+    persistPreviewData();
     return { item: newGroup, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };
   },
 
@@ -422,6 +447,7 @@ export const previewAdminGateway: AdminDataGateway = {
     const idx = previewSessionData.groups.findIndex(x => x.id === id);
     if (idx === -1) throw new Error('Group not found');
     previewSessionData.groups[idx] = { ...previewSessionData.groups[idx], ...data } as any;
+    persistPreviewData();
     const updated = await this.getGroup(id);
     return { item: updated!, message: 'Updated in preview data. | تم التحديث في بيانات المعاينة.' };
   },
@@ -429,6 +455,7 @@ export const previewAdminGateway: AdminDataGateway = {
   async deleteGroup(id: string): Promise<DeleteResult> {
     await previewDelay();
     previewSessionData.groups = previewSessionData.groups.filter(x => x.id !== id);
+    persistPreviewData();
     return { success: true, message: 'Archived in preview data. | تمت الأرشفة في بيانات المعاينة.' };
   },
 
@@ -489,6 +516,7 @@ export const previewAdminGateway: AdminDataGateway = {
       performanceScore: 0,
     };
     previewSessionData.players.push(newPlayer as any);
+    persistPreviewData();
     return { item: newPlayer, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };
   },
 
@@ -497,6 +525,7 @@ export const previewAdminGateway: AdminDataGateway = {
     const idx = previewSessionData.players.findIndex(x => x.id === id);
     if (idx === -1) throw new Error('Player not found');
     previewSessionData.players[idx] = { ...previewSessionData.players[idx], ...data } as any;
+    persistPreviewData();
     const updated = await this.getPlayer(id);
     return { item: updated!, message: 'Updated in preview data. | تم التحديث في بيانات المعاينة.' };
   },
@@ -504,6 +533,7 @@ export const previewAdminGateway: AdminDataGateway = {
   async deletePlayer(id: string): Promise<DeleteResult> {
     await previewDelay();
     previewSessionData.players = previewSessionData.players.filter(x => x.id !== id);
+    persistPreviewData();
     return { success: true, message: 'Archived in preview data. | تمت الأرشفة في بيانات المعاينة.' };
   },
 
@@ -558,6 +588,7 @@ export const previewAdminGateway: AdminDataGateway = {
       status: (data.status as 'active' | 'inactive') ?? 'active',
     };
     previewSessionData.coaches.push(newCoach as any);
+    persistPreviewData();
     return { item: newCoach, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };
   },
 
@@ -566,6 +597,7 @@ export const previewAdminGateway: AdminDataGateway = {
     const idx = previewSessionData.coaches.findIndex(x => x.id === id);
     if (idx === -1) throw new Error('Coach not found');
     previewSessionData.coaches[idx] = { ...previewSessionData.coaches[idx], ...data } as any;
+    persistPreviewData();
     const updated = await this.getCoach(id);
     return { item: updated!, message: 'Updated in preview data. | تم التحديث في بيانات المعاينة.' };
   },
@@ -573,6 +605,7 @@ export const previewAdminGateway: AdminDataGateway = {
   async deleteCoach(id: string): Promise<DeleteResult> {
     await previewDelay();
     previewSessionData.coaches = previewSessionData.coaches.filter(x => x.id !== id);
+    persistPreviewData();
     return { success: true, message: 'Archived in preview data. | تمت الأرشفة في بيانات المعاينة.' };
   },
 
@@ -624,6 +657,7 @@ export const previewAdminGateway: AdminDataGateway = {
       email: data.email,
     };
     previewSessionData.parents.push(newParent as any);
+    persistPreviewData();
     return { item: newParent, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };
   },
 
@@ -632,6 +666,7 @@ export const previewAdminGateway: AdminDataGateway = {
     const idx = previewSessionData.parents.findIndex(x => x.id === id);
     if (idx === -1) throw new Error('Parent not found');
     previewSessionData.parents[idx] = { ...previewSessionData.parents[idx], ...data } as any;
+    persistPreviewData();
     const updated = await this.getParent(id);
     return { item: updated!, message: 'Updated in preview data. | تم التحديث في بيانات المعاينة.' };
   },
@@ -639,6 +674,7 @@ export const previewAdminGateway: AdminDataGateway = {
   async deleteParent(id: string): Promise<DeleteResult> {
     await previewDelay();
     previewSessionData.parents = previewSessionData.parents.filter(x => x.id !== id);
+    persistPreviewData();
     return { success: true, message: 'Archived in preview data. | تمت الأرشفة في بيانات المعاينة.' };
   },
 
@@ -667,6 +703,7 @@ export const previewAdminGateway: AdminDataGateway = {
       coachIds: data.coachIds ?? [],
     };
     previewSessionData.sessions.push(newSession as any);
+    persistPreviewData();
     return { item: newSession, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };
   },
 
@@ -675,6 +712,7 @@ export const previewAdminGateway: AdminDataGateway = {
     const idx = previewSessionData.sessions.findIndex(x => x.id === id);
     if (idx === -1) throw new Error('Session not found');
     previewSessionData.sessions[idx] = { ...previewSessionData.sessions[idx], ...data } as any;
+    persistPreviewData();
     const updated = await this.getSession(id);
     return { item: updated!, message: 'Updated in preview data. | تم التحديث في بيانات المعاينة.' };
   },
@@ -682,6 +720,7 @@ export const previewAdminGateway: AdminDataGateway = {
   async deleteSession(id: string): Promise<DeleteResult> {
     await previewDelay();
     previewSessionData.sessions = previewSessionData.sessions.filter(x => x.id !== id);
+    persistPreviewData();
     return { success: true, message: 'Archived in preview data. | تمت الأرشفة في بيانات المعاينة.' };
   },
 
@@ -712,6 +751,7 @@ export const previewAdminGateway: AdminDataGateway = {
       currency: data.currency ?? 'AED',
     };
     previewSessionData.subscriptions.push(newSub);
+    persistPreviewData();
     return { item: newSub, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };
   },
 
@@ -720,6 +760,7 @@ export const previewAdminGateway: AdminDataGateway = {
     const idx = previewSessionData.subscriptions.findIndex(x => x.id === id);
     if (idx === -1) throw new Error('Subscription not found');
     previewSessionData.subscriptions[idx] = { ...previewSessionData.subscriptions[idx], ...data };
+    persistPreviewData();
     const updated = await this.getSubscription(id);
     return { item: updated!, message: 'Updated in preview data. | تم التحديث في بيانات المعاينة.' };
   },
@@ -727,6 +768,7 @@ export const previewAdminGateway: AdminDataGateway = {
   async deleteSubscription(id: string): Promise<DeleteResult> {
     await previewDelay();
     previewSessionData.subscriptions = previewSessionData.subscriptions.filter(x => x.id !== id);
+    persistPreviewData();
     return { success: true, message: 'Archived in preview data. | تمت الأرشفة في بيانات المعاينة.' };
   },
 
@@ -756,6 +798,7 @@ export const previewAdminGateway: AdminDataGateway = {
       reference: data.reference,
     };
     previewSessionData.payments.push(newPayment);
+    persistPreviewData();
     return { item: newPayment, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };
   },
 
@@ -764,6 +807,7 @@ export const previewAdminGateway: AdminDataGateway = {
     const idx = previewSessionData.payments.findIndex(x => x.id === id);
     if (idx === -1) throw new Error('Payment not found');
     previewSessionData.payments[idx] = { ...previewSessionData.payments[idx], ...data };
+    persistPreviewData();
     const updated = await this.getPayment(id);
     return { item: updated!, message: 'Updated in preview data. | تم التحديث في بيانات المعاينة.' };
   },
@@ -771,6 +815,7 @@ export const previewAdminGateway: AdminDataGateway = {
   async deletePayment(id: string): Promise<DeleteResult> {
     await previewDelay();
     previewSessionData.payments = previewSessionData.payments.filter(x => x.id !== id);
+    persistPreviewData();
     return { success: true, message: 'Archived in preview data. | تمت الأرشفة في بيانات المعاينة.' };
   },
 
@@ -796,6 +841,7 @@ export const previewAdminGateway: AdminDataGateway = {
       status: 'ready' as const,
     };
     previewSessionData.reports.push(newReport);
+    persistPreviewData();
     return { item: newReport, message: 'Report generated in preview. | تم إنشاء التقرير في المعاينة.' };
   },
 
@@ -821,6 +867,7 @@ export const previewAdminGateway: AdminDataGateway = {
       updatedAt: new Date().toISOString(),
     };
     previewSessionData.content.push(newContent);
+    persistPreviewData();
     return { item: newContent, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };
   },
 
@@ -829,6 +876,7 @@ export const previewAdminGateway: AdminDataGateway = {
     const idx = previewSessionData.content.findIndex(x => x.id === id);
     if (idx === -1) throw new Error('Content not found');
     previewSessionData.content[idx] = { ...previewSessionData.content[idx], ...data, updatedAt: new Date().toISOString() };
+    persistPreviewData();
     const updated = await this.getContent(id);
     return { item: updated!, message: 'Updated in preview data. | تم التحديث في بيانات المعاينة.' };
   },
@@ -836,6 +884,7 @@ export const previewAdminGateway: AdminDataGateway = {
   async deleteContent(id: string): Promise<DeleteResult> {
     await previewDelay();
     previewSessionData.content = previewSessionData.content.filter(x => x.id !== id);
+    persistPreviewData();
     return { success: true, message: 'Archived in preview data. | تمت الأرشفة في بيانات المعاينة.' };
   },
 
@@ -862,6 +911,7 @@ export const previewAdminGateway: AdminDataGateway = {
       lastLogin: undefined,
     };
     previewSessionData.users.push(newUser);
+    persistPreviewData();
     return { item: newUser, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };
   },
 
@@ -870,6 +920,7 @@ export const previewAdminGateway: AdminDataGateway = {
     const idx = previewSessionData.users.findIndex(x => x.id === id);
     if (idx === -1) throw new Error('User not found');
     previewSessionData.users[idx] = { ...previewSessionData.users[idx], ...data };
+    persistPreviewData();
     const updated = await this.getUser(id);
     return { item: updated!, message: 'Updated in preview data. | تم التحديث في بيانات المعاينة.' };
   },
@@ -877,6 +928,7 @@ export const previewAdminGateway: AdminDataGateway = {
   async deleteUser(id: string): Promise<DeleteResult> {
     await previewDelay();
     previewSessionData.users = previewSessionData.users.filter(x => x.id !== id);
+    persistPreviewData();
     return { success: true, message: 'Archived in preview data. | تمت الأرشفة في بيانات المعاينة.' };
   },
 
@@ -904,6 +956,7 @@ export const previewAdminGateway: AdminDataGateway = {
       confirmedAt: data.confirmedAt,
     };
     previewSessionData.registrations.push(newReg);
+    persistPreviewData();
     return { item: newReg, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };
   },
 
@@ -912,6 +965,7 @@ export const previewAdminGateway: AdminDataGateway = {
     const idx = previewSessionData.registrations.findIndex(x => x.id === id);
     if (idx === -1) throw new Error('Registration not found');
     previewSessionData.registrations[idx] = { ...previewSessionData.registrations[idx], ...data };
+    persistPreviewData();
     const updated = await this.getRegistration(id);
     return { item: updated!, message: 'Updated in preview data. | تم التحديث في بيانات المعاينة.' };
   },
@@ -919,6 +973,7 @@ export const previewAdminGateway: AdminDataGateway = {
   async deleteRegistration(id: string): Promise<DeleteResult> {
     await previewDelay();
     previewSessionData.registrations = previewSessionData.registrations.filter(x => x.id !== id);
+    persistPreviewData();
     return { success: true, message: 'Archived in preview data. | تمت الأرشفة في بيانات المعاينة.' };
   },
 
@@ -947,6 +1002,7 @@ export const previewAdminGateway: AdminDataGateway = {
       status: (data.status as 'awarded' | 'pending' | 'revoked') ?? 'pending',
     };
     previewSessionData.achievements.push(newAch);
+    persistPreviewData();
     return { item: newAch, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };
   },
 
@@ -955,6 +1011,7 @@ export const previewAdminGateway: AdminDataGateway = {
     const idx = previewSessionData.achievements.findIndex(x => x.id === id);
     if (idx === -1) throw new Error('Achievement not found');
     previewSessionData.achievements[idx] = { ...previewSessionData.achievements[idx], ...data };
+    persistPreviewData();
     const updated = await this.getAchievement(id);
     return { item: updated!, message: 'Updated in preview data. | تم التحديث في بيانات المعاينة.' };
   },
@@ -962,6 +1019,7 @@ export const previewAdminGateway: AdminDataGateway = {
   async deleteAchievement(id: string): Promise<DeleteResult> {
     await previewDelay();
     previewSessionData.achievements = previewSessionData.achievements.filter(x => x.id !== id);
+    persistPreviewData();
     return { success: true, message: 'Archived in preview data. | تمت الأرشفة في بيانات المعاينة.' };
   },
 
@@ -990,6 +1048,7 @@ export const previewAdminGateway: AdminDataGateway = {
       status: (data.status as 'scheduled' | 'ongoing' | 'completed' | 'cancelled') ?? 'scheduled',
     };
     previewSessionData.events.push(newEvent);
+    persistPreviewData();
     return { item: newEvent, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };
   },
 
@@ -998,6 +1057,7 @@ export const previewAdminGateway: AdminDataGateway = {
     const idx = previewSessionData.events.findIndex(x => x.id === id);
     if (idx === -1) throw new Error('Event not found');
     previewSessionData.events[idx] = { ...previewSessionData.events[idx], ...data };
+    persistPreviewData();
     const updated = await this.getEvent(id);
     return { item: updated!, message: 'Updated in preview data. | تم التحديث في بيانات المعاينة.' };
   },
@@ -1005,6 +1065,7 @@ export const previewAdminGateway: AdminDataGateway = {
   async deleteEvent(id: string): Promise<DeleteResult> {
     await previewDelay();
     previewSessionData.events = previewSessionData.events.filter(x => x.id !== id);
+    persistPreviewData();
     return { success: true, message: 'Archived in preview data. | تمت الأرشفة في بيانات المعاينة.' };
   },
 
@@ -1032,6 +1093,7 @@ export const previewAdminGateway: AdminDataGateway = {
       status: (data.status as 'draft' | 'published' | 'archived') ?? 'draft',
     };
     previewSessionData.announcements.push(newAnn);
+    persistPreviewData();
     return { item: newAnn, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };
   },
 
@@ -1040,6 +1102,7 @@ export const previewAdminGateway: AdminDataGateway = {
     const idx = previewSessionData.announcements.findIndex(x => x.id === id);
     if (idx === -1) throw new Error('Announcement not found');
     previewSessionData.announcements[idx] = { ...previewSessionData.announcements[idx], ...data };
+    persistPreviewData();
     const updated = await this.getAnnouncement(id);
     return { item: updated!, message: 'Updated in preview data. | تم التحديث في بيانات المعاينة.' };
   },
@@ -1047,6 +1110,7 @@ export const previewAdminGateway: AdminDataGateway = {
   async deleteAnnouncement(id: string): Promise<DeleteResult> {
     await previewDelay();
     previewSessionData.announcements = previewSessionData.announcements.filter(x => x.id !== id);
+    persistPreviewData();
     return { success: true, message: 'Archived in preview data. | تمت الأرشفة في بيانات المعاينة.' };
   },
 
@@ -1075,6 +1139,7 @@ export const previewAdminGateway: AdminDataGateway = {
       status: (data.status as 'sent' | 'delivered' | 'read' | 'failed') ?? 'sent',
     };
     previewSessionData.messages.push(newMsg);
+    persistPreviewData();
     return { item: newMsg, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };
   },
 
@@ -1083,6 +1148,7 @@ export const previewAdminGateway: AdminDataGateway = {
     const idx = previewSessionData.messages.findIndex(x => x.id === id);
     if (idx === -1) throw new Error('Message not found');
     previewSessionData.messages[idx] = { ...previewSessionData.messages[idx], ...data };
+    persistPreviewData();
     const updated = await this.getMessage(id);
     return { item: updated!, message: 'Updated in preview data. | تم التحديث في بيانات المعاينة.' };
   },
@@ -1090,6 +1156,7 @@ export const previewAdminGateway: AdminDataGateway = {
   async deleteMessage(id: string): Promise<DeleteResult> {
     await previewDelay();
     previewSessionData.messages = previewSessionData.messages.filter(x => x.id !== id);
+    persistPreviewData();
     return { success: true, message: 'Archived in preview data. | تمت الأرشفة في بيانات المعاينة.' };
   },
 
@@ -1129,4 +1196,5 @@ export function resetPreviewData() {
     messages: [...previewMessages],
     auditActivity: [...previewAuditActivity],
   };
+  if (typeof window !== 'undefined') { try { window.localStorage.removeItem(PREVIEW_STORAGE_KEY); } catch { /* optional */ } }
 }
