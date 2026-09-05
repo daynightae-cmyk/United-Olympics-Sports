@@ -1,0 +1,67 @@
+name: Admin Closure Audit
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/admin-closure-audit.yml'
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Admin structural audit
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          roots=[Path('src/pages/admin'),Path('src/components/admin'),Path('src/layouts'),Path('src/admin')]
+          files=[]
+          for root in roots:
+              if root.exists(): files += list(root.rglob('*.tsx'))+list(root.rglob('*.ts'))
+          patterns={
+            'empty_arrow': re.compile(r'=>\s*\{\s*\}'),
+            'future_module': re.compile(r'AdminFutureModulePage|Future Module|future module',re.I),
+            'preview_notice': re.compile(r'PreviewNotice|preview only|local preview|does not save|no backend persistence',re.I),
+            'demo_direct': re.compile(r'from ["\']\.\./\.\./data/demo|from ["\']\.\./data/demo'),
+          }
+          print('=== ADMIN AUDIT FINDINGS ===')
+          for name,rx in patterns.items():
+              print(f'\n## {name}')
+              count=0
+              for p in files:
+                  text=p.read_text(encoding='utf-8')
+                  for i,line in enumerate(text.splitlines(),1):
+                      if rx.search(line):
+                          count+=1; print(f'{p}:{i}: {line.strip()[:260]}')
+              print('COUNT',count)
+          # Route/link reconciliation
+          layout=Path('src/layouts/AdminLayout.tsx').read_text(encoding='utf-8')
+          route_paths=set(re.findall(r'<Route\s+path="([^"]+)"',layout))
+          print('\n## admin links to detail routes')
+          links=[]
+          for p in files:
+              text=p.read_text(encoding='utf-8')
+              for m in re.finditer(r'/admin/([a-z-]+)/\$\{',text):
+                  base=m.group(1); links.append((str(p),base))
+          for p,base in sorted(set(links)):
+              expected=f'{base}/:'
+              ok=any(r.startswith(expected) for r in route_paths)
+              print(('OK' if ok else 'MISSING'),base,p)
+          print('\nROUTES',len(route_paths),sorted(route_paths))
+          PY
+      - name: TypeScript gate
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+      - name: Diff integrity
+        run: git diff --check
