@@ -126,7 +126,19 @@ html[data-theme=dark] .store-shell { --store-canvas:#0c0e12; --store-surface:#14
 .store-variant-picker.is-compact .store-size-options button { min-width:34px; min-height:36px; }
 .store-product-rating { display:inline-flex; gap:5px; font-size:12px; align-items:center; margin:8px 0; }
 .store-product-rating svg { width:14px; height:14px; }
-@media(hover:hover) and (pointer:fine) { .store-product-card:hover { transform:translateY(-4px); box-shadow:var(--store-shadow); border-color:var(--store-gold); } .store-product-card:hover .store-product-media img { transform:scale(1.025); } }
+@media(hover:hover) and (pointer:fine) { 
+  .store-product-card {
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.28s ease;
+  }
+  .store-product-card:hover { 
+    transform: translateY(-6px) scale(1.025); 
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22), 0 0 24px rgba(212, 175, 55, 0.35); 
+    border-color: var(--store-gold, #d4af37); 
+  } 
+  .store-product-card:hover .store-product-media img { 
+    transform: scale(1.05); 
+  } 
+}
 /* Dense catalog and consistent category routes. */
 .store-catalog-page .store-page-heading { padding:24px 28px 18px; }
 .store-catalog-page .store-page-heading h1 { font-size:34px; margin:10px 0; }

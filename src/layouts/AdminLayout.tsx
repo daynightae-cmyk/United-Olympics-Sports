@@ -11,6 +11,7 @@ import { AdminGroupsPage } from '../pages/admin/AdminGroupsPage';
 import { AdminPlayerDetailPage } from '../pages/admin/AdminPlayerDetailPage';
 import { AdminPlayersPage } from '../pages/admin/AdminPlayersPage';
 import { AdminSettingsPage } from '../pages/admin/AdminSettingsPage';
+import { AdminIntegrationsPage } from '../pages/admin/AdminIntegrationsPage';
 import { AdminSportDetailPage } from '../pages/admin/AdminSportDetailPage';
 import { AdminSportsPage } from '../pages/admin/AdminSportsPage';
 import { AdminCountriesPage } from '../pages/admin/AdminCountriesPage';
@@ -101,6 +102,7 @@ export function AdminLayout() {
       <Route path="players" element={<AdminPlayersPage />} />
       <Route path="players/:playerId" element={<AdminPlayerDetailPage />} />
       <Route path="settings" element={<AdminSettingsPage />} />
+      <Route path="integrations" element={<AdminIntegrationsPage />} />
       <Route path="countries" element={<AdminCountriesPage />} />
       <Route path="countries/:countryId" element={<AdminCountryDetailPage />} />
       <Route path="branches" element={<AdminBranchesPage />} />

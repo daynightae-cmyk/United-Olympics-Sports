@@ -26,4 +26,6 @@ export function getSportPreviewMedia(sportId: string) {
     ?? assets[0];
 }
 
+export * from './publicMediaRegistry';
+export { default as MediaRegistry } from './publicMediaRegistry';
 export { basketballMediaAssets, footballMediaAssets, swimmingMediaAssets };

@@ -10,6 +10,7 @@ import { UnitedAssistant } from '../assistant/UnitedAssistant';
 import { UpdateToast } from '../platform/UpdateToast';
 import { PortalAuthPage } from '../components/auth/PortalAuthPage';
 import { OlympicRouteTransition } from '../components/navigation/OlympicRouteTransition';
+import { OlympicLuxurySplash } from '../components/splash/OlympicLuxurySplash';
 
 const StoreApp = lazy(() => import('../store/StoreApp').then((module) => ({ default: module.StoreApp })));
 
@@ -22,6 +23,7 @@ function InternalProductUtilities() {
 export function AppRouter() {
   return (
     <BrowserRouter>
+      <OlympicLuxurySplash />
       <OlympicRouteTransition />
       <Routes>
         <Route path="/benchmark" element={<BenchmarkShowcasePage />} />

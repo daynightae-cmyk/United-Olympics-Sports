@@ -212,7 +212,6 @@ function PublicHeader() {
     { to: "/sports", value: { en: "Sports", ar: "الرياضات" } },
     { to: "/programs", value: { en: "Programs", ar: "البرامج" } },
     { to: "/coaches", value: { en: "Coaches", ar: "المدربون" } },
-    { to: "/store", value: { en: "Store", ar: "المتجر" } },
     { to: "/contact", value: { en: "Contact", ar: "تواصل معنا" } },
   ];
   return (
@@ -876,32 +875,24 @@ function Contact() {
         </form>
         <aside className="contact-note contact-note-premium">
           <div className="contact-note-icon">
-            <MessageCircle size={32} />
+            <Mail size={32} />
           </div>
           <h3>
-            <Bilingual value={{ en: "Verified details first", ar: "التفاصيل الموثقة أولًا" }} />
+            <Bilingual value={{ en: "Official Support", ar: "الدعم الرسمي" }} />
           </h3>
           <p>
             <Bilingual
               value={{
-                en: "Public contact details will be added only after verification. No fake addresses, phones, or WhatsApp numbers are displayed in this preview.",
-                ar: "ستتم إضافة بيانات التواصل العامة فقط بعد التحقق منها. لا يتم عرض عناوين أو هواتف أو أرقام واتساب وهمية في هذه المعاينة.",
+                en: "For support, enquiries, or to join our programs, please reach out via our official email address.",
+                ar: "للدعم والاستفسارات أو للانضمام إلى برامجنا، يرجى التواصل عبر عنوان بريدنا الإلكتروني الرسمي.",
               }}
             />
           </p>
-          <div className="contact-integrity">
-            <article className="integrity-item">
-              <CheckCircle size={16} />
-              <span><Bilingual value={{ en: "No fabricated UAE/KSA addresses", ar: "لا عناوين إمارات/سعودية مختلقة" }} /></span>
-            </article>
-            <article className="integrity-item">
-              <CheckCircle size={16} />
-              <span><Bilingual value={{ en: "No fake phone/WhatsApp numbers", ar: "لا أرقام هاتف/واتساب وهمية" }} /></span>
-            </article>
-            <article className="integrity-item">
-              <CheckCircle size={16} />
-              <span><Bilingual value={{ en: "Developer contact clearly labeled", ar: "بيانات المطور موضحة بوضوح" }} /></span>
-            </article>
+          <div className="contact-integrity" style={{ marginTop: '1.5rem', padding: '1rem', background: 'color-mix(in srgb, var(--color-brand) 5%, transparent)', borderRadius: '12px' }}>
+            <a href="mailto:Knouxio@gmail.com" className="integrity-item" style={{ textDecoration: 'none', color: 'var(--color-text-primary)' }}>
+              <Mail size={20} style={{ color: 'var(--color-brand)' }} />
+              <strong style={{ fontWeight: 700, letterSpacing: '0.5px' }}>Knouxio@gmail.com</strong>
+            </a>
           </div>
         </aside>
       </section>

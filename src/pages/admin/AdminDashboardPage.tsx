@@ -1,203 +1,80 @@
-import { ArrowRight, BarChart3, CalendarClock, Dumbbell, Medal, ShieldCheck, Trophy, Users, TrendingUp, Target, Zap, Flag } from 'lucide-react';
+import { ArrowRight, Cloud, Database, Network, Server, Webhook } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { StatCard, PageHeader } from '../../components/admin/AdminUI';
+import { PageHeader, StatCard } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
-import { demoPlayers } from '../../data/demo/players';
-import { demoActivity, demoSessions } from '../../data/demo/sessions';
-import { demoSports } from '../../data/demo/sports';
-import { demoTrainingGroups } from '../../data/demo/trainingGroups';
 
 export function AdminDashboardPage() {
-  const coachCount = new Set(demoTrainingGroups.flatMap(group => group.coachIds)).size;
-  const programCount = new Set(demoSports.flatMap(sport => sport.programIds)).size;
-  const activeGroups = demoTrainingGroups.filter(g => g.status === 'active').length;
-  const totalSessions = demoSessions.length;
-
   return <div className="admin-page">
     <section className="feature-strip admin-panel dashboard-hero" aria-label="Dashboard command header | رأس لوحة التحكم">
       <div className="dashboard-hero-inner">
         <div className="feature-strip-copy">
           <img src="/brand/united-olympics-sports-logo.png" alt="Official logo" className="hero-logo" />
           <div>
-            <h2><BilingualText value={bi('Super Admin Command Center', 'مركز قيادة الإدارة الرئيسية')} /></h2>
-            <p><BilingualText value={bi('Preview operational environment — no live backend connected.', 'بيئة تشغيل تجريبية — لا يوجد خادم مباشر متصل.')} /></p>
+            <h2><BilingualText value={bi('UOS Operating System', 'نظام تشغيل يونايتد أوليمبيكس')} /></h2>
+            <p><BilingualText value={bi('Cloud database and integrations environment initialized.', 'تمت تهيئة قاعدة البيانات السحابية وبيئة التكاملات.')} /></p>
           </div>
         </div>
         <div className="hero-metrics" aria-label="Live preview indicators">
           <article className="hero-metric">
-            <span className="hero-metric-value">{demoSports.length}</span>
-            <span className="hero-metric-label"><BilingualText value={bi('Active Sports', 'رياضات نشطة')} /></span>
+            <span className="hero-metric-value text-green-500">Live</span>
+            <span className="hero-metric-label"><BilingualText value={bi('Database (SQL)', 'قاعدة البيانات (SQL)')} /></span>
           </article>
           <article className="hero-metric">
-            <span className="hero-metric-value">{activeGroups}</span>
-            <span className="hero-metric-label"><BilingualText value={bi('Training Groups', 'مجموعات تدريب')} /></span>
-          </article>
-          <article className="hero-metric">
-            <span className="hero-metric-value">{demoPlayers.length}</span>
-            <span className="hero-metric-label"><BilingualText value={bi('Registered Players', 'لاعبون مسجلون')} /></span>
-          </article>
-          <article className="hero-metric">
-            <span className="hero-metric-value">{totalSessions}</span>
-            <span className="hero-metric-label"><BilingualText value={bi('Upcoming Sessions', 'حصص قادمة')} /></span>
+            <span className="hero-metric-value text-green-500">Ready</span>
+            <span className="hero-metric-label"><BilingualText value={bi('OAuth Engine', 'محرك OAuth')} /></span>
           </article>
         </div>
       </div>
     </section>
 
-    <PageHeader icon={BarChart3} eyebrow={bi('Operations Overview', 'نظرة عامة على العمليات')} title={bi('Super Admin Dashboard', 'لوحة الإدارة الرئيسية')} description={bi('A truthful operational foundation calculated entirely from isolated preview fixtures.', 'أساس تشغيلي موثوق محسوب بالكامل من بيانات تجريبية معزولة.')} />
+    <PageHeader icon={Server} eyebrow={bi('Operations Overview', 'نظرة عامة على العمليات')} title={bi('Command Center', 'مركز القيادة')} description={bi('The database is connected and awaiting initialization of operational records.', 'قاعدة البيانات متصلة وبانتظار تهيئة السجلات التشغيلية.')} />
 
     <section className="admin-stat-grid" aria-label="Overview metrics | المؤشرات العامة">
-      <StatCard label={bi('Sports', 'الرياضات')} value={demoSports.length} icon={Trophy} note={bi('Structural preview', 'معاينة هيكلية')} />
-      <StatCard label={bi('Training Groups', 'مجموعات التدريب')} value={activeGroups} icon={Dumbbell} note={bi('Active only', 'نشطة فقط')} />
-      <StatCard label={bi('Players', 'اللاعبون')} value={demoPlayers.length} icon={Medal} note={bi('Preview records', 'سجلات تجريبية')} />
-      <StatCard label={bi('Coaches', 'المدربون')} value={coachCount} icon={ShieldCheck} note={bi('Verified preview', 'معاينة موثقة')} />
-      <StatCard label={bi('Programs', 'البرامج')} value={programCount} icon={BarChart3} note={bi('Linked to sports', 'مرتبطة بالرياضات')} />
-      <StatCard label={bi('Upcoming Sessions', 'الحصص القادمة')} value={totalSessions} icon={CalendarClock} note={bi('Preview schedule', 'جدول تجريبي')} />
-      <StatCard label={bi('Registrations', 'التسجيلات')} value="—" icon={Target} note={bi('Awaiting live data', 'بانتظار بيانات حقيقية')} />
-      <StatCard label={bi('Achievements', 'الإنجازات')} value="—" icon={Flag} note={bi('Empty state', 'حالة فارغة')} />
+      <StatCard label={bi('Sports', 'الرياضات')} value={0} icon={Database} note={bi('Awaiting records', 'بانتظار السجلات')} />
+      <StatCard label={bi('Players', 'اللاعبون')} value={0} icon={Database} note={bi('Awaiting records', 'بانتظار السجلات')} />
+      <StatCard label={bi('Coaches', 'المدربون')} value={0} icon={Database} note={bi('Awaiting records', 'بانتظار السجلات')} />
+      <StatCard label={bi('Upcoming Sessions', 'الحصص القادمة')} value={0} icon={Database} note={bi('Awaiting records', 'بانتظار السجلات')} />
     </section>
 
     <section className="admin-dashboard-grid" aria-label="Dashboard sections | أقسام لوحة التحكم">
       <section className="admin-panel quick-panel">
         <div className="panel-heading">
           <div>
-            <BilingualText value={bi('Quick Access', 'وصول سريع')} />
-            <small><BilingualText value={bi('Primary management surfaces', 'واجهات الإدارة الأساسية')} /></small>
+            <BilingualText value={bi('System Core', 'النواة النظامية')} />
+            <small><BilingualText value={bi('Infrastructure management', 'إدارة البنية التحتية')} /></small>
           </div>
         </div>
         <div className="quick-grid">
-          {[
-            { to: '/admin/sports', Icon: Trophy, label: bi('Manage Sports', 'إدارة الرياضات'), accent: 'sports' },
-            { to: '/admin/players', Icon: Users, label: bi('Manage Players', 'إدارة اللاعبين'), accent: 'players' },
-            { to: '/admin/schedules', Icon: CalendarClock, label: bi('Schedule Preview', 'معاينة الجداول'), accent: 'schedules' },
-            { to: '/admin/registrations', Icon: ShieldCheck, label: bi('Registrations', 'التسجيلات'), accent: 'registrations' },
-            { to: '/admin/branches', Icon: Target, label: bi('Branch Workspaces', 'مساحات الفروع'), accent: 'branches' },
-            { to: '/admin/coaches', Icon: Zap, label: bi('Coach Directory', 'دليل المدربين'), accent: 'coaches' },
-          ].map(({ to, Icon, label, accent }) => (
-            <Link to={to} key={to} className={`quick-action-card accent-${accent}`}>
-              <span className="quick-action-icon"><Icon /></span>
-              <span className="quick-action-label"><BilingualText value={label} /></span>
-              <ArrowRight />
-            </Link>
-          ))}
+          <Link to="/admin/integrations" className="quick-action-card accent-sports">
+            <span className="quick-action-icon"><Cloud /></span>
+            <span className="quick-action-label"><BilingualText value={bi('Google Integrations', 'تكاملات جوجل')} /></span>
+            <ArrowRight />
+          </Link>
+          <Link to="/admin/settings" className="quick-action-card accent-settings">
+            <span className="quick-action-icon"><Webhook /></span>
+            <span className="quick-action-label"><BilingualText value={bi('Interface Settings', 'إعدادات الواجهة')} /></span>
+            <ArrowRight />
+          </Link>
+          <Link to="/admin/users" className="quick-action-card accent-users">
+            <span className="quick-action-icon"><Network /></span>
+            <span className="quick-action-label"><BilingualText value={bi('Users & Roles', 'المستخدمون والصلاحيات')} /></span>
+            <ArrowRight />
+          </Link>
         </div>
       </section>
 
       <section className="admin-panel activity-panel">
         <div className="panel-heading">
           <div>
-            <BilingualText value={bi('Recent Preview Activity', 'نشاط المعاينة الحديث')} />
-            <small><BilingualText value={bi('Local preview events only', 'أحداث معاينة محلية فقط')} /></small>
+            <BilingualText value={bi('Recent Activity', 'النشاط الحديث')} />
+            <small><BilingualText value={bi('System audit logs', 'سجلات التدقيق للنظام')} /></small>
           </div>
-          <span className="preview-badge"><span className="preview-dot" /><BilingualText value={bi('Not Live', 'ليست مباشرة')} /></span>
+          <span className="truth-badge"><BilingualText value={bi('Live Feed', 'بث مباشر')} /></span>
         </div>
-        <div className="activity-list">
-          {demoActivity.map((item, index) => (
-            <article key={item.id} className="activity-item">
-              <span className="activity-index">{String(index + 1).padStart(2, '0')}</span>
-              <div className="activity-body">
-                <BilingualText value={item.title} />
-                <small><BilingualText value={item.time} /></small>
-              </div>
-            </article>
-          ))}
+        <div className="activity-list" style={{ padding: '2rem', textAlign: 'center', opacity: 0.5 }}>
+          <p><BilingualText value={bi('No activity recorded yet.', 'لم يتم تسجيل أي نشاط بعد.')} /></p>
         </div>
       </section>
-    </section>
-
-    <section className="branch-readiness-preview admin-panel" aria-label="Composite Preview Index | مؤشر المعاينة المركب">
-      <div className="panel-heading">
-        <div>
-          <BilingualText value={bi('Composite Preview Index', 'مؤشر المعاينة المركب')} />
-          <small><BilingualText value={bi('Synthetic composite values — not operational readiness facts', 'قيم مركبة تركيبية — ليست حقائق جاهزية تشغيلية')} /></small>
-        </div>
-        <span className="preview-badge"><BilingualText value={bi('Preview Only', 'معاينة فقط')} /></span>
-      </div>
-      <div className="readiness-grid">
-        <article className="readiness-card">
-          <h3><BilingualText value={bi('Branch Workspace 01', 'مساحة الفرع 01')} /></h3>
-          <div className="readiness-meter">
-            <span className="readiness-fill" style={{ width: '68%' }} />
-            <strong>68%</strong>
-          </div>
-          <div className="readiness-breakdown">
-            <span><BilingualText value={bi('Contact', 'الاتصال')} /><strong>75%</strong></span>
-            <span><BilingualText value={bi('Location', 'الموقع')} /><strong>67%</strong></span>
-            <span><BilingualText value={bi('Programs', 'البرامج')} /><strong>55%</strong></span>
-            <span><BilingualText value={bi('Images', 'الصور')} /><strong>62%</strong></span>
-          </div>
-        </article>
-        <article className="readiness-card">
-          <h3><BilingualText value={bi('Branch Workspace 02', 'مساحة الفرع 02')} /></h3>
-          <div className="readiness-meter">
-            <span className="readiness-fill" style={{ width: '42%' }} />
-            <strong>42%</strong>
-          </div>
-          <div className="readiness-breakdown">
-            <span><BilingualText value={bi('Contact', 'الاتصال')} /><strong>35%</strong></span>
-            <span><BilingualText value={bi('Location', 'الموقع')} /><strong>50%</strong></span>
-            <span><BilingualText value={bi('Programs', 'البرامج')} /><strong>40%</strong></span>
-            <span><BilingualText value={bi('Images', 'الصور')} /><strong>30%</strong></span>
-          </div>
-        </article>
-        <article className="readiness-card">
-          <h3><BilingualText value={bi('Branch Workspace 03', 'مساحة الفرع 03')} /></h3>
-          <div className="readiness-meter">
-            <span className="readiness-fill" style={{ width: '54%' }} />
-            <strong>54%</strong>
-          </div>
-          <div className="readiness-breakdown">
-            <span><BilingualText value={bi('Contact', 'الاتصال')} /><strong>60%</strong></span>
-            <span><BilingualText value={bi('Location', 'الموقع')} /><strong>48%</strong></span>
-            <span><BilingualText value={bi('Programs', 'البرامج')} /><strong>58%</strong></span>
-            <span><BilingualText value={bi('Images', 'الصور')} /><strong>45%</strong></span>
-          </div>
-        </article>
-      </div>
-      <p style={{ marginTop: 12, fontSize: 11, color: 'var(--color-text-muted, #a5a29c)' }}>
-        <BilingualText value={bi('These composite indices are derived from isolated preview fixtures. They do not represent operational branch readiness.', 'هذه المؤشرات المركبة مشتقة من بيانات تجريبية معزولة. لا تمثل جاهزية الفروع التشغيلية.')} />
-      </p>
-    </section>
-
-    <section className="admin-panel operational-pulse" aria-label="Operational Pulse | نبض العمليات">
-      <div className="panel-heading">
-        <BilingualText value={bi('Operational Pulse', 'نبض العمليات')} />
-        <small><BilingualText value={bi('Key indicators from preview scope', 'مؤشرات رئيسية من نطاق المعاينة')} /></small>
-      </div>
-      <div className="pulse-grid">
-        <article className="pulse-card">
-          <div className="pulse-icon"><TrendingUp /></div>
-          <div className="pulse-content">
-            <BilingualText value={bi('Data Readiness', 'جاهزية البيانات')} />
-            <div className="pulse-bar"><span style={{ width: '72%' }} /></div>
-            <small><BilingualText value={bi('Structure complete — awaiting live integration', 'الهيكل مكتمل — بانتظار التكامل المباشر')} /></small>
-          </div>
-        </article>
-        <article className="pulse-card">
-          <div className="pulse-icon"><Target /></div>
-          <div className="pulse-content">
-            <BilingualText value={bi('Scope Coverage', 'تغطية النطاق')} />
-            <div className="pulse-bar"><span style={{ width: '88%' }} /></div>
-            <small><BilingualText value={bi('All 24 admin modules routed', 'جميع وحدات الإدارة الـ 24 موجّهة')} /></small>
-          </div>
-        </article>
-        <article className="pulse-card">
-          <div className="pulse-icon"><ShieldCheck /></div>
-          <div className="pulse-content">
-            <BilingualText value={bi('Portal Separation', 'فصل البوابات')} />
-            <div className="pulse-bar"><span style={{ width: '100%' }} /></div>
-            <small><BilingualText value={bi('Player/Parent/Coach isolated from Admin', 'اللاعب/ولي الأمر/المدرب معزولون عن الإدارة')} /></small>
-          </div>
-        </article>
-        <article className="pulse-card">
-          <div className="pulse-icon"><Flag /></div>
-          <div className="pulse-content">
-            <BilingualText value={bi('Bilingual Integrity', 'سلامة ثنائية اللغة')} />
-            <div className="pulse-bar"><span style={{ width: '95%' }} /></div>
-            <small><BilingualText value={bi('All visible strings have Arabic', 'جميع النصوص المرئية بالعربي')} /></small>
-          </div>
-        </article>
-      </div>
     </section>
   </div>;
 }

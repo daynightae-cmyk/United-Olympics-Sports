@@ -7,6 +7,7 @@ import './styles/visual-system.css';
 import './styles/theme-closure.css';
 import './styles/uos-design-system.css';
 import './styles/uos-fields.css';
+import './styles/portal-shell.css';
 import './styles/uos-assistant.css';
 import './styles/uos-update.css';
 import './styles/sports-3d-system.css';

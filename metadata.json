@@ -1,6 +1,6 @@
 {
   "name": "United Olympics Sports | يونايتد أوليمبيكس سبورت",
-  "description": "A thoughtful sports development environment for structured training, discipline and progress. | بيئة متكاملة للتطوير الرياضي والتدريب المنظم والانضباط والتقدم.",
+  "description": "United Olympics Sports (يونايتد أوليمبيكس سبورت) — High-performance sports development, Olympic discipline, structured training, and elite youth athletics.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -4,6 +4,7 @@ import { BilingualText, bi } from '../../bilingual/BilingualText';
 import { Sports3DIcon } from '../../../design/sports3d';
 import { MediaRegistry } from '../../../data/public/mediaRegistry';
 import type { MediaAsset } from '../../../data/public/mediaRegistry';
+import { UosImage } from '../UosImage';
 import { useReducedMotion } from '../../../hooks/useReducedMotion';
 
 export type SportCardData = {
@@ -54,22 +55,12 @@ export function SportCard({ sport, mediaAsset, featured = false, className = '' 
     >
       <div className="uos-card-media-wrapper">
         {asset ? (
-          <picture className="uos-card-picture">
-            {avifSet && <source type="image/avif" srcSet={avifSet} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />}
-            {webpSet && <source type="image/webp" srcSet={webpSet} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />}
-            <img
-              className="uos-card-img"
-              src={asset.src}
-              alt={`${asset.alt.en} | ${asset.alt.ar}`}
-              width={asset.width}
-              height={asset.height}
-              loading="lazy"
-              decoding="async"
-              style={{
-                objectPosition: asset.objectPosition?.desktop || '50% 50%',
-              }}
-            />
-          </picture>
+          <UosImage
+            asset={asset}
+            className="uos-card-img"
+            containerClassName="w-full h-full"
+            loading="lazy"
+          />
         ) : (
           <div className="uos-card-media-fallback" aria-hidden="true" />
         )}

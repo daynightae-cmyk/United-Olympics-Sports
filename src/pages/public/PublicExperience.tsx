@@ -44,6 +44,7 @@ import {
   type PublicLocale,
   type PublicMediaAsset,
 } from '../../data/public/publicMedia';
+import { PublicHeader } from '../../components/public/PublicHeader';
 import '../../styles/public-relaunch.css';
 
 const LocaleContext = createContext<{ locale: PublicLocale; setLocale: (locale: PublicLocale) => void } | null>(null);
@@ -88,14 +89,23 @@ function PublicImage({
 }) {
   const { locale } = usePublicLocale();
   const [failed, setFailed] = useState(false);
+  const [useRemote, setUseRemote] = useState(false);
   const style = {
     '--media-desktop': asset.objectPosition.desktop,
     '--media-tablet': asset.objectPosition.tablet,
     '--media-mobile': asset.objectPosition.mobile,
     aspectRatio: asset.aspectRatio,
   } as CSSProperties;
-  const avif = sourceSet(asset, 'avif');
-  const webp = sourceSet(asset, 'webp');
+  const avif = !useRemote ? sourceSet(asset, 'avif') : undefined;
+  const webp = !useRemote ? sourceSet(asset, 'webp') : undefined;
+
+  const handleImageError = () => {
+    if (!useRemote && asset.remoteUrl) {
+      setUseRemote(true);
+    } else {
+      setFailed(true);
+    }
+  };
 
   return (
     <figure className={`uos-media ${className} ${failed ? 'is-failed' : ''}`} style={style}>
@@ -108,14 +118,15 @@ function PublicImage({
           {avif ? <source type="image/avif" srcSet={avif} sizes={sizes} /> : null}
           {webp ? <source type="image/webp" srcSet={webp} sizes={sizes} /> : null}
           <img
-            src={asset.src}
+            src={useRemote && asset.remoteUrl ? asset.remoteUrl : asset.src}
             alt={t(asset.alt, locale)}
             width={asset.width}
             height={asset.height}
             loading={eager || asset.priority ? 'eager' : 'lazy'}
             fetchPriority={eager || asset.priority ? 'high' : 'auto'}
             decoding="async"
-            onError={() => setFailed(true)}
+            referrerPolicy="no-referrer"
+            onError={handleImageError}
           />
         </picture>
       )}
@@ -140,106 +151,6 @@ const PUBLIC_NAV = [
   { path: '/coaches', label: { ar: 'فلسفة التدريب', en: 'Coaching' } },
   { path: '/contact', label: { ar: 'تواصل معنا', en: 'Contact' } },
 ] as const;
-
-function PortalLinks({ onNavigate }: { onNavigate?: () => void }) {
-  return (
-    <div className="uos-portal-links">
-      {PORTAL_LINKS.map((portal) => (
-        <Link key={portal.path} to={portal.path} onClick={onNavigate}>
-          <Copy>{portal.label}</Copy><ArrowRight aria-hidden="true" />
-        </Link>
-      ))}
-    </div>
-  );
-}
-
-function PublicHeader() {
-  const { locale, setLocale } = usePublicLocale();
-  const [open, setOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const menuButton = useRef<HTMLButtonElement>(null);
-  const drawer = useRef<HTMLDivElement>(null);
-  const location = useLocation();
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  useEffect(() => setOpen(false), [location.pathname]);
-
-  useEffect(() => {
-    if (!open) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const focusable = () => Array.from(drawer.current?.querySelectorAll<HTMLElement>('a, button') ?? []);
-    focusable()[0]?.focus();
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setOpen(false);
-        menuButton.current?.focus();
-      }
-      if (event.key === 'Tab') {
-        const items = focusable();
-        if (!items.length) return;
-        const first = items[0];
-        const last = items[items.length - 1];
-        if (event.shiftKey && document.activeElement === first) {
-          event.preventDefault();
-          last.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-          event.preventDefault();
-          first.focus();
-        }
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-
-  const changeLocale = () => setLocale(locale === 'ar' ? 'en' : 'ar');
-
-  return (
-    <header className={`uos-site-header ${scrolled ? 'is-scrolled' : ''}`}>
-      <div className="uos-header-inner">
-        <Brand compact />
-        <nav className="uos-desktop-nav" aria-label={locale === 'ar' ? 'التنقل الرئيسي' : 'Primary navigation'}>
-          {PUBLIC_NAV.map((item) => (
-            <NavLink key={item.path} to={item.path} end={item.path === '/'}><Copy>{item.label}</Copy></NavLink>
-          ))}
-          <NavLink to="/store"><Copy>{{ ar: 'المتجر', en: 'Store' }}</Copy></NavLink>
-        </nav>
-        <div className="uos-header-actions">
-          <button className="uos-language" type="button" onClick={changeLocale} aria-label={locale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}>
-            <Languages aria-hidden="true" /><span>{locale === 'ar' ? 'EN' : 'ع'}</span>
-          </button>
-          <details className="uos-login-menu">
-            <summary><Copy>{{ ar: 'تسجيل الدخول', en: 'Log in' }}</Copy><ChevronDown aria-hidden="true" /></summary>
-            <PortalLinks />
-          </details>
-          <button ref={menuButton} className="uos-menu-trigger" type="button" onClick={() => setOpen(true)} aria-expanded={open} aria-controls="uos-mobile-menu" aria-label={locale === 'ar' ? 'فتح القائمة' : 'Open menu'}>
-            <Menu aria-hidden="true" />
-          </button>
-        </div>
-      </div>
-      <div className={`uos-drawer-backdrop ${open ? 'is-open' : ''}`} onMouseDown={() => setOpen(false)} aria-hidden={!open} />
-      <div ref={drawer} id="uos-mobile-menu" className={`uos-mobile-drawer ${open ? 'is-open' : ''}`} role="dialog" aria-modal="true" aria-label={locale === 'ar' ? 'قائمة الموقع' : 'Site menu'}>
-        <div className="uos-drawer-head"><Brand compact /><button type="button" onClick={() => setOpen(false)} aria-label={locale === 'ar' ? 'إغلاق القائمة' : 'Close menu'}><X /></button></div>
-        <nav aria-label={locale === 'ar' ? 'التنقل عبر الهاتف' : 'Mobile navigation'}>
-          {PUBLIC_NAV.map((item) => <NavLink key={item.path} to={item.path} end={item.path === '/'}><Copy>{item.label}</Copy><ArrowRight /></NavLink>)}
-          <NavLink to="/store"><Copy>{{ ar: 'المتجر', en: 'Store' }}</Copy><ArrowRight /></NavLink>
-        </nav>
-        <div className="uos-drawer-portals"><span><Copy>{{ ar: 'البوابات', en: 'Portals' }}</Copy></span><PortalLinks /></div>
-        <button className="uos-drawer-language" type="button" onClick={changeLocale}><Languages /><span>{locale === 'ar' ? 'English' : 'العربية'}</span></button>
-      </div>
-    </header>
-  );
-}
 
 function ButtonLink({ to, children, variant = 'primary' }: { to: string; children: ReactNode; variant?: 'primary' | 'secondary' | 'text' }) {
   return <Link className={`uos-button is-${variant}`} to={to}>{children}<ArrowRight aria-hidden="true" /></Link>;
@@ -392,7 +303,21 @@ function PublicFooter() {
 }
 
 function PublicRoutes() {
-  return <Routes><Route path="/" element={<HomePage />} /><Route path="/about" element={<AboutPage />} /><Route path="/sports" element={<SportsPage />} />{PUBLIC_SPORTS.map((sport) => <Route key={sport.id} path={`/sports/${sport.slug}`} element={<SportPage sport={sport} />} />)}<Route path="/programs" element={<ProgramsPage />} /><Route path="/coaches" element={<CoachingPage />} /><Route path="/contact" element={<ContactPage />} /><Route path="*" element={<NotFoundPage />} /></Routes>;
+  return (
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/sports" element={<SportsPage />} />
+      {PUBLIC_SPORTS.map((sport) => (
+        <Route key={sport.id} path={`/sports/${sport.slug}`} element={<SportPage sport={sport} />} />
+      ))}
+      <Route path="/programs" element={<ProgramsPage />} />
+      <Route path="/philosophy" element={<CoachingPage />} />
+      <Route path="/coaches" element={<CoachingPage />} />
+      <Route path="/contact" element={<ContactPage />} />
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
+  );
 }
 
 export function PublicExperience() {
@@ -425,5 +350,18 @@ export function PublicExperience() {
     return () => cancelAnimationFrame(frame);
   }, [location.pathname]);
 
-  return <LocaleContext.Provider value={{ locale, setLocale }}><div className="uos-public" dir={locale === 'ar' ? 'rtl' : 'ltr'}><a className="uos-skip-link" href="#uos-public-main"><Copy>{{ ar: 'انتقل إلى المحتوى', en: 'Skip to content' }}</Copy></a><PublicHeader /><main id="uos-public-main"><PublicRoutes /></main><PublicFooter /></div></LocaleContext.Provider>;
+  return (
+    <LocaleContext.Provider value={{ locale, setLocale }}>
+      <div className="uos-public" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+        <a className="uos-skip-link" href="#uos-public-main">
+          <Copy>{{ ar: 'انتقل إلى المحتوى', en: 'Skip to content' }}</Copy>
+        </a>
+        <PublicHeader locale={locale} onToggleLocale={() => setLocale(locale === 'ar' ? 'en' : 'ar')} />
+        <main id="uos-public-main">
+          <PublicRoutes />
+        </main>
+        <PublicFooter />
+      </div>
+    </LocaleContext.Provider>
+  );
 }

@@ -4,11 +4,13 @@ type Props = {
   compact?: boolean;
   className?: string;
   alt?: string;
+  size?: 'sm' | 'md' | 'lg' | string;
 };
 
-export function SafeBrandLogo({ compact = false, className = "", alt }: Props) {
+export function SafeBrandLogo({ compact = false, className = "", alt, size }: Props) {
   const [visible, setVisible] = React.useState(true);
-  const imgClass = compact ? `official-logo compact ${className}` : `official-logo ${className}`;
+  const sizeClass = size ? `size--${size}` : '';
+  const imgClass = compact ? `official-logo compact ${sizeClass} ${className}` : `official-logo ${sizeClass} ${className}`;
 
   if (visible) {
     return (

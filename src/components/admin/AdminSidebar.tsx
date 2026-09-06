@@ -55,6 +55,7 @@ const sections: Array<{ title: { en: string; ar: string }; items: NavItem[] }> =
     { to: '/admin/content', label: bi('Content', 'المحتوى'), icon: 'content' },
     { to: '/admin/users', label: bi('Users & Roles', 'المستخدمون والصلاحيات'), icon: 'users' },
     { to: '/admin/settings', label: bi('Settings', 'الإعدادات'), icon: 'settings' },
+    { to: '/admin/integrations', label: bi('Integrations', 'التكاملات'), icon: 'settings' },
   ] },
 ];
 
