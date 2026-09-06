@@ -37,6 +37,7 @@ const adminRoutes = [
   '/admin/audit-activity',
 ];
 const allRoutes = [...publicRoutes, ...playerRoutes, ...parentRoutes, ...coachRoutes, ...adminRoutes];
+const intentionalPlayerLoginRedirects = new Set(['/player/phone', '/player/verify']);
 
 const viewportMatrix = [
   { width: 320, height: 568 },
@@ -142,7 +143,7 @@ async function assertRoute(page, runtimeErrors, route, checkOverflow = true) {
   if (state.failedImages.length) throw new Error(`${route}: broken image ${state.failedImages.join(' | ')}`);
   if (route.startsWith('/coach') && route !== '/coach/login' && state.pathname === '/coach/login') throw new Error(`${route}: unexpectedly redirected to coach login`);
   if (route.startsWith('/parent') && route !== '/parent/login' && state.pathname === '/parent/login') throw new Error(`${route}: unexpectedly redirected to parent login`);
-  if (route.startsWith('/player') && !route.includes('/login') && state.pathname === '/player/login') throw new Error(`${route}: unexpectedly redirected to player login`);
+  if (route.startsWith('/player') && !route.includes('/login') && !intentionalPlayerLoginRedirects.has(route) && state.pathname === '/player/login') throw new Error(`${route}: unexpectedly redirected to player login`);
   if (runtimeErrors.length) throw new Error(`${route}: ${runtimeErrors.join(' | ')}`);
   return state;
 }
