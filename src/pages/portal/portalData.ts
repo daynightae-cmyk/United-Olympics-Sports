@@ -5,6 +5,9 @@ import { demoPrograms } from '../../data/demo/programs';
 import { demoSessions } from '../../data/demo/sessions';
 import { demoTrainingGroups } from '../../data/demo/trainingGroups';
 import { getGroup, getPlayer, getSport } from '../../data/demo/selectors';
+import type { Coach, Player } from '../../domain/contracts';
+
+const COACH_PREVIEW_SESSION_KEY = 'uos:coach-portal:preview-session:v1';
 
 const requirePreviewPlayer = (id: string) => {
   const player = getPlayer(id);
@@ -22,16 +25,57 @@ const requirePreviewCoach = (id: string) => {
   return coach;
 };
 
+function readActivePreviewCoach(): Coach {
+  if (typeof window !== 'undefined') {
+    const sessionId = window.sessionStorage.getItem(COACH_PREVIEW_SESSION_KEY);
+    const sessionCoach = sessionId ? demoCoaches.find((item) => item.id === sessionId) : undefined;
+    if (sessionCoach) return sessionCoach;
+  }
+  return requirePreviewCoach('coach-preview-01');
+}
+
+function createDynamicArray<T>(resolve: () => T[]): T[] {
+  return new Proxy([] as T[], {
+    get(_target, property) {
+      const items = resolve();
+      const value = Reflect.get(items, property, items);
+      return typeof value === 'function' ? value.bind(items) : value;
+    },
+    ownKeys() {
+      return Reflect.ownKeys(resolve());
+    },
+    getOwnPropertyDescriptor(_target, property) {
+      const descriptor = Object.getOwnPropertyDescriptor(resolve(), property);
+      return descriptor ? { ...descriptor, configurable: true } : undefined;
+    },
+  });
+}
+
 export const activePlayer = requirePreviewPlayer('player-demo-001');
 export const activeParent = requirePreviewParent('parent-preview-01');
-export const activeCoach = requirePreviewCoach('coach-preview-01');
+
+/**
+ * Coach-facing legacy workspace exports remain API-compatible, but their
+ * values are now resolved from the current session-scoped preview identity.
+ * This prevents a selected coach from inheriting coach-preview-01 data simply
+ * because the module was imported earlier in the application lifecycle.
+ */
+export const activeCoach = new Proxy(requirePreviewCoach('coach-preview-01'), {
+  get(_target, property, receiver) {
+    return Reflect.get(readActivePreviewCoach(), property, receiver);
+  },
+}) as Coach;
+
 export const activePlayerSport = getSport(activePlayer.sportId);
 export const activePlayerGroup = getGroup(activePlayer.groupId);
 export const portalSessions = demoSessions;
 export const portalGroups = demoTrainingGroups;
 export const portalPrograms = demoPrograms;
 export const portalChildren = activeParent.playerIds.map(id => demoPlayers.find(player => player.id === id)).filter((player): player is typeof demoPlayers[number] => Boolean(player));
-export const portalCoachPlayers = demoPlayers.filter(player => activeCoach.playerIds.includes(player.id) || activeCoach.groupIds.includes(player.groupId ?? ''));
+export const portalCoachPlayers = createDynamicArray<Player>(() => {
+  const coach = readActivePreviewCoach();
+  return demoPlayers.filter((player) => coach.playerIds.includes(player.id) || coach.groupIds.includes(player.groupId ?? ''));
+});
 
 export const previewSubscriptions = [
   { id: 'subscription-preview-001', playerId: 'player-demo-001', plan: { en: 'Foundation Football', ar: 'أساس كرة القدم' }, amount: 450, currency: 'AED', renewal: '2026-09-30', status: 'active' as const },
