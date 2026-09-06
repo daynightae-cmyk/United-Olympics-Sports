@@ -102,7 +102,10 @@ jobs:
         shell: bash
         run: |
           if [ -f /tmp/uos-production-preview.pid ]; then
-            kill "$(cat /tmp/uos-production-preview.pid)" 2>/dev/null || true
+            pid="$(cat /tmp/uos-production-preview.pid)"
+            kill "$pid" 2>/dev/null || true
+            wait "$pid" 2>/dev/null || true
+            rm -f /tmp/uos-production-preview.pid
           fi
           sleep 1
 
@@ -123,11 +126,64 @@ jobs:
           UOS_BASE_URL: http://127.0.0.1:4173
         run: node qa/interface-smoke.mjs
 
-      - name: Store Golden Master QA (explicit preview provider)
+      - name: Store Golden Master QA with isolated browser previews
+        shell: bash
         env:
           UOS_BASE_URL: http://127.0.0.1:4173
           UOS_STORE_PREVIEW: 'true'
-        run: node qa/store-golden-master.mjs
+        run: |
+          set -euo pipefail
+
+          stop_preview() {
+            if [ -f /tmp/uos-vite-preview.pid ]; then
+              pid="$(cat /tmp/uos-vite-preview.pid)"
+              kill "$pid" 2>/dev/null || true
+              wait "$pid" 2>/dev/null || true
+              rm -f /tmp/uos-vite-preview.pid
+            fi
+          }
+
+          start_preview() {
+            browser="$1"
+            log="/tmp/uos-vite-preview-${browser,,}.log"
+            ./node_modules/.bin/vite preview --host 127.0.0.1 --port 4173 > "$log" 2>&1 &
+            echo $! > /tmp/uos-vite-preview.pid
+
+            ready=0
+            for attempt in $(seq 1 30); do
+              if curl --fail --silent --show-error http://127.0.0.1:4173/store > /dev/null; then
+                ready=1
+                break
+              fi
+              sleep 1
+            done
+
+            if [ "$ready" -ne 1 ]; then
+              echo "QA preview did not become healthy for $browser"
+              cat "$log" || true
+              return 1
+            fi
+          }
+
+          trap stop_preview EXIT
+          for browser in Chromium Firefox WebKit; do
+            echo "Starting isolated Golden Master preview for $browser"
+            stop_preview
+            sleep 1
+            start_preview "$browser"
+            UOS_QA_BROWSER="$browser" node qa/store-golden-master.mjs
+          done
+
+      - name: Stop QA production preview
+        if: always()
+        shell: bash
+        run: |
+          if [ -f /tmp/uos-vite-preview.pid ]; then
+            pid="$(cat /tmp/uos-vite-preview.pid)"
+            kill "$pid" 2>/dev/null || true
+            wait "$pid" 2>/dev/null || true
+            rm -f /tmp/uos-vite-preview.pid
+          fi
 
       - name: Upload preview logs on failure
         if: failure()
@@ -136,5 +192,5 @@ jobs:
           name: uos-vite-preview-logs
           path: |
             /tmp/uos-production-preview.log
-            /tmp/uos-vite-preview.log
+            /tmp/uos-vite-preview*.log
           if-no-files-found: ignore
