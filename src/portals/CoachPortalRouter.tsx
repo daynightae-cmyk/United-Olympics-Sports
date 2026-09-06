@@ -18,8 +18,8 @@ const CoachPortalPlayersPage = load(() => import('../pages/portal/coach/CoachPor
 const CoachPortalPlayerDetailPage = load(() => import('../pages/portal/coach/CoachPortalPlayerDetailPage'), 'CoachPortalPlayerDetailPage');
 const CoachPortalGroupDetailPage = load(() => import('../pages/portal/coach/CoachPortalGroupDetailPage'), 'CoachPortalGroupDetailPage');
 const CoachPortalAttendancePage = load(() => import('../pages/portal/coach/CoachPortalAttendancePage'), 'CoachPortalAttendancePage');
-const CoachPortalProgramsPage = load(() => import('../pages/portal/coach/CoachPortalProgramsPage'), 'CoachPortalProgramsPage');
-const CoachPortalMessagesPage = load(() => import('../pages/portal/coach/CoachPortalMessagesPage'), 'CoachPortalMessagesPage');
+const CoachSessionProgramsPage = load(() => import('../pages/portal/coach/CoachSessionProgramsPage'), 'CoachSessionProgramsPage');
+const CoachSessionMessagesPage = load(() => import('../pages/portal/coach/CoachSessionMessagesPage'), 'CoachSessionMessagesPage');
 
 function CoachShellLayout() {
   return (
@@ -51,8 +51,8 @@ export function CoachPortalRouter() {
                   <Route path="players/:playerId" element={<CoachPortalPlayerDetailPage />} />
                   <Route path="groups/:groupId" element={<CoachPortalGroupDetailPage />} />
                   <Route path="attendance" element={<CoachPortalAttendancePage />} />
-                  <Route path="programs" element={<CoachPortalProgramsPage />} />
-                  <Route path="messages" element={<CoachPortalMessagesPage />} />
+                  <Route path="programs" element={<CoachSessionProgramsPage />} />
+                  <Route path="messages" element={<CoachSessionMessagesPage />} />
                   <Route path="profile" element={<CoachPortalProfilePage />} />
                   <Route path="*" element={<PortalNotFoundPage portal="coach" />} />
                 </Route>
