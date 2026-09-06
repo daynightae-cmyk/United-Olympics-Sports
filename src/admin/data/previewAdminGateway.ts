@@ -337,9 +337,9 @@ export const previewAdminGateway: AdminDataGateway = {
       name: p.name,
       sportId: p.sportId,
       description: p.description,
-      ageGroups: [p.ageGroup],
+      ageGroups: Array.isArray((p as any).ageGroups) ? (p as any).ageGroups : ((p as any).ageGroup ? [(p as any).ageGroup] : []),
       level: p.level,
-      status: 'active' as const,
+      status: ((p as any).status as 'active' | 'inactive') ?? 'active',
     })));
     return paginate(items, params);
   },
@@ -353,24 +353,28 @@ export const previewAdminGateway: AdminDataGateway = {
       name: p.name,
       sportId: p.sportId,
       description: p.description,
-      ageGroups: [p.ageGroup],
+      ageGroups: Array.isArray((p as any).ageGroups) ? (p as any).ageGroups : ((p as any).ageGroup ? [(p as any).ageGroup] : []),
       level: p.level,
-      status: 'active' as const,
+      status: ((p as any).status as 'active' | 'inactive') ?? 'active',
     };
   },
 
   async createProgram(data: Partial<ProgramViewModel>): Promise<CreateResult<ProgramViewModel>> {
     await previewDelay();
+    const ageGroups = data.ageGroups ?? [];
     const newProgram = {
       id: genId('program'),
       name: data.name ?? { en: 'New Program', ar: 'برنامج جديد' },
       sportId: data.sportId ?? 'football',
       description: data.description ?? { en: '', ar: '' },
-      ageGroups: data.ageGroups ?? [],
+      ageGroup: ageGroups[0] ?? { en: 'All Ages', ar: 'كل الأعمار' },
+      ageGroups,
       level: data.level ?? { en: 'Foundation', ar: 'أساسي' },
       status: (data.status as 'active' | 'inactive') ?? 'active',
     };
     previewSessionData.programs.push(newProgram as any);
+    const sport = previewSessionData.sports.find(item => item.id === newProgram.sportId);
+    if (sport && !sport.programIds.includes(newProgram.id)) sport.programIds.push(newProgram.id);
     persistPreviewData();
     return { item: newProgram, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };
   },
@@ -388,6 +392,9 @@ export const previewAdminGateway: AdminDataGateway = {
   async deleteProgram(id: string): Promise<DeleteResult> {
     await previewDelay();
     previewSessionData.programs = previewSessionData.programs.filter(x => x.id !== id);
+    previewSessionData.sports.forEach(sport => { sport.programIds = sport.programIds.filter(programId => programId !== id); });
+    previewSessionData.groups.forEach(group => { group.programIds = group.programIds.filter(programId => programId !== id); });
+    previewSessionData.branches.forEach(branch => { branch.programIds = branch.programIds.filter(programId => programId !== id); });
     persistPreviewData();
     return { success: true, message: 'Archived in preview data. | تمت الأرشفة في بيانات المعاينة.' };
   },
@@ -401,9 +408,9 @@ export const previewAdminGateway: AdminDataGateway = {
       name: g.name,
       ageGroup: g.ageGroup,
       level: g.level,
-      playerCount: demoPlayers.filter(p => p.groupId === g.id).length,
-      coachCount: g.coachIds.length,
-      programIds: g.programIds,
+      playerCount: previewSessionData.players.filter(p => p.groupId === g.id).length,
+      coachCount: Array.isArray((g as any).coachIds) ? (g as any).coachIds.length : Number((g as any).coachCount ?? 0),
+      programIds: (g as any).programIds ?? [],
       status: g.status,
     })));
     return paginate(items, params);
@@ -419,9 +426,9 @@ export const previewAdminGateway: AdminDataGateway = {
       name: g.name,
       ageGroup: g.ageGroup,
       level: g.level,
-      playerCount: demoPlayers.filter(p => p.groupId === g.id).length,
-      coachCount: g.coachIds.length,
-      programIds: g.programIds,
+      playerCount: previewSessionData.players.filter(p => p.groupId === g.id).length,
+      coachCount: Array.isArray((g as any).coachIds) ? (g as any).coachIds.length : Number((g as any).coachCount ?? 0),
+      programIds: (g as any).programIds ?? [],
       status: g.status,
     };
   },
@@ -434,6 +441,8 @@ export const previewAdminGateway: AdminDataGateway = {
       name: data.name ?? { en: 'New Group', ar: 'مجموعة جديدة' },
       ageGroup: data.ageGroup ?? { en: 'U12', ar: 'تحت 12' },
       level: data.level ?? { en: 'Foundation', ar: 'أساسي' },
+      playerIds: [],
+      coachIds: [],
       playerCount: 0,
       coachCount: 0,
       programIds: data.programIds ?? [],
@@ -518,6 +527,16 @@ export const previewAdminGateway: AdminDataGateway = {
       performanceScore: 0,
     };
     previewSessionData.players.push(newPlayer as any);
+    if (newPlayer.groupId) {
+      const group = previewSessionData.groups.find(item => item.id === newPlayer.groupId) as any;
+      if (group) {
+        group.playerIds = Array.isArray(group.playerIds) ? group.playerIds : [];
+        if (!group.playerIds.includes(newPlayer.id)) group.playerIds.push(newPlayer.id);
+      }
+      previewSessionData.branches.forEach(branch => {
+        if (branch.groupIds.includes(newPlayer.groupId!) && !branch.playerIds.includes(newPlayer.id)) branch.playerIds.push(newPlayer.id);
+      });
+    }
     persistPreviewData();
     return { item: newPlayer, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };
   },
@@ -535,6 +554,9 @@ export const previewAdminGateway: AdminDataGateway = {
   async deletePlayer(id: string): Promise<DeleteResult> {
     await previewDelay();
     previewSessionData.players = previewSessionData.players.filter(x => x.id !== id);
+    previewSessionData.groups.forEach(group => { const item = group as any; if (Array.isArray(item.playerIds)) item.playerIds = item.playerIds.filter((playerId: string) => playerId !== id); });
+    previewSessionData.branches.forEach(branch => { branch.playerIds = branch.playerIds.filter(playerId => playerId !== id); });
+    previewSessionData.parents.forEach(parent => { parent.playerIds = parent.playerIds.filter(playerId => playerId !== id); });
     persistPreviewData();
     return { success: true, message: 'Archived in preview data. | تمت الأرشفة في بيانات المعاينة.' };
   },
@@ -549,7 +571,7 @@ export const previewAdminGateway: AdminDataGateway = {
       sportIds: c.sportIds,
       branchIds: c.branchIds,
       groupIds: c.groupIds,
-      playerCount: demoPlayers.filter(p => c.playerIds.includes(p.id)).length,
+      playerCount: Array.isArray((c as any).playerIds) ? previewSessionData.players.filter(p => (c as any).playerIds.includes(p.id)).length : Number((c as any).playerCount ?? 0),
       specializations: c.specializations,
       certifications: c.certifications,
       status: c.status,
@@ -568,7 +590,7 @@ export const previewAdminGateway: AdminDataGateway = {
       sportIds: c.sportIds,
       branchIds: c.branchIds,
       groupIds: c.groupIds,
-      playerCount: demoPlayers.filter(p => c.playerIds.includes(p.id)).length,
+      playerCount: Array.isArray((c as any).playerIds) ? previewSessionData.players.filter(p => (c as any).playerIds.includes(p.id)).length : Number((c as any).playerCount ?? 0),
       specializations: c.specializations,
       certifications: c.certifications,
       status: c.status,
@@ -584,12 +606,23 @@ export const previewAdminGateway: AdminDataGateway = {
       sportIds: data.sportIds ?? [],
       branchIds: data.branchIds ?? [],
       groupIds: data.groupIds ?? [],
+      playerIds: [],
       playerCount: 0,
       specializations: data.specializations ?? [],
       certifications: data.certifications ?? [],
       status: (data.status as 'active' | 'inactive') ?? 'active',
     };
     previewSessionData.coaches.push(newCoach as any);
+    previewSessionData.branches.forEach(branch => {
+      if (newCoach.branchIds.includes(branch.id) && !branch.coachIds.includes(newCoach.id)) branch.coachIds.push(newCoach.id);
+    });
+    previewSessionData.groups.forEach(group => {
+      const item = group as any;
+      if (newCoach.groupIds.includes(group.id)) {
+        item.coachIds = Array.isArray(item.coachIds) ? item.coachIds : [];
+        if (!item.coachIds.includes(newCoach.id)) item.coachIds.push(newCoach.id);
+      }
+    });
     persistPreviewData();
     return { item: newCoach, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };
   },
@@ -607,6 +640,8 @@ export const previewAdminGateway: AdminDataGateway = {
   async deleteCoach(id: string): Promise<DeleteResult> {
     await previewDelay();
     previewSessionData.coaches = previewSessionData.coaches.filter(x => x.id !== id);
+    previewSessionData.branches.forEach(branch => { branch.coachIds = branch.coachIds.filter(coachId => coachId !== id); });
+    previewSessionData.groups.forEach(group => { const item = group as any; if (Array.isArray(item.coachIds)) item.coachIds = item.coachIds.filter((coachId: string) => coachId !== id); });
     persistPreviewData();
     return { success: true, message: 'Archived in preview data. | تمت الأرشفة في بيانات المعاينة.' };
   },
@@ -683,7 +718,7 @@ export const previewAdminGateway: AdminDataGateway = {
   // Sessions
   async listSessions(params?: ListQueryParams): Promise<ListResult<SessionViewModel>> {
     await previewDelay();
-    const items = filterAndSort(previewSessionData.sessions.map(s => ({ ...s, coachIds: [] })));
+    const items = filterAndSort(previewSessionData.sessions.map(s => ({ ...s, coachIds: (s as any).coachIds ?? [] })));
     return paginate(items, params);
   },
 
@@ -691,7 +726,7 @@ export const previewAdminGateway: AdminDataGateway = {
     await previewDelay();
     const s = previewSessionData.sessions.find(x => x.id === id);
     if (!s) return null;
-    return { ...s, coachIds: [] };
+    return { ...s, coachIds: (s as any).coachIds ?? [] };
   },
 
   async createSession(data: Partial<SessionViewModel>): Promise<CreateResult<SessionViewModel>> {
