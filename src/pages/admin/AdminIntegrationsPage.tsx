@@ -1,40 +1,28 @@
 import { useState, useEffect } from 'react';
-import { ShieldCheck, Cloud, Settings2, LogOut, CheckCircle2, XCircle } from 'lucide-react';
+import { Cloud, LogOut, CheckCircle2, XCircle } from 'lucide-react';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { UiButton } from '../../components/ui/UiPrimitives';
-import { initAuth, googleSignIn, logout, getAccessToken } from '../../lib/firebase';
-import type { User } from 'firebase/auth';
+import { auth, googleSignIn, logout } from '../../lib/firebase';
+import { onAuthStateChanged, type User } from 'firebase/auth';
 
 export function AdminIntegrationsPage() {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = initAuth(
-      (u, t) => {
-        setUser(u);
-        setToken(t);
-        setInitialized(true);
-      },
-      () => {
-        setUser(null);
-        setToken(null);
-        setInitialized(true);
-      }
-    );
-    return () => unsubscribe();
+    const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
+      setUser(nextUser);
+      setInitialized(true);
+    });
+    return unsubscribe;
   }, []);
 
   const handleLogin = async () => {
     setIsLoggingIn(true);
     try {
       const result = await googleSignIn();
-      if (result) {
-        setToken(result.accessToken);
-        setUser(result.user);
-      }
+      setUser(result.user);
     } catch (err) {
       console.error('Login failed:', err);
     } finally {
@@ -59,9 +47,7 @@ export function AdminIntegrationsPage() {
     <div className="admin-page settings-page">
       <div className="admin-page-header">
         <div className="admin-page-header-copy">
-          <span className="section-icon admin-page-header-icon" aria-hidden="true">
-            <Cloud />
-          </span>
+          <span className="section-icon admin-page-header-icon" aria-hidden="true"><Cloud /></span>
           <div>
             <BilingualText value={bi('Settings', 'الإعدادات')} className="admin-eyebrow" />
             <h1><BilingualText value={bi('Google Workspace Integrations', 'تكاملات مساحة عمل جوجل')} /></h1>
@@ -75,35 +61,17 @@ export function AdminIntegrationsPage() {
           <div className="flex items-center justify-between">
             <div>
               <h3><BilingualText value={bi('Workspace Authentication', 'المصادقة مع مساحة العمل')} /></h3>
-              <p>
-                <BilingualText 
-                  value={bi(
-                    'Connect a Google account to enable all Workspace integrations for this session.', 
-                    'قم بربط حساب جوجل لتفعيل جميع تكاملات مساحة العمل لهذه الجلسة.'
-                  )} 
-                />
-              </p>
+              <p><BilingualText value={bi('Connect a Google account to enable configured Workspace integrations for this session.', 'قم بربط حساب جوجل لتفعيل تكاملات مساحة العمل المهيأة لهذه الجلسة.')} /></p>
             </div>
             {!initialized ? (
               <div className="text-sm opacity-50">Loading...</div>
             ) : user ? (
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>{user.email}</span>
-                </div>
-                <UiButton variant="outline" onClick={logout}>
-                  <LogOut className="w-4 h-4" />
-                  <BilingualText value={bi('Disconnect', 'قطع الاتصال')} />
-                </UiButton>
+                <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400"><CheckCircle2 className="w-4 h-4" /><span>{user.email}</span></div>
+                <UiButton variant="outline" onClick={() => void logout()}><LogOut className="w-4 h-4" /><BilingualText value={bi('Disconnect', 'قطع الاتصال')} /></UiButton>
               </div>
             ) : (
-              <button 
-                onClick={handleLogin}
-                disabled={isLoggingIn}
-                className="gsi-material-button"
-                style={{ width: '240px' }}
-              >
+              <button onClick={() => void handleLogin()} disabled={isLoggingIn} className="gsi-material-button" style={{ width: '240px' }}>
                 <div className="gsi-material-button-state"></div>
                 <div className="gsi-material-button-content-wrapper">
                   <div className="gsi-material-button-icon">
@@ -128,22 +96,9 @@ export function AdminIntegrationsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {integrations.map((integration) => (
             <article key={integration.id} className="setting-card flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg m-0">{integration.name}</h3>
-                {user ? (
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
-                ) : (
-                  <XCircle className="w-5 h-5 text-gray-400 opacity-50" />
-                )}
-              </div>
+              <div className="flex items-center justify-between"><h3 className="text-lg m-0">{integration.name}</h3>{user ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <XCircle className="w-5 h-5 text-gray-400 opacity-50" />}</div>
               <p className="text-sm opacity-80">{integration.description}</p>
-              <div className="mt-2 text-xs font-medium">
-                {user ? (
-                  <span className="text-green-600 dark:text-green-400">Ready to use</span>
-                ) : (
-                  <span className="text-amber-600 dark:text-amber-400">Requires Authentication</span>
-                )}
-              </div>
+              <div className="mt-2 text-xs font-medium">{user ? <span className="text-green-600 dark:text-green-400">Authenticated</span> : <span className="text-amber-600 dark:text-amber-400">Requires Authentication</span>}</div>
             </article>
           ))}
         </div>
