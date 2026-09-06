@@ -1,5 +1,6 @@
 import { storeCategories } from './storeCategories';
 import { cartLineKey, hasSelectedVariants } from './storeUtils';
+import { applyVerifiedProductMedia } from './storeMediaProvenance';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useUiSettings } from '../ui/theme/useUiSettings';
 import type { StoreCartLine, StoreCategory, StoreDataState, StoreProduct } from './storeTypes';
@@ -38,14 +39,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [miniCartOpen, setMiniCartOpen] = useState(false);
   const locale = bilingualOrder === 'ar-first' ? 'ar' : 'en';
+
   useEffect(() => {
     if (!isPreview) return;
     let active = true;
     void import('./storeData.preview').then((module) => {
-      if (active) setPreviewData({ products: module.previewProducts, categories: module.previewCategories });
+      if (active) {
+        setPreviewData({
+          products: module.previewProducts.map(applyVerifiedProductMedia),
+          categories: module.previewCategories,
+        });
+      }
     });
     return () => { active = false; };
   }, [isPreview]);
+
   const products = isPreview ? previewData.products : [];
   const categories = storeCategories;
   const recordView = useCallback((id: string) => setRecentlyViewed((current) => current[0] === id ? current : [id, ...current.filter((item) => item !== id)].slice(0, 8)), []);
