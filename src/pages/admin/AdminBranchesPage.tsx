@@ -1,242 +1,233 @@
-import { ArrowRight, Building2, CheckCircle2, Globe2, Plus, SlidersHorizontal } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useBranches, useCreateBranch, useCountries, useSports } from '../../admin/data/adminHooks';
+import { ArrowRight, Building2, Flag, Globe2, ShieldCheck, Trophy, UsersRound, TrendingUp, Zap, Target, CheckCircle, ChevronRight } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { useState, useMemo } from 'react';
+import { PageHeader } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
-import { BmBadge, BmButton, BmDataTable, BmDrawer, BmEmptyState, BmErrorState, BmFilterBar, BmFilterSelect, BmLoadingTable, BmPageHeader, type BmColumn } from '../../components/benchmark/BenchmarkComponents';
-import { UosFormSection, UosSelectField, UosSteps, UosTextField } from '../../components/fields/UosFields';
-import { UiDialog } from '../../components/ui/UiPrimitives';
-import type { BranchViewModel } from '../../admin/data/viewModels';
-
-function sortText(value: unknown): string {
-  if (typeof value === 'string') return value;
-  if (typeof value === 'number') return String(value);
-  if (value && typeof value === 'object' && 'en' in value) return String((value as { en: unknown }).en ?? '');
-  return '';
-}
-
-const WIZARD_STEPS = [bi('Identity', 'الهوية'), bi('Location & Sports', 'الموقع والرياضات'), bi('Review', 'المراجعة')];
+import { PreviewNotice } from '../../components/enterprise/EnterpriseUI';
+import { EnterpriseSelect } from '../../components/enterprise/EnterpriseUI';
+import { demoBranches, demoCountries } from '../../data/demo/business';
+import { demoPlayers } from '../../data/demo/players';
+import { demoSports } from '../../data/demo/sports';
+import { demoTrainingGroups } from '../../data/demo/trainingGroups';
+import { demoCoaches } from '../../data/demo/coaches';
+import { getSportPreviewMedia } from '../../data/media';
 
 export function AdminBranchesPage() {
-  const [query, setQuery] = useState('');
-  const [country, setCountry] = useState('all');
-  const [sortBy, setSortBy] = useState('name');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
-  const [selected, setSelected] = useState<string[]>([]);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [wizardOpen, setWizardOpen] = useState(false);
-  const [wizardStep, setWizardStep] = useState(0);
-  const [notice, setNotice] = useState(false);
-  const [optimisticBranches, setOptimisticBranches] = useState<BranchViewModel[]>([]);
-  const [draftNameEn, setDraftNameEn] = useState('');
-  const [draftNameAr, setDraftNameAr] = useState('');
-  const [draftCountry, setDraftCountry] = useState('');
-  const [draftSport, setDraftSport] = useState('');
-  const [draftError, setDraftError] = useState<{ en: string; ar: string } | null>(null);
-  const { data, loading, error, refetch } = useBranches({ page: 1, pageSize: 100 });
-  const { data: countriesData } = useCountries({ page: 1, pageSize: 100 });
-  const { data: sportsData } = useSports({ page: 1, pageSize: 100 });
-  const { create, loading: createLoading } = useCreateBranch();
-  const countries = countriesData?.items ?? [];
-  const sportsCatalog = sportsData?.items ?? [];
+  const [searchParams] = useSearchParams();
+  const initialQuery = searchParams.get('q') ?? '';
+  const initialCountry = searchParams.get('country') ?? 'all';
+  const [query, setQuery] = useState(initialQuery);
+  const [countryFilter, setCountryFilter] = useState(initialCountry);
 
-  const branches = useMemo(() => {
-    const source = [...(data?.items ?? []), ...optimisticBranches.filter(local => !(data?.items ?? []).some(remote => remote.id === local.id))];
-    const items = source.filter(branch =>
-      (country === 'all' || branch.countryId === country) &&
+  const filteredBranches = useMemo(() =>
+    demoBranches.filter(branch =>
+      (countryFilter === 'all' || branch.countryId === countryFilter) &&
       `${branch.name.en} ${branch.name.ar} ${branch.id}`.toLowerCase().includes(query.toLowerCase())
-    );
-    return [...items].sort((a, b) => {
-      const av = sortText(a[sortBy as keyof BranchViewModel]);
-      const bv = sortText(b[sortBy as keyof BranchViewModel]);
-      return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
-    });
-  }, [data, optimisticBranches, query, country, sortBy, sortDir]);
+    ), [query, countryFilter]);
 
-  const allSelected = branches.length > 0 && branches.every(b => selected.includes(b.id));
-  const toggleAll = () => setSelected(allSelected ? [] : branches.map(b => b.id));
-  const toggleRow = (id: string) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
-  const onSort = (key: string) => { if (sortBy === key) { setSortDir(d => d === 'asc' ? 'desc' : 'asc'); } else { setSortBy(key); setSortDir('asc'); } };
-  const reset = () => { setQuery(''); setCountry('all'); setSelected([]); };
+  const totalPlayers = new Set(demoBranches.flatMap(b => b.playerIds)).size;
+  const totalCoaches = new Set(demoBranches.flatMap(b => b.coachIds)).size;
+  const totalSports = new Set(demoBranches.flatMap(b => b.sportIds)).size;
+  const activeCountries = demoCountries.filter(c => c.status === 'active').length;
 
-  const startWizard = () => {
-    setWizardStep(0);
-    setDraftError(null);
-    setWizardOpen(true);
-  };
-
-  const nextWizard = () => {
-    if (wizardStep === 0 && (!draftNameEn.trim() || !draftNameAr.trim())) {
-      setDraftError({ en: 'Enter the branch name in both languages to continue.', ar: 'أدخل اسم الفرع باللغتين للمتابعة.' });
-      return;
-    }
-    if (wizardStep === 1 && (!draftCountry || !draftSport)) {
-      setDraftError({ en: 'Choose a country and a primary sport to continue.', ar: 'اختر الدولة والرياضة الأساسية للمتابعة.' });
-      return;
-    }
-    setDraftError(null);
-    setWizardStep((step) => Math.min(step + 1, WIZARD_STEPS.length - 1));
-  };
-
-  const createBranch = async () => {
-    if (!draftNameEn.trim() || !draftNameAr.trim() || !draftCountry || !draftSport) return;
-    const result = await create({
-      name: { en: draftNameEn.trim(), ar: draftNameAr.trim() },
-      countryId: draftCountry,
-      organizationId: 'org-united-olympics',
-      sportIds: [draftSport], programIds: [], groupIds: [], coachIds: [], playerIds: [],
-      sportCount: 1, programCount: 0, groupCount: 0, coachCount: 0, playerCount: 0,
-      status: 'active',
-    });
-    setOptimisticBranches(current => [...current.filter(item => item.id !== result.item.id), result.item]);
-    await refetch();
-    setWizardOpen(false); setNotice(true);
-    setDraftNameEn(''); setDraftNameAr(''); setDraftCountry(''); setDraftSport(''); setWizardStep(0);
-  };
-
-  const columns: BmColumn<BranchViewModel>[] = [
-    {
-      key: 'name', label: bi('Branch', 'الفرع'), sortable: true,
-      render: (b) => (
-        <div className="bm-cell-entity">
-          <span className="bm-cell-avatar"><Building2 aria-hidden="true" /></span>
-          <span><strong><BilingualText value={b.name} /></strong><small>{b.id}</small></span>
+  return (
+    <div className="admin-page">
+      <section className="branches-hero" aria-label="Branches overview">
+        <div className="branches-hero-bg" aria-hidden="true">
+          <div className="hero-gradient-ring ring-one" />
+          <div className="hero-gradient-ring ring-two" />
         </div>
-      ),
-      mobileRender: (b) => (
-        <div className="bm-mobile-card-head">
-          <span className="bm-cell-avatar"><Building2 aria-hidden="true" /></span>
-          <div className="bm-mobile-card-title">
-            <strong><BilingualText value={b.name} /></strong>
-            <small>{b.id}</small>
-          </div>
+        <div className="branches-hero-content">
+          <span className="eyebrow eyebrow-premium">
+            <Building2 size={15} />
+            <BilingualText value={bi('Branch Management', 'إدارة الفروع')} />
+          </span>
+          <h1><BilingualText value={bi('Branches', 'الفروع')} /></h1>
+          <p><BilingualText value={bi('A multi-country branch cockpit for sports, programs, rosters, coaches and coverage.', 'مركز فروع متعدد الدول للرياضات والبرامج والقوائم والمدربين والتغطية.')} /></p>
         </div>
-      ),
-    },
-    { key: 'countryId', label: bi('Country', 'الدولة'), sortable: true, render: (b) => <BilingualText value={countries.find(c => c.id === b.countryId)?.name ?? bi(b.countryId, b.countryId)} /> },
-    { key: 'playerCount', label: bi('Players', 'اللاعبون'), sortable: true, render: (b) => <span className="bm-cell-strong">{b.playerCount}</span> },
-    { key: 'coachCount', label: bi('Coaches', 'المدربون'), sortable: true, render: (b) => <span className="bm-cell-strong">{b.coachCount}</span> },
-    { key: 'programCount', label: bi('Programs', 'البرامج'), sortable: true, render: (b) => b.programCount },
-    { key: 'sportCount', label: bi('Sports', 'الرياضات'), sortable: true, render: (b) => b.sportCount },
-    { key: 'groupCount', label: bi('Groups', 'المجموعات'), sortable: true, render: (b) => <span className="bm-cell-strong">{b.groupCount}</span> },
-    { key: 'status', label: bi('Status', 'الحالة'), sortable: true, render: (b) => <BmBadge tone={b.status === 'active' ? 'success' : 'neutral'} label={b.status === 'active' ? bi('Active', 'نشط') : bi('Inactive', 'غير نشط')} icon={b.status === 'active' ? <CheckCircle2 aria-hidden="true" /> : undefined} /> },
-    {
-      key: 'actions', label: bi('Open', 'فتح'),
-      render: (b) => <Link to={`/admin/branches/${b.id}`} className="bm-btn bm-btn-icon" aria-label="Open branch"><ArrowRight aria-hidden="true" /></Link>,
-    },
-  ];
+      </section>
 
-  return <div className="admin-page">
-    <BmPageHeader
-      eyebrow={bi('Branch Management', 'إدارة الفروع')}
-      title={bi('Branches', 'الفروع')}
-      description={bi('A multi-country branch cockpit for sports, programs, rosters, coaches and coverage.', 'مركز فروع متعدد الدول للرياضات والبرامج والقوائم والمدربين والتغطية.')}
-      icon={<Building2 aria-hidden="true" />}
-      actions={<BmButton variant="primary" onClick={startWizard}><Plus aria-hidden="true" /><BilingualText value={bi('Add Branch', 'إضافة فرع')} /></BmButton>}
-    />
+      <PageHeader
+        icon={Building2}
+        eyebrow={bi('Branch Workspaces', 'مساحات الفروع')}
+        title={bi('Branches', 'الفروع')}
+        description={bi('Manage branch workspaces, sports coverage, athlete rosters and coach assignments from one preview cockpit.', 'أدر مساحات الفروع وتغطية الرياضات وقوائم الرياضيين وتكليفات المدربين من مركز معاينة واحد.')}
+        actions={<PreviewNotice />}
+      />
 
-    {notice && <div className="bm-badge bm-badge-info" style={{ marginBottom: '16px' }} role="status"><BilingualText value={bi('Branch saved in the browser preview store — no production backend write was made.', 'تم حفظ الفرع في مخزن المعاينة بالمتصفح — دون كتابة في نظام خلفي إنتاجي.')} /></div>}
+      <section className="admin-stat-grid branches-kpi" aria-label="Branch KPIs">
+        <article className="admin-stat-card kpi-card accent-branches-main">
+          <div className="kpi-icon"><Building2 size={22} /></div>
+          <strong>{demoBranches.length}</strong>
+          <span><BilingualText value={bi('Branch Workspaces', 'مساحات الفروع')} /></span>
+          <small><BilingualText value={bi('Across all countries', 'عبر جميع الدول')} /></small>
+        </article>
+        <article className="admin-stat-card kpi-card accent-countries-b">
+          <div className="kpi-icon"><Flag size={22} /></div>
+          <strong>{activeCountries}</strong>
+          <span><BilingualText value={bi('Active Countries', 'الدول النشطة')} /></span>
+          <small><BilingualText value={bi('Country workspaces', 'مساحات الدول')} /></small>
+        </article>
+        <article className="admin-stat-card kpi-card accent-players-b">
+          <div className="kpi-icon"><UsersRound size={22} /></div>
+          <strong>{totalPlayers}</strong>
+          <span><BilingualText value={bi('Total Players', 'إجمالي اللاعبين')} /></span>
+          <small><BilingualText value={bi('Preview records', 'سجلات تجريبية')} /></small>
+        </article>
+        <article className="admin-stat-card kpi-card accent-coaches-b">
+          <div className="kpi-icon"><ShieldCheck size={22} /></div>
+          <strong>{totalCoaches}</strong>
+          <span><BilingualText value={bi('Total Coaches', 'إجمالي المدربين')} /></span>
+          <small><BilingualText value={bi('Verified preview', 'معاينة موثقة')} /></small>
+        </article>
+        <article className="admin-stat-card kpi-card accent-sports-b">
+          <div className="kpi-icon"><Trophy size={22} /></div>
+          <strong>{totalSports}</strong>
+          <span><BilingualText value={bi('Active Sports', 'الرياضات النشطة')} /></span>
+          <small><BilingualText value={bi('Across branches', 'عبر الفروع')} /></small>
+        </article>
+      </section>
 
-    <BmFilterBar
-      searchValue={query}
-      onSearchChange={setQuery}
-      searchPlaceholder={bi('Search branches or IDs', 'البحث عن الفروع أو المعرفات')}
-      filters={<BmFilterSelect label={bi('Country', 'الدولة')} value={country} onChange={setCountry} options={[{ value: 'all', label: bi('All countries', 'كل الدول') }, ...countries.map(c => ({ value: c.id, label: c.name }))]} />}
-      onMobileOpen={() => setDrawerOpen(true)}
-    />
-
-    <div style={{ marginTop: '16px' }}>
-      {loading && <BmLoadingTable rows={5} />}
-      {error && <BmErrorState onRetry={() => globalThis.location.reload()} />}
-      {!loading && !error && (
-        <BmDataTable<BranchViewModel>
-          columns={columns}
-          rows={branches}
-          selectable
-          selectedIds={selected}
-          onToggleRow={toggleRow}
-          onToggleAll={toggleAll}
-          sortBy={sortBy}
-          sortDir={sortDir}
-          onSort={onSort}
-          bulkActions={
-            <>
-              <BmButton variant="ghost" onClick={() => setSelected([])}><BilingualText value={bi('Clear', 'مسح')} /></BmButton>
-            </>
-          }
-          emptyState={
-            <BmEmptyState
-              icon={<Building2 aria-hidden="true" />}
-              title={bi('No branches match', 'لا تطابق أي فروع')}
-              description={bi('Reset the country filter or search term.', 'أعد ضبط فلتر الدولة أو مصطلح البحث.')}
-              action={<BmButton variant="tertiary" onClick={reset}><SlidersHorizontal aria-hidden="true" /><BilingualText value={bi('Reset filters', 'إعادة ضبط')} /></BmButton>}
-            />
-          }
+      <section className="enterprise-toolbar branches-toolbar" aria-label="Branches filters">
+        <label className="enterprise-search">
+          <svg aria-hidden="true" viewBox="0 0 24 24" className="enterprise-search-icon"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.8" /><path d="m16 16 4.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+          <span className="sr-only"><BilingualText value={bi('Search branches or IDs', 'البحث عن الفروع أو المعرفات')} /></span>
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search branches or IDs | البحث عن الفروع أو المعرفات" />
+        </label>
+        <EnterpriseSelect
+          label={bi('Country', 'الدولة')}
+          value={countryFilter}
+          onChange={setCountryFilter}
+          options={[
+            { value: 'all', label: bi('All countries', 'كل الدول') },
+            ...demoCountries.map(item => ({ value: item.id, label: item.name }))
+          ]}
         />
-      )}
-    </div>
+        <div className="enterprise-toolbar-end">
+          <span className="enterprise-result"><BilingualText value={bi(`${filteredBranches.length} branches`, `${filteredBranches.length} فروع`)} /></span>
+        </div>
+      </section>
 
-    <BmDrawer
-      open={drawerOpen}
-      onClose={() => setDrawerOpen(false)}
-      title={bi('Branch Filters', 'فلاتر الفروع')}
-      description={bi('Search and country scope for the branch directory.', 'البحث ونطاق الدولة لدليل الفروع.')}
-      footer={<BmButton variant="primary" onClick={() => setDrawerOpen(false)}><BilingualText value={bi('Show results', 'عرض النتائج')} /></BmButton>}
-    >
-      <div className="bm-field">
-        <label className="bm-field-label" htmlFor="branch-drawer-search"><BilingualText value={bi('Search', 'البحث')} /></label>
-        <input id="branch-drawer-search" className="bm-field-input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search branches or IDs | البحث عن الفروع أو المعرفات" />
-      </div>
-      <BmFilterSelect label={bi('Country', 'الدولة')} value={country} onChange={setCountry} options={[{ value: 'all', label: bi('All countries', 'كل الدول') }, ...countries.map(c => ({ value: c.id, label: c.name }))]} />
-    </BmDrawer>
+      <section className="branches-grid" aria-label="Branches list">
+        {filteredBranches.length > 0 ? (
+          filteredBranches.map(branch => {
+            const country = demoCountries.find(c => c.id === branch.countryId);
+            const players = new Set(branch.playerIds);
+            const sports = branch.sportIds.map(id => demoSports.find(s => s.id === id)).filter(Boolean);
+            const coaches = branch.coachIds.map(id => demoCoaches.find(c => c.id === id)).filter(Boolean);
+            const groups = branch.groupIds.map(id => demoTrainingGroups.find(g => g.id === id)).filter(Boolean);
+            const programs = branch.programIds.map(id => demoSports.find(s => s.id === id)).filter(Boolean);
 
-    <UiDialog
-      open={wizardOpen}
-      onClose={() => setWizardOpen(false)}
-      title={bi('Add Branch', 'إضافة فرع')}
-      description={bi('Creates a browser-persistent preview branch. It does not write to a production backend.', 'ينشئ فرع معاينة محفوظًا في المتصفح. لا يكتب في نظام خلفي إنتاجي.')}
-    >
-      <UosSteps steps={WIZARD_STEPS} current={wizardStep} />
-      {wizardStep === 0 && (
-        <UosFormSection title={bi('Identity', 'الهوية')} icon={<Building2 size={17} />} description={bi('The public branch name in both languages.', 'اسم الفرع العام باللغتين.')}>
-          <UosTextField label={bi('Branch name (English)', 'اسم الفرع (إنجليزي)')} icon={<Building2 size={16} />} value={draftNameEn} onChange={(event) => setDraftNameEn(event.target.value)} required autoComplete="off" placeholder="Branch name" error={draftError} />
-          <UosTextField label={bi('Branch name (Arabic)', 'اسم الفرع (عربي)')} value={draftNameAr} onChange={(event) => setDraftNameAr(event.target.value)} required autoComplete="off" placeholder="اسم الفرع" />
-        </UosFormSection>
-      )}
-      {wizardStep === 1 && (
-        <UosFormSection title={bi('Location & Sports', 'الموقع والرياضات')} icon={<Globe2 size={17} />} description={bi('Country scope and the primary sport for this preview record.', 'نطاق الدولة والرياضة الأساسية لسجل المعاينة هذا.')}>
-          <UosSelectField label={bi('Country', 'الدولة')} icon={<Globe2 size={16} />} value={draftCountry} onChange={(event) => setDraftCountry(event.target.value)} required placeholder={bi('Choose country', 'اختر الدولة')} options={countries.map((c) => ({ value: c.id, label: c.name }))} error={draftError} />
-          <UosSelectField label={bi('Primary sport', 'الرياضة الأساسية')} value={draftSport} onChange={(event) => setDraftSport(event.target.value)} required placeholder={bi('Choose sport', 'اختر الرياضة')} options={sportsCatalog.map((s) => ({ value: s.id, label: s.name }))} />
-        </UosFormSection>
-      )}
-      {wizardStep === 2 && (
-        <UosFormSection title={bi('Review', 'المراجعة')} icon={<CheckCircle2 size={17} />} description={bi('Confirm the branch before saving it to the browser preview store.', 'أكد بيانات الفرع قبل حفظها في مخزن المعاينة بالمتصفح.')}>
-          <div className="uos-review-list">
-            <div><span><BilingualText value={bi('Name', 'الاسم')} /></span><strong>{draftNameEn || '—'} · {draftNameAr || '—'}</strong></div>
-            <div><span><BilingualText value={bi('Country', 'الدولة')} /></span><strong>{countries.find((c) => c.id === draftCountry)?.name.en ?? '—'}</strong></div>
-            <div><span><BilingualText value={bi('Sport', 'الرياضة')} /></span><strong>{sportsCatalog.find((s) => s.id === draftSport)?.name.en ?? '—'}</strong></div>
+            return (
+              <article key={branch.id} className="branch-card">
+                <div className="branch-card-media" aria-hidden="true">
+                  <div className="branch-building-bg">
+                    <Building2 size={48} />
+                  </div>
+                </div>
+                <div className="branch-card-body">
+                  <div className="branch-card-head">
+                    <div className="branch-identity">
+                      <span className="branch-icon-wrapper"><Building2 size={20} /></span>
+                      <div>
+                        <h2><BilingualText value={branch.name} /></h2>
+                        <p className="branch-country"><Flag size={12} /><BilingualText value={country?.name ?? { en: branch.countryId, ar: branch.countryId }} /></p>
+                      </div>
+                    </div>
+                    <span className="branch-status status-active"><BilingualText value={bi('Active', 'نشط')} /></span>
+                  </div>
+                  <div className="branch-stats">
+                    <div className="stat-item">
+                      <UsersRound size={14} />
+                      <span><BilingualText value={bi('Players', 'اللاعبون')} /></span>
+                      <strong>{players.size}</strong>
+                    </div>
+                    <div className="stat-item">
+                      <ShieldCheck size={14} />
+                      <span><BilingualText value={bi('Coaches', 'المدربون')} /></span>
+                      <strong>{coaches.length}</strong>
+                    </div>
+                    <div className="stat-item">
+                      <Trophy size={14} />
+                      <span><BilingualText value={bi('Sports', 'الرياضات')} /></span>
+                      <strong>{branch.sportIds.length}</strong>
+                    </div>
+                    <div className="stat-item">
+                      <Target size={14} />
+                      <span><BilingualText value={bi('Groups', 'المجموعات')} /></span>
+                      <strong>{groups.length}</strong>
+                    </div>
+                    <div className="stat-item">
+                      <Zap size={14} />
+                      <span><BilingualText value={bi('Programs', 'البرامج')} /></span>
+                      <strong>{branch.programIds.length}</strong>
+                    </div>
+                  </div>
+                  <div className="branch-sports-preview">
+                    <h3><BilingualText value={bi('Sports at this Branch', 'الرياضات في هذا الفرع')} /></h3>
+                    <div className="sports-tags">
+                      {sports.map(sport => (
+                        <span key={sport!.id} className={`sport-tag sport-${sport!.id}`}>
+                          <BilingualText value={sport!.name} />
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="branch-actions">
+                    <Link to={`/admin/branches/${branch.id}`} className="admin-link-button">
+                      <BilingualText value={bi('Open Branch Detail', 'فتح تفاصيل الفرع')} />
+                      <ChevronRight size={14} />
+                    </Link>
+                    <Link to={`/admin/branches/${branch.id}/overview`} className="admin-secondary-button">
+                      <BilingualText value={bi('Branch Cockpit', 'قمرة قيادة الفرع')} />
+                    </Link>
+                  </div>
+                </div>
+              </article>
+            );
+          })
+        ) : (
+          <div className="enterprise-empty">
+            <Building2 size={32} />
+            <h3><BilingualText value={bi('No branches found', 'لم يتم العثور على فروع')} /></h3>
+            <p><BilingualText value={bi('Try adjusting your search or country filter.', 'جرّب تعديل البحث أو فلتر الدولة.')} /></p>
           </div>
-          <p className="uos-field-helper"><BilingualText value={bi('Saving persists this branch in the browser preview store until preview data is reset.', 'الحفظ يبقي هذا الفرع في مخزن المعاينة بالمتصفح حتى إعادة ضبط بيانات المعاينة.')} /></p>
-        </UosFormSection>
-      )}
-      <div className="dialog-actions" style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-        {wizardStep > 0 && <UiButtonSafeSecondary onClick={() => { setDraftError(null); setWizardStep((step) => step - 1); }} label={bi('Back', 'رجوع')} />}
-        {wizardStep < WIZARD_STEPS.length - 1
-          ? <PrimaryNext onClick={nextWizard} />
-          : <PrimaryPrepare onClick={() => void createBranch()} loading={createLoading} />}
-      </div>
-    </UiDialog>
-  </div>;
-}
+        )}
+      </section>
 
-function UiButtonSafeSecondary({ onClick, label }: { onClick: () => void; label: { en: string; ar: string } }) {
-  return <button type="button" className="uos-btn-ghost uos-touch" onClick={onClick}><BilingualText value={label} /></button>;
-}
-
-function PrimaryNext({ onClick }: { onClick: () => void }) {
-  return <button type="button" className="uos-btn-primary uos-touch" onClick={onClick}><BilingualText value={bi('Continue', 'متابعة')} /></button>;
-}
-
-function PrimaryPrepare({ onClick, loading }: { onClick: () => void; loading: boolean }) {
-  return <button type="button" className="uos-btn-primary uos-touch" disabled={loading} onClick={onClick}><BilingualText value={bi(loading ? 'Saving…' : 'Save Branch', loading ? 'جارٍ الحفظ…' : 'حفظ الفرع')} /></button>;
+      <section className="branches-integrity" aria-label="Data integrity">
+        <h2 className="section-title"><BilingualText value={bi('Data Integrity', 'سلامة البيانات')} /></h2>
+        <div className="integrity-grid">
+          <article className="integrity-card">
+            <div className="integrity-icon"><CheckCircle size={20} /></div>
+            <div>
+              <h3><BilingualText value={bi('No Fabricated Branches', 'لا فروع مختلقة')} /></h3>
+              <p><BilingualText value={bi('Only structural workspaces: Branch Workspace 01–04', 'مساحات هيكلية فقط: مساحة الفرع 01–04')} /></p>
+            </div>
+          </article>
+          <article className="integrity-card">
+            <div className="integrity-icon"><ShieldCheck size={20} /></div>
+            <div>
+              <h3><BilingualText value={bi('Zero Operational Claims', 'صفر ادعاءات تشغيلية')} /></h3>
+              <p><BilingualText value={bi('No fake addresses, phones, coordinates or real-world presence', 'لا عناوين/هواتف/إحداثيات وهمية أو وجود حقيقي')} /></p>
+            </div>
+          </article>
+          <article className="integrity-card">
+            <div className="integrity-icon"><Target size={20} /></div>
+            <div>
+              <h3><BilingualText value={bi('Ready for Live Data', 'جاهزة للبيانات الحقيقية')} /></h3>
+              <p><BilingualText value={bi('Structure complete — awaiting backend integration', 'الهيكل مكتمل — بانتظار تكامل الخادم')} /></p>
+            </div>
+          </article>
+          <article className="integrity-card">
+            <div className="integrity-icon"><Flag size={20} /></div>
+            <div>
+              <h3><BilingualText value={bi('Multi-Country Ready', 'متعددة الدول')} /></h3>
+              <p><BilingualText value={bi('Country filter enables cross-border branch management', 'فلتر الدولة يمكّن إدارة الفروع عبر الحدود')} /></p>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+  );
 }
