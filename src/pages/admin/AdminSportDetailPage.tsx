@@ -1,12 +1,12 @@
-import { ArrowRight, BarChart3, ClipboardList, Dumbbell, FolderCog, ImageIcon, Layers3, ShieldCheck, Trophy, Users } from 'lucide-react';
+import { ArrowRight, BarChart3, ClipboardList, Dumbbell, FolderCog, ImageIcon, ShieldCheck, Trash2, Trophy, Users } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { FuturePanel, PageHeader, StatCard, StatusBadge, Tabs } from '../../components/admin/AdminUI';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { PageHeader, StatCard, StatusBadge, Tabs } from '../../components/admin/AdminUI';
 import { SportMediaManager } from '../../components/admin/SportMediaManager';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
+import { UiButton, UiPreviewState } from '../../components/ui/UiPrimitives';
 import { demoSportMediaAssets } from '../../data/demo/media';
-import { demoPrograms } from '../../data/demo/programs';
-import { getSport, getSportGroups, getSportMetrics, getSportPlayers } from '../../data/demo/selectors';
+import { useCoaches, useDeleteSport, useGroups, usePlayers, usePrograms, useSport, useUpdateSport } from '../../admin/data/adminHooks';
 
 const tabs = [
   { id: 'overview', label: bi('Overview', 'نظرة عامة') },
@@ -20,44 +20,48 @@ const tabs = [
 
 export function AdminSportDetailPage() {
   const { sportId } = useParams();
-  const sport = getSport(sportId);
+  const navigate = useNavigate();
   const [active, setActive] = useState('overview');
+  const { item: sport, loading, error, refetch } = useSport(sportId);
+  const { data: groupsData } = useGroups({ page: 1, pageSize: 500 });
+  const { data: playersData } = usePlayers({ page: 1, pageSize: 1000 });
+  const { data: coachesData } = useCoaches({ page: 1, pageSize: 500 });
+  const { data: programsData } = usePrograms({ page: 1, pageSize: 500 });
+  const { update, loading: updating } = useUpdateSport();
+  const { delete: remove, loading: deleting } = useDeleteSport();
 
-  if (!sport) return <FuturePanel title={bi('Sport not found', 'الرياضة غير موجودة')} description={bi('Choose a valid preview sport from the Sports Center.', 'اختر رياضة تجريبية صالحة من مركز الرياضات.')} />;
+  if (loading) return <div className="admin-page"><UiPreviewState title={bi('Loading sport', 'جارٍ تحميل الرياضة')} description={bi('Reading the Admin data gateway.', 'جارٍ قراءة بوابة بيانات الإدارة.')} /></div>;
+  if (error || !sport) return <div className="admin-page"><PageHeader icon={Trophy} eyebrow={bi('Sport Detail', 'تفاصيل الرياضة')} title={bi('Sport not found', 'الرياضة غير موجودة')} description={bi('Choose a valid sport from the Sports Center.', 'اختر رياضة صالحة من مركز الرياضات.')} /></div>;
 
-  const groups = getSportGroups(sport.id);
-  const players = getSportPlayers(sport.id);
-  const metrics = getSportMetrics(sport.id);
-  const coaches = Array.from(new Set(groups.flatMap(group => group.coachIds)));
-  const programs = demoPrograms.filter(program => program.sportId === sport.id);
+  const groups = groupsData.items.filter(group => group.sportId === sport.id);
+  const players = playersData.items.filter(player => player.sportId === sport.id);
+  const coaches = coachesData.items.filter(coach => coach.sportIds.includes(sport.id) || coach.groupIds.some(groupId => groups.some(group => group.id === groupId)));
+  const programs = programsData.items.filter(program => program.sportId === sport.id);
   const sportMedia = demoSportMediaAssets.filter(asset => asset.sportId === sport.id);
+  const hasRelations = groups.length > 0 || players.length > 0 || programs.length > 0 || coaches.length > 0;
+
+  const setStatus = async (status: 'active' | 'inactive') => { await update(sport.id, { status }); await refetch(); };
+  const deleteSport = async () => {
+    if (hasRelations) return;
+    if (!window.confirm('Delete this Preview sport? | حذف رياضة المعاينة؟')) return;
+    await remove(sport.id);
+    navigate('/admin/sports');
+  };
 
   return <div className="admin-page">
     <PageHeader icon={Trophy} eyebrow={bi('Sport Detail', 'تفاصيل الرياضة')} title={sport.name} description={sport.description} actions={<StatusBadge active={sport.status === 'active'} />} />
-    <section className="admin-stat-grid compact">
-      <StatCard label={bi('Players Count', 'عدد اللاعبين')} value={players.length} icon={Users} />
-      <StatCard label={bi('Groups Count', 'عدد المجموعات')} value={groups.length} icon={Dumbbell} />
-      <StatCard label={bi('Programs Count', 'عدد البرامج')} value={programs.length || sport.programIds.length} icon={FolderCog} />
-      <StatCard label={bi('Coaches Count', 'عدد المدربين')} value={coaches.length} icon={ShieldCheck} />
-    </section>
+    <section className="admin-stat-grid compact"><StatCard label={bi('Players Count', 'عدد اللاعبين')} value={players.length} icon={Users} /><StatCard label={bi('Groups Count', 'عدد المجموعات')} value={groups.length} icon={Dumbbell} /><StatCard label={bi('Programs Count', 'عدد البرامج')} value={programs.length} icon={FolderCog} /><StatCard label={bi('Coaches Count', 'عدد المدربين')} value={coaches.length} icon={ShieldCheck} /></section>
+    <section className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Sport Controls', 'ضوابط الرياضة')} /><ShieldCheck /></div><div className="preview-form-grid"><label><BilingualText value={bi('Operating status', 'حالة التشغيل')} /><select value={sport.status} disabled={updating} onChange={event => void setStatus(event.target.value as 'active' | 'inactive')}><option value="active">Active | نشط</option><option value="inactive">Inactive | غير نشط</option></select></label></div><p className="preview-warning"><BilingualText value={bi('Changes persist in the browser Preview store.', 'تستمر التغييرات في مخزن المعاينة بالمتصفح.')} /></p></section>
     <Tabs items={tabs} active={active} onChange={setActive} />
     <section className="admin-tab-panel" role="tabpanel">
-      {active === 'overview' && <div className="overview-grid"><article className="admin-panel feature-panel"><Trophy /><BilingualText value={bi('Sport Foundation', 'أساس الرياضة')} className="admin-eyebrow" /><h2><BilingualText value={sport.name} /></h2><p><BilingualText value={bi('This sport connects its own training groups, players, coaches, programmes and metric definitions without universal sport assumptions.', 'تربط هذه الرياضة مجموعاتها ولاعبيها ومدربيها وبرامجها وتعريفات مؤشراتها دون افتراضات عامة موحدة لكل الرياضات.')} /></p></article><article className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Age Groups', 'الفئات العمرية')} /></div><div className="tag-list">{sport.ageGroups.map(item => <BilingualText key={item.en} value={item} />)}</div></article></div>}
-
-      {active === 'groups' && <div className="group-grid">{groups.map(group => <article className="group-card" key={group.id}><div><BilingualText value={group.name} className="group-title" /><StatusBadge active={group.status === 'active'} /></div><dl><div><dt><BilingualText value={bi('Age Group', 'الفئة العمرية')} /></dt><dd><BilingualText value={group.ageGroup} /></dd></div><div><dt><BilingualText value={bi('Level', 'المستوى')} /></dt><dd><BilingualText value={group.level} /></dd></div><div><dt><BilingualText value={bi('Players', 'اللاعبون')} /></dt><dd>{group.playerIds.length}</dd></div><div><dt><BilingualText value={bi('Coaches', 'المدربون')} /></dt><dd>{group.coachIds.length}</dd></div></dl><Link className="admin-link-button" to={`/admin/sports/${sport.id}/groups/${group.id}`}><BilingualText value={bi('Open Group', 'فتح المجموعة')} /><ArrowRight /></Link></article>)}</div>}
-
-      {active === 'players' && <div className="linked-player-list">{players.map(player => <Link to={`/admin/players/${player.id}`} key={player.id}><span className="list-index">{player.id.slice(-3)}</span><BilingualText value={{ en: player.nameEn, ar: player.nameAr }} /><BilingualText value={player.level} /><ArrowRight /></Link>)}</div>}
-
-      {active === 'coaches' && <div className="admin-entity-grid">{coaches.length > 0 ? coaches.map((coachRef, index) => {
-        const assignedGroups = groups.filter(group => group.coachIds.includes(coachRef));
-        return <article key={coachRef}><span className="section-icon"><ClipboardList /></span><small><BilingualText value={bi('Coach Reference', 'مرجع المدرب')} /></small><h3>{coachRef}</h3><BilingualText value={bi('Assignment Coverage', 'نطاق التكليف')} /><strong>{assignedGroups.length}</strong><span className="preview-badge"><BilingualText value={bi(`Role Preview ${index + 1}`, `معاينة الدور ${index + 1}`)} /></span></article>;
-      }) : <article><span className="section-icon"><ClipboardList /></span><h3><BilingualText value={bi('Coaching Structure', 'هيكل التدريب')} /></h3><p><BilingualText value={bi('No verified coach assignment is attached to this sport preview yet.', 'لا يوجد تكليف مدرب موثق مرتبط بمعاينة هذه الرياضة حتى الآن.')} /></p><span className="preview-badge"><BilingualText value={bi('UI Preview', 'معاينة الواجهة')} /></span></article>}</div>}
-
-      {active === 'programs' && <div className="admin-entity-grid">{programs.length > 0 ? programs.map(program => <article key={program.id}><span className="section-icon"><Layers3 /></span><small><BilingualText value={program.level} /></small><h3><BilingualText value={program.name} /></h3><p><BilingualText value={program.focus} /></p><span className="preview-badge"><BilingualText value={bi('Program Preview', 'معاينة البرنامج')} /></span></article>) : <article><span className="section-icon"><Layers3 /></span><h3><BilingualText value={bi('Program Structure', 'هيكل البرامج')} /></h3><p><BilingualText value={bi('The management surface is ready to display verified programs when they are connected.', 'واجهة الإدارة جاهزة لعرض البرامج الموثقة عند ربطها.')} /></p><span className="preview-badge"><BilingualText value={bi('UI Preview', 'معاينة الواجهة')} /></span></article>}</div>}
-
-      {active === 'metrics' && <div className="metric-definition-grid">{metrics.map((metric, index) => <article key={metric.id}><span>0{index + 1}</span><BarChart3 /><BilingualText value={metric.name} /><small><BilingualText value={bi('Sport-specific definition', 'تعريف خاص بالرياضة')} /></small></article>)}</div>}
-
-      {active === 'media' && (sportMedia.length > 0 ? <SportMediaManager assets={sportMedia} sportName={sport.name} /> : <div className="admin-entity-grid"><article><span className="section-icon"><ImageIcon /></span><small><BilingualText value={bi('Media Workspace', 'مساحة الوسائط')} /></small><h3><BilingualText value={bi('Verified Media Collection', 'مجموعة الوسائط الموثقة')} /></h3><p><BilingualText value={bi('No verified user media assets are attached to this sport. The interface remains ready without inventing stock imagery.', 'لا توجد أصول وسائط معتمدة من المستخدم لهذه الرياضة. تظل الواجهة جاهزة دون اختلاق صور مخزنة.')} /></p><span className="preview-badge"><BilingualText value={bi('Awaiting Verified Assets', 'بانتظار أصول موثقة')} /></span></article></div>)}
+      {active === 'overview' && <div className="overview-grid"><article className="admin-panel feature-panel"><Trophy /><BilingualText value={bi('Sport Foundation', 'أساس الرياضة')} className="admin-eyebrow" /><h2><BilingualText value={sport.name} /></h2><p><BilingualText value={sport.description} /></p></article><article className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Age Groups', 'الفئات العمرية')} /></div><div className="tag-list">{sport.ageGroups.map((item, index) => <BilingualText key={`${item.en}-${index}`} value={item} />)}{!sport.ageGroups.length && <span>—</span>}</div></article></div>}
+      {active === 'groups' && <div className="group-grid">{groups.map(group => <article className="group-card" key={group.id}><div><BilingualText value={group.name} className="group-title" /><StatusBadge active={group.status === 'active'} /></div><dl><div><dt><BilingualText value={bi('Age Group', 'الفئة العمرية')} /></dt><dd><BilingualText value={group.ageGroup} /></dd></div><div><dt><BilingualText value={bi('Level', 'المستوى')} /></dt><dd><BilingualText value={group.level} /></dd></div><div><dt><BilingualText value={bi('Players', 'اللاعبون')} /></dt><dd>{group.playerCount}</dd></div><div><dt><BilingualText value={bi('Coaches', 'المدربون')} /></dt><dd>{group.coachCount}</dd></div></dl><Link className="admin-link-button" to={`/admin/sports/${sport.id}/groups/${group.id}`}><BilingualText value={bi('Open Group', 'فتح المجموعة')} /><ArrowRight /></Link></article>)}{!groups.length && <p className="empty-message"><BilingualText value={bi('No groups assigned to this sport.', 'لا توجد مجموعات مخصصة لهذه الرياضة.')} /></p>}</div>}
+      {active === 'players' && <div className="linked-player-list">{players.map(player => <Link to={`/admin/players/${player.id}`} key={player.id}><span className="list-index">{player.id.slice(-3)}</span><BilingualText value={{ en: player.nameEn, ar: player.nameAr }} /><BilingualText value={player.level} /><ArrowRight /></Link>)}{!players.length && <p className="empty-message"><BilingualText value={bi('No players assigned to this sport.', 'لا يوجد لاعبون مخصصون لهذه الرياضة.')} /></p>}</div>}
+      {active === 'coaches' && <div className="admin-entity-grid">{coaches.map(coach => <article key={coach.id}><span className="section-icon"><ClipboardList /></span><small><BilingualText value={bi('Coach', 'المدرب')} /></small><h3>{coach.nameEn} | {coach.nameAr}</h3><BilingualText value={bi('Assigned groups', 'المجموعات المكلف بها')} /><strong>{coach.groupIds.filter(groupId => groups.some(group => group.id === groupId)).length}</strong><Link className="admin-link-button small" to={`/admin/coaches/${coach.id}`}><BilingualText value={bi('Open', 'فتح')} /></Link></article>)}{!coaches.length && <article><ClipboardList /><p><BilingualText value={bi('No coach assignment is represented for this sport.', 'لا يوجد تكليف مدرب ممثل لهذه الرياضة.')} /></p></article>}</div>}
+      {active === 'programs' && <div className="admin-entity-grid">{programs.map(program => <article key={program.id}><span className="section-icon"><FolderCog /></span><small><BilingualText value={program.level} /></small><h3><BilingualText value={program.name} /></h3><p><BilingualText value={program.description} /></p><Link className="admin-link-button small" to={`/admin/programs/${program.id}`}><BilingualText value={bi('Open', 'فتح')} /></Link></article>)}{!programs.length && <p className="empty-message"><BilingualText value={bi('No programs linked to this sport.', 'لا توجد برامج مرتبطة بهذه الرياضة.')} /></p>}</div>}
+      {active === 'metrics' && <section className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Performance Metrics', 'مؤشرات الأداء')} /><BarChart3 /></div><p><BilingualText value={bi('Sport-level metric definitions are not represented in the current Admin data contract. No synthetic metrics are shown here.', 'تعريفات مؤشرات الأداء على مستوى الرياضة غير ممثلة في عقد بيانات الإدارة الحالي، لذلك لا يتم عرض مؤشرات مصطنعة هنا.')} /></p><Link className="admin-link-button" to="/admin/performance"><BilingualText value={bi('Open Performance Operations', 'فتح عمليات الأداء')} /><ArrowRight /></Link></section>}
+      {active === 'media' && (sportMedia.length > 0 ? <><p className="preview-warning"><BilingualText value={bi('These are verified static media assets; they are not claimed as editable Admin data records.', 'هذه أصول وسائط ثابتة موثقة؛ ولا يتم الادعاء بأنها سجلات بيانات إدارة قابلة للتحرير.')} /></p><SportMediaManager assets={sportMedia} sportName={sport.name} /></> : <div className="admin-entity-grid"><article><span className="section-icon"><ImageIcon /></span><h3><BilingualText value={bi('Verified Media Collection', 'مجموعة الوسائط الموثقة')} /></h3><p><BilingualText value={bi('No verified static media assets are attached to this sport.', 'لا توجد أصول وسائط ثابتة موثقة مرتبطة بهذه الرياضة.')} /></p></article></div>)}
     </section>
+    <section className="admin-panel"><div className="panel-heading"><BilingualText value={bi('Danger Zone', 'منطقة الخطر')} /><ShieldCheck /></div>{hasRelations && <p className="preview-warning"><BilingualText value={bi('Remove or reassign related programs, groups, players and coaches before deleting this sport.', 'احذف أو أعد تعيين البرامج والمجموعات واللاعبين والمدربين المرتبطين قبل حذف هذه الرياضة.')} /></p>}<UiButton variant="danger" disabled={deleting || hasRelations} onClick={() => void deleteSport()}><Trash2 /><BilingualText value={bi(deleting ? 'Deleting…' : 'Delete Preview sport', deleting ? 'جارٍ الحذف…' : 'حذف رياضة المعاينة')} /></UiButton></section>
   </div>;
 }
