@@ -108,6 +108,10 @@ async function modalChecks(page, selector, trigger, close) {
   await trigger.click();
   const panel = page.locator(selector);
   await panel.waitFor();
+  await page.waitForFunction((activeSelector) => {
+    const activePanel = document.querySelector(activeSelector);
+    return Boolean(activePanel?.contains(document.activeElement));
+  }, selector);
   assert(await panel.evaluate((e) => e.contains(document.activeElement)), `${selector}: missing initial focus`);
   for (let i = 0; i < 16; i++) await page.keyboard.press('Tab');
   assert(await panel.evaluate((e) => e.contains(document.activeElement)), `${selector}: escaped focus trap`);
