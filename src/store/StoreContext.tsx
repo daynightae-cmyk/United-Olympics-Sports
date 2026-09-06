@@ -32,7 +32,7 @@ const StoreContext = createContext<StoreContextValue | undefined>(undefined);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const { bilingualOrder, setSetting } = useUiSettings();
-  const isPreview = import.meta.env.DEV;
+  const isPreview = import.meta.env.DEV || import.meta.env.VITE_UOS_STORE_PREVIEW === 'true';
   const [previewData, setPreviewData] = useState<{ products: StoreProduct[]; categories: StoreCategory[] }>({ products: [], categories: [] });
   const [cart, setCart] = useState<StoreCartLine[]>([]);
   const [recentlyViewed, setRecentlyViewed] = useState<string[]>([]);
