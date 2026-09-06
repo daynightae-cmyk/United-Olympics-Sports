@@ -71,8 +71,6 @@ jobs:
             fi
           done
 
-          # Demo fixtures are legitimate inside the explicitly named preview and
-          # benchmark labs, but must never leak into owner-facing product code.
           if grep -RInF \
             --exclude-dir=node_modules \
             --exclude-dir=dist \
@@ -86,9 +84,7 @@ jobs:
           exit "$failed"
 
       - name: Install browser QA runtime
-        run: |
-          npm install --no-save --package-lock=false playwright@1.55.0
-          npx playwright install --with-deps chromium firefox webkit
+        run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Start production preview
         shell: bash
