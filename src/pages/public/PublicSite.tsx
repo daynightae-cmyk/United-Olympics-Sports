@@ -24,10 +24,10 @@ import {
   Compass,
 } from "lucide-react";
 import { ThemeToggle } from "../../components/ui/ThemeToggle";
-import { Sports3DIcon } from "../../design/sports3d";
 import { UosFormSection, UosTextAreaField, UosTextField, uosCommonHelpers } from "../../components/fields/UosFields";
-import { SportConceptVisual } from "../../components/owner-demo/OwnerDemoVisuals";
-import { getSportPreviewMedia } from "../../data/media";
+import { useReducedMotion } from "../../hooks/useReducedMotion";
+import { MediaRegistry } from "../../data/public/mediaRegistry";
+import { SportCard, ValueCard } from "../../components/public/cards";
 import {
   CoachPreviewPage,
   ParentPreviewPage,
@@ -151,9 +151,7 @@ function OfficialLogo({ compact = false }: { compact?: boolean }) {
 }
 
 function Splash({ onComplete }: { onComplete: () => void }) {
-  const [reducedMotion] = useState(
-    () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
-  );
+  const reducedMotion = useReducedMotion();
   useEffect(() => {
     const timer = window.setTimeout(onComplete, reducedMotion ? 420 : 3000);
     return () => window.clearTimeout(timer);
@@ -466,72 +464,74 @@ function Home() {
         <div className="feature-grid feature-grid-premium">
           {[
             {
-              icon: <Dumbbell />,
+              icon: Dumbbell,
               title: { en: "Training", ar: "التدريب" },
-              text: {
+              description: {
                 en: "Build strong foundations through consistent practice.",
                 ar: "ابنِ أساسًا قويًا من خلال الممارسة المستمرة.",
               },
-              accent: "training",
+              accent: "training" as const,
+              indexNumber: 1,
             },
             {
-              icon: <ShieldCheck />,
+              icon: ShieldCheck,
               title: { en: "Discipline", ar: "الانضباط" },
-              text: {
+              description: {
                 en: "Create habits that support long-term development.",
                 ar: "كوّن عادات تدعم التطور على المدى الطويل.",
               },
-              accent: "discipline",
+              accent: "discipline" as const,
+              indexNumber: 2,
             },
             {
-              icon: <Trophy />,
+              icon: Trophy,
               title: { en: "Performance", ar: "الأداء" },
-              text: {
+              description: {
                 en: "Turn preparation into confident performance.",
                 ar: "حوّل الاستعداد إلى أداء واثق.",
               },
-              accent: "performance",
+              accent: "performance" as const,
+              indexNumber: 3,
             },
             {
-              icon: <Users />,
+              icon: Users,
               title: { en: "Teamwork", ar: "العمل الجماعي" },
-              text: {
+              description: {
                 en: "Learn communication, support and shared responsibility.",
                 ar: "تعلم التواصل والدعم والمسؤولية المشتركة.",
               },
-              accent: "teamwork",
+              accent: "teamwork" as const,
+              indexNumber: 4,
             },
             {
-              icon: <Target />,
+              icon: Target,
               title: { en: "Focus", ar: "التركيز" },
-              text: {
+              description: {
                 en: "Develop decision-making and match awareness.",
                 ar: "طور اتخاذ القرار ووعي المباراة.",
               },
-              accent: "focus",
+              accent: "focus" as const,
+              indexNumber: 5,
             },
             {
-              icon: <Heart />,
+              icon: Heart,
               title: { en: "Progress", ar: "التقدم" },
-              text: {
+              description: {
                 en: "Measure growth through structured evaluation.",
                 ar: "قس النمو من خلال التقييم المنظم.",
               },
-              accent: "progress",
+              accent: "progress" as const,
+              indexNumber: 6,
             },
           ].map((item) => (
-            <article key={item.title.en} className={`feature-card accent-${item.accent}`}>
-              <div className="feature-icon">
-                {item.icon}
-              </div>
-              <h3>
-                <Bilingual value={item.title} />
-              </h3>
-              <p>
-                <Bilingual value={item.text} />
-              </p>
-              <div className="feature-underline" />
-            </article>
+            <ValueCard
+              key={item.title.en}
+              icon={item.icon}
+              title={item.title}
+              description={item.description}
+              accent={item.accent}
+              indexNumber={item.indexNumber}
+            />
           ))}
         </div>
       </section>
@@ -545,7 +545,18 @@ function Home() {
         />
         <div className="card-grid sports-grid-premium">
           {sports.slice(0, 3).map((sport) => (
-            <SportCard key={sport.id} sport={sport} premium />
+            <SportCard
+              key={sport.id}
+              sport={{
+                id: sport.id,
+                name: { en: sport.en, ar: sport.ar },
+                description: sport.description,
+                ages: sport.ages,
+                focus: sport.focus,
+              }}
+              mediaAsset={MediaRegistry.getSportAsset(sport.id, "card")}
+              featured
+            />
           ))}
         </div>
         <Link className="text-link text-link-premium" to="/sports">
@@ -641,56 +652,75 @@ function About() {
         </div>
         <div className="about-values">
           {[
-            [
-              "Vision",
-              "رؤيتنا",
-              "Create a lasting culture of confident participation and performance.",
-              "بناء ثقافة مستدامة للمشاركة والأداء بثقة.",
-            ],
-            [
-              "Mission",
-              "رسالتنا",
-              "Guide athletes through structured training and human support.",
-              "توجيه الرياضيين عبر تدريب منظم ودعم إنساني.",
-            ],
-            [
-              "Values",
-              "قيمنا",
-              "Respect, discipline, teamwork and progress in every step.",
-              "الاحترام والانضباط والعمل الجماعي والتقدم في كل خطوة.",
-            ],
-            [
-              "Approach",
-              "نهجنا",
-              "Readiness-based pathways, not invented age cut-offs.",
-              "مسارات مبنية على الجاهزية، لا حدود عمرية مختلقة.",
-            ],
-            [
-              "Integrity",
-              "نزاهتنا",
-              "Zero fabricated operational claims in any public surface.",
-              "صفر ادعاءات تشغيلية مختلقة في أي واجهة عامة.",
-            ],
-            [
-              "Access",
-              "وصولنا",
-              "Player, Parent, Coach and Admin portals — fully separated.",
-              "بوابات اللاعب، ولي الأمر، المدرب والإدارة — منفصلة بالكامل.",
-            ],
-          ].map(([en, ar, te, ta]) => (
-            <div className="value-row value-row-premium" key={en}>
-              <div className="value-icon">
-                <Star size={22} />
-              </div>
-              <div className="value-content">
-                <h3>
-                  <Bilingual value={{ en, ar }} />
-                </h3>
-                <p>
-                  <Bilingual value={{ en: te, ar: ta }} />
-                </p>
-              </div>
-            </div>
+            {
+              title: { en: "Vision", ar: "رؤيتنا" },
+              description: {
+                en: "Create a lasting culture of confident participation and performance.",
+                ar: "بناء ثقافة مستدامة للمشاركة والأداء بثقة.",
+              },
+              icon: Star,
+              accent: "gold" as const,
+              indexNumber: 1,
+            },
+            {
+              title: { en: "Mission", ar: "رسالتنا" },
+              description: {
+                en: "Guide athletes through structured training and human support.",
+                ar: "توجيه الرياضيين عبر تدريب منظم ودعم إنساني.",
+              },
+              icon: Target,
+              accent: "performance" as const,
+              indexNumber: 2,
+            },
+            {
+              title: { en: "Values", ar: "قيمنا" },
+              description: {
+                en: "Respect, discipline, teamwork and progress in every step.",
+                ar: "الاحترام والانضباط والعمل الجماعي والتقدم في كل خطوة.",
+              },
+              icon: ShieldCheck,
+              accent: "discipline" as const,
+              indexNumber: 3,
+            },
+            {
+              title: { en: "Approach", ar: "نهجنا" },
+              description: {
+                en: "Readiness-based pathways, not invented age cut-offs.",
+                ar: "مسارات مبنية على الجاهزية، لا حدود عمرية مختلقة.",
+              },
+              icon: Compass,
+              accent: "training" as const,
+              indexNumber: 4,
+            },
+            {
+              title: { en: "Integrity", ar: "نزاهتنا" },
+              description: {
+                en: "Zero fabricated operational claims in any public surface.",
+                ar: "صفر ادعاءات تشغيلية مختلقة في أي واجهة عامة.",
+              },
+              icon: CheckCircle,
+              accent: "focus" as const,
+              indexNumber: 5,
+            },
+            {
+              title: { en: "Access", ar: "وصولنا" },
+              description: {
+                en: "Player, Parent, Coach and Admin portals — fully separated.",
+                ar: "بوابات اللاعب، ولي الأمر، المدرب والإدارة — منفصلة بالكامل.",
+              },
+              icon: Users,
+              accent: "progress" as const,
+              indexNumber: 6,
+            },
+          ].map((item) => (
+            <ValueCard
+              key={item.title.en}
+              icon={item.icon}
+              title={item.title}
+              description={item.description}
+              accent={item.accent}
+              indexNumber={item.indexNumber}
+            />
           ))}
         </div>
       </section>
@@ -734,57 +764,6 @@ function About() {
   );
 }
 
-function SportCard({ sport, premium }: { sport: Sport; premium?: boolean }) {
-  const preview = getSportPreviewMedia(sport.id);
-  const href = sportDetailRoutes[sport.id];
-  return (
-    <article className={`sport-card od-sport-card ${premium ? 'sport-card-premium' : ''}`}>
-      {preview ? (
-        <img
-          className="sport-card-media"
-          src={preview.url}
-          alt={`${preview.altEn} | ${preview.altAr}`}
-          width={1648}
-          height={928}
-          loading="lazy"
-          decoding="async"
-        />
-      ) : (
-        <SportConceptVisual sportId={sport.id} compact />
-      )}
-      <div className="sport-card-body">
-        <div className="sport-icon">
-          <Sports3DIcon sport={sport.id as 'football' | 'basketball' | 'swimming' | 'tennis' | 'gymnastics' | 'martial-arts'} size="md" decorative />
-        </div>
-        <h3>
-          <Bilingual value={{ en: sport.en, ar: sport.ar }} />
-        </h3>
-        <p>
-          <Bilingual value={sport.description} />
-        </p>
-        <div className="card-meta">
-          <span>
-            <Bilingual value={{ en: "Development path", ar: "مسار التطور" }} />
-          </span>
-          <strong>
-            <Bilingual value={sport.ages} />
-          </strong>
-        </div>
-        <Link className="text-link" to={href}>
-          <Bilingual value={{ en: "Explore Sport", ar: "استكشف الرياضة" }} />
-          <ArrowRight size={16} />
-        </Link>
-        {premium && (
-          <div className="sport-card-pulse" aria-hidden="true">
-            <span className="pulse-ring" />
-            <span className="pulse-ring" />
-            <span className="pulse-ring" />
-          </div>
-        )}
-      </div>
-    </article>
-  );
-}
 function Sports() {
   return (
     <div className="page od-sports-owner-page">
@@ -799,7 +778,17 @@ function Sports() {
       <section className="section section-premium sports-grid-section">
         <div className="card-grid sports-grid-premium">
           {sports.map((sport) => (
-            <SportCard key={sport.id} sport={sport} premium />
+            <SportCard
+              key={sport.id}
+              sport={{
+                id: sport.id,
+                name: { en: sport.en, ar: sport.ar },
+                description: sport.description,
+                ages: sport.ages,
+                focus: sport.focus,
+              }}
+              mediaAsset={MediaRegistry.getSportAsset(sport.id, "card")}
+            />
           ))}
         </div>
       </section>

@@ -550,3 +550,424 @@
   .integrity-card { flex-direction: column; align-items: flex-start; gap: 10px; }
   .integrity-icon { width: 36px; height: 36px; }
 }
+
+/* ===================================================================
+   Unified Modular Card Tokens & System (SportCard, ProgramCard, ValueCard)
+   =================================================================== */
+
+:root {
+  --uos-card-radius: 14px;
+  --uos-card-inner-radius: 10px;
+  --uos-card-bg: linear-gradient(145deg, rgba(20, 24, 32, 0.85), rgba(10, 12, 16, 0.95));
+  --uos-card-border: rgba(212, 175, 55, 0.16);
+  --uos-card-border-hover: rgba(212, 175, 55, 0.45);
+  --uos-card-shadow: 0 10px 30px -6px rgba(0, 0, 0, 0.5), 0 0 1px rgba(255, 255, 255, 0.08);
+  --uos-card-shadow-hover: 0 18px 42px -6px rgba(0, 0, 0, 0.7), 0 0 20px rgba(212, 175, 55, 0.14);
+}
+
+/* --- SportCard Modular Component --- */
+.uos-sport-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--uos-card-bg);
+  border: 1px solid var(--uos-card-border);
+  border-radius: var(--uos-card-radius);
+  box-shadow: var(--uos-card-shadow);
+  overflow: hidden;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.28s ease, box-shadow 0.28s ease;
+}
+
+.uos-sport-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--uos-card-border-hover);
+  box-shadow: var(--uos-card-shadow-hover);
+}
+
+.uos-sport-card.is-featured {
+  border-color: rgba(212, 175, 55, 0.32);
+}
+
+.uos-card-media-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: rgba(10, 12, 16, 0.8);
+}
+
+.uos-card-picture,
+.uos-card-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.uos-sport-card:hover .uos-card-img {
+  transform: scale(1.03);
+}
+
+.uos-card-media-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 12, 16, 0.1) 0%, rgba(10, 12, 16, 0.4) 60%, rgba(10, 12, 16, 0.95) 100%);
+  pointer-events: none;
+}
+
+.uos-card-badge-container {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.uos-card-3d-emblem {
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 14px;
+  background: rgba(10, 12, 16, 0.65);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  backdrop-filter: blur(8px);
+}
+
+.uos-card-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(212, 175, 55, 0.18);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  color: #f6dc92;
+  backdrop-filter: blur(8px);
+}
+
+.uos-card-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 22px;
+  gap: 12px;
+}
+
+.uos-card-title {
+  margin: 0;
+  font-size: 1.28rem;
+  font-weight: 800;
+  line-height: 1.3;
+  color: #ffffff;
+}
+
+.uos-card-description {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.uos-card-meta-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.uos-card-meta-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(212, 175, 55, 0.8);
+}
+
+.uos-card-meta-value {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #e6e6e6;
+}
+
+.uos-card-footer {
+  padding-top: 6px;
+}
+
+.uos-card-action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #d4af37;
+  text-decoration: none;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.uos-card-action-link:hover {
+  color: #f7e098;
+  transform: translateX(3px);
+}
+
+/* --- ProgramCard Modular Component --- */
+.uos-program-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--uos-card-bg);
+  border: 1px solid var(--uos-card-border);
+  border-radius: var(--uos-card-radius);
+  box-shadow: var(--uos-card-shadow);
+  padding: 26px;
+  gap: 16px;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.28s ease, box-shadow 0.28s ease;
+}
+
+.uos-program-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--uos-card-border-hover);
+  box-shadow: var(--uos-card-shadow-hover);
+}
+
+.uos-program-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.uos-program-category {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  color: #e5be53;
+}
+
+.uos-program-title {
+  margin: 0;
+  font-size: 1.32rem;
+  font-weight: 800;
+  line-height: 1.3;
+  color: #ffffff;
+}
+
+.uos-program-description {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.uos-program-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--uos-card-inner-radius);
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.uos-program-meta-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  color: #d4af37;
+}
+
+.uos-meta-label {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.uos-meta-value {
+  display: block;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #eaeaea;
+}
+
+.uos-program-focus-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.uos-program-focus-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.86rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.uos-program-focus-item svg {
+  color: #67cf8b;
+  flex-shrink: 0;
+}
+
+.uos-program-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.uos-program-integrity-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.uos-program-integrity-badge svg {
+  color: #d4af37;
+}
+
+.uos-program-action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f7e098;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.uos-program-action-button:hover {
+  background: #d4af37;
+  color: #07080a;
+}
+
+/* --- ValueCard Modular Component --- */
+.uos-value-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--uos-card-bg);
+  border: 1px solid var(--uos-card-border);
+  border-radius: var(--uos-card-radius);
+  box-shadow: var(--uos-card-shadow);
+  padding: 24px;
+  gap: 14px;
+  overflow: hidden;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.28s ease, box-shadow 0.28s ease;
+}
+
+.uos-value-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--uos-card-border-hover);
+  box-shadow: var(--uos-card-shadow-hover);
+}
+
+.uos-value-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.uos-value-icon-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  color: #d4af37;
+}
+
+.uos-value-number {
+  font-size: 1.5rem;
+  font-weight: 900;
+  font-family: var(--uos-font-mono, monospace);
+  color: rgba(255, 255, 255, 0.15);
+}
+
+.uos-value-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.uos-value-badge {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #d4af37;
+}
+
+.uos-value-title {
+  margin: 0;
+  font-size: 1.18rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.uos-value-description {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.uos-value-card-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #d4af37, transparent);
+  opacity: 0.35;
+  transition: opacity 0.28s ease, height 0.28s ease;
+}
+
+.uos-value-card:hover .uos-value-card-bar {
+  opacity: 0.9;
+  height: 3px;
+}
+
+/* Reduced Motion Global Guard */
+@media (prefers-reduced-motion: reduce) {
+  .uos-sport-card,
+  .uos-program-card,
+  .uos-value-card,
+  .uos-card-img,
+  .uos-card-action-link,
+  .uos-program-action-button {
+    transition: none !important;
+    transform: none !important;
+    animation: none !important;
+  }
+}
+
