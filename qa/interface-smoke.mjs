@@ -13,7 +13,7 @@ const coachRoutes = ['/coach', '/coach/login', '/coach/schedule', '/coach/groups
 const adminRoutes = [
   '/admin',
   '/admin/countries', '/admin/countries/country-workspace-01',
-  '/admin/branches', '/admin/branches/branch-workspace-01',
+  '/admin/branches', '/admin/branches/branch-workspace-01', '/admin/branches/branch-workspace-01/overview',
   '/admin/sports', '/admin/sports/football', '/admin/sports/football/groups', '/admin/sports/football/groups/football-demo-u12',
   '/admin/programs', '/admin/programs/program-demo-football-foundation',
   '/admin/players', '/admin/players/player-demo-001',
@@ -49,7 +49,7 @@ const viewportMatrix = [
   { width: 1440, height: 900 },
   { width: 1920, height: 1080 },
 ];
-const responsiveRoutes = ['/', '/sports', '/player/login', '/player/home', '/parent/login', '/parent', '/parent/children', '/parent/payments', '/coach', '/coach/players', '/admin', '/admin/players'];
+const responsiveRoutes = ['/', '/sports', '/player/login', '/player/home', '/parent/login', '/parent', '/parent/children', '/parent/payments', '/coach', '/coach/players', '/admin', '/admin/branches', '/admin/players'];
 
 async function waitForServer() {
   let lastError;
@@ -98,7 +98,14 @@ function sessionBootstrap() {
 
 async function createCheckedPage(browser, options = {}) {
   const context = await browser.newContext({ viewport: options.viewport ?? { width: 1440, height: 900 }, reducedMotion: 'reduce' });
-  await context.addInitScript(sessionBootstrap(), { playerId: previewPlayerId, parentId: previewParentId, coachId: previewCoachId, settingsKey: uiSettingsKey, theme: options.appearance ?? 'dark', forceRtl: Boolean(options.rtl) });
+  await context.addInitScript(sessionBootstrap(), {
+    playerId: options.playerId ?? previewPlayerId,
+    parentId: options.parentId ?? previewParentId,
+    coachId: options.coachId ?? previewCoachId,
+    settingsKey: uiSettingsKey,
+    theme: options.appearance ?? 'dark',
+    forceRtl: Boolean(options.rtl),
+  });
   const page = await context.newPage();
   const runtimeErrors = [];
   page.on('pageerror', (error) => runtimeErrors.push(`pageerror: ${error.message}`));
@@ -137,6 +144,7 @@ async function assertRoute(page, runtimeErrors, route, checkOverflow = true) {
   if (route.startsWith('/parent') && route !== '/parent/login' && state.pathname === '/parent/login') throw new Error(`${route}: unexpectedly redirected to parent login`);
   if (route.startsWith('/player') && !route.includes('/login') && state.pathname === '/player/login') throw new Error(`${route}: unexpectedly redirected to player login`);
   if (runtimeErrors.length) throw new Error(`${route}: ${runtimeErrors.join(' | ')}`);
+  return state;
 }
 
 async function routeSweep(browserType, browserName) {
@@ -176,9 +184,42 @@ async function themeAndRtlSweep() {
   try {
     for (const variant of variants) {
       const { context, page, runtimeErrors } = await createCheckedPage(browser, { ...variant, viewport: { width: 390, height: 844 } });
-      for (const route of ['/', '/player/home', '/parent', '/parent/settings', '/coach', '/coach/players', '/admin']) await assertRoute(page, runtimeErrors, route, true);
+      for (const route of ['/', '/player/home', '/parent', '/parent/settings', '/coach', '/coach/players', '/admin', '/admin/branches']) await assertRoute(page, runtimeErrors, route, true);
       await context.close();
       console.log(`[theme] ${variant.label}: representative role routes passed`);
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
+async function coachIdentityIsolationSweep() {
+  const browser = await chromium.launch({ headless: true });
+  try {
+    for (const identity of [
+      { id: 'coach-preview-01', expectedName: 'Coach Preview 01' },
+      { id: 'coach-preview-03', expectedName: 'Coach Preview 03' },
+    ]) {
+      const { context, page, runtimeErrors } = await createCheckedPage(browser, { coachId: identity.id });
+      await assertRoute(page, runtimeErrors, '/coach/profile', true);
+      const profileText = await page.locator('#root').innerText();
+      if (!profileText.includes(identity.expectedName)) throw new Error(`${identity.id}: active coach profile identity was not rendered`);
+
+      await assertRoute(page, runtimeErrors, '/coach/messages', true);
+      await assertRoute(page, runtimeErrors, '/coach/programs', true);
+
+      if (identity.id === 'coach-preview-03') {
+        await page.goto(`${baseURL}/coach/groups/football-demo-u12`, { waitUntil: 'domcontentloaded' });
+        await page.waitForTimeout(150);
+        if (new URL(page.url()).pathname !== '/coach/groups') throw new Error('coach-preview-03: cross-scope group route was not blocked');
+
+        await page.goto(`${baseURL}/coach/players/player-demo-001`, { waitUntil: 'domcontentloaded' });
+        await page.waitForTimeout(150);
+        if (new URL(page.url()).pathname !== '/coach/players') throw new Error('coach-preview-03: cross-scope player route was not blocked');
+      }
+
+      await context.close();
+      console.log(`[coach-scope] ${identity.id}: session identity and deep-link isolation passed`);
     }
   } finally {
     await browser.close();
@@ -191,4 +232,5 @@ await routeSweep(firefox, 'Firefox');
 await routeSweep(webkit, 'WebKit');
 await responsiveSweep();
 await themeAndRtlSweep();
+await coachIdentityIsolationSweep();
 console.log('UOS interface smoke matrix passed.');
