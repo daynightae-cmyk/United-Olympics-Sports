@@ -321,7 +321,10 @@ async function interactions(browser, name, rtl) {
       await page.locator('.store-inline-error').waitFor();
 
       await page.locator('.store-nav a[href="/store"]').click();
-      assert((await page.locator('.store-main').textContent())?.includes('Recently viewed'), 'legitimate history missing');
+      await page.waitForURL('**/store');
+      await page.locator('.store-retail-hero').waitFor();
+      const historyTitle = rtl ? 'شاهدت مؤخرًا' : 'Recently viewed';
+      assert((await page.locator('.store-main').textContent())?.includes(historyTitle), 'legitimate history missing');
     }
 
     assert.deepEqual(errors, [], `${name} interaction runtime errors`);
