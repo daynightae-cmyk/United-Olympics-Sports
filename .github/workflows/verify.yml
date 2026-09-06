@@ -32,10 +32,7 @@ jobs:
       - name: TypeScript
         run: npm run lint
 
-      - name: Production build with explicit QA preview providers
-        env:
-          VITE_UOS_ADMIN_PREVIEW: 'true'
-          VITE_UOS_STORE_PREVIEW: 'true'
+      - name: Ordinary production build
         run: npm run build
 
       - name: Diff check
@@ -89,10 +86,36 @@ jobs:
       - name: Install browser QA runtime
         run: npx playwright install --with-deps chromium firefox webkit
 
-      - name: Start production preview
+      - name: Start ordinary production preview
         shell: bash
         run: |
-          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/uos-vite-preview.log 2>&1 &
+          ./node_modules/.bin/vite preview --host 127.0.0.1 --port 4173 > /tmp/uos-production-preview.log 2>&1 &
+          echo $! > /tmp/uos-production-preview.pid
+
+      - name: Production provider boundary
+        env:
+          UOS_BASE_URL: http://127.0.0.1:4173
+        run: node qa/production-provider-boundary.mjs
+
+      - name: Stop ordinary production preview
+        if: always()
+        shell: bash
+        run: |
+          if [ -f /tmp/uos-production-preview.pid ]; then
+            kill "$(cat /tmp/uos-production-preview.pid)" 2>/dev/null || true
+          fi
+          sleep 1
+
+      - name: QA production build with explicit preview providers
+        env:
+          VITE_UOS_ADMIN_PREVIEW: 'true'
+          VITE_UOS_STORE_PREVIEW: 'true'
+        run: npm run build
+
+      - name: Start QA production preview
+        shell: bash
+        run: |
+          ./node_modules/.bin/vite preview --host 127.0.0.1 --port 4173 > /tmp/uos-vite-preview.log 2>&1 &
           echo $! > /tmp/uos-vite-preview.pid
 
       - name: Browser route and responsive smoke matrix
@@ -100,15 +123,18 @@ jobs:
           UOS_BASE_URL: http://127.0.0.1:4173
         run: node qa/interface-smoke.mjs
 
-      - name: Store Golden Master QA (production)
+      - name: Store Golden Master QA (explicit preview provider)
         env:
           UOS_BASE_URL: http://127.0.0.1:4173
+          UOS_STORE_PREVIEW: 'true'
         run: node qa/store-golden-master.mjs
 
-      - name: Upload preview log on failure
+      - name: Upload preview logs on failure
         if: failure()
         uses: actions/upload-artifact@v6
         with:
-          name: uos-vite-preview-log
-          path: /tmp/uos-vite-preview.log
+          name: uos-vite-preview-logs
+          path: |
+            /tmp/uos-production-preview.log
+            /tmp/uos-vite-preview.log
           if-no-files-found: ignore
