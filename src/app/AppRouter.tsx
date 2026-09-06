@@ -1,10 +1,10 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { AdminLayout } from '../layouts/AdminLayout';
 import { PlayerPortalRouter } from '../portals/PlayerPortalRouter';
 import { ParentPortalRouter } from '../portals/ParentPortalRouter';
 import { CoachPortalRouter } from '../portals/CoachPortalRouter';
-import { PublicSite } from '../pages/public/PublicSite';
+import { PublicExperience } from '../pages/public/PublicExperience';
 import { BenchmarkShowcasePage } from '../pages/benchmark/BenchmarkShowcasePage';
 import { UnitedAssistant } from '../assistant/UnitedAssistant';
 import { UpdateToast } from '../platform/UpdateToast';
@@ -12,6 +12,12 @@ import { PortalAuthPage } from '../components/auth/PortalAuthPage';
 import { OlympicRouteTransition } from '../components/navigation/OlympicRouteTransition';
 
 const StoreApp = lazy(() => import('../store/StoreApp').then((module) => ({ default: module.StoreApp })));
+
+function InternalProductUtilities() {
+  const { pathname } = useLocation();
+  const isInternalRoute = /^\/(admin|player|parent|coach|store)(\/|$)/.test(pathname);
+  return isInternalRoute ? <><UnitedAssistant /><UpdateToast /></> : null;
+}
 
 export function AppRouter() {
   return (
@@ -28,10 +34,9 @@ export function AppRouter() {
         <Route path="/player/*" element={<PlayerPortalRouter />} />
         <Route path="/parent/*" element={<ParentPortalRouter />} />
         <Route path="/coach/*" element={<CoachPortalRouter />} />
-        <Route path="*" element={<PublicSite />} />
+        <Route path="*" element={<PublicExperience />} />
       </Routes>
-      <UnitedAssistant />
-      <UpdateToast />
+      <InternalProductUtilities />
     </BrowserRouter>
   );
 }
