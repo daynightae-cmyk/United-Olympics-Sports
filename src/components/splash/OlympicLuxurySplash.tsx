@@ -21,8 +21,8 @@ const STAGES = [
     icon: Compass,
     ar: 'تنسيق المسارات والأنشطة',
     en: 'Harmonizing Pathways & Programs',
-    detailAr: 'تهيئة الأكاديميات والأنظمة الرياضية والمسارات المعتمدة...',
-    detailEn: 'Aligning accredited pathways, academies, and schedules...',
+    detailAr: 'تهيئة البرامج والأنظمة الرياضية والمسارات المعتمدة...',
+    detailEn: 'Aligning accredited pathways, programs, and schedules...',
   },
   {
     threshold: 80,
@@ -47,7 +47,7 @@ export function OlympicLuxurySplash({ onComplete, forceShow = false }: OlympicLu
     if (!visible) return;
 
     const startTime = Date.now();
-    const duration = 2800; // 2.8 seconds total
+    const duration = 2800;
 
     const interval = setInterval(() => {
       const elapsed = Date.now() - startTime;
@@ -96,55 +96,32 @@ export function OlympicLuxurySplash({ onComplete, forceShow = false }: OlympicLu
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="fixed inset-0 z-[99999] flex items-center justify-center overflow-hidden bg-[#05070c] text-white select-none"
         >
-          {/* Cosmic Dark Ambient Glows */}
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full bg-[radial-gradient(circle,rgba(212,175,55,0.18)_0%,rgba(245,215,127,0.06)_40%,transparent_70%)] blur-2xl animate-pulse" style={{ animationDuration: '4s' }} />
             <div className="absolute top-1/4 left-1/3 w-[360px] h-[360px] rounded-full bg-[radial-gradient(circle,rgba(197,160,89,0.12)_0%,transparent_65%)] blur-xl" />
             <div className="absolute bottom-1/4 right-1/3 w-[420px] h-[420px] rounded-full bg-[radial-gradient(circle,rgba(212,175,55,0.09)_0%,transparent_65%)] blur-2xl" />
-            {/* Subtle Star / Dust Texture Grid */}
             <div className="absolute inset-0 bg-[radial-gradient(#d4af37_1px,transparent_1px)] [background-size:36px_36px] opacity-15" />
           </div>
 
-          {/* Main Stage Card */}
           <div className="relative z-10 flex flex-col items-center text-center px-6 py-8 max-w-lg w-full mx-auto">
-            {/* Celestial Orbital Medallion */}
             <div className="relative w-44 h-44 mb-8 flex items-center justify-center">
-              {/* Outer Cosmic Orbit Ring */}
-              <div
-                className="absolute inset-0 rounded-full border border-[#d4af37]/20 animate-spin"
-                style={{ animationDuration: '18s', animationTimingFunction: 'linear' }}
-              >
+              <div className="absolute inset-0 rounded-full border border-[#d4af37]/20 animate-spin" style={{ animationDuration: '18s', animationTimingFunction: 'linear' }}>
                 <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[#f5d77f] shadow-[0_0_12px_#f5d77f]" />
                 <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-[#d4af37] shadow-[0_0_8px_#d4af37]" />
               </div>
 
-              {/* Middle Counter-Rotating Celestial Ring */}
-              <div
-                className="absolute inset-3 rounded-full border border-dashed border-[#d4af37]/45 animate-spin"
-                style={{ animationDirection: 'reverse', animationDuration: '12s', animationTimingFunction: 'linear' }}
-              />
+              <div className="absolute inset-3 rounded-full border border-dashed border-[#d4af37]/45 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '12s', animationTimingFunction: 'linear' }} />
+              <div className="absolute inset-6 rounded-full border-2 border-transparent border-t-[#f5d77f] border-r-[#d4af37] border-b-[#c5a059]/30 animate-spin" style={{ animationDuration: '2.5s', animationTimingFunction: 'linear' }} />
 
-              {/* Inner High-Speed Golden Aura */}
-              <div
-                className="absolute inset-6 rounded-full border-2 border-transparent border-t-[#f5d77f] border-r-[#d4af37] border-b-[#c5a059]/30 animate-spin"
-                style={{ animationDuration: '2.5s', animationTimingFunction: 'linear' }}
-              />
-
-              {/* Central Glowing Circular Emblem */}
               <motion.div
                 initial={{ scale: 0.85, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.8, ease: 'easeOut' }}
                 className="relative z-10 w-28 h-28 rounded-full p-2 bg-gradient-to-b from-[#1c222e] to-[#0c1017] border border-[#d4af37]/60 shadow-[0_0_40px_rgba(212,175,55,0.45),0_12px_30px_rgba(0,0,0,0.8)] flex items-center justify-center overflow-hidden"
               >
-                <img
-                  src="/brand/united-olympics-sports-logo.png"
-                  alt="United Olympics Sports Emblem"
-                  className="w-full h-full object-contain filter drop-shadow-[0_0_12px_rgba(245,215,127,0.6)]"
-                />
+                <img src="/brand/united-olympics-sports-logo.png" alt="United Olympics Sports Emblem" className="w-full h-full object-contain filter drop-shadow-[0_0_12px_rgba(245,215,127,0.6)]" />
               </motion.div>
 
-              {/* Floating Dynamic Stage Icon Badge */}
               <motion.div
                 key={`splash-stage-icon-${currentStage.threshold}`}
                 initial={{ scale: 0, rotate: -20 }}
@@ -156,26 +133,15 @@ export function OlympicLuxurySplash({ onComplete, forceShow = false }: OlympicLu
               </motion.div>
             </div>
 
-            {/* Brand Titles */}
-            <motion.div
-              initial={{ y: 15, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.6 }}
-              className="mb-6 space-y-1.5"
-            >
+            <motion.div initial={{ y: 15, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2, duration: 0.6 }} className="mb-6 space-y-1.5">
               <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#d4af37]/10 border border-[#d4af37]/30 text-xs text-[#f5d77f] font-semibold tracking-wider uppercase mb-1">
                 <Sparkles className="w-3.5 h-3.5 text-[#f5d77f]" />
                 <span>UNITED OLYMPICS SPORTS</span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white font-['Cabinet_Grotesk',sans-serif]">
-                يونايتد أوليمبيكس سبورت
-              </h1>
-              <p className="text-xs sm:text-sm text-[#c8d1e0]/80 tracking-wide">
-                الأكاديمية الرياضية الأولمبية المتكاملة لإعداد الأبطال
-              </p>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white font-['Cabinet_Grotesk',sans-serif]">يونايتد أوليمبيكس سبورت</h1>
+              <p className="text-xs sm:text-sm text-[#c8d1e0]/80 tracking-wide">منظومة رياضية متكاملة لتطوير الناشئين وصناعة الأبطال</p>
             </motion.div>
 
-            {/* Interactive Dynamic Stage Card */}
             <motion.div
               key={`splash-stage-text-${currentStage.threshold}`}
               initial={{ opacity: 0, y: 8 }}
@@ -185,34 +151,19 @@ export function OlympicLuxurySplash({ onComplete, forceShow = false }: OlympicLu
               className="w-full bg-[#0f141f]/80 backdrop-blur-md border border-[#d4af37]/25 rounded-xl p-4 mb-6 shadow-[0_8px_24px_rgba(0,0,0,0.5)]"
             >
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-semibold text-[#f5d77f] flex items-center gap-1.5">
-                  <CurrentIcon className="w-4 h-4" />
-                  {currentStage.ar}
-                </span>
-                <span className="text-[11px] font-mono font-medium text-[#d4af37]/90">
-                  {progress}%
-                </span>
+                <span className="text-xs font-semibold text-[#f5d77f] flex items-center gap-1.5"><CurrentIcon className="w-4 h-4" />{currentStage.ar}</span>
+                <span className="text-[11px] font-mono font-medium text-[#d4af37]/90">{progress}%</span>
               </div>
-              <p className="text-[12px] text-gray-300 text-start leading-relaxed">
-                {currentStage.detailAr}
-              </p>
-              <p className="text-[11px] text-gray-400 text-start mt-0.5 italic">
-                {currentStage.en}
-              </p>
+              <p className="text-[12px] text-gray-300 text-start leading-relaxed">{currentStage.detailAr}</p>
+              <p className="text-[11px] text-gray-400 text-start mt-0.5 italic">{currentStage.en}</p>
             </motion.div>
 
-            {/* Live Progress Bar with Golden Sheen */}
             <div className="w-full mb-6">
               <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden relative p-0.5 border border-white/5">
-                <motion.div
-                  className="h-full rounded-full bg-gradient-to-r from-[#c5a059] via-[#f5d77f] to-[#d4af37] shadow-[0_0_12px_#f5d77f]"
-                  style={{ width: `${progress}%` }}
-                  transition={{ ease: 'easeOut', duration: 0.1 }}
-                />
+                <motion.div className="h-full rounded-full bg-gradient-to-r from-[#c5a059] via-[#f5d77f] to-[#d4af37] shadow-[0_0_12px_#f5d77f]" style={{ width: `${progress}%` }} transition={{ ease: 'easeOut', duration: 0.1 }} />
               </div>
             </div>
 
-            {/* Controls: Skip Intro Button */}
             <div className="flex items-center justify-center gap-4">
               <button
                 type="button"
