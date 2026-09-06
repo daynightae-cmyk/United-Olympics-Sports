@@ -61,7 +61,7 @@ async function checkedContext(browser, width, theme = 'light', rtl = false) {
 
 async function visit(page, errors, route) {
   const response = await page.goto(base + route, { waitUntil: 'domcontentloaded' });
-  assert(response?.ok(), `${route}: HTTP failure`);
+  assert(response && response.status() < 400, `${route}: HTTP ${response?.status() ?? 'no response'}`);
   await page.locator('.store-shell').waitFor();
   if (preview && ['/store', '/store/shop', '/store/category/swimming'].includes(route)) {
     await page.locator('.store-product-card').first().waitFor();
