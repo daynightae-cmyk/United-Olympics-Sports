@@ -1,0 +1,189 @@
+from pathlib import Path
+
+p = Path('src/admin/data/previewAdminGateway.ts')
+s = p.read_text(encoding='utf-8')
+
+s = s.replace(
+    "      ageGroups: [p.ageGroup],\n      level: p.level,\n      status: 'active' as const,",
+    "      ageGroups: Array.isArray((p as any).ageGroups) ? (p as any).ageGroups : ((p as any).ageGroup ? [(p as any).ageGroup] : []),\n      level: p.level,\n      status: ((p as any).status as 'active' | 'inactive') ?? 'active',",
+)
+if s.count("ageGroups: Array.isArray((p as any).ageGroups)") != 2:
+    raise SystemExit('program list/get normalization patch did not apply twice')
+
+old = """    const newProgram = {
+      id: genId('program'),
+      name: data.name ?? { en: 'New Program', ar: 'برنامج جديد' },
+      sportId: data.sportId ?? 'football',
+      description: data.description ?? { en: '', ar: '' },
+      ageGroups: data.ageGroups ?? [],
+      level: data.level ?? { en: 'Foundation', ar: 'أساسي' },
+      status: (data.status as 'active' | 'inactive') ?? 'active',
+    };
+    previewSessionData.programs.push(newProgram as any);
+    persistPreviewData();"""
+new = """    const ageGroups = data.ageGroups ?? [];
+    const newProgram = {
+      id: genId('program'),
+      name: data.name ?? { en: 'New Program', ar: 'برنامج جديد' },
+      sportId: data.sportId ?? 'football',
+      description: data.description ?? { en: '', ar: '' },
+      ageGroup: ageGroups[0] ?? { en: 'All Ages', ar: 'كل الأعمار' },
+      ageGroups,
+      level: data.level ?? { en: 'Foundation', ar: 'أساسي' },
+      status: (data.status as 'active' | 'inactive') ?? 'active',
+    };
+    previewSessionData.programs.push(newProgram as any);
+    const sport = previewSessionData.sports.find(item => item.id === newProgram.sportId);
+    if (sport && !sport.programIds.includes(newProgram.id)) sport.programIds.push(newProgram.id);
+    persistPreviewData();"""
+if old not in s:
+    raise SystemExit('createProgram block not found')
+s = s.replace(old, new)
+
+old = """    previewSessionData.programs = previewSessionData.programs.filter(x => x.id !== id);
+    persistPreviewData();"""
+new = """    previewSessionData.programs = previewSessionData.programs.filter(x => x.id !== id);
+    previewSessionData.sports.forEach(sport => { sport.programIds = sport.programIds.filter(programId => programId !== id); });
+    previewSessionData.groups.forEach(group => { group.programIds = group.programIds.filter(programId => programId !== id); });
+    previewSessionData.branches.forEach(branch => { branch.programIds = branch.programIds.filter(programId => programId !== id); });
+    persistPreviewData();"""
+if old not in s:
+    raise SystemExit('deleteProgram block not found')
+s = s.replace(old, new, 1)
+
+s = s.replace(
+    "      playerCount: demoPlayers.filter(p => p.groupId === g.id).length,\n      coachCount: g.coachIds.length,\n      programIds: g.programIds,",
+    "      playerCount: previewSessionData.players.filter(p => p.groupId === g.id).length,\n      coachCount: Array.isArray((g as any).coachIds) ? (g as any).coachIds.length : Number((g as any).coachCount ?? 0),\n      programIds: (g as any).programIds ?? [],",
+)
+if s.count("playerCount: previewSessionData.players.filter(p => p.groupId === g.id).length") != 2:
+    raise SystemExit('group list/get normalization patch did not apply twice')
+
+old = """    const newGroup = {
+      id: genId('group'),
+      sportId: data.sportId ?? 'football',
+      name: data.name ?? { en: 'New Group', ar: 'مجموعة جديدة' },
+      ageGroup: data.ageGroup ?? { en: 'U12', ar: 'تحت 12' },
+      level: data.level ?? { en: 'Foundation', ar: 'أساسي' },
+      playerCount: 0,
+      coachCount: 0,
+      programIds: data.programIds ?? [],
+      status: (data.status as 'active' | 'inactive') ?? 'active',
+    };"""
+new = """    const newGroup = {
+      id: genId('group'),
+      sportId: data.sportId ?? 'football',
+      name: data.name ?? { en: 'New Group', ar: 'مجموعة جديدة' },
+      ageGroup: data.ageGroup ?? { en: 'U12', ar: 'تحت 12' },
+      level: data.level ?? { en: 'Foundation', ar: 'أساسي' },
+      playerIds: [],
+      coachIds: [],
+      playerCount: 0,
+      coachCount: 0,
+      programIds: data.programIds ?? [],
+      status: (data.status as 'active' | 'inactive') ?? 'active',
+    };"""
+if old not in s:
+    raise SystemExit('createGroup block not found')
+s = s.replace(old, new)
+
+old = """    previewSessionData.players.push(newPlayer as any);
+    persistPreviewData();
+    return { item: newPlayer, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };"""
+new = """    previewSessionData.players.push(newPlayer as any);
+    if (newPlayer.groupId) {
+      const group = previewSessionData.groups.find(item => item.id === newPlayer.groupId) as any;
+      if (group) {
+        group.playerIds = Array.isArray(group.playerIds) ? group.playerIds : [];
+        if (!group.playerIds.includes(newPlayer.id)) group.playerIds.push(newPlayer.id);
+      }
+      previewSessionData.branches.forEach(branch => {
+        if (branch.groupIds.includes(newPlayer.groupId!) && !branch.playerIds.includes(newPlayer.id)) branch.playerIds.push(newPlayer.id);
+      });
+    }
+    persistPreviewData();
+    return { item: newPlayer, message: 'Created in preview session. | تم الإنشاء في جلسة المعاينة.' };"""
+if old not in s:
+    raise SystemExit('createPlayer persist block not found')
+s = s.replace(old, new, 1)
+
+old = """    previewSessionData.players = previewSessionData.players.filter(x => x.id !== id);
+    persistPreviewData();"""
+new = """    previewSessionData.players = previewSessionData.players.filter(x => x.id !== id);
+    previewSessionData.groups.forEach(group => { const item = group as any; if (Array.isArray(item.playerIds)) item.playerIds = item.playerIds.filter((playerId: string) => playerId !== id); });
+    previewSessionData.branches.forEach(branch => { branch.playerIds = branch.playerIds.filter(playerId => playerId !== id); });
+    previewSessionData.parents.forEach(parent => { parent.playerIds = parent.playerIds.filter(playerId => playerId !== id); });
+    persistPreviewData();"""
+if old not in s:
+    raise SystemExit('deletePlayer block not found')
+s = s.replace(old, new, 1)
+
+s = s.replace(
+    "      playerCount: demoPlayers.filter(p => c.playerIds.includes(p.id)).length,",
+    "      playerCount: Array.isArray((c as any).playerIds) ? previewSessionData.players.filter(p => (c as any).playerIds.includes(p.id)).length : Number((c as any).playerCount ?? 0),",
+)
+if s.count("playerCount: Array.isArray((c as any).playerIds)") != 2:
+    raise SystemExit('coach list/get normalization patch did not apply twice')
+
+old = """    const newCoach = {
+      id: genId('coach'),
+      nameEn: data.nameEn ?? 'New Coach',
+      nameAr: data.nameAr ?? 'مدرب جديد',
+      sportIds: data.sportIds ?? [],
+      branchIds: data.branchIds ?? [],
+      groupIds: data.groupIds ?? [],
+      playerCount: 0,
+      specializations: data.specializations ?? [],
+      certifications: data.certifications ?? [],
+      status: (data.status as 'active' | 'inactive') ?? 'active',
+    };
+    previewSessionData.coaches.push(newCoach as any);
+    persistPreviewData();"""
+new = """    const newCoach = {
+      id: genId('coach'),
+      nameEn: data.nameEn ?? 'New Coach',
+      nameAr: data.nameAr ?? 'مدرب جديد',
+      sportIds: data.sportIds ?? [],
+      branchIds: data.branchIds ?? [],
+      groupIds: data.groupIds ?? [],
+      playerIds: [],
+      playerCount: 0,
+      specializations: data.specializations ?? [],
+      certifications: data.certifications ?? [],
+      status: (data.status as 'active' | 'inactive') ?? 'active',
+    };
+    previewSessionData.coaches.push(newCoach as any);
+    previewSessionData.branches.forEach(branch => {
+      if (newCoach.branchIds.includes(branch.id) && !branch.coachIds.includes(newCoach.id)) branch.coachIds.push(newCoach.id);
+    });
+    previewSessionData.groups.forEach(group => {
+      const item = group as any;
+      if (newCoach.groupIds.includes(group.id)) {
+        item.coachIds = Array.isArray(item.coachIds) ? item.coachIds : [];
+        if (!item.coachIds.includes(newCoach.id)) item.coachIds.push(newCoach.id);
+      }
+    });
+    persistPreviewData();"""
+if old not in s:
+    raise SystemExit('createCoach block not found')
+s = s.replace(old, new)
+
+old = """    previewSessionData.coaches = previewSessionData.coaches.filter(x => x.id !== id);
+    persistPreviewData();"""
+new = """    previewSessionData.coaches = previewSessionData.coaches.filter(x => x.id !== id);
+    previewSessionData.branches.forEach(branch => { branch.coachIds = branch.coachIds.filter(coachId => coachId !== id); });
+    previewSessionData.groups.forEach(group => { const item = group as any; if (Array.isArray(item.coachIds)) item.coachIds = item.coachIds.filter((coachId: string) => coachId !== id); });
+    persistPreviewData();"""
+if old not in s:
+    raise SystemExit('deleteCoach block not found')
+s = s.replace(old, new, 1)
+
+s = s.replace(
+    "    const items = filterAndSort(previewSessionData.sessions.map(s => ({ ...s, coachIds: [] })));",
+    "    const items = filterAndSort(previewSessionData.sessions.map(s => ({ ...s, coachIds: (s as any).coachIds ?? [] })));",
+)
+s = s.replace(
+    "    return { ...s, coachIds: [] };",
+    "    return { ...s, coachIds: (s as any).coachIds ?? [] };",
+)
+
+p.write_text(s, encoding='utf-8')
