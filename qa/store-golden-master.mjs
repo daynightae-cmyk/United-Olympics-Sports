@@ -273,7 +273,8 @@ async function interactions(browser, name, rtl) {
       await page.keyboard.press('Escape');
       await page.locator('.store-mini-cart').waitFor({ state: 'hidden' });
 
-      await visit(page, errors, '/store/product/elite-hydro-pro-goggles');
+      await page.locator('.store-product-card h3 a').filter({ hasText: 'Elite Hydro Pro Goggles' }).click();
+      await page.waitForURL('**/store/product/elite-hydro-pro-goggles');
       await page.locator('.store-product-info').waitFor();
 
       assert.equal(await page.locator('.store-thumbnails button').count(), 0, 'single verified image rendered duplicate thumbnails');
