@@ -93,7 +93,7 @@ export const UOS_PUBLIC_MEDIA = {
     },
     gymnastics: {
       card: local('UOS_06_GYMNASTICS_CARD', '06', 'لاعبة جمباز ناشئة تؤدي تمرين توازن', 'Young gymnast performing a balance exercise', 1229, 1536, 'card', ['50% 50%', '50% 50%', '50% 50%'], [640, 960]),
-      hero: remote('UOS_18_GYMNASTICS_HERO', 'https://i.postimg.cc/VNWTbN5s/file-00000000edb88210b32581b03ddcbf05.png', 'لاعبة جمباز ناشئة تؤدي تمرين توازن داخل الأكاديمية', 'Young gymnast performing a balance drill inside the academy', 1536, 864, 'hero', ['58% 50%', '56% 50%', '54% 50%']),
+      hero: remote('UOS_18_GYMNASTICS_HERO', 'https://i.postimg.cc/VNWTbN5s/file-00000000edb88210b32581b03ddcbf05.png', 'لاعبة جمباز ناشئة تؤدي تمرين توازن داخل المنشأة الرياضية', 'Young gymnast performing a balance drill inside the sports facility', 1536, 864, 'hero', ['58% 50%', '56% 50%', '54% 50%']),
     },
     martialArts: {
       card: local('UOS_07_MARTIAL_ARTS_CARD', '07', 'رياضيان ناشئان يتدربان على الفنون القتالية بانضباط', 'Young athletes practising martial arts with discipline', 1229, 1536, 'card', ['50% 50%', '50% 50%', '50% 50%'], [640, 960]),
