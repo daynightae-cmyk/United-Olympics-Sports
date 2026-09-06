@@ -1,205 +1,48 @@
-import { ArrowRight, Building2, Flag, Globe2, ShieldCheck, Trophy, UsersRound, TrendingUp, Zap, Target, CheckCircle } from 'lucide-react';
+import { ArrowRight, Building2, Flag, Globe2, Plus, ShieldCheck, Target, Trophy, UsersRound, X } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { PageHeader } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { PreviewNotice } from '../../components/enterprise/EnterpriseUI';
-import { demoBranches, demoCountries } from '../../data/demo/business';
-import { demoPlayers } from '../../data/demo/players';
-import { Sports3DIcon } from '../../design/sports3d';
+import { useBranches, useCountries, useCreateCountry } from '../../admin/data/adminHooks';
+
+const emptyCountryDraft = { nameEn: '', nameAr: '', code: '', flag: '' };
 
 export function AdminCountriesPage() {
   const [searchParams] = useSearchParams();
-  const initialQuery = searchParams.get('q') ?? '';
-  const [query, setQuery] = useState(initialQuery);
+  const [query, setQuery] = useState(searchParams.get('q') ?? '');
+  const [showCreate, setShowCreate] = useState(false);
+  const [draft, setDraft] = useState(emptyCountryDraft);
+  const [formError, setFormError] = useState('');
+  const [savedNotice, setSavedNotice] = useState(false);
+  const { data: countriesData, loading, error } = useCountries({ page: 1, pageSize: 200 });
+  const { data: branchesData } = useBranches({ page: 1, pageSize: 500 });
+  const { create, loading: createLoading } = useCreateCountry();
+  const countries = useMemo(() => countriesData.items.filter(country => `${country.name.en} ${country.name.ar} ${country.code}`.toLowerCase().includes(query.toLowerCase())), [countriesData.items, query]);
+  const branches = branchesData.items;
+  const totalPlayers = new Set(branches.flatMap(branch => branch.playerIds)).size;
+  const totalSports = new Set(branches.flatMap(branch => branch.sportIds)).size;
+  const activeCountries = countriesData.items.filter(country => country.status === 'active').length;
+  const setField = (field: keyof typeof emptyCountryDraft, value: string) => setDraft(current => ({ ...current, [field]: value }));
+  const closeCreate = () => { if (!createLoading) setShowCreate(false); };
+  const submit = async () => {
+    const code = draft.code.trim().toUpperCase();
+    if (!draft.nameEn.trim() || !draft.nameAr.trim() || !code) { setFormError('Country name in both languages and country code are required. | اسم الدولة باللغتين ورمز الدولة مطلوبة.'); return; }
+    if (countriesData.items.some(country => country.code.toUpperCase() === code)) { setFormError('Country code already exists in Preview data. | رمز الدولة موجود بالفعل في بيانات المعاينة.'); return; }
+    setFormError('');
+    await create({ name: { en: draft.nameEn.trim(), ar: draft.nameAr.trim() }, code, flag: draft.flag.trim() || undefined, organizationId: 'org-united-olympics', branchCount: 0, status: 'active' });
+    setDraft(emptyCountryDraft); setShowCreate(false); setSavedNotice(true);
+  };
 
-  const countries = useMemo(() =>
-    demoCountries.filter(country =>
-      `${country.name.en} ${country.name.ar} ${country.code}`.toLowerCase().includes(query.toLowerCase())
-    ), [query]);
-
-  const totalBranches = demoBranches.length;
-  const totalPlayers = new Set(demoBranches.flatMap(b => b.playerIds)).size;
-  const totalSports = new Set(demoBranches.flatMap(b => b.sportIds)).size;
-  const activeCountries = demoCountries.filter(c => c.status === 'active').length;
-
-  return (
-    <div className="admin-page">
-      <section className="countries-hero" aria-label="Countries overview">
-        <div className="countries-hero-bg" aria-hidden="true">
-          <div className="hero-gradient-ring ring-one" />
-          <div className="hero-gradient-ring ring-two" />
-        </div>
-        <div className="countries-hero-content">
-          <span className="eyebrow eyebrow-premium">
-            <Globe2 size={15} />
-            <BilingualText value={bi('Organization Hierarchy', 'التسلسل التنظيمي')} />
-          </span>
-          <h1><BilingualText value={bi('Countries', 'الدول')} /></h1>
-          <p><BilingualText value={bi('Review country-level coverage across preview branches, sports and players.', 'راجع التغطية على مستوى الدول عبر الفروع والرياضات واللاعبين التجريبيين.')} /></p>
-        </div>
-      </section>
-
-      <PageHeader
-        icon={Flag}
-        eyebrow={bi('Country Workspaces', 'مساحات الدول')}
-        title={bi('Countries', 'الدول')}
-        description={bi('Manage country workspaces, branches, sports coverage and athlete reach from one preview cockpit.', 'أدر مساحات الدول والفروع وتغطية الرياضات وانتشار الرياضيين من مركز معاينة واحد.')}
-        actions={<PreviewNotice />}
-      />
-
-      <section className="admin-stat-grid countries-kpi" aria-label="Country KPIs">
-        <article className="admin-stat-card kpi-card accent-countries">
-          <div className="kpi-icon"><Flag size={22} /></div>
-          <strong>{demoCountries.length}</strong>
-          <span><BilingualText value={bi('Country Workspaces', 'مساحات الدول')} /></span>
-          <small><BilingualText value={bi('Active', 'نشط')} /></small>
-        </article>
-        <article className="admin-stat-card kpi-card accent-branches">
-          <div className="kpi-icon"><Building2 size={22} /></div>
-          <strong>{totalBranches}</strong>
-          <span><BilingualText value={bi('Total Branches', 'إجمالي الفروع')} /></span>
-          <small><BilingualText value={bi('Across all countries', 'عبر جميع الدول')} /></small>
-        </article>
-        <article className="admin-stat-card kpi-card accent-players">
-          <div className="kpi-icon"><UsersRound size={22} /></div>
-          <strong>{totalPlayers}</strong>
-          <span><BilingualText value={bi('Registered Players', 'اللاعبون المسجلون')} /></span>
-          <small><BilingualText value={bi('Preview records', 'سجلات تجريبية')} /></small>
-        </article>
-        <article className="admin-stat-card kpi-card accent-sports">
-          <div className="kpi-icon"><Trophy size={22} /></div>
-          <strong>{totalSports}</strong>
-          <span><BilingualText value={bi('Active Sports', 'الرياضات النشطة')} /></span>
-          <small><BilingualText value={bi('Linked to branches', 'مرتبطة بالفروع')} /></small>
-        </article>
-      </section>
-
-      <section className="enterprise-toolbar countries-toolbar" aria-label="Countries filters">
-        <label className="enterprise-search">
-          <svg aria-hidden="true" viewBox="0 0 24 24" className="enterprise-search-icon"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.8" /><path d="m16 16 4.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
-          <span className="sr-only"><BilingualText value={bi('Search countries or codes', 'البحث عن الدول أو الرموز')} /></span>
-          <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search countries or codes | البحث عن الدول أو الرموز" />
-        </label>
-        <div className="enterprise-toolbar-end">
-          <span className="enterprise-result"><BilingualText value={bi(`${countries.length} countries`, `${countries.length} دول`)} /></span>
-        </div>
-      </section>
-
-      <section className="countries-grid" aria-label="Countries list">
-        {countries.length > 0 ? (
-          countries.map(country => {
-            const branches = demoBranches.filter(branch => branch.countryId === country.id);
-            const players = new Set(branches.flatMap(branch => branch.playerIds));
-            const sports = new Set(branches.flatMap(branch => branch.sportIds));
-            const coaches = new Set(branches.flatMap(branch => branch.coachIds));
-            const programs = new Set(branches.flatMap(branch => branch.programIds));
-
-            return (
-              <article key={country.id} className="country-card">
-                <div className="country-card-media" aria-hidden="true">
-                  <div className="country-flag-bg">
-                    <Flag size={48} />
-                  </div>
-                </div>
-                <div className="country-card-body">
-                  <div className="country-card-head">
-                    <div className="country-identity">
-                      <span className="country-flag-icon"><Flag size={20} /></span>
-                      <div>
-                        <h2><BilingualText value={country.name} /></h2>
-                        <p className="country-code"><Globe2 size={12} /><span>{country.code}</span></p>
-                      </div>
-                    </div>
-                    <span className="country-status status-active"><BilingualText value={bi('Active', 'نشط')} /></span>
-                  </div>
-                  <div className="country-stats">
-                    <div className="stat-item">
-                      <Building2 size={14} />
-                      <span><BilingualText value={bi('Branches', 'الفروع')} /></span>
-                      <strong>{branches.length}</strong>
-                    </div>
-                    <div className="stat-item">
-                      <UsersRound size={14} />
-                      <span><BilingualText value={bi('Players', 'اللاعبون')} /></span>
-                      <strong>{players.size}</strong>
-                    </div>
-                    <div className="stat-item">
-                      <Trophy size={14} />
-                      <span><BilingualText value={bi('Sports', 'الرياضات')} /></span>
-                      <strong>{sports.size}</strong>
-                    </div>
-                    <div className="stat-item">
-                      <ShieldCheck size={14} />
-                      <span><BilingualText value={bi('Coaches', 'المدربون')} /></span>
-                      <strong>{coaches.size}</strong>
-                    </div>
-                    <div className="stat-item">
-                      <Target size={14} />
-                      <span><BilingualText value={bi('Programs', 'البرامج')} /></span>
-                      <strong>{programs.size}</strong>
-                    </div>
-                  </div>
-                  <div className="country-branches-preview">
-                    <h3><BilingualText value={bi('Branches in this Country', 'فروع في هذه الدولة')} /></h3>
-                    <div className="branches-list">
-                      {branches.map(branch => (
-                        <Link key={branch.id} to={`/admin/branches/${branch.id}`} className="branch-link">
-                          <span className="branch-icon"><Building2 size={14} /></span>
-                          <span className="branch-name"><BilingualText value={branch.name} /></span>
-                          <ArrowRight size={14} />
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="country-actions">
-                    <Link to={`/admin/countries/${country.id}`} className="admin-link-button">
-                      <BilingualText value={bi('Open Country Detail', 'فتح تفاصيل الدولة')} />
-                      <ArrowRight size={14} />
-                    </Link>
-                    <Link to={`/admin/branches?country=${country.id}`} className="admin-secondary-button">
-                      <BilingualText value={bi('View All Branches', 'عرض جميع الفروع')} />
-                    </Link>
-                  </div>
-                </div>
-              </article>
-            );
-          })
-        ) : (
-          <div className="enterprise-empty">
-            <Flag size={32} />
-            <h3><BilingualText value={bi('No countries found', 'لم يتم العثور على دول')} /></h3>
-            <p><BilingualText value={bi('Try adjusting your search query.', 'جرّب تعديل استعلام البحث.')} /></p>
-          </div>
-        )}
-      </section>
-
-      <section className="countries-integrity" aria-label="Data integrity">
-        <h2 className="section-title"><BilingualText value={bi('Data Integrity', 'سلامة البيانات')} /></h2>
-        <div className="integrity-grid">
-          <article className="integrity-card">
-            <div className="integrity-icon"><CheckCircle size={20} /></div>
-            <div>
-              <h3><BilingualText value={bi('No Fabricated Countries', 'لا دول مختلقة')} /></h3>
-              <p><BilingualText value={bi('Only structural workspaces: Country Workspace 01, 02', 'مساحات هيكلية فقط: مساحة الدولة 01، 02')} /></p>
-            </div>
-          </article>
-          <article className="integrity-card">
-            <div className="integrity-icon"><ShieldCheck size={20} /></div>
-            <div>
-              <h3><BilingualText value={bi('Zero Operational Claims', 'صفر ادعاءات تشغيلية')} /></h3>
-              <p><BilingualText value={bi('No fake addresses, phones, coordinates or real-world presence', 'لا عناوين/هواتف/إحداثيات وهمية أو وجود حقيقي')} /></p>
-            </div>
-          </article>
-          <article className="integrity-card">
-            <div className="integrity-icon"><Target size={20} /></div>
-            <div>
-              <h3><BilingualText value={bi('Ready for Live Data', 'جاهزة للبيانات الحقيقية')} /></h3>
-              <p><BilingualText value={bi('Structure complete — awaiting backend integration', 'الهيكل مكتمل — بانتظار تكامل الخادم')} /></p>
-            </div>
-          </article>
-        </div>
-      </section>
-    </div>
-  );
+  return <div className="admin-page">
+    <section className="countries-hero" aria-label="Countries overview"><div className="countries-hero-bg" aria-hidden="true"><div className="hero-gradient-ring ring-one" /><div className="hero-gradient-ring ring-two" /></div><div className="countries-hero-content"><span className="eyebrow eyebrow-premium"><Globe2 size={15} /><BilingualText value={bi('Organization Hierarchy', 'التسلسل التنظيمي')} /></span><h1><BilingualText value={bi('Countries', 'الدول')} /></h1><p><BilingualText value={bi('Country workspaces sourced from the Admin data gateway.', 'مساحات الدول من بوابة بيانات الإدارة.')} /></p></div></section>
+    <PageHeader icon={Flag} eyebrow={bi('Country Workspaces', 'مساحات الدول')} title={bi('Countries', 'الدول')} description={bi('Manage countries and their branch coverage from the same Preview data source used by the rest of Admin.', 'أدر الدول وتغطية فروعها من نفس مصدر بيانات المعاينة المستخدم في بقية الإدارة.')} actions={<div className="admin-header-actions"><PreviewNotice /><button className="admin-primary-button" onClick={() => { setFormError(''); setShowCreate(true); }}><Plus /><BilingualText value={bi('Add Country', 'إضافة دولة')} /></button></div>} />
+    {savedNotice && <div className="preview-warning" role="status"><BilingualText value={bi('Country saved to Preview data.', 'تم حفظ الدولة في بيانات المعاينة.')} /></div>}
+    <section className="admin-stat-grid countries-kpi" aria-label="Country KPIs"><article className="admin-stat-card kpi-card accent-countries"><div className="kpi-icon"><Flag size={22} /></div><strong>{countriesData.items.length}</strong><span><BilingualText value={bi('Country Workspaces', 'مساحات الدول')} /></span><small><BilingualText value={bi(`${activeCountries} active`, `${activeCountries} نشطة`)} /></small></article><article className="admin-stat-card kpi-card accent-branches"><div className="kpi-icon"><Building2 size={22} /></div><strong>{branches.length}</strong><span><BilingualText value={bi('Total Branches', 'إجمالي الفروع')} /></span><small><BilingualText value={bi('Across all countries', 'عبر جميع الدول')} /></small></article><article className="admin-stat-card kpi-card accent-players"><div className="kpi-icon"><UsersRound size={22} /></div><strong>{totalPlayers}</strong><span><BilingualText value={bi('Linked Players', 'اللاعبون المرتبطون')} /></span><small><BilingualText value={bi('From branch relationships', 'من علاقات الفروع')} /></small></article><article className="admin-stat-card kpi-card accent-sports"><div className="kpi-icon"><Trophy size={22} /></div><strong>{totalSports}</strong><span><BilingualText value={bi('Linked Sports', 'الرياضات المرتبطة')} /></span><small><BilingualText value={bi('Across branch workspaces', 'عبر مساحات الفروع')} /></small></article></section>
+    <section className="enterprise-toolbar countries-toolbar" aria-label="Countries filters"><label className="enterprise-search"><svg aria-hidden="true" viewBox="0 0 24 24" className="enterprise-search-icon"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.8" /><path d="m16 16 4.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg><span className="sr-only"><BilingualText value={bi('Search countries or codes', 'البحث عن الدول أو الرموز')} /></span><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search countries or codes | البحث عن الدول أو الرموز" /></label><div className="enterprise-toolbar-end"><span className="enterprise-result"><BilingualText value={bi(`${countries.length} countries`, `${countries.length} دول`)} /></span></div></section>
+    {loading && <div className="enterprise-empty" role="status"><Flag size={32} /><h3><BilingualText value={bi('Loading countries…', 'جارٍ تحميل الدول…')} /></h3></div>}
+    {error && <div className="enterprise-empty" role="alert"><ShieldCheck size={32} /><h3><BilingualText value={bi('Country data unavailable', 'بيانات الدول غير متاحة')} /></h3><p>{error.message}</p></div>}
+    {!loading && !error && <section className="countries-grid" aria-label="Countries list">{countries.map(country => { const countryBranches = branches.filter(branch => branch.countryId === country.id); const players = new Set(countryBranches.flatMap(branch => branch.playerIds)); const sports = new Set(countryBranches.flatMap(branch => branch.sportIds)); const coaches = new Set(countryBranches.flatMap(branch => branch.coachIds)); const programs = new Set(countryBranches.flatMap(branch => branch.programIds)); return <article key={country.id} className="country-card"><div className="country-card-media" aria-hidden="true"><div className="country-flag-bg"><Flag size={48} /></div></div><div className="country-card-body"><div className="country-card-head"><div className="country-identity"><span className="country-flag-icon"><Flag size={20} /></span><div><h2><BilingualText value={country.name} /></h2><p className="country-code"><Globe2 size={12} /><span>{country.flag ? `${country.flag} ` : ''}{country.code}</span></p></div></div><span className={`country-status status-${country.status}`}><BilingualText value={country.status === 'active' ? bi('Active', 'نشط') : bi('Inactive', 'غير نشط')} /></span></div><div className="country-stats"><div className="stat-item"><Building2 size={14} /><span><BilingualText value={bi('Branches', 'الفروع')} /></span><strong>{countryBranches.length}</strong></div><div className="stat-item"><UsersRound size={14} /><span><BilingualText value={bi('Players', 'اللاعبون')} /></span><strong>{players.size}</strong></div><div className="stat-item"><Trophy size={14} /><span><BilingualText value={bi('Sports', 'الرياضات')} /></span><strong>{sports.size}</strong></div><div className="stat-item"><ShieldCheck size={14} /><span><BilingualText value={bi('Coaches', 'المدربون')} /></span><strong>{coaches.size}</strong></div><div className="stat-item"><Target size={14} /><span><BilingualText value={bi('Programs', 'البرامج')} /></span><strong>{programs.size}</strong></div></div><div className="country-branches-preview"><h3><BilingualText value={bi('Branches in this Country', 'الفروع في هذه الدولة')} /></h3><div className="branches-list">{countryBranches.map(branch => <Link key={branch.id} to={`/admin/branches/${branch.id}`} className="branch-link"><span className="branch-icon"><Building2 size={14} /></span><span className="branch-name"><BilingualText value={branch.name} /></span><ArrowRight size={14} /></Link>)}{!countryBranches.length && <span className="empty-message"><BilingualText value={bi('No branches yet', 'لا توجد فروع بعد')} /></span>}</div></div><div className="country-actions"><Link to={`/admin/countries/${country.id}`} className="admin-link-button"><BilingualText value={bi('Open Country Detail', 'فتح تفاصيل الدولة')} /><ArrowRight size={14} /></Link><Link to={`/admin/branches?country=${country.id}`} className="admin-secondary-button"><BilingualText value={bi('View Branches', 'عرض الفروع')} /></Link></div></div></article>; })}{!countries.length && <div className="enterprise-empty"><Flag size={32} /><h3><BilingualText value={bi('No countries found', 'لم يتم العثور على دول')} /></h3></div>}</section>}
+    {showCreate && <div className="admin-modal-backdrop" role="presentation" onMouseDown={closeCreate}><section className="admin-modal" role="dialog" aria-modal="true" aria-label="Add Country | إضافة دولة" onMouseDown={event => event.stopPropagation()}><div className="modal-head"><div><BilingualText value={bi('Add Country', 'إضافة دولة')} /><small><BilingualText value={bi('Browser-persistent Preview record', 'سجل معاينة محفوظ في المتصفح')} /></small></div><button className="admin-icon-button" onClick={closeCreate} aria-label="Close | إغلاق"><X /></button></div><div className="preview-warning"><BilingualText value={bi('Saving writes to the browser Preview store only.', 'الحفظ يكتب في مخزن المعاينة بالمتصفح فقط.')} /></div>{formError && <p className="form-error" role="alert">{formError}</p>}<div className="preview-form-grid"><label><BilingualText value={bi('Country name (English)', 'اسم الدولة (إنجليزي)')} /><input value={draft.nameEn} onChange={event => setField('nameEn', event.target.value)} /></label><label><BilingualText value={bi('Country name (Arabic)', 'اسم الدولة (عربي)')} /><input value={draft.nameAr} onChange={event => setField('nameAr', event.target.value)} /></label><label><BilingualText value={bi('Country code', 'رمز الدولة')} /><input value={draft.code} onChange={event => setField('code', event.target.value)} placeholder="AE" /></label><label><BilingualText value={bi('Flag marker (optional)', 'رمز العلم (اختياري)')} /><input value={draft.flag} onChange={event => setField('flag', event.target.value)} placeholder="🇦🇪" /></label></div><div className="dialog-actions"><button className="admin-secondary-button" onClick={closeCreate} disabled={createLoading}><BilingualText value={bi('Cancel', 'إلغاء')} /></button><button className="admin-primary-button" onClick={() => void submit()} disabled={createLoading}><BilingualText value={bi(createLoading ? 'Saving…' : 'Save Country', createLoading ? 'جارٍ الحفظ…' : 'حفظ الدولة')} /></button></div></section></div>}
+  </div>;
 }
