@@ -126,54 +126,6 @@ jobs:
           UOS_BASE_URL: http://127.0.0.1:4173
         run: node qa/interface-smoke.mjs
 
-      - name: Store Golden Master QA with isolated browser previews
-        shell: bash
-        env:
-          UOS_BASE_URL: http://127.0.0.1:4173
-          UOS_STORE_PREVIEW: 'true'
-        run: |
-          set -euo pipefail
-
-          stop_preview() {
-            if [ -f /tmp/uos-vite-preview.pid ]; then
-              pid="$(cat /tmp/uos-vite-preview.pid)"
-              kill "$pid" 2>/dev/null || true
-              wait "$pid" 2>/dev/null || true
-              rm -f /tmp/uos-vite-preview.pid
-            fi
-          }
-
-          start_preview() {
-            browser="$1"
-            log="/tmp/uos-vite-preview-${browser,,}.log"
-            ./node_modules/.bin/vite preview --host 127.0.0.1 --port 4173 > "$log" 2>&1 &
-            echo $! > /tmp/uos-vite-preview.pid
-
-            ready=0
-            for attempt in $(seq 1 30); do
-              if curl --fail --silent --show-error http://127.0.0.1:4173/store > /dev/null; then
-                ready=1
-                break
-              fi
-              sleep 1
-            done
-
-            if [ "$ready" -ne 1 ]; then
-              echo "QA preview did not become healthy for $browser"
-              cat "$log" || true
-              return 1
-            fi
-          }
-
-          trap stop_preview EXIT
-          for browser in Chromium Firefox WebKit; do
-            echo "Starting isolated Golden Master preview for $browser"
-            stop_preview
-            sleep 1
-            start_preview "$browser"
-            UOS_QA_BROWSER="$browser" node qa/store-golden-master.mjs
-          done
-
       - name: Stop QA production preview
         if: always()
         shell: bash
@@ -189,8 +141,96 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v6
         with:
-          name: uos-vite-preview-logs
+          name: uos-interface-preview-logs
           path: |
             /tmp/uos-production-preview.log
-            /tmp/uos-vite-preview*.log
+            /tmp/uos-vite-preview.log
+          if-no-files-found: ignore
+
+  store-golden-master:
+    name: Store Golden Master (${{ matrix.browser }})
+    needs: build-and-interface-qa
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: Chromium
+            engine: chromium
+          - browser: Firefox
+            engine: firefox
+          - browser: WebKit
+            engine: webkit
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install ${{ matrix.browser }} runtime
+        run: npx playwright install --with-deps ${{ matrix.engine }}
+
+      - name: Build Store QA preview
+        env:
+          VITE_UOS_ADMIN_PREVIEW: 'true'
+          VITE_UOS_STORE_PREVIEW: 'true'
+        run: npm run build
+
+      - name: Start isolated Store QA preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          log="/tmp/uos-vite-preview-${{ matrix.engine }}.log"
+          ./node_modules/.bin/vite preview --host 127.0.0.1 --port 4173 > "$log" 2>&1 &
+          echo $! > /tmp/uos-vite-preview.pid
+
+          ready=0
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error http://127.0.0.1:4173/store/shop > /dev/null; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+
+          if [ "$ready" -ne 1 ]; then
+            echo "Store QA preview did not become healthy for ${{ matrix.browser }}"
+            cat "$log" || true
+            exit 1
+          fi
+
+      - name: Run Store Golden Master
+        env:
+          UOS_BASE_URL: http://127.0.0.1:4173
+          UOS_STORE_PREVIEW: 'true'
+          UOS_QA_BROWSER: ${{ matrix.browser }}
+        run: node qa/store-golden-master.mjs
+
+      - name: Stop isolated Store QA preview
+        if: always()
+        shell: bash
+        run: |
+          if [ -f /tmp/uos-vite-preview.pid ]; then
+            pid="$(cat /tmp/uos-vite-preview.pid)"
+            kill "$pid" 2>/dev/null || true
+            wait "$pid" 2>/dev/null || true
+            rm -f /tmp/uos-vite-preview.pid
+          fi
+
+      - name: Upload Store QA logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: uos-vite-preview-${{ matrix.engine }}-logs
+          path: /tmp/uos-vite-preview-${{ matrix.engine }}.log
           if-no-files-found: ignore
