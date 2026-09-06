@@ -1,0 +1,36 @@
+name: Admin Preview Gateway Coherence Repair V2
+on:
+  push:
+    branches:
+      - work/admin-operations-closure-20260906
+    paths:
+      - '.github/workflows/admin-gateway-coherence-fix-v2.yml'
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Apply gateway repair
+        run: python3 .github/scripts/admin_gateway_repair.py
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: git diff --check
+      - name: Commit repaired gateway
+        shell: bash
+        run: |
+          git config user.name "DAY NIGHT DELIVERY SERVICES"
+          git config user.email "293348050+daynightae-cmyk@users.noreply.github.com"
+          git add src/admin/data/previewAdminGateway.ts
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "fix(admin): normalize preview gateway CRUD relationships"
+          git pull --rebase origin work/admin-operations-closure-20260906
+          git push origin HEAD:work/admin-operations-closure-20260906
