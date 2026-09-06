@@ -32,7 +32,10 @@ jobs:
       - name: TypeScript
         run: npm run lint
 
-      - name: Production build
+      - name: Production build with explicit QA preview providers
+        env:
+          VITE_UOS_ADMIN_PREVIEW: 'true'
+          VITE_UOS_STORE_PREVIEW: 'true'
         run: npm run build
 
       - name: Diff check
