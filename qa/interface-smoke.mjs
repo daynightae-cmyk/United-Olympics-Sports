@@ -4,15 +4,16 @@ const baseURL = process.env.UOS_BASE_URL ?? 'http://127.0.0.1:4173';
 const uiSettingsKey = 'uos:ui-settings:v1';
 const previewPlayerId = 'player-demo-001';
 const previewParentId = 'parent-preview-01';
+const previewCoachId = 'coach-preview-01';
 
 const publicRoutes = ['/', '/about', '/sports', '/sports/football', '/sports/swimming', '/sports/basketball', '/sports/tennis', '/sports/gymnastics', '/sports/martial-arts', '/programs', '/programs/football-foundations', '/coaches', '/contact', '/route-that-must-404'];
 const playerRoutes = ['/player', '/player/login', '/player/auth/phone', '/player/auth/verify', '/player/phone', '/player/otp', '/player/home', '/player/schedule', '/player/schedule/session-demo-001', '/player/session/session-demo-001', '/player/attendance', '/player/performance', '/player/achievements', '/player/feedback', '/player/subscription', '/player/payments', '/player/documents', '/player/messages', '/player/notifications', '/player/profile', '/player/settings', '/player/route-that-must-404'];
 const parentRoutes = ['/parent', '/parent/login', '/parent/children', '/parent/children/player-demo-001', '/parent/schedule', '/parent/attendance', '/parent/performance', '/parent/feedback', '/parent/subscriptions', '/parent/payments', '/parent/documents', '/parent/messages', '/parent/notifications', '/parent/profile', '/parent/settings', '/parent/route-that-must-404'];
-const coachRoutes = ['/coach', '/coach/schedule', '/coach/groups', '/coach/groups/football-demo-u12', '/coach/evaluations', '/coach/players', '/coach/players/player-demo-001', '/coach/attendance', '/coach/programs', '/coach/messages', '/coach/profile', '/coach/route-that-must-404'];
+const coachRoutes = ['/coach', '/coach/login', '/coach/schedule', '/coach/groups', '/coach/groups/football-demo-u12', '/coach/evaluations', '/coach/players', '/coach/players/player-demo-001', '/coach/attendance', '/coach/programs', '/coach/messages', '/coach/profile', '/coach/route-that-must-404'];
 const adminRoutes = [
   '/admin',
   '/admin/countries', '/admin/countries/country-workspace-01',
-  '/admin/branches', '/admin/branches/branch-workspace-01',
+  '/admin/branches', '/admin/branches/branch-workspace-01', '/admin/branches/branch-workspace-01/overview',
   '/admin/sports', '/admin/sports/football', '/admin/sports/football/groups', '/admin/sports/football/groups/football-demo-u12',
   '/admin/programs', '/admin/programs/program-demo-football-foundation',
   '/admin/players', '/admin/players/player-demo-001',
@@ -36,6 +37,7 @@ const adminRoutes = [
   '/admin/audit-activity',
 ];
 const allRoutes = [...publicRoutes, ...playerRoutes, ...parentRoutes, ...coachRoutes, ...adminRoutes];
+const intentionalPlayerLoginRedirects = new Set(['/player/phone', '/player/verify']);
 
 const viewportMatrix = [
   { width: 320, height: 568 },
@@ -48,7 +50,7 @@ const viewportMatrix = [
   { width: 1440, height: 900 },
   { width: 1920, height: 1080 },
 ];
-const responsiveRoutes = ['/', '/sports', '/player/login', '/player/home', '/parent/login', '/parent', '/parent/children', '/parent/payments', '/coach', '/admin', '/admin/players'];
+const responsiveRoutes = ['/', '/sports', '/player/login', '/player/home', '/parent/login', '/parent', '/parent/children', '/parent/payments', '/coach', '/coach/players', '/admin', '/admin/branches', '/admin/players'];
 
 async function waitForServer() {
   let lastError;
@@ -65,7 +67,7 @@ async function waitForServer() {
 }
 
 function sessionBootstrap() {
-  return ({ playerId, parentId, settingsKey, theme, forceRtl }) => {
+  return ({ playerId, parentId, coachId, settingsKey, theme, forceRtl }) => {
     const playerSession = {
       userId: `preview-user-${playerId}`,
       playerId,
@@ -81,7 +83,11 @@ function sessionBootstrap() {
     localStorage.setItem('uos:player-portal:active-id', playerId);
     localStorage.setItem('uos:player-portal:auth', 'true');
     localStorage.setItem('uos:parent-portal:session:v1', JSON.stringify(parentSession));
+    localStorage.removeItem('uos:coach-portal:auth');
+    localStorage.removeItem('uos:coach-portal:active-id');
     localStorage.setItem(settingsKey, JSON.stringify({ appearance: theme, bilingualOrder: forceRtl ? 'ar-first' : 'en-first', density: 'comfortable', motion: 'reduced', fontScale: 'default', sidebarDefault: 'expanded' }));
+    sessionStorage.setItem('uos:coach-portal:preview-session:v1', coachId);
+    sessionStorage.setItem('uos:luxury-splash-seen', 'true');
     sessionStorage.setItem('uos:splash-seen', 'true');
     if (forceRtl) {
       document.addEventListener('DOMContentLoaded', () => {
@@ -93,7 +99,14 @@ function sessionBootstrap() {
 
 async function createCheckedPage(browser, options = {}) {
   const context = await browser.newContext({ viewport: options.viewport ?? { width: 1440, height: 900 }, reducedMotion: 'reduce' });
-  await context.addInitScript(sessionBootstrap(), { playerId: previewPlayerId, parentId: previewParentId, settingsKey: uiSettingsKey, theme: options.appearance ?? 'dark', forceRtl: Boolean(options.rtl) });
+  await context.addInitScript(sessionBootstrap(), {
+    playerId: options.playerId ?? previewPlayerId,
+    parentId: options.parentId ?? previewParentId,
+    coachId: options.coachId ?? previewCoachId,
+    settingsKey: uiSettingsKey,
+    theme: options.appearance ?? 'dark',
+    forceRtl: Boolean(options.rtl),
+  });
   const page = await context.newPage();
   const runtimeErrors = [];
   page.on('pageerror', (error) => runtimeErrors.push(`pageerror: ${error.message}`));
@@ -120,6 +133,7 @@ async function assertRoute(page, runtimeErrors, route, checkOverflow = true) {
   const state = await page.evaluate(() => ({
     rootText: document.querySelector('#root')?.textContent?.trim().length ?? 0,
     overflow: document.documentElement.scrollWidth - window.innerWidth,
+    pathname: window.location.pathname,
     failedImages: [...document.images]
       .filter((image) => image.complete && image.naturalWidth === 0 && Boolean(image.currentSrc || image.src))
       .map((image) => image.currentSrc || image.src),
@@ -127,7 +141,11 @@ async function assertRoute(page, runtimeErrors, route, checkOverflow = true) {
   if (state.rootText < 8) throw new Error(`${route}: root rendered effectively empty`);
   if (checkOverflow && state.overflow > 2) throw new Error(`${route}: body horizontal overflow ${state.overflow}px`);
   if (state.failedImages.length) throw new Error(`${route}: broken image ${state.failedImages.join(' | ')}`);
+  if (route.startsWith('/coach') && route !== '/coach/login' && state.pathname === '/coach/login') throw new Error(`${route}: unexpectedly redirected to coach login`);
+  if (route.startsWith('/parent') && route !== '/parent/login' && state.pathname === '/parent/login') throw new Error(`${route}: unexpectedly redirected to parent login`);
+  if (route.startsWith('/player') && !route.includes('/login') && !intentionalPlayerLoginRedirects.has(route) && state.pathname === '/player/login') throw new Error(`${route}: unexpectedly redirected to player login`);
   if (runtimeErrors.length) throw new Error(`${route}: ${runtimeErrors.join(' | ')}`);
+  return state;
 }
 
 async function routeSweep(browserType, browserName) {
@@ -167,9 +185,42 @@ async function themeAndRtlSweep() {
   try {
     for (const variant of variants) {
       const { context, page, runtimeErrors } = await createCheckedPage(browser, { ...variant, viewport: { width: 390, height: 844 } });
-      for (const route of ['/', '/player/home', '/parent', '/parent/settings', '/coach', '/admin']) await assertRoute(page, runtimeErrors, route, true);
+      for (const route of ['/', '/player/home', '/parent', '/parent/settings', '/coach', '/coach/players', '/admin', '/admin/branches']) await assertRoute(page, runtimeErrors, route, true);
       await context.close();
       console.log(`[theme] ${variant.label}: representative role routes passed`);
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
+async function coachIdentityIsolationSweep() {
+  const browser = await chromium.launch({ headless: true });
+  try {
+    for (const identity of [
+      { id: 'coach-preview-01', expectedName: 'Coach Preview 01' },
+      { id: 'coach-preview-03', expectedName: 'Coach Preview 03' },
+    ]) {
+      const { context, page, runtimeErrors } = await createCheckedPage(browser, { coachId: identity.id });
+      await assertRoute(page, runtimeErrors, '/coach/profile', true);
+      const profileText = await page.locator('#root').innerText();
+      if (!profileText.includes(identity.expectedName)) throw new Error(`${identity.id}: active coach profile identity was not rendered`);
+
+      await assertRoute(page, runtimeErrors, '/coach/messages', true);
+      await assertRoute(page, runtimeErrors, '/coach/programs', true);
+
+      if (identity.id === 'coach-preview-03') {
+        await page.goto(`${baseURL}/coach/groups/football-demo-u12`, { waitUntil: 'domcontentloaded' });
+        await page.waitForTimeout(150);
+        if (new URL(page.url()).pathname !== '/coach/groups') throw new Error('coach-preview-03: cross-scope group route was not blocked');
+
+        await page.goto(`${baseURL}/coach/players/player-demo-001`, { waitUntil: 'domcontentloaded' });
+        await page.waitForTimeout(150);
+        if (new URL(page.url()).pathname !== '/coach/players') throw new Error('coach-preview-03: cross-scope player route was not blocked');
+      }
+
+      await context.close();
+      console.log(`[coach-scope] ${identity.id}: session identity and deep-link isolation passed`);
     }
   } finally {
     await browser.close();
@@ -182,4 +233,5 @@ await routeSweep(firefox, 'Firefox');
 await routeSweep(webkit, 'WebKit');
 await responsiveSweep();
 await themeAndRtlSweep();
+await coachIdentityIsolationSweep();
 console.log('UOS interface smoke matrix passed.');

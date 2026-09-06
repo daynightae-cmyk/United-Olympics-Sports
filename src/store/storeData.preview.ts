@@ -200,8 +200,8 @@ export const BRAND_PRODUCTS: StoreProduct[] = [
     slug: 'podium-presentation-track-jacket',
     name: bi('Podium Presentation Track Jacket', 'سترة منصات التتويج الأولمبية'),
     description: bi(
-      'Water-resistant thermal-lined jacket with gilded academy crest.',
-      'سترة مقاومة للماء مع بطانة حرارية وشعار الأكاديمية المذهب.'
+      'Water-resistant thermal-lined jacket with a gilded United Olympics Sports crest.',
+      'سترة مقاومة للماء مع بطانة حرارية وشعار يونايتد أوليمبيكس سبورت المذهب.'
     ),
     category: 'apparel',
     type: bi('Tracksuit & Outerwear', 'سترات وملابس خارجية'),

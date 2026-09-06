@@ -106,6 +106,7 @@ export function AdminLayout() {
       <Route path="countries" element={<AdminCountriesPage />} />
       <Route path="countries/:countryId" element={<AdminCountryDetailPage />} />
       <Route path="branches" element={<AdminBranchesPage />} />
+      <Route path="branches/:branchId/overview" element={<AdminBranchDetailPage />} />
       <Route path="branches/:branchId" element={<AdminBranchDetailPage />} />
       <Route path="programs" element={<AdminProgramsPage />} />
       <Route path="programs/:programId" element={<AdminProgramDetailPage />} />
