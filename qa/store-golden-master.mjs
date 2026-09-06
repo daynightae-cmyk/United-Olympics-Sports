@@ -300,6 +300,8 @@ async function interactions(browser, name, rtl) {
       await mobileBuy.click();
       await page.locator('.store-mini-cart').waitFor();
       await page.locator('.store-mini-cart footer a[href="/store/cart"]').click();
+      await page.waitForURL('**/store/cart');
+      await page.locator('.store-cart-list article').first().waitFor();
       assert.equal(await page.locator('.store-cart-list article').count(), 2, 'cart lost an existing variant or new product');
       await screenshot(page, `${name}-${rtl ? 'rtl' : 'ltr'}-cart`);
 
