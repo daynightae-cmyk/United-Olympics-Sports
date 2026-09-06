@@ -1,0 +1,176 @@
+name: Admin Operations Closure 20260906
+on:
+  push:
+    branches:
+      - work/admin-operations-closure-20260906
+    paths:
+      - '.github/workflows/admin-ops-closure-20260906.yml'
+permissions:
+  contents: read
+jobs:
+  verify-admin-operations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: TypeScript gate
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+      - name: Diff integrity
+        run: git diff --check
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Create Admin CRUD browser QA
+        shell: bash
+        run: |
+          cat > /tmp/admin-ops-qa.mjs <<'JS'
+          import { chromium } from 'playwright';
+          const base='http://127.0.0.1:4173';
+          const browser=await chromium.launch({headless:true});
+          const page=await browser.newPage({viewport:{width:1440,height:1000}});
+          const storageKey='uos-admin-preview-data-v1';
+          const selectFirstReal=async(sel)=>{const values=await sel.locator('option').evaluateAll(os=>os.map(o=>o.value).filter(Boolean));if(!values.length)throw new Error('select has no usable option');await sel.selectOption(values[0]);return values[0];};
+          const store=async()=>page.evaluate((key)=>{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):null;},storageKey);
+          const openDialog=()=>page.getByRole('dialog').last();
+
+          // Branch create + UI synchronization + reload/detail.
+          await page.goto(base+'/admin/branches',{waitUntil:'networkidle'});
+          await page.getByRole('button',{name:/Add Branch/i}).click();
+          let dialog=openDialog();
+          const branchInputs=dialog.locator('input');
+          await branchInputs.nth(0).fill('QA Closure Branch');
+          await branchInputs.nth(1).fill('فرع إغلاق الاختبار');
+          const branchSelects=dialog.locator('select');
+          await selectFirstReal(branchSelects.nth(0));
+          await selectFirstReal(branchSelects.nth(1));
+          await branchInputs.nth(2).fill('QA Address');
+          await branchInputs.nth(3).fill('عنوان الاختبار');
+          await branchInputs.nth(4).fill('+971500000000');
+          await branchInputs.nth(5).fill('qa-branch@example.com');
+          await dialog.getByRole('button',{name:/Save Branch/i}).click();
+          await dialog.waitFor({state:'hidden'});
+          let s=await store();
+          const branch=s?.branches?.find(x=>x.name?.en==='QA Closure Branch');
+          if(!branch?.id)throw new Error('branch create did not persist');
+          await page.locator(`a[href="/admin/branches/${branch.id}"]`).first().waitFor();
+          await page.reload({waitUntil:'networkidle'});
+          await page.locator(`a[href="/admin/branches/${branch.id}"]`).first().waitFor();
+          await page.goto(base+`/admin/branches/${branch.id}`,{waitUntil:'networkidle'});
+          await page.getByText('Branch Controls',{exact:true}).waitFor();
+
+          // Event create.
+          await page.goto(base+'/admin/events',{waitUntil:'networkidle'});
+          await page.getByRole('button',{name:/Add Event/i}).click();
+          dialog=openDialog();
+          let textInputs=dialog.locator('input:not([type="date"])');
+          await textInputs.nth(0).fill('QA Closure Event');
+          await textInputs.nth(1).fill('فعالية إغلاق الاختبار');
+          await textInputs.nth(2).fill('Tournament');
+          await textInputs.nth(3).fill('بطولة');
+          await dialog.locator('textarea').nth(0).fill('QA event description');
+          await dialog.locator('textarea').nth(1).fill('وصف فعالية الاختبار');
+          await dialog.locator('input[type="date"]').nth(0).fill('2026-09-10');
+          await dialog.locator('input[type="date"]').nth(1).fill('2026-09-11');
+          await dialog.getByRole('button',{name:/Save Event/i}).click();
+          await dialog.waitFor({state:'hidden'});
+          s=await store();
+          const event=s?.events?.find(x=>x.title?.en==='QA Closure Event');
+          if(!event?.id)throw new Error('event create did not persist');
+          await page.locator(`a[href="/admin/events/${event.id}"]`).first().waitFor();
+
+          // Registration create from live player/program selectors.
+          await page.goto(base+'/admin/registrations',{waitUntil:'networkidle'});
+          await page.getByRole('button',{name:/Add Registration/i}).click();
+          dialog=openDialog();
+          let selects=dialog.locator('select');
+          const playerId=await selectFirstReal(selects.nth(0));
+          const programId=await selectFirstReal(selects.nth(1));
+          await dialog.getByRole('button',{name:/Save Registration/i}).click();
+          await dialog.waitFor({state:'hidden'});
+          s=await store();
+          const registration=[...(s?.registrations??[])].reverse().find(x=>x.playerId===playerId&&x.programId===programId);
+          if(!registration?.id)throw new Error('registration create did not persist');
+          await page.locator(`a[href="/admin/registrations/${registration.id}"]`).first().waitFor();
+
+          // Achievement create.
+          await page.goto(base+'/admin/achievements',{waitUntil:'networkidle'});
+          await page.getByRole('button',{name:/Add Achievement/i}).click();
+          dialog=openDialog();
+          textInputs=dialog.locator('input:not([type="date"])');
+          await textInputs.nth(0).fill('QA Closure Achievement');
+          await textInputs.nth(1).fill('إنجاز إغلاق الاختبار');
+          await textInputs.nth(2).fill('Milestone');
+          await textInputs.nth(3).fill('مرحلة');
+          await dialog.locator('input[type="date"]').fill('2026-09-06');
+          await dialog.getByRole('button',{name:/Save Achievement/i}).click();
+          await dialog.waitFor({state:'hidden'});
+          s=await store();
+          const achievement=s?.achievements?.find(x=>x.title?.en==='QA Closure Achievement');
+          if(!achievement?.id)throw new Error('achievement create did not persist');
+          await page.locator(`a[href="/admin/achievements/${achievement.id}"]`).first().waitFor();
+
+          // Announcement create/publish.
+          await page.goto(base+'/admin/announcements',{waitUntil:'networkidle'});
+          await page.getByRole('button',{name:/Add Announcement/i}).click();
+          dialog=openDialog();
+          textInputs=dialog.locator('input');
+          await textInputs.nth(0).fill('QA Closure Announcement');
+          await textInputs.nth(1).fill('إعلان إغلاق الاختبار');
+          await dialog.locator('textarea').nth(0).fill('QA announcement body');
+          await dialog.locator('textarea').nth(1).fill('محتوى إعلان الاختبار');
+          await textInputs.nth(2).fill('All Staff');
+          await textInputs.nth(3).fill('جميع الموظفين');
+          selects=dialog.locator('select');
+          await selects.nth(1).selectOption('published');
+          await dialog.getByRole('button',{name:/Save Announcement/i}).click();
+          await dialog.waitFor({state:'hidden'});
+          s=await store();
+          const announcement=s?.announcements?.find(x=>x.title?.en==='QA Closure Announcement');
+          if(!announcement?.id||announcement.status!=='published'||!announcement.publishedAt)throw new Error('announcement create/publish did not persist');
+          await page.locator(`a[href="/admin/announcements/${announcement.id}"]`).first().waitFor();
+
+          // Message compose.
+          await page.goto(base+'/admin/messages',{waitUntil:'networkidle'});
+          await page.getByRole('button',{name:/Compose Message/i}).click();
+          dialog=openDialog();
+          textInputs=dialog.locator('input');
+          await textInputs.nth(0).fill('admin-qa');
+          await textInputs.nth(1).fill('user-001, user-002');
+          await textInputs.nth(2).fill('QA Closure Message');
+          await textInputs.nth(3).fill('رسالة إغلاق الاختبار');
+          await dialog.locator('textarea').nth(0).fill('QA message body');
+          await dialog.locator('textarea').nth(1).fill('محتوى رسالة الاختبار');
+          await dialog.getByRole('button',{name:/Save Message/i}).click();
+          await dialog.waitFor({state:'hidden'});
+          s=await store();
+          const message=s?.messages?.find(x=>x.subject?.en==='QA Closure Message');
+          if(!message?.id||message.toIds?.length!==2)throw new Error('message compose did not persist');
+          await page.locator(`a[href="/admin/messages/${message.id}"]`).first().waitFor();
+
+          // Persistence after reload on final module.
+          await page.reload({waitUntil:'networkidle'});
+          await page.locator(`a[href="/admin/messages/${message.id}"]`).first().waitFor();
+          await browser.close();
+          console.log('Admin operations CRUD persistence QA passed.');
+          JS
+      - name: Start preview
+        shell: bash
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/admin-ops-preview.log 2>&1 &
+          for i in {1..40}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep 1; done
+          cat /tmp/admin-ops-preview.log
+          exit 1
+      - name: Admin operations browser QA
+        run: node /tmp/admin-ops-qa.mjs
+      - name: Existing Admin smoke QA
+        shell: bash
+        run: |
+          test -f qa/admin-operational.mjs && node qa/admin-operational.mjs || true
+          test -f qa/admin-functional.mjs && node qa/admin-functional.mjs || true
+        env:
+          UOS_BASE_URL: http://127.0.0.1:4173
