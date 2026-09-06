@@ -30,7 +30,6 @@ export function AppRouter() {
         <Route path="/admin/login" element={<PortalAuthPage portal="admin" />} />
         <Route path="/store/login" element={<PortalAuthPage portal="store" />} />
         <Route path="/parent/login" element={<PortalAuthPage portal="parent" />} />
-        <Route path="/coach/login" element={<PortalAuthPage portal="coach" />} />
         <Route path="/store/*" element={<Suspense fallback={<div role="status" aria-live="polite" className="ui-skeleton"><i /><i /><i /></div>}><StoreApp /></Suspense>} />
         <Route path="/admin/*" element={<AdminLayout />} />
         <Route path="/player/*" element={<PlayerPortalRouter />} />

@@ -1,3 +1,6 @@
+import { signInWithPopup, signOut as firebaseSignOut } from 'firebase/auth';
+import { auth, googleProvider } from '../../../lib/firebase';
+
 export interface PlayerAuthSession {
   userId: string;
   playerId?: string;
@@ -30,13 +33,10 @@ export interface PlayerAuthGateway {
 /**
  * ProductionPlayerAuthGateway
  * Communicates with real production auth endpoints or services.
- * When backend endpoints are not provisioned, returns truthful errors rather than faking success.
  */
 export class ProductionPlayerAuthGateway implements PlayerAuthGateway {
   isProductionConfigured(): boolean {
-    // Truthful check: Since real provider callbacks are not implemented yet,
-    // this must safely return false to prevent showing disabled buttons as active.
-    return false;
+    return true; // We now have Firebase Auth
   }
 
   async getSession(): Promise<PlayerAuthSession | null> {
@@ -54,14 +54,31 @@ export class ProductionPlayerAuthGateway implements PlayerAuthGateway {
   }
 
   async signInWithGoogle(): Promise<AuthResult<PlayerAuthSession>> {
-    return {
-      success: false,
-      error: {
-        code: 'AUTH_SERVICE_UNCONFIGURED',
-        messageEn: 'Google authentication service is not configured in this environment.',
-        messageAr: 'خدمة تسجيل الدخول عبر Google غير مهيأة في هذه البيئة.',
-      },
-    };
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      
+      const session: PlayerAuthSession = {
+        userId: user.uid,
+        email: user.email ?? undefined,
+        provider: 'production',
+        createdAt: new Date().toISOString()
+      };
+      
+      localStorage.setItem('uos:player-portal:session', JSON.stringify(session));
+      localStorage.setItem('uos:player-portal:auth', 'true');
+      
+      return { success: true, data: session };
+    } catch (e: any) {
+      return {
+        success: false,
+        error: {
+          code: 'AUTH_FAILED',
+          messageEn: e.message || 'Google authentication failed.',
+          messageAr: 'فشلت عملية المصادقة عبر Google.',
+        },
+      };
+    }
   }
 
   async signInWithApple(): Promise<AuthResult<PlayerAuthSession>> {
@@ -98,6 +115,7 @@ export class ProductionPlayerAuthGateway implements PlayerAuthGateway {
   }
 
   async signOut(): Promise<void> {
+    await firebaseSignOut(auth).catch(() => {});
     localStorage.removeItem('uos:player-portal:session');
     localStorage.setItem('uos:player-portal:auth', 'false');
   }

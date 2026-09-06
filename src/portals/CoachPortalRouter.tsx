@@ -1,7 +1,10 @@
 import { lazy, Suspense, type ComponentType } from 'react';
-import { Outlet, Route, Routes } from 'react-router-dom';
+import { Outlet, Route, Routes, Navigate } from 'react-router-dom';
 import { PortalLayout } from '../layouts/PortalLayout';
 import { PortalErrorBoundary, PortalNotFoundPage, PortalRouteLoader } from '../components/portal/PortalRouteState';
+import { CoachSessionProvider } from './coach/CoachSessionContext';
+import { CoachProtectedRoute } from './coach/CoachProtectedRoute';
+import { CoachLoginPage } from './coach/CoachLoginPage';
 
 const load = <T extends Record<string, ComponentType>>(factory: () => Promise<T>, key: keyof T) =>
   lazy(() => factory().then((module) => ({ default: module[key] })));
@@ -30,21 +33,34 @@ function CoachShellLayout() {
 
 export function CoachPortalRouter() {
   return (
-    <Routes>
-      <Route element={<CoachShellLayout />}>
-        <Route index element={<CoachPortalOverviewPage />} />
-        <Route path="schedule" element={<CoachPortalSchedulePage />} />
-        <Route path="groups" element={<CoachPortalGroupsPage />} />
-        <Route path="evaluations" element={<CoachPortalEvaluationsPage />} />
-        <Route path="players" element={<CoachPortalPlayersPage />} />
-        <Route path="players/:playerId" element={<CoachPortalPlayerDetailPage />} />
-        <Route path="groups/:groupId" element={<CoachPortalGroupDetailPage />} />
-        <Route path="attendance" element={<CoachPortalAttendancePage />} />
-        <Route path="programs" element={<CoachPortalProgramsPage />} />
-        <Route path="messages" element={<CoachPortalMessagesPage />} />
-        <Route path="profile" element={<CoachPortalProfilePage />} />
-        <Route path="*" element={<PortalNotFoundPage portal="coach" />} />
-      </Route>
-    </Routes>
+    <CoachSessionProvider>
+      <Routes>
+        <Route path="login" element={<CoachLoginPage />} />
+        <Route
+          path="*"
+          element={
+            <CoachProtectedRoute>
+              <Routes>
+                <Route element={<CoachShellLayout />}>
+                  <Route index element={<Navigate to="home" replace />} />
+                  <Route path="home" element={<CoachPortalOverviewPage />} />
+                  <Route path="schedule" element={<CoachPortalSchedulePage />} />
+                  <Route path="groups" element={<CoachPortalGroupsPage />} />
+                  <Route path="evaluations" element={<CoachPortalEvaluationsPage />} />
+                  <Route path="players" element={<CoachPortalPlayersPage />} />
+                  <Route path="players/:playerId" element={<CoachPortalPlayerDetailPage />} />
+                  <Route path="groups/:groupId" element={<CoachPortalGroupDetailPage />} />
+                  <Route path="attendance" element={<CoachPortalAttendancePage />} />
+                  <Route path="programs" element={<CoachPortalProgramsPage />} />
+                  <Route path="messages" element={<CoachPortalMessagesPage />} />
+                  <Route path="profile" element={<CoachPortalProfilePage />} />
+                  <Route path="*" element={<PortalNotFoundPage portal="coach" />} />
+                </Route>
+              </Routes>
+            </CoachProtectedRoute>
+          }
+        />
+      </Routes>
+    </CoachSessionProvider>
   );
 }

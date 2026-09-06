@@ -12,8 +12,10 @@ function isSameLocalDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
+import { useCoachSession } from '../../../portals/coach/CoachSessionContext';
 export function CoachPortalOverviewPage() {
-  const group = demoTrainingGroups[0];
+  const { coach } = useCoachSession();
+  const group = demoTrainingGroups.find(g => coach && g.coachIds.includes(coach.id)) || demoTrainingGroups[0];
   const sport = getSport(group.sportId);
   const sessions = demoSessions
     .filter(session => session.groupId === group.id)

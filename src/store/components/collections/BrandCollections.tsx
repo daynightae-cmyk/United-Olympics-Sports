@@ -18,7 +18,7 @@ export const OFFICIAL_BRAND_COLLECTIONS: StoreCollection[] = [
       en: 'Engineered competition goggles, hydrodynamic silicone caps, and speed training fins.',
       ar: 'نظارات سباحة احترافية، قبعات سيليكون متطورة، وزعانف سرعة مائية للبطولات.',
     },
-    campaignMedia: 'https://i.postimg.cc/3wNVhZJj/Chat-GPT-Image-Sep-5-2026-01-46-30-PM.png',
+    campaignMedia: imgGoggles,
     productIds: ['uos-prod-goggles', 'uos-prod-swim-cap', 'uos-prod-kickboard', 'uos-prod-swim-fins'],
   },
   {
@@ -32,7 +32,7 @@ export const OFFICIAL_BRAND_COLLECTIONS: StoreCollection[] = [
       en: 'Official match balls, carbon armor shin guards, and high-tempo squad training kits.',
       ar: 'كرات المباريات الرسمية، واقيات الساق المقواة، وأطقم تدريب المباريات التكتيكية.',
     },
-    campaignMedia: 'https://i.postimg.cc/HkBRFNHL/Chat-GPT-Image-Sep-5-2026-01-53-40-PM.png',
+    campaignMedia: imgRacket,
     productIds: ['uos-prod-ball-black', 'uos-prod-ball-ivory', 'uos-prod-shin-guards', 'uos-prod-pitch-jersey'],
   },
   {
@@ -46,7 +46,7 @@ export const OFFICIAL_BRAND_COLLECTIONS: StoreCollection[] = [
       en: 'Podium presentation track jackets, compression shorts, and Olympic matchday uniforms.',
       ar: 'سترات منصات التتويج الأولمبية، شورتات الضغط العضلي، وأزياء البطولات المعتمدة.',
     },
-    campaignMedia: 'https://i.postimg.cc/pL23GvNP/Chat-GPT-Image-Sep-5-2026-01-53-48-PM-(1).png',
+    campaignMedia: imgFootball,
     productIds: ['uos-prod-track-jacket', 'uos-prod-match-kit', 'uos-prod-compression-shorts', 'uos-prod-gold-shorts'],
   },
   {
@@ -60,7 +60,7 @@ export const OFFICIAL_BRAND_COLLECTIONS: StoreCollection[] = [
       en: 'Executive athlete travel duffles, insulated thermal flasks, and squad backpacks.',
       ar: 'حقائب سفر تنفيذية فاخرة، قوارير مياه معزولة ومحفورة بالليزر، وحقائب تدريب متطورة.',
     },
-    campaignMedia: 'https://i.postimg.cc/Kv7dDzHH/Chat-GPT-Image-Sep-5-2026-01-53-58-PM.png',
+    campaignMedia: imgFootball,
     productIds: ['uos-prod-travel-duffle', 'uos-prod-hydro-bottle-black', 'uos-prod-hydro-bottle-gold', 'uos-prod-sports-backpack'],
   },
 ];

@@ -99,6 +99,13 @@ export function applyUiSettingsToDocument(
   root.dataset.fontScale = settings.fontScale;
   root.dataset.motion = settings.motion;
   root.dataset.sidebarDefault = settings.sidebarDefault;
+
+  if (mode === 'dark') {
+    root.classList.add('dark');
+  } else {
+    root.classList.remove('dark');
+  }
+
   const isArabicFirst = settings.bilingualOrder === 'ar-first';
   root.lang = isArabicFirst ? 'ar' : 'en';
   root.dir = isArabicFirst ? 'rtl' : 'ltr';

@@ -59,7 +59,7 @@ export function StoreHomePage() {
         </div>
         <div className="store-retail-hero-media">
           <img
-            src="https://i.postimg.cc/3wNVhZJj/Chat-GPT-Image-Sep-5-2026-01-46-30-PM.png"
+            src={imgGoggles}
             alt="Swimming goggles · editorial preview | نظارة سباحة · معاينة تحريرية"
             fetchPriority="high"
           />
@@ -69,7 +69,7 @@ export function StoreHomePage() {
         </div>
         <Link className="store-retail-hero-side" to="/store/category/apparel">
           <img
-            src="https://i.postimg.cc/XYVtHWMV/Chat-GPT-Image-Sep-5-2026-01-53-48-PM.png"
+            src={imgFootball}
             alt="Training apparel · editorial preview | ملابس تدريب · معاينة تحريرية"
             loading="lazy"
           />
@@ -150,7 +150,7 @@ export function StoreHomePage() {
 
       <section className="store-editorial-split">
         <img
-          src="https://i.postimg.cc/pL23GvNP/Chat-GPT-Image-Sep-5-2026-01-53-48-PM-(1).png"
+          src={imgFootball}
           alt="Podium track jacket · editorial preview | سترة التتويج · معاينة تحريرية"
           loading="lazy"
         />
