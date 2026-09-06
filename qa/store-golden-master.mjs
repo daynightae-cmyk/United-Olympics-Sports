@@ -134,7 +134,7 @@ async function interactions(browser, name, rtl) {
     await page.locator('.store-mobile-filter').click();
     await page.locator('.store-filter-layer label').filter({ hasText: 'Swimming' }).click();
     await page.locator('.store-filter-layer .store-button-primary').click();
-    if (preview) assert.equal(await page.locator('.store-product-card').count(), 3);
+    if (preview) assert.equal(await page.locator('.store-product-card').count(), 4);
     const search = page.locator('#store-search');
     await search.fill('swim');
     await page.locator('#store-search-results').waitFor();
