@@ -1,20 +1,37 @@
-import { Building2, Flag, ShieldCheck, Trophy, UsersRound, Zap, Target, CheckCircle, ChevronRight } from 'lucide-react';
+import { Building2, Flag, ShieldCheck, Trophy, UsersRound, Zap, Target, CheckCircle, ChevronRight, Plus, X } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useState, useMemo } from 'react';
 import { PageHeader } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { PreviewNotice, EnterpriseSelect } from '../../components/enterprise/EnterpriseUI';
-import { useBranches, useCountries } from '../../admin/data/adminHooks';
-import { demoSports } from '../../data/demo/sports';
+import { useBranches, useCountries, useCreateBranch, useSports } from '../../admin/data/adminHooks';
+
+const emptyBranchDraft = {
+  nameEn: '',
+  nameAr: '',
+  countryId: '',
+  sportId: '',
+  addressEn: '',
+  addressAr: '',
+  phone: '',
+  email: '',
+};
 
 export function AdminBranchesPage() {
   const [searchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get('q') ?? '');
   const [countryFilter, setCountryFilter] = useState(searchParams.get('country') ?? 'all');
+  const [showCreate, setShowCreate] = useState(false);
+  const [draft, setDraft] = useState(emptyBranchDraft);
+  const [formError, setFormError] = useState('');
+  const [savedNotice, setSavedNotice] = useState(false);
   const { data: branchResult, loading: branchesLoading, error: branchesError } = useBranches({ page: 1, pageSize: 100 });
   const { data: countryResult, loading: countriesLoading, error: countriesError } = useCountries({ page: 1, pageSize: 100 });
+  const { data: sportResult } = useSports({ page: 1, pageSize: 100 });
+  const { create, loading: createLoading } = useCreateBranch();
   const branches = branchResult.items;
   const countries = countryResult.items;
+  const sportsCatalog = sportResult.items;
 
   const filteredBranches = useMemo(() => branches.filter((branch) =>
     (countryFilter === 'all' || branch.countryId === countryFilter) &&
@@ -28,6 +45,36 @@ export function AdminBranchesPage() {
   const loading = branchesLoading || countriesLoading;
   const error = branchesError ?? countriesError;
 
+  const setDraftField = (field: keyof typeof emptyBranchDraft, value: string) => setDraft((current) => ({ ...current, [field]: value }));
+  const resetDraft = () => { setDraft(emptyBranchDraft); setFormError(''); };
+  const openCreate = () => { resetDraft(); setShowCreate(true); };
+  const closeCreate = () => { if (!createLoading) setShowCreate(false); };
+
+  const submitBranch = async () => {
+    if (!draft.nameEn.trim() || !draft.nameAr.trim() || !draft.countryId || !draft.sportId) {
+      setFormError('Branch names, country, and primary sport are required. | اسم الفرع باللغتين والدولة والرياضة الأساسية مطلوبة.');
+      return;
+    }
+    setFormError('');
+    await create({
+      name: { en: draft.nameEn.trim(), ar: draft.nameAr.trim() },
+      countryId: draft.countryId,
+      organizationId: 'org-united-olympics',
+      sportIds: [draft.sportId],
+      programIds: [],
+      groupIds: [],
+      coachIds: [],
+      playerIds: [],
+      status: 'active',
+      address: draft.addressEn.trim() || draft.addressAr.trim() ? { en: draft.addressEn.trim(), ar: draft.addressAr.trim() } : undefined,
+      phone: draft.phone.trim() || undefined,
+      email: draft.email.trim() || undefined,
+    });
+    setShowCreate(false);
+    resetDraft();
+    setSavedNotice(true);
+  };
+
   return (
     <div className="admin-page">
       <section className="branches-hero" aria-label="Branches overview">
@@ -39,7 +86,15 @@ export function AdminBranchesPage() {
         </div>
       </section>
 
-      <PageHeader icon={Building2} eyebrow={bi('Branch Workspaces', 'مساحات الفروع')} title={bi('Branches', 'الفروع')} description={bi('Manage branch workspaces, sports coverage, athlete rosters and coach assignments from one preview cockpit.', 'أدر مساحات الفروع وتغطية الرياضات وقوائم الرياضيين وتكليفات المدربين من مركز معاينة واحد.')} actions={<PreviewNotice />} />
+      <PageHeader
+        icon={Building2}
+        eyebrow={bi('Branch Workspaces', 'مساحات الفروع')}
+        title={bi('Branches', 'الفروع')}
+        description={bi('Manage branch workspaces, sports coverage, athlete rosters and coach assignments from one preview cockpit.', 'أدر مساحات الفروع وتغطية الرياضات وقوائم الرياضيين وتكليفات المدربين من مركز معاينة واحد.')}
+        actions={<div className="admin-header-actions"><PreviewNotice /><button type="button" className="admin-primary-button" onClick={openCreate}><Plus size={16} /><BilingualText value={bi('Add Branch', 'إضافة فرع')} /></button></div>}
+      />
+
+      {savedNotice && <div className="preview-warning" role="status"><BilingualText value={bi('Branch saved to the browser preview store. Production backend data was not changed.', 'تم حفظ الفرع في مخزن المعاينة بالمتصفح. لم يتم تغيير بيانات نظام إنتاجي خلفي.')} /></div>}
 
       <section className="admin-stat-grid branches-kpi" aria-label="Branch KPIs">
         <article className="admin-stat-card kpi-card accent-branches-main"><div className="kpi-icon"><Building2 size={22} /></div><strong>{branches.length}</strong><span><BilingualText value={bi('Branch Workspaces', 'مساحات الفروع')} /></span><small><BilingualText value={bi('Preview data source', 'مصدر بيانات المعاينة')} /></small></article>
@@ -66,7 +121,7 @@ export function AdminBranchesPage() {
           <div className="enterprise-empty" role="alert"><ShieldCheck size={32} /><h3><BilingualText value={bi('Branch data is unavailable', 'بيانات الفروع غير متاحة')} /></h3><p>{error.message}</p></div>
         ) : filteredBranches.length > 0 ? filteredBranches.map((branch) => {
           const country = countries.find((item) => item.id === branch.countryId);
-          const sports = branch.sportIds.map((id) => demoSports.find((sport) => sport.id === id)).filter(Boolean);
+          const sports = branch.sportIds.map((id) => sportsCatalog.find((sport) => sport.id === id)).filter(Boolean);
           return (
             <article key={branch.id} className="branch-card">
               <div className="branch-card-media" aria-hidden="true"><div className="branch-building-bg"><Building2 size={48} /></div></div>
@@ -101,6 +156,25 @@ export function AdminBranchesPage() {
           <article className="integrity-card"><div className="integrity-icon"><Flag size={20} /></div><div><h3><BilingualText value={bi('Multi-Country Ready', 'متعددة الدول')} /></h3><p><BilingualText value={bi('Country filtering is driven by gateway records.', 'تصفية الدول مدفوعة بسجلات البوابة.')} /></p></div></article>
         </div>
       </section>
+
+      {showCreate && <div className="admin-modal-backdrop" role="presentation" onMouseDown={closeCreate}>
+        <section className="admin-modal" role="dialog" aria-modal="true" aria-label="Add Branch | إضافة فرع" onMouseDown={(event) => event.stopPropagation()}>
+          <div className="modal-head"><div><BilingualText value={bi('Add Branch', 'إضافة فرع')} /><small><BilingualText value={bi('Browser-persistent preview record', 'سجل معاينة محفوظ في المتصفح')} /></small></div><button type="button" className="admin-icon-button" onClick={closeCreate} aria-label="Close | إغلاق"><X /></button></div>
+          <div className="preview-warning"><BilingualText value={bi('This creates a persistent Preview record in this browser. It does not write to a production backend.', 'ينشئ هذا سجل معاينة محفوظًا في هذا المتصفح. لا يكتب إلى نظام خلفي إنتاجي.')} /></div>
+          {formError && <p role="alert" className="form-error">{formError}</p>}
+          <div className="preview-form-grid">
+            <label><BilingualText value={bi('Branch name (English)', 'اسم الفرع (إنجليزي)')} /><input value={draft.nameEn} onChange={(event) => setDraftField('nameEn', event.target.value)} placeholder="Abu Dhabi Branch" /></label>
+            <label><BilingualText value={bi('Branch name (Arabic)', 'اسم الفرع (عربي)')} /><input value={draft.nameAr} onChange={(event) => setDraftField('nameAr', event.target.value)} placeholder="فرع أبوظبي" /></label>
+            <label><BilingualText value={bi('Country', 'الدولة')} /><select value={draft.countryId} onChange={(event) => setDraftField('countryId', event.target.value)}><option value="">Select Country | اختر الدولة</option>{countries.map((country) => <option key={country.id} value={country.id}>{country.name.en} | {country.name.ar}</option>)}</select></label>
+            <label><BilingualText value={bi('Primary sport', 'الرياضة الأساسية')} /><select value={draft.sportId} onChange={(event) => setDraftField('sportId', event.target.value)}><option value="">Select Sport | اختر الرياضة</option>{sportsCatalog.map((sport) => <option key={sport.id} value={sport.id}>{sport.name.en} | {sport.name.ar}</option>)}</select></label>
+            <label><BilingualText value={bi('Address (English)', 'العنوان (إنجليزي)')} /><input value={draft.addressEn} onChange={(event) => setDraftField('addressEn', event.target.value)} placeholder="Branch address" /></label>
+            <label><BilingualText value={bi('Address (Arabic)', 'العنوان (عربي)')} /><input value={draft.addressAr} onChange={(event) => setDraftField('addressAr', event.target.value)} placeholder="عنوان الفرع" /></label>
+            <label><BilingualText value={bi('Phone', 'الهاتف')} /><input value={draft.phone} onChange={(event) => setDraftField('phone', event.target.value)} placeholder="+971..." /></label>
+            <label><BilingualText value={bi('Email', 'البريد الإلكتروني')} /><input type="email" value={draft.email} onChange={(event) => setDraftField('email', event.target.value)} placeholder="branch@example.com" /></label>
+          </div>
+          <div className="dialog-actions"><button type="button" className="admin-secondary-button" onClick={closeCreate} disabled={createLoading}><BilingualText value={bi('Cancel', 'إلغاء')} /></button><button type="button" className="admin-primary-button" onClick={() => void submitBranch()} disabled={createLoading}><BilingualText value={bi(createLoading ? 'Saving…' : 'Save Branch', createLoading ? 'جارٍ الحفظ…' : 'حفظ الفرع')} /></button></div>
+        </section>
+      </div>}
     </div>
   );
 }
