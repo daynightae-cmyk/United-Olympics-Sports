@@ -1,19 +1,23 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
-import { AdminLayout } from '../layouts/AdminLayout';
-import { PlayerPortalRouter } from '../portals/PlayerPortalRouter';
-import { ParentPortalRouter } from '../portals/ParentPortalRouter';
-import { CoachPortalRouter } from '../portals/CoachPortalRouter';
-import { AdminAccessGate } from '../portals/admin/AdminAccessGate';
-import { PublicExperience } from '../pages/public/PublicExperience';
-import { BenchmarkShowcasePage } from '../pages/benchmark/BenchmarkShowcasePage';
 import { UnitedAssistant } from '../assistant/UnitedAssistant';
 import { UpdateToast } from '../platform/UpdateToast';
-import { PortalAuthPage } from '../components/auth/PortalAuthPage';
 import { OlympicRouteTransition } from '../components/navigation/OlympicRouteTransition';
 import { OlympicLuxurySplash } from '../components/splash/OlympicLuxurySplash';
 
+const AdminLayout = lazy(() => import('../layouts/AdminLayout').then((module) => ({ default: module.AdminLayout })));
+const PlayerPortalRouter = lazy(() => import('../portals/PlayerPortalRouter').then((module) => ({ default: module.PlayerPortalRouter })));
+const ParentPortalRouter = lazy(() => import('../portals/ParentPortalRouter').then((module) => ({ default: module.ParentPortalRouter })));
+const CoachPortalRouter = lazy(() => import('../portals/CoachPortalRouter').then((module) => ({ default: module.CoachPortalRouter })));
+const AdminAccessGate = lazy(() => import('../portals/admin/AdminAccessGate').then((module) => ({ default: module.AdminAccessGate })));
+const PublicExperience = lazy(() => import('../pages/public/PublicExperience').then((module) => ({ default: module.PublicExperience })));
+const BenchmarkShowcasePage = lazy(() => import('../pages/benchmark/BenchmarkShowcasePage').then((module) => ({ default: module.BenchmarkShowcasePage })));
+const PortalAuthPage = lazy(() => import('../components/auth/PortalAuthPage').then((module) => ({ default: module.PortalAuthPage })));
 const StoreApp = lazy(() => import('../store/StoreApp').then((module) => ({ default: module.StoreApp })));
+
+function RouteFallback() {
+  return <div role="status" aria-live="polite" className="ui-skeleton"><i /><i /><i /></div>;
+}
 
 function InternalProductUtilities() {
   const { pathname } = useLocation();
@@ -26,17 +30,19 @@ export function AppRouter() {
     <BrowserRouter>
       <OlympicLuxurySplash />
       <OlympicRouteTransition />
-      <Routes>
-        <Route path="/benchmark" element={<BenchmarkShowcasePage />} />
-        <Route path="/admin/login" element={<PortalAuthPage portal="admin" />} />
-        <Route path="/store/login" element={<PortalAuthPage portal="store" />} />
-        <Route path="/store/*" element={<Suspense fallback={<div role="status" aria-live="polite" className="ui-skeleton"><i /><i /><i /></div>}><StoreApp /></Suspense>} />
-        <Route path="/admin/*" element={<AdminAccessGate><AdminLayout /></AdminAccessGate>} />
-        <Route path="/player/*" element={<PlayerPortalRouter />} />
-        <Route path="/parent/*" element={<ParentPortalRouter />} />
-        <Route path="/coach/*" element={<CoachPortalRouter />} />
-        <Route path="*" element={<PublicExperience />} />
-      </Routes>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          <Route path="/benchmark" element={<BenchmarkShowcasePage />} />
+          <Route path="/admin/login" element={<PortalAuthPage portal="admin" />} />
+          <Route path="/store/login" element={<PortalAuthPage portal="store" />} />
+          <Route path="/store/*" element={<StoreApp />} />
+          <Route path="/admin/*" element={<AdminAccessGate><AdminLayout /></AdminAccessGate>} />
+          <Route path="/player/*" element={<PlayerPortalRouter />} />
+          <Route path="/parent/*" element={<ParentPortalRouter />} />
+          <Route path="/coach/*" element={<CoachPortalRouter />} />
+          <Route path="*" element={<PublicExperience />} />
+        </Routes>
+      </Suspense>
       <InternalProductUtilities />
     </BrowserRouter>
   );
