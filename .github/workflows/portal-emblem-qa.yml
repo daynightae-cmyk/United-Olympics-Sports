@@ -23,7 +23,7 @@ jobs:
       - name: Lint and typecheck
         run: npm run lint
 
-      - name: Build
+      - name: Ordinary production build
         run: npm run build
 
       - name: Diff integrity
@@ -32,7 +32,13 @@ jobs:
       - name: Install Playwright browser matrix
         run: npx playwright install --with-deps
 
-      - name: Start production preview
+      - name: Build portal QA preview with explicit preview providers
+        env:
+          VITE_UOS_ADMIN_PREVIEW: 'true'
+          VITE_UOS_STORE_PREVIEW: 'true'
+        run: npm run build
+
+      - name: Start QA production preview
         shell: bash
         run: |
           npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/uos-portal-preview.log 2>&1 &
@@ -54,6 +60,7 @@ jobs:
       - name: Existing Store Golden Master
         env:
           UOS_BASE_URL: http://127.0.0.1:4173
+          UOS_STORE_PREVIEW: 'true'
         run: node qa/store-golden-master.mjs
 
       - name: Portal route theme RTL and visual QA
