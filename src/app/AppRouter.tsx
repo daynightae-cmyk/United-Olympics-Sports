@@ -17,7 +17,7 @@ const StoreApp = lazy(() => import('../store/StoreApp').then((module) => ({ defa
 
 function RouteFallback() {
   return (
-    <div role="status" aria-live="polite" aria-busy="true" className="ui-skeleton">
+    <div data-route-loading="true" role="status" aria-live="polite" aria-busy="true" className="ui-skeleton">
       <span>Loading United Olympics Sports… | جاري التحميل</span>
       <i />
       <i />
