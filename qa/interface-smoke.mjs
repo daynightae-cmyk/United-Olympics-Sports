@@ -124,11 +124,24 @@ async function createCheckedPage(browser, options = {}) {
   return { context, page, runtimeErrors };
 }
 
+async function waitForRouteSettled(page, route) {
+  // Let React mount the route first, then require every standardized Suspense
+  // fallback to leave the DOM before the next navigation can abort a chunk.
+  await page.waitForTimeout(100);
+  try {
+    await page.locator('[data-route-loading="true"]').waitFor({ state: 'hidden', timeout: 10_000 });
+  } catch {
+    const stillLoading = await page.locator('[data-route-loading="true"]').count();
+    if (stillLoading) throw new Error(`${route}: lazy route loader did not settle`);
+  }
+  await page.waitForTimeout(75);
+}
+
 async function assertRoute(page, runtimeErrors, route, checkOverflow = true) {
   runtimeErrors.length = 0;
   const response = await page.goto(`${baseURL}${route}`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
   await page.waitForSelector('#root', { state: 'attached', timeout: 10_000 });
-  await page.waitForTimeout(150);
+  await waitForRouteSettled(page, route);
   if (response && response.status() >= 400) throw new Error(`${route}: HTTP ${response.status()}`);
   const state = await page.evaluate(() => ({
     rootText: document.querySelector('#root')?.textContent?.trim().length ?? 0,
@@ -217,10 +230,12 @@ async function coachIdentityIsolationSweep() {
       if (identity.id === 'coach-preview-03') {
         await page.goto(`${baseURL}/coach/groups/football-demo-u12`, { waitUntil: 'domcontentloaded' });
         await page.waitForURL((url) => url.pathname === '/coach/groups', { timeout: 10_000 });
+        await waitForRouteSettled(page, '/coach/groups');
         if (new URL(page.url()).pathname !== '/coach/groups') throw new Error('coach-preview-03: cross-scope group route was not blocked');
 
         await page.goto(`${baseURL}/coach/players/player-demo-001`, { waitUntil: 'domcontentloaded' });
         await page.waitForURL((url) => url.pathname === '/coach/players', { timeout: 10_000 });
+        await waitForRouteSettled(page, '/coach/players');
         if (new URL(page.url()).pathname !== '/coach/players') throw new Error('coach-preview-03: cross-scope player route was not blocked');
       }
 
