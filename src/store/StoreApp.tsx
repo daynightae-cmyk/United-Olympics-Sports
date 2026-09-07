@@ -1,6 +1,8 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { StoreLayout } from './StoreComponents';
 import { StoreProvider } from './StoreContext';
+import { StoreDataProvider } from './data/StoreDataProvider';
+import type { StoreDataGateway } from './data/StoreDataGateway';
 import {
   AccountPage,
   AddressesPage,
@@ -22,8 +24,8 @@ import {
 import '../styles/store-commerce.css';
 import '../styles/store-factory6-enhancements.css';
 
-export function StoreApp() {
-  return <StoreProvider><StoreLayout><Routes>
+export function StoreApp({ dataGateway }: { dataGateway?: StoreDataGateway }) {
+  return <StoreDataProvider gateway={dataGateway}><StoreProvider><StoreLayout><Routes>
     <Route index element={<StoreHomePage />} />
     <Route path="shop" element={<CatalogPage />} />
     <Route path="categories" element={<CatalogPage categoriesOnly />} />
@@ -44,5 +46,5 @@ export function StoreApp() {
     <Route path="notifications" element={<NotificationsPage />} />
     <Route path="settings" element={<StoreSettingsPage />} />
     <Route path="*" element={<Navigate to="/store" replace />} />
-  </Routes></StoreLayout></StoreProvider>;
+  </Routes></StoreLayout></StoreProvider></StoreDataProvider>;
 }

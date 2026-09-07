@@ -1,8 +1,7 @@
-import { storeCategories } from './storeCategories';
 import { cartLineKey, hasSelectedVariants } from './storeUtils';
-import { applyVerifiedProductMedia } from './storeMediaProvenance';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { useUiSettings } from '../ui/theme/useUiSettings';
+import { useStoreData } from './data/StoreDataProvider';
 import type { StoreCartLine, StoreCategory, StoreDataState, StoreProduct } from './storeTypes';
 
 type AddOptions = { quantity?: number; size?: string; color?: string; openCart?: boolean };
@@ -32,34 +31,17 @@ const StoreContext = createContext<StoreContextValue | undefined>(undefined);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const { bilingualOrder, setSetting } = useUiSettings();
-  const isPreview = import.meta.env.DEV || import.meta.env.VITE_UOS_STORE_PREVIEW === 'true';
-  const [previewData, setPreviewData] = useState<{ products: StoreProduct[]; categories: StoreCategory[] }>({ products: [], categories: [] });
+  const { mode, state, products, categories } = useStoreData();
+  const isPreview = mode === 'preview';
   const [cart, setCart] = useState<StoreCartLine[]>([]);
   const [recentlyViewed, setRecentlyViewed] = useState<string[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [miniCartOpen, setMiniCartOpen] = useState(false);
   const locale = bilingualOrder === 'ar-first' ? 'ar' : 'en';
-
-  useEffect(() => {
-    if (!isPreview) return;
-    let active = true;
-    void import('./storeData.preview').then((module) => {
-      if (active) {
-        setPreviewData({
-          products: module.previewProducts.map(applyVerifiedProductMedia),
-          categories: module.previewCategories,
-        });
-      }
-    });
-    return () => { active = false; };
-  }, [isPreview]);
-
-  const products = isPreview ? previewData.products : [];
-  const categories = storeCategories;
   const recordView = useCallback((id: string) => setRecentlyViewed((current) => current[0] === id ? current : [id, ...current.filter((item) => item !== id)].slice(0, 8)), []);
 
   const value = useMemo<StoreContextValue>(() => ({
-    state: isPreview ? 'preview' : 'empty',
+    state,
     isPreview,
     locale,
     direction: locale === 'ar' ? 'rtl' : 'ltr',
@@ -87,7 +69,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     updateQuantity: (productId, quantity) => setCart((current) => current.map((line) => cartLineKey(line) === productId ? { ...line, quantity: Number.isFinite(quantity) ? Math.max(1, Math.floor(quantity)) : line.quantity } : line)),
     removeFromCart: (productId) => setCart((current) => current.filter((line) => cartLineKey(line) !== productId)),
     toggleWishlist: (productId) => setWishlist((current) => current.includes(productId) ? current.filter((id) => id !== productId) : [...current, productId]),
-  }), [cart, categories, isPreview, locale, miniCartOpen, products, recentlyViewed, recordView, setSetting, wishlist]);
+  }), [cart, categories, isPreview, locale, miniCartOpen, products, recentlyViewed, recordView, setSetting, state, wishlist]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
