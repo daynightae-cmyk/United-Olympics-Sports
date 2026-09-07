@@ -8,16 +8,16 @@ import { PlayerEmptyState } from '../../../portals/player/components/PlayerEmpty
 import { PlayerSessionSummaryCard } from '../../../portals/player/components/PlayerSessionSummaryCard';
 import { TrainingLog } from '../../../portals/player/components/TrainingLog';
 import { useTrainingLog } from '../../../portals/player/hooks/useTrainingLog';
-import { selectPlayerOverallScore, selectUpcomingSession } from '../../../portals/player/foundation/playerSelectors';
+import { selectUpcomingSession } from '../../../portals/player/foundation/playerSelectors';
 
 export function PlayerPortalOverviewPage() {
-  const { player, sport, group, coach, sessions, attendanceStats, feedback } = usePlayerSession();
+  const { player, sport, group, coach, sessions, attendanceStats, feedback, overallScore } = usePlayerSession();
   const navigate = useNavigate();
   const [identityOpen, setIdentityOpen] = useState(false);
   if (!player) return null;
 
   const nextSession = selectUpcomingSession(sessions);
-  const score = selectPlayerOverallScore(player);
+  const score = typeof overallScore === 'number' && Number.isFinite(overallScore) ? overallScore : null;
   const attendanceRate = attendanceStats.rate;
   const latestFeedback = [...feedback].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).at(0);
   const training = useTrainingLog(player.id);
@@ -26,7 +26,7 @@ export function PlayerPortalOverviewPage() {
     <div className="space-y-7" id="player-overview-page">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div><span className="text-[10px] font-black uppercase tracking-[.16em] text-amber-400"><BilingualText value={bi('Athlete workspace', 'مساحة اللاعب')} /></span><h1 className="mt-1 text-xl sm:text-2xl font-black text-white"><BilingualText value={bi('Your Player Portal', 'بوابة اللاعب الخاصة بك')} /></h1></div>
-        <span className="athlete-data-scope"><ShieldCheck size={13} /><BilingualText value={bi('Player-owned preview records', 'سجلات معاينة مرتبطة باللاعب')} /></span>
+        <span className="athlete-data-scope"><ShieldCheck size={13} /><BilingualText value={bi('Player-scoped provider records', 'سجلات مزود البيانات الخاصة باللاعب')} /></span>
       </div>
 
       <PlayerAthleteIdentityCard player={player} sport={sport} group={group} coach={coach} nextSession={nextSession} attendanceRate={attendanceRate} overallScore={score} preview onOpenIdentity={() => setIdentityOpen(true)} />
@@ -40,8 +40,8 @@ export function PlayerPortalOverviewPage() {
         <section className="athlete-glass-card p-5 sm:p-6">
           <header className="mb-5"><span className="text-[10px] font-extrabold uppercase tracking-[.16em] text-amber-400"><BilingualText value={bi('Athlete snapshot', 'ملخص اللاعب')} /></span><h2 className="mt-1 text-lg font-black text-white"><BilingualText value={bi('Current recorded signals', 'المؤشرات المسجلة حاليًا')} /></h2></header>
           <div className="grid grid-cols-2 gap-3">
-            <Snapshot icon={<Activity size={16} />} label={bi('Attendance', 'الحضور')} value={attendanceRate === null ? undefined : `${attendanceRate}%`} />
-            <Snapshot icon={<Gauge size={16} />} label={bi('Performance', 'الأداء')} value={score === null ? undefined : `${score}/100`} />
+            <Snapshot icon={<Activity size={16} />} label={bi('Attendance', 'الحضور')} value={typeof attendanceRate === 'number' ? `${attendanceRate}%` : undefined} />
+            <Snapshot icon={<Gauge size={16} />} label={bi('Performance', 'الأداء')} value={score === null ? undefined : `${Math.round(score)}/100`} />
             <Snapshot icon={<Trophy size={16} />} label={bi('Achievements', 'الإنجازات')} value={player.achievements.length ? String(player.achievements.length) : undefined} />
             <Snapshot icon={<MessageSquareText size={16} />} label={bi('Coach feedback', 'ملاحظات المدرب')} value={feedback.length ? String(feedback.length) : undefined} />
           </div>
@@ -51,7 +51,7 @@ export function PlayerPortalOverviewPage() {
       <div className="grid grid-cols-1 xl:grid-cols-[.9fr_1.1fr] gap-5">
         <section className="athlete-glass-card p-5 sm:p-6">
           <header className="flex items-center justify-between gap-3 mb-4"><div><span className="text-[10px] font-extrabold uppercase tracking-[.16em] text-amber-400"><BilingualText value={bi('Coach perspective', 'رؤية المدرب')} /></span><h2 className="mt-1 text-lg font-black text-white"><BilingualText value={bi('Latest recorded feedback', 'أحدث الملاحظات المسجلة')} /></h2></div><MessageSquareText size={19} className="text-amber-400" /></header>
-          {latestFeedback ? <div className="rounded-2xl border border-white/10 bg-white/[.025] p-4"><p className="text-sm leading-7 text-slate-200"><BilingualText value={latestFeedback.summary} /></p><Link to="/player/feedback" className="mt-4 inline-flex items-center gap-1.5 text-xs font-black text-amber-300"><BilingualText value={bi('Open feedback center', 'فتح مركز الملاحظات')} /><ArrowRight size={13} className="rtl:rotate-180" /></Link></div> : <PlayerEmptyState compact title={bi('No coach feedback recorded', 'لا توجد ملاحظات مدرب مسجلة')} description={bi('This area remains empty until a feedback record is linked to the athlete.', 'تبقى هذه المساحة فارغة حتى يتم ربط سجل ملاحظات باللاعب.')} />}
+          {latestFeedback ? <div className="rounded-2xl border border-white/10 bg-white/[.025] p-4"><p className="text-sm leading-7 text-slate-200"><BilingualText value={latestFeedback.summary} /></p><Link to="/player/feedback" className="mt-4 inline-flex items-center gap-1.5 text-xs font-black text-amber-300"><BilingualText value={bi('Open feedback center', 'فتح مركز الملاحظات')} /><ArrowRight size={13} className="rtl:rotate-180" /></Link></div> : <PlayerEmptyState compact title={bi('Detailed coach feedback is not available', 'ملاحظات المدرب التفصيلية غير متاحة')} description={bi('The shared provider does not expose a player feedback collection yet, so this area stays empty instead of loading legacy fixture notes.', 'لا يوفّر مزود البيانات المشترك مجموعة ملاحظات تفصيلية للاعب حتى الآن، لذلك تبقى هذه المساحة فارغة بدل تحميل ملاحظات تجريبية قديمة.')} />}
         </section>
 
         <TrainingLog entries={training.entries} weeklyGoal={training.weeklyGoal} currentWeekMinutes={training.currentWeekMinutes} onAddEntry={training.addEntry} onDeleteEntry={training.deleteEntry} onUpdateGoal={training.updateWeeklyGoal} />
