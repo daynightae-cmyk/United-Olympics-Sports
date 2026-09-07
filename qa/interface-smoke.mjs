@@ -203,6 +203,11 @@ async function coachIdentityIsolationSweep() {
     ]) {
       const { context, page, runtimeErrors } = await createCheckedPage(browser, { coachId: identity.id });
       await assertRoute(page, runtimeErrors, '/coach/profile', true);
+
+      // Route-level code splitting can leave the portal shell visible before the
+      // profile chunk has committed. Synchronize on the identity itself rather
+      // than accepting the shell as proof that the scoped profile rendered.
+      await page.getByText(identity.expectedName, { exact: true }).first().waitFor({ state: 'visible', timeout: 10_000 });
       const profileText = await page.locator('#root').innerText();
       if (!profileText.includes(identity.expectedName)) throw new Error(`${identity.id}: active coach profile identity was not rendered`);
 
@@ -211,11 +216,11 @@ async function coachIdentityIsolationSweep() {
 
       if (identity.id === 'coach-preview-03') {
         await page.goto(`${baseURL}/coach/groups/football-demo-u12`, { waitUntil: 'domcontentloaded' });
-        await page.waitForTimeout(150);
+        await page.waitForURL((url) => url.pathname === '/coach/groups', { timeout: 10_000 });
         if (new URL(page.url()).pathname !== '/coach/groups') throw new Error('coach-preview-03: cross-scope group route was not blocked');
 
         await page.goto(`${baseURL}/coach/players/player-demo-001`, { waitUntil: 'domcontentloaded' });
-        await page.waitForTimeout(150);
+        await page.waitForURL((url) => url.pathname === '/coach/players', { timeout: 10_000 });
         if (new URL(page.url()).pathname !== '/coach/players') throw new Error('coach-preview-03: cross-scope player route was not blocked');
       }
 
