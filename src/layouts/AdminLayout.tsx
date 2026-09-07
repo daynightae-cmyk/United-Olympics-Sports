@@ -4,7 +4,6 @@ import { AdminBreadcrumbs } from '../components/admin/AdminBreadcrumbs';
 import { AdminSidebar } from '../components/admin/AdminSidebar';
 import { AdminTopbar } from '../components/admin/AdminTopbar';
 import { bi } from '../components/bilingual/BilingualText';
-import { getBranch, getCoach, getCountry, getGroup, getParent, getPlayer, getProgram, getSport } from '../data/demo/selectors';
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
 import { AdminGroupDetailPage } from '../pages/admin/AdminGroupDetailPage';
 import { AdminGroupsPage } from '../pages/admin/AdminGroupsPage';
@@ -54,7 +53,11 @@ import '../styles/admin.css';
 import '../styles/admin-visual-rebuild.css';
 
 const routeLabels: Record<string, { en: string; ar: string }> = {
-  sports: bi('Sports', 'الرياضات'), players: bi('Players', 'اللاعبون'), groups: bi('Training Groups', 'مجموعات التدريب'), parents: bi('Parents', 'أولياء الأمور'), coaches: bi('Coaches', 'المدربون'), programs: bi('Programs', 'البرامج'), schedules: bi('Schedules', 'الجداول'), attendance: bi('Attendance', 'الحضور'), performance: bi('Performance', 'الأداء'), countries: bi('Countries', 'الدول'), branches: bi('Branches', 'الفروع'), subscriptions: bi('Subscriptions', 'الاشتراكات'), payments: bi('Payments', 'المدفوعات'), reports: bi('Reports', 'التقارير'), content: bi('Content', 'المحتوى'), users: bi('Users & Roles', 'المستخدمون والصلاحيات'), settings: bi('Settings', 'الإعدادات'), registrations: bi('Registrations', 'التسجيلات'), achievements: bi('Achievements', 'الإنجازات'), events: bi('Events', 'الفعاليات'), announcements: bi('Announcements', 'الإعلانات'), messages: bi('Messages', 'الرسائل'), 'audit-activity': bi('Audit Activity', 'سجل النشاط'), store: bi('Store Dashboard', 'لوحة المتجر'), products: bi('Products', 'المنتجات'), categories: bi('Categories', 'الفئات'), orders: bi('Store Orders', 'طلبات المتجر'), inventory: bi('Inventory', 'المخزون'), collections: bi('Collections', 'المجموعات'), discounts: bi('Discounts', 'الخصومات'),
+  sports: bi('Sports', 'الرياضات'), players: bi('Players', 'اللاعبون'), groups: bi('Training Groups', 'مجموعات التدريب'), parents: bi('Parents', 'أولياء الأمور'), coaches: bi('Coaches', 'المدربون'), programs: bi('Programs', 'البرامج'), schedules: bi('Schedules', 'الجداول'), attendance: bi('Attendance', 'الحضور'), performance: bi('Performance', 'الأداء'), countries: bi('Countries', 'الدول'), branches: bi('Branches', 'الفروع'), subscriptions: bi('Subscriptions', 'الاشتراكات'), payments: bi('Payments', 'المدفوعات'), reports: bi('Reports', 'التقارير'), content: bi('Content', 'المحتوى'), users: bi('Users & Roles', 'المستخدمون والصلاحيات'), settings: bi('Settings', 'الإعدادات'), integrations: bi('Integrations', 'التكاملات'), registrations: bi('Registrations', 'التسجيلات'), achievements: bi('Achievements', 'الإنجازات'), events: bi('Events', 'الفعاليات'), announcements: bi('Announcements', 'الإعلانات'), messages: bi('Messages', 'الرسائل'), 'audit-activity': bi('Audit Activity', 'سجل النشاط'), store: bi('Store Dashboard', 'لوحة المتجر'), products: bi('Products', 'المنتجات'), categories: bi('Categories', 'الفئات'), orders: bi('Store Orders', 'طلبات المتجر'), inventory: bi('Inventory', 'المخزون'), collections: bi('Collections', 'المجموعات'), discounts: bi('Discounts', 'الخصومات'),
+};
+
+const detailLabels: Record<string, { en: string; ar: string }> = {
+  sports: bi('Sport Detail', 'تفاصيل الرياضة'), players: bi('Player Detail', 'تفاصيل اللاعب'), groups: bi('Training Group Detail', 'تفاصيل مجموعة التدريب'), parents: bi('Parent Detail', 'تفاصيل ولي الأمر'), coaches: bi('Coach Detail', 'تفاصيل المدرب'), programs: bi('Program Detail', 'تفاصيل البرنامج'), schedules: bi('Session Detail', 'تفاصيل الجلسة'), countries: bi('Country Detail', 'تفاصيل الدولة'), branches: bi('Branch Detail', 'تفاصيل الفرع'), subscriptions: bi('Subscription Detail', 'تفاصيل الاشتراك'), payments: bi('Payment Detail', 'تفاصيل الدفعة'), content: bi('Content Detail', 'تفاصيل المحتوى'), registrations: bi('Registration Detail', 'تفاصيل التسجيل'), achievements: bi('Achievement Detail', 'تفاصيل الإنجاز'), events: bi('Event Detail', 'تفاصيل الفعالية'), announcements: bi('Announcement Detail', 'تفاصيل الإعلان'), messages: bi('Message Detail', 'تفاصيل الرسالة'), users: bi('User Detail', 'تفاصيل المستخدم'), 'audit-activity': bi('Audit Activity Detail', 'تفاصيل سجل النشاط'),
 };
 
 function usePageTitle() {
@@ -63,15 +66,11 @@ function usePageTitle() {
     const segments = location.pathname.split('/').filter(Boolean).slice(1);
     const last = segments.at(-1);
     if (!last) return bi('Dashboard', 'لوحة التحكم');
-    const player = getPlayer(last); if (player) return { en: player.nameEn, ar: player.nameAr };
-    const sport = getSport(last); if (sport) return sport.name;
-    const group = getGroup(last); if (group) return group.name;
-    const country = getCountry(last); if (country) return country.name;
-    const branch = getBranch(last); if (branch) return branch.name;
-    const coach = getCoach(last); if (coach) return { en: coach.nameEn, ar: coach.nameAr };
-    const parent = getParent(last); if (parent) return { en: parent.nameEn, ar: parent.nameAr };
-    const program = getProgram(last); if (program) return program.name;
-    return routeLabels[last] ?? bi('Super Admin', 'الإدارة الرئيسية');
+    if (routeLabels[last]) return routeLabels[last];
+    const parent = segments.length > 1 ? segments.at(-2) : undefined;
+    if (parent && detailLabels[parent]) return detailLabels[parent];
+    if (segments.includes('groups')) return detailLabels.groups;
+    return bi('Super Admin', 'الإدارة الرئيسية');
   }, [location.pathname]);
 }
 
