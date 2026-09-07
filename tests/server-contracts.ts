@@ -27,7 +27,6 @@ async function call(route: string, req: Partial<ApiRequest>): Promise<MockRespon
     url: req.url || '/',
     headers: req.headers || {},
     body: req.body,
-    query: req.query,
   }, res);
   return res;
 }

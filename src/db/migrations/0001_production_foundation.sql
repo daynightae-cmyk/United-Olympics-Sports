@@ -34,7 +34,7 @@ create table if not exists guardians (
 );
 create table if not exists player_guardians (
   id uuid primary key default gen_random_uuid(), player_id uuid not null references players(id), guardian_id uuid not null references guardians(id),
-  relationship text, active integer not null default 1, created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+  relationship text, active boolean not null default true, created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
   unique(player_id, guardian_id)
 );
 create table if not exists coaches (
@@ -84,12 +84,12 @@ create table if not exists inventory (
   created_at timestamptz not null default now(), updated_at timestamptz not null default now()
 );
 create table if not exists app_user_roles (
-  id uuid primary key default gen_random_uuid(), uid text not null, role text not null, active integer not null default 1,
+  id uuid primary key default gen_random_uuid(), uid text not null, role text not null, active boolean not null default true,
   organization_id uuid references organizations(id), country_id uuid references countries(id), branch_id uuid references branches(id),
-  created_at timestamptz not null default now(), updated_at timestamptz not null default now(), unique(uid, role, organization_id, country_id, branch_id)
+  created_at timestamptz not null default now(), updated_at timestamptz not null default now()
 );
 create table if not exists app_user_scopes (
-  id uuid primary key default gen_random_uuid(), uid text not null, scope text not null, active integer not null default 1,
+  id uuid primary key default gen_random_uuid(), uid text not null, scope text not null, active boolean not null default true,
   created_at timestamptz not null default now(), updated_at timestamptz not null default now(), unique(uid, scope)
 );
 create table if not exists audit_logs (

@@ -20,7 +20,12 @@ export function getPool(): Pool {
     const connectionString = process.env.DATABASE_URL?.trim();
     const user = process.env.SQL_USER?.trim() || process.env.SQL_ADMIN_USER?.trim();
     const password = process.env.SQL_PASSWORD?.trim() || process.env.SQL_ADMIN_PASSWORD?.trim();
-    const sslEnabled = process.env.SQL_SSL === 'true' || process.env.NODE_ENV === 'production';
+    const sslEnabled = process.env.SQL_SSL != null
+      ? process.env.SQL_SSL === 'true'
+      : process.env.NODE_ENV === 'production';
+    const ssl = sslEnabled
+      ? { rejectUnauthorized: process.env.SQL_SSL_REJECT_UNAUTHORIZED !== 'false' }
+      : undefined;
 
     global._uosPostgresPool = new Pool(
       connectionString
@@ -28,7 +33,7 @@ export function getPool(): Pool {
             connectionString,
             max: Number(process.env.SQL_POOL_MAX || 10),
             connectionTimeoutMillis: 15000,
-            ssl: sslEnabled ? { rejectUnauthorized: process.env.SQL_SSL_REJECT_UNAUTHORIZED !== 'false' } : undefined,
+            ssl,
           }
         : {
             host: process.env.SQL_HOST,
@@ -38,7 +43,7 @@ export function getPool(): Pool {
             database: process.env.SQL_DB_NAME,
             max: Number(process.env.SQL_POOL_MAX || 10),
             connectionTimeoutMillis: 15000,
-            ssl: sslEnabled ? { rejectUnauthorized: process.env.SQL_SSL_REJECT_UNAUTHORIZED !== 'false' } : undefined,
+            ssl,
           },
     );
 

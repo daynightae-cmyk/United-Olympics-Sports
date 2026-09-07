@@ -5,7 +5,6 @@ export interface ApiRequest {
   url?: string;
   headers: IncomingHttpHeaders | Record<string, string | string[] | undefined>;
   body?: unknown;
-  query?: Record<string, string | string[] | undefined>;
 }
 
 export interface ApiResponse {

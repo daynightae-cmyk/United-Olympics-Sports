@@ -1,9 +1,9 @@
-import { integer, jsonb, pgTable, serial, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { boolean, integer, jsonb, pgTable, serial, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
-const timestamps = {
+const timestamps = () => ({
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-};
+});
 
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -17,7 +17,7 @@ export const organizations = pgTable('organizations', {
   name: text('name').notNull(),
   nameAr: text('name_ar'),
   status: text('status').default('active').notNull(),
-  ...timestamps,
+  ...timestamps(),
 });
 
 export const countries = pgTable('countries', {
@@ -27,7 +27,7 @@ export const countries = pgTable('countries', {
   name: text('name').notNull(),
   nameAr: text('name_ar'),
   status: text('status').default('active').notNull(),
-  ...timestamps,
+  ...timestamps(),
 });
 
 export const branches = pgTable('branches', {
@@ -36,7 +36,7 @@ export const branches = pgTable('branches', {
   name: text('name').notNull(),
   nameAr: text('name_ar'),
   status: text('status').default('active').notNull(),
-  ...timestamps,
+  ...timestamps(),
 });
 
 export const sports = pgTable('sports', {
@@ -45,7 +45,7 @@ export const sports = pgTable('sports', {
   name: text('name').notNull(),
   nameAr: text('name_ar'),
   status: text('status').default('active').notNull(),
-  ...timestamps,
+  ...timestamps(),
 });
 
 export const programs = pgTable('programs', {
@@ -55,7 +55,7 @@ export const programs = pgTable('programs', {
   name: text('name').notNull(),
   nameAr: text('name_ar'),
   status: text('status').default('active').notNull(),
-  ...timestamps,
+  ...timestamps(),
 });
 
 export const groups = pgTable('groups', {
@@ -64,7 +64,7 @@ export const groups = pgTable('groups', {
   programId: uuid('program_id').references(() => programs.id).notNull(),
   name: text('name').notNull(),
   status: text('status').default('active').notNull(),
-  ...timestamps,
+  ...timestamps(),
 });
 
 export const players = pgTable('players', {
@@ -73,14 +73,14 @@ export const players = pgTable('players', {
   branchId: uuid('branch_id').references(() => branches.id),
   fullName: text('full_name').notNull(),
   archivedAt: timestamp('archived_at', { withTimezone: true }),
-  ...timestamps,
+  ...timestamps(),
 });
 
 export const guardians = pgTable('guardians', {
   id: uuid('id').defaultRandom().primaryKey(),
   userUid: text('user_uid').notNull().unique(),
   fullName: text('full_name').notNull(),
-  ...timestamps,
+  ...timestamps(),
 });
 
 export const playerGuardians = pgTable('player_guardians', {
@@ -88,8 +88,8 @@ export const playerGuardians = pgTable('player_guardians', {
   playerId: uuid('player_id').references(() => players.id).notNull(),
   guardianId: uuid('guardian_id').references(() => guardians.id).notNull(),
   relationship: text('relationship'),
-  active: integer('active').default(1).notNull(),
-  ...timestamps,
+  active: boolean('active').default(true).notNull(),
+  ...timestamps(),
 });
 
 export const coaches = pgTable('coaches', {
@@ -97,7 +97,7 @@ export const coaches = pgTable('coaches', {
   userUid: text('user_uid').unique(),
   branchId: uuid('branch_id').references(() => branches.id),
   fullName: text('full_name').notNull(),
-  ...timestamps,
+  ...timestamps(),
 });
 
 export const sessions = pgTable('sessions', {
@@ -106,7 +106,7 @@ export const sessions = pgTable('sessions', {
   startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
   endsAt: timestamp('ends_at', { withTimezone: true }),
   status: text('status').default('scheduled').notNull(),
-  ...timestamps,
+  ...timestamps(),
 });
 
 export const attendance = pgTable('attendance', {
@@ -115,7 +115,7 @@ export const attendance = pgTable('attendance', {
   playerId: uuid('player_id').references(() => players.id).notNull(),
   status: text('status').notNull(),
   recordedByUid: text('recorded_by_uid'),
-  ...timestamps,
+  ...timestamps(),
 });
 
 export const performanceEvaluations = pgTable('performance_evaluations', {
@@ -126,7 +126,7 @@ export const performanceEvaluations = pgTable('performance_evaluations', {
   metricKey: text('metric_key').notNull(),
   score: integer('score'),
   notes: text('notes'),
-  ...timestamps,
+  ...timestamps(),
 });
 
 export const subscriptions = pgTable('subscriptions', {
@@ -138,7 +138,7 @@ export const subscriptions = pgTable('subscriptions', {
   amountMinor: integer('amount_minor'),
   startsAt: timestamp('starts_at', { withTimezone: true }),
   endsAt: timestamp('ends_at', { withTimezone: true }),
-  ...timestamps,
+  ...timestamps(),
 });
 
 export const payments = pgTable('payments', {
@@ -150,7 +150,7 @@ export const payments = pgTable('payments', {
   status: text('status').default('pending').notNull(),
   currency: text('currency'),
   amountMinor: integer('amount_minor'),
-  ...timestamps,
+  ...timestamps(),
 });
 
 export const documents = pgTable('documents', {
@@ -160,7 +160,7 @@ export const documents = pgTable('documents', {
   storageKey: text('storage_key').notNull(),
   mimeType: text('mime_type'),
   status: text('status').default('active').notNull(),
-  ...timestamps,
+  ...timestamps(),
 });
 
 export const publicEnquiries = pgTable('public_enquiries', {
@@ -173,7 +173,7 @@ export const publicEnquiries = pgTable('public_enquiries', {
   sport: text('sport'),
   guardianRelationship: text('guardian_relationship'),
   status: text('status').default('new').notNull(),
-  ...timestamps,
+  ...timestamps(),
 });
 
 export const serviceRequests = pgTable('service_requests', {
@@ -186,7 +186,7 @@ export const serviceRequests = pgTable('service_requests', {
   payload: jsonb('payload').$type<Record<string, unknown>>().default({}).notNull(),
   quotedAmountMinor: integer('quoted_amount_minor'),
   currency: text('currency'),
-  ...timestamps,
+  ...timestamps(),
 });
 
 export const catalogProducts = pgTable('catalog_products', {
@@ -197,33 +197,33 @@ export const catalogProducts = pgTable('catalog_products', {
   status: text('status').default('draft').notNull(),
   priceMinor: integer('price_minor'),
   currency: text('currency'),
-  ...timestamps,
+  ...timestamps(),
 });
 
 export const inventory = pgTable('inventory', {
   id: uuid('id').defaultRandom().primaryKey(),
   productId: uuid('product_id').references(() => catalogProducts.id).notNull().unique(),
   availableQuantity: integer('available_quantity').default(0).notNull(),
-  ...timestamps,
+  ...timestamps(),
 });
 
 export const appUserRoles = pgTable('app_user_roles', {
   id: uuid('id').defaultRandom().primaryKey(),
   uid: text('uid').notNull(),
   role: text('role').notNull(),
-  active: integer('active').default(1).notNull(),
+  active: boolean('active').default(true).notNull(),
   organizationId: uuid('organization_id').references(() => organizations.id),
   countryId: uuid('country_id').references(() => countries.id),
   branchId: uuid('branch_id').references(() => branches.id),
-  ...timestamps,
+  ...timestamps(),
 });
 
 export const appUserScopes = pgTable('app_user_scopes', {
   id: uuid('id').defaultRandom().primaryKey(),
   uid: text('uid').notNull(),
   scope: text('scope').notNull(),
-  active: integer('active').default(1).notNull(),
-  ...timestamps,
+  active: boolean('active').default(true).notNull(),
+  ...timestamps(),
 });
 
 export const auditLogs = pgTable('audit_logs', {
