@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { lazy, Suspense, ComponentType } from 'react';
 import { PlayerSessionProvider } from './player/PlayerSessionContext';
 import { PlayerLoginPage } from './player/auth/PlayerLoginPage';
@@ -40,13 +40,24 @@ function PlayerPortalNotFoundRedirect() {
   return <PlayerPortalNotFoundPage />;
 }
 
+function LegacyPlayerSessionRedirect() {
+  const { sessionId } = useParams();
+  return <Navigate to={sessionId ? `/player/schedule/${sessionId}` : '/player/schedule'} replace />;
+}
+
 export function PlayerPortalRouter() {
   return (
     <PlayerSessionProvider>
       <Routes>
         <Route path="login" element={<PlayerLoginPage />} />
+
+        {/* Legacy auth URLs remain renderable while phone/OTP production auth is not configured. */}
+        <Route path="auth/phone" element={<PlayerLoginPage />} />
+        <Route path="auth/verify" element={<PlayerLoginPage />} />
+        <Route path="otp" element={<PlayerLoginPage />} />
         <Route path="phone" element={<Navigate to="/player/login" replace />} />
         <Route path="verify" element={<Navigate to="/player/login" replace />} />
+
         <Route
           path="*"
           element={
@@ -57,6 +68,7 @@ export function PlayerPortalRouter() {
                   <Route path="home" element={<LazyRoute Component={PlayerPortalOverviewPage} />} />
                   <Route path="schedule" element={<LazyRoute Component={PlayerPortalSchedulePage} />} />
                   <Route path="schedule/:sessionId" element={<LazyRoute Component={PlayerPortalSessionDetailPage} />} />
+                  <Route path="session/:sessionId" element={<LegacyPlayerSessionRedirect />} />
                   <Route path="performance" element={<LazyRoute Component={PlayerPortalPerformancePage} />} />
                   <Route path="feedback" element={<LazyRoute Component={PlayerPortalFeedbackPage} />} />
                   <Route path="achievements" element={<LazyRoute Component={PlayerPortalAchievementsPage} />} />
