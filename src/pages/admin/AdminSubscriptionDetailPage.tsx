@@ -1,30 +1,41 @@
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, CreditCard } from 'lucide-react';
-import { PageHeader } from '../../components/admin/AdminUI';
+import { ArrowLeft, CreditCard, Trash2 } from 'lucide-react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useBranch, useDeleteSubscription, usePayments, usePlayer, useProgram, useSubscription, useUpdateSubscription } from '../../admin/data/adminHooks';
+import { FuturePanel, PageHeader } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
+import { EnterpriseStatus, PreviewNotice } from '../../components/enterprise/EnterpriseUI';
 
-const demoSubscriptions = [
-  { id: 'sub-demo-001', playerId: 'player-demo-001', plan: { en: 'Foundation Football', ar: 'أساس كرة القدم' }, amount: 450, currency: 'AED', status: 'active' as const, startDate: '2026-08-01', endDate: '2027-08-01', branchId: 'branch-workspace-01', programId: 'program-demo-football-foundation' },
-  { id: 'sub-demo-002', playerId: 'player-demo-003', plan: { en: 'Progressive Swimming', ar: 'سباحة متقدمة' }, amount: 600, currency: 'AED', status: 'pending' as const, startDate: '2026-09-01', endDate: '2027-09-01', branchId: 'branch-workspace-04', programId: 'program-demo-swimming-progressive' },
-];
+const statusLabel = (status: string) => bi(status, status === 'active' ? 'نشط' : status === 'pending' ? 'قيد الانتظار' : status === 'expired' ? 'منتهٍ' : 'ملغي');
 
 export function AdminSubscriptionDetailPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>();
-  const sub = demoSubscriptions.find(s => s.id === subscriptionId);
-  if (!sub) return <div className="admin-page"><PageHeader eyebrow={bi('Not Found', 'غير موجود')} title={bi('Subscription not found', 'الاشتراك غير موجود')} description={bi('-', '-')} /></div>;
+  const navigate = useNavigate();
+  const { item: subscription, loading, error } = useSubscription(subscriptionId);
+  const { item: player } = usePlayer(subscription?.playerId);
+  const { item: program } = useProgram(subscription?.programId);
+  const { item: branch } = useBranch(subscription?.branchId);
+  const { data: paymentResult } = usePayments({ page: 1, pageSize: 300 });
+  const { update, loading: updateLoading } = useUpdateSubscription();
+  const { delete: deleteSubscription, loading: deleteLoading } = useDeleteSubscription();
+
+  if (loading) return <FuturePanel title={bi('Loading subscription', 'جارٍ تحميل الاشتراك')} description={bi('Reading the finance record from the Admin data gateway.', 'جارٍ قراءة السجل المالي من بوابة بيانات الإدارة.')} />;
+  if (error || !subscription) return <FuturePanel title={bi('Subscription not found', 'الاشتراك غير موجود')} description={bi('The requested subscription is not available in the current provider.', 'الاشتراك المطلوب غير متاح في موفر البيانات الحالي.')} />;
+
+  const payments = paymentResult.items.filter((payment) => payment.subscriptionId === subscription.id);
+  const busy = updateLoading || deleteLoading;
+  const deleteBlocked = payments.length > 0;
+  const setStatus = async (status: 'active' | 'pending' | 'expired' | 'cancelled') => { await update(subscription.id, { status }); };
+  const remove = async () => { if (busy || deleteBlocked) return; await deleteSubscription(subscription.id); navigate('/admin/subscriptions'); };
+
   return <div className="admin-page">
     <Link to="/admin/subscriptions" className="admin-back-link"><ArrowLeft size={16} /><BilingualText value={bi('Back to Subscriptions', 'العودة للاشتراكات')} /></Link>
-    <PageHeader eyebrow={bi('Finance', 'المالية')} title={bi('Subscription', 'الاشتراك')} description={bi('Subscription preview — no processing claim.', 'معاينة اشتراك — لا يُدّعى وجود معالجة.')} />
-    <div className="preview-badge" style={{ marginBottom: 16 }}><BilingualText value={bi('Preview Data — No live billing gateway', 'بيانات تجريبية — لا يوجد بوابة دفع حقيقية')} /></div>
+    <PageHeader eyebrow={bi('Finance', 'المالية')} title={subscription.plan} description={bi('Gateway-backed subscription preview. No live billing or renewal action is claimed.', 'معاينة اشتراك مدعومة ببوابة البيانات. لا يتم ادعاء فوترة أو تجديد حي.')} actions={<div className="admin-header-actions"><PreviewNotice /><EnterpriseStatus label={statusLabel(subscription.status)} tone={subscription.status === 'active' ? 'active' : subscription.status === 'pending' ? 'warning' : subscription.status === 'expired' ? 'danger' : 'neutral'} /><button type="button" className="admin-danger-button" disabled={busy || deleteBlocked} onClick={() => void remove()}><Trash2 size={15} /><BilingualText value={bi('Delete', 'حذف')} /></button></div>} />
+    {deleteBlocked && <div className="preview-warning" role="status"><BilingualText value={bi('Deletion is protected while payment records reference this subscription.', 'الحذف محمي ما دامت سجلات دفعات تشير إلى هذا الاشتراك.')} /></div>}
+
     <div className="admin-detail-grid">
-      <section className="admin-detail-card"><h3><CreditCard size={18} /> <BilingualText value={bi('Plan Details', 'تفاصيل الخطة')} /></h3>
-        <p><strong><BilingualText value={bi('Plan', 'الخطة')} /></strong> <BilingualText value={sub.plan} /></p>
-        <p><strong><BilingualText value={bi('Amount', 'المبلغ')} /></strong> <span className="mono">{sub.amount} {sub.currency}</span></p>
-        <p><strong><BilingualText value={bi('Status', 'الحالة')} /></strong> <span>{sub.status}</span></p>
-        <p><strong><BilingualText value={bi('Start', 'البداية')} /></strong> {sub.startDate}</p>
-        <p><strong><BilingualText value={bi('End', 'النهاية')} /></strong> {sub.endDate}</p>
-        <p><strong><BilingualText value={bi('Branch', 'الفرع')} /></strong> {sub.branchId}</p>
-      </section>
+      <section className="admin-detail-card"><h3><CreditCard size={18} /> <BilingualText value={bi('Plan Details', 'تفاصيل الخطة')} /></h3><p><strong><BilingualText value={bi('Subscription ID', 'معرف الاشتراك')} /></strong> <code>{subscription.id}</code></p><p><strong><BilingualText value={bi('Player', 'اللاعب')} /></strong> {player ? <Link to={`/admin/players/${player.id}`}><BilingualText value={{ en: player.nameEn, ar: player.nameAr }} /></Link> : subscription.playerId}</p><p><strong><BilingualText value={bi('Program', 'البرنامج')} /></strong> {program ? <Link to={`/admin/programs/${program.id}`}><BilingualText value={program.name} /></Link> : subscription.programId}</p><p><strong><BilingualText value={bi('Branch', 'الفرع')} /></strong> {branch ? <Link to={`/admin/branches/${branch.id}`}><BilingualText value={branch.name} /></Link> : subscription.branchId}</p><p><strong><BilingualText value={bi('Amount', 'المبلغ')} /></strong> <span className="mono">{subscription.amount} {subscription.currency}</span></p><p><strong><BilingualText value={bi('Start', 'البداية')} /></strong> {subscription.startDate}</p><p><strong><BilingualText value={bi('End', 'النهاية')} /></strong> {subscription.endDate ?? '—'}</p></section>
+      <section className="admin-detail-card"><h3><CreditCard size={18} /> <BilingualText value={bi('Status Control', 'التحكم بالحالة')} /></h3><div className="admin-form-actions">{(['pending','active','expired','cancelled'] as const).map((value) => <button key={value} type="button" className={subscription.status === value ? 'admin-primary-button' : 'admin-secondary-button'} disabled={busy} onClick={() => void setStatus(value)}><BilingualText value={statusLabel(value)} /></button>)}</div></section>
+      <section className="admin-detail-card"><h3><CreditCard size={18} /> <BilingualText value={bi('Payment Records', 'سجلات الدفعات')} /></h3>{payments.length ? <div className="linked-player-list">{payments.map((payment) => <Link key={payment.id} to={`/admin/payments/${payment.id}`}><span>{payment.id}</span><strong>{payment.amount} {payment.currency}</strong></Link>)}</div> : <p><BilingualText value={bi('No payment records reference this subscription.', 'لا توجد سجلات دفعات تشير إلى هذا الاشتراك.')} /></p>}</section>
     </div>
   </div>;
 }
