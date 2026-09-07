@@ -1,1 +1,1 @@
-export { ParentPortalSubscriptionsPage } from './ParentPortalWorkspaces';
+export { ParentPortalSubscriptionsPage } from './ParentPortalGatewayPages';
