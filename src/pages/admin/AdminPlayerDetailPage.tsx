@@ -1,4 +1,4 @@
-import { BarChart3, CalendarCheck, FileText, Medal, ShieldCheck, Trash2, Trophy, UsersRound } from 'lucide-react';
+import { ArrowRight, BarChart3, CalendarCheck, FileText, Medal, ShieldCheck, Trash2, Trophy, UsersRound } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAchievements, useCoaches, useDeletePlayer, useGroup, useParents, usePayments, usePlayer, useRegistrations, useSessions, useSport, useSubscriptions, useUpdatePlayer } from '../../admin/data/adminHooks';
