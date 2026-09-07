@@ -41,9 +41,10 @@ export function EnterpriseStatus({ label, tone = 'neutral' }: { label: Bilingual
   return <span className={`enterprise-status status-${tone}`}><i /> <BilingualText value={label} /></span>;
 }
 
-export function EnterpriseProgress({ value, label, color = 'gold' }: { value: number; label?: BilingualValue; color?: 'gold' | 'green' | 'blue' }) {
+export function EnterpriseProgress({ value, label, color = 'gold' }: { value: number; label?: BilingualValue; color?: 'gold' | 'green' | 'blue' | 'red' }) {
   const safeValue = Math.max(0, Math.min(100, value));
-  return <div className="enterprise-progress-wrap">{label && <div className="enterprise-progress-label"><BilingualText value={label} /><strong>{safeValue}%</strong></div>}<div className="enterprise-progress"><span className={`progress-${color}`} style={{ width: `${safeValue}%` }} /></div></div>;
+  const dangerStyle = color === 'red' ? { background: '#f28a82', boxShadow: '0 0 12px rgba(242, 138, 130, .28)' } : undefined;
+  return <div className="enterprise-progress-wrap">{label && <div className="enterprise-progress-label"><BilingualText value={label} /><strong>{safeValue}%</strong></div>}<div className="enterprise-progress"><span className={`progress-${color}`} style={{ width: `${safeValue}%`, ...dangerStyle }} /></div></div>;
 }
 
 export function EnterpriseSparkline({ values, color = 'gold' }: { values: number[]; color?: 'gold' | 'green' | 'blue' }) {
