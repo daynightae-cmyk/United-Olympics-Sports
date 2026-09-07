@@ -112,10 +112,20 @@ async function createCheckedPage(browser, options = {}) {
   page.on('pageerror', (error) => runtimeErrors.push(`pageerror: ${error.message}`));
   page.on('console', (message) => {
     const text = message.text();
+    const sourceUrl = message.location().url ?? '';
+    const googleFontNetworkError =
+      sourceUrl.includes('fonts.googleapis.com')
+      || sourceUrl.includes('fonts.gstatic.com')
+      || text.includes('https://fonts.googleapis.com/')
+      || text.includes('https://fonts.gstatic.com/');
     const ignorableExternalFontFailure =
       message.type() === 'error'
-      && text.includes('downloadable font: download failed')
-      && text.includes('https://fonts.gstatic.com/');
+      && googleFontNetworkError
+      && (
+        text.includes('downloadable font: download failed')
+        || text.includes('Failed to preconnect')
+        || text.includes('Failed to load resource: WebKit encountered an internal error')
+      );
 
     if (message.type() === 'error' && !ignorableExternalFontFailure) {
       runtimeErrors.push(`console: ${text}`);
