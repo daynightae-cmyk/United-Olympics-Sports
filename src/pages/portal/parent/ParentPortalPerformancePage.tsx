@@ -1,1 +1,1 @@
-export { ParentPortalPerformancePage } from './ParentPortalWorkspaces';
+export { ParentPortalPerformancePage } from './ParentPortalGatewayPages';
