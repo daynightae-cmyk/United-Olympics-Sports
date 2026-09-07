@@ -16,7 +16,14 @@ const PortalAuthPage = lazy(() => import('../components/auth/PortalAuthPage').th
 const StoreApp = lazy(() => import('../store/StoreApp').then((module) => ({ default: module.StoreApp })));
 
 function RouteFallback() {
-  return <div role="status" aria-live="polite" className="ui-skeleton"><i /><i /><i /></div>;
+  return (
+    <div role="status" aria-live="polite" aria-busy="true" className="ui-skeleton">
+      <span>Loading United Olympics Sports… | جاري التحميل</span>
+      <i />
+      <i />
+      <i />
+    </div>
+  );
 }
 
 function InternalProductUtilities() {
