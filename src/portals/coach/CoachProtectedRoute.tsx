@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { demoPlayers } from '../../data/demo/players';
+import { PortalRouteLoader } from '../../components/portal/PortalRouteState';
 import { useCoachSession } from './CoachSessionContext';
 
 interface CoachProtectedRouteProps {
@@ -8,18 +8,13 @@ interface CoachProtectedRouteProps {
 }
 
 export function CoachProtectedRoute({ children }: CoachProtectedRouteProps) {
-  const { isAuthenticated, coach } = useCoachSession();
+  const { isAuthenticated, coach, loading } = useCoachSession();
   const location = useLocation();
+
+  if (loading) return <PortalRouteLoader portal="coach" />;
 
   if (!isAuthenticated || !coach) {
     return <Navigate to="/coach/login" state={{ from: location }} replace />;
-  }
-
-  const playerMatch = location.pathname.match(/^\/coach\/players\/([^/]+)$/);
-  if (playerMatch) {
-    const player = demoPlayers.find((item) => item.id === decodeURIComponent(playerMatch[1]));
-    const inCoachScope = player && (coach.playerIds.includes(player.id) || coach.groupIds.includes(player.groupId ?? ''));
-    if (!inCoachScope) return <Navigate to="/coach/players" replace />;
   }
 
   const groupMatch = location.pathname.match(/^\/coach\/groups\/([^/]+)$/);
