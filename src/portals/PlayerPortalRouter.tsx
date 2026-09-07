@@ -5,6 +5,7 @@ import { PlayerLoginPage } from './player/auth/PlayerLoginPage';
 import { PlayerPortalShell } from './player/PlayerPortalShell';
 import { PlayerProtectedRoute } from './player/PlayerProtectedRoute';
 import { BilingualText } from '../components/bilingual/BilingualText';
+import { PlayerPortalNotFoundPage } from '../pages/portal/player/PlayerPortalNotFoundPage';
 
 const PlayerPortalOverviewPage = lazy(() => import('../pages/portal/player/PlayerPortalOverviewPage').then(m => ({ default: m.PlayerPortalOverviewPage })));
 const PlayerPortalSchedulePage = lazy(() => import('../pages/portal/player/PlayerPortalSchedulePage').then(m => ({ default: m.PlayerPortalSchedulePage })));
@@ -19,7 +20,6 @@ const PlayerPortalNotificationsPage = lazy(() => import('../pages/portal/player/
 const PlayerPortalSubscriptionPage = lazy(() => import('../pages/portal/player/PlayerPortalSubscriptionPage').then(m => ({ default: m.PlayerPortalSubscriptionPage })));
 const PlayerPortalPaymentsPage = lazy(() => import('../pages/portal/player/PlayerPortalPaymentsPage').then(m => ({ default: m.PlayerPortalPaymentsPage })));
 const PlayerPortalSettingsPage = lazy(() => import('../pages/portal/player/PlayerPortalSettingsPage').then(m => ({ default: m.PlayerPortalSettingsPage })));
-const PlayerPortalNotFoundPage = lazy(() => import('../pages/portal/player/PlayerPortalNotFoundPage').then(m => ({ default: m.PlayerPortalNotFoundPage })));
 const PlayerPortalProfilePage = lazy(() => import('../pages/portal/player/PlayerPortalProfilePage').then(m => ({ default: m.PlayerPortalProfilePage })));
 
 function LazyRoute({ Component }: { Component: ComponentType }) {
@@ -34,10 +34,6 @@ function LazyRoute({ Component }: { Component: ComponentType }) {
       <Component />
     </Suspense>
   );
-}
-
-function PlayerPortalNotFoundRedirect() {
-  return <PlayerPortalNotFoundPage />;
 }
 
 function LegacyPlayerSessionRedirect() {
@@ -80,7 +76,7 @@ export function PlayerPortalRouter() {
                   <Route path="payments" element={<LazyRoute Component={PlayerPortalPaymentsPage} />} />
                   <Route path="profile" element={<LazyRoute Component={PlayerPortalProfilePage} />} />
                   <Route path="settings" element={<LazyRoute Component={PlayerPortalSettingsPage} />} />
-                  <Route path="*" element={<PlayerPortalNotFoundRedirect />} />
+                  <Route path="*" element={<PlayerPortalNotFoundPage />} />
                 </Routes>
               </PlayerPortalShell>
             </PlayerProtectedRoute>
