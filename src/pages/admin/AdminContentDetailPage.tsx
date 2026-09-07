@@ -1,45 +1,37 @@
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, CalendarDays, FileText, Image } from 'lucide-react';
-import { PageHeader } from '../../components/admin/AdminUI';
+import { ArrowLeft, CalendarDays, FileText, Trash2 } from 'lucide-react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useContentItem, useDeleteContent, useUpdateContent } from '../../admin/data/adminHooks';
+import { FuturePanel, PageHeader } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
-import { EnterpriseStatus } from '../../components/enterprise/EnterpriseUI';
-import { previewContent } from '../../data/demo/adminRecords';
-import { sportMediaAssets } from '../../data/media';
+import { EnterpriseStatus, PreviewNotice } from '../../components/enterprise/EnterpriseUI';
+
+const statusLabel = (status: string) => bi(status, status === 'published' ? 'منشور' : status === 'draft' ? 'مسودة' : 'مؤرشف');
+const statusTone = (status: string): 'active' | 'warning' | 'neutral' => status === 'published' ? 'active' : status === 'draft' ? 'warning' : 'neutral';
 
 export function AdminContentDetailPage() {
   const { contentId } = useParams<{ contentId: string }>();
-  const record = previewContent.find((item) => item.id === contentId);
-  const linkedMedia = sportMediaAssets.filter((asset) =>
-    `${asset.id} ${asset.sportId} ${asset.altEn}`.toLowerCase().includes((record?.title.en ?? '').split(' ')[0].toLowerCase()),
-  ).slice(0, 4);
+  const navigate = useNavigate();
+  const { item: record, loading, error } = useContentItem(contentId);
+  const { update, loading: updateLoading } = useUpdateContent();
+  const { delete: deleteContent, loading: deleteLoading } = useDeleteContent();
 
-  if (!record) {
-    return <div className="admin-page">
-      <Link to="/admin/content" className="admin-back-link"><ArrowLeft size={16} /><BilingualText value={bi('Back to Content', 'العودة للمحتوى')} /></Link>
-      <PageHeader eyebrow={bi('Experience & Access', 'التجربة والوصول')} title={bi('Content Not Found', 'المحتوى غير موجود')} description={bi(`No preview content matches “${contentId ?? '—'}”.`, `لا يوجد محتوى تجريبي يطابق “${contentId ?? '—'}”.`)} />
-      <div className="admin-preview-card"><FileText size={32} /><h3><BilingualText value={bi('Unknown content reference', 'مرجع محتوى غير معروف')} /></h3><p><BilingualText value={bi('Return to the content workspace and choose an existing record.', 'عد إلى مساحة المحتوى واختر سجلًا موجودًا.')} /></p></div>
-    </div>;
-  }
+  if (loading) return <FuturePanel title={bi('Loading content', 'جارٍ تحميل المحتوى')} description={bi('Reading the editorial record from the Admin data gateway.', 'جارٍ قراءة السجل التحريري من بوابة بيانات الإدارة.')} />;
+  if (error || !record) return <FuturePanel title={bi('Content not found', 'المحتوى غير موجود')} description={bi('The requested content record is not available in the current provider.', 'سجل المحتوى المطلوب غير متاح في موفر البيانات الحالي.')} />;
+
+  const busy = updateLoading || deleteLoading;
+  const setStatus = async (status: 'published' | 'draft' | 'archived') => { await update(record.id, { status }); };
+  const remove = async () => { if (busy) return; await deleteContent(record.id); navigate('/admin/content'); };
 
   return <div className="admin-page">
     <Link to="/admin/content" className="admin-back-link"><ArrowLeft size={16} /><BilingualText value={bi('Back to Content', 'العودة للمحتوى')} /></Link>
-    <PageHeader
-      eyebrow={bi('Experience & Access', 'التجربة والوصول')}
-      title={record.title}
-      description={bi(`Preview editorial record · ${record.id}`, `سجل تحريري تجريبي · ${record.id}`)}
-    />
+    <PageHeader eyebrow={bi('Experience & Access', 'التجربة والوصول')} title={record.title} description={bi(`Managed editorial record · ${record.id}`, `سجل تحريري مُدار · ${record.id}`)} actions={<div className="admin-header-actions"><PreviewNotice /><EnterpriseStatus label={statusLabel(record.status)} tone={statusTone(record.status)} /><button type="button" className="admin-danger-button" disabled={busy} onClick={() => void remove()}><Trash2 size={15} /><BilingualText value={bi('Delete', 'حذف')} /></button></div>} />
+
     <section className="portal-card-grid" style={{ marginTop: 14 }}>
       <article className="portal-card"><span className="portal-card-icon"><FileText size={18} /></span><h3><BilingualText value={bi('Content Type', 'نوع المحتوى')} /></h3><p><BilingualText value={record.type} /></p></article>
       <article className="portal-card"><span className="portal-card-icon"><CalendarDays size={18} /></span><h3><BilingualText value={bi('Last Updated', 'آخر تحديث')} /></h3><p>{record.updatedAt}</p></article>
-      <article className="portal-card"><span className="portal-card-icon"><Image size={18} /></span><h3><BilingualText value={bi('Publication Status', 'حالة النشر')} /></h3><p><EnterpriseStatus label={bi(record.status, record.status)} tone={record.status === 'published' ? 'active' : 'warning'} /></p></article>
+      <article className="portal-card"><span className="portal-card-icon"><FileText size={18} /></span><h3><BilingualText value={bi('Record ID', 'معرف السجل')} /></h3><p><code>{record.id}</code></p></article>
     </section>
-    <section className="portal-section" style={{ marginTop: 14 }}>
-      <header><div><h2><BilingualText value={bi('Linked Media Preview', 'معاينة الوسائط المرتبطة')} /></h2><p><BilingualText value={bi('Verified sport media whose reference matches this record title.', 'وسائط رياضية موثقة يطابق مرجعها عنوان هذا السجل.')} /></p></div></header>
-      {linkedMedia.length ? (
-        <div className="enterprise-grid-3">{linkedMedia.map((asset) => <article className="enterprise-panel content-asset-card" key={asset.id}><div className="content-asset-image"><img src={asset.url} alt={`${asset.altEn} | ${asset.altAr}`} loading="lazy" decoding="async" /></div><div className="content-asset-copy"><h3>{asset.id}</h3><p><BilingualText value={{ en: asset.altEn, ar: asset.altAr }} /></p></div></article>)}</div>
-      ) : (
-        <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: 12 }}><BilingualText value={bi('No verified media references this record yet.', 'لا توجد وسائط موثقة تشير إلى هذا السجل بعد.')} /></p>
-      )}
-    </section>
+
+    <section className="admin-panel" style={{ marginTop: 14 }}><div className="panel-heading"><BilingualText value={bi('Publication Control', 'التحكم بالنشر')} /></div><div className="admin-form-actions">{(['draft','published','archived'] as const).map(value => <button key={value} type="button" className={record.status === value ? 'admin-primary-button' : 'admin-secondary-button'} disabled={busy} onClick={() => void setStatus(value)}><BilingualText value={statusLabel(value)} /></button>)}</div><p><BilingualText value={bi('This Preview status does not publish to an external CMS or social network.', 'حالة المعاينة هذه لا تنشر إلى نظام إدارة محتوى خارجي أو شبكة اجتماعية.')} /></p></section>
   </div>;
 }
