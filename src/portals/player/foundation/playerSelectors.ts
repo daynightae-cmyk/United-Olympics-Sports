@@ -1,13 +1,8 @@
-import type { Coach, CoachFeedback, Parent, Player, Session, TrainingGroup } from '../../../domain/contracts';
-import { demoBranches } from '../../../data/demo/business';
-import { demoCoaches } from '../../../data/demo/coaches';
-import { demoParents } from '../../../data/demo/parents';
-import { demoSessions } from '../../../data/demo/sessions';
-import { getLatestPlayerMetrics } from '../../../data/demo/selectors';
+import type { Branch, Coach, CoachFeedback, Parent, Player, Session, TrainingGroup } from '../../../domain/contracts';
 
-export function selectPlayerSessions(player: Player | null): Session[] {
+export function selectPlayerSessions(player: Player | null, source: Session[] = []): Session[] {
   if (!player?.groupId) return [];
-  return demoSessions
+  return source
     .filter((session) => session.groupId === player.groupId)
     .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
 }
@@ -19,24 +14,24 @@ export function selectUpcomingSession(sessions: Session[], now = new Date()): Se
     .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())[0] ?? null;
 }
 
-export function selectAssignedCoaches(player: Player | null, group?: TrainingGroup): Coach[] {
+export function selectAssignedCoaches(player: Player | null, group?: TrainingGroup, source: Coach[] = []): Coach[] {
   if (!player) return [];
   const ids = new Set([...(player.coachIds ?? []), ...(group?.coachIds ?? [])]);
-  return demoCoaches.filter((coach) => ids.has(coach.id));
+  return source.filter((coach) => ids.has(coach.id));
 }
 
-export function selectPrimaryCoach(player: Player | null, group?: TrainingGroup): Coach | undefined {
-  return selectAssignedCoaches(player, group)[0];
+export function selectPrimaryCoach(player: Player | null, group?: TrainingGroup, source: Coach[] = []): Coach | undefined {
+  return selectAssignedCoaches(player, group, source)[0];
 }
 
-export function selectPlayerParent(player: Player | null): Parent | undefined {
+export function selectPlayerParent(player: Player | null, source: Parent[] = []): Parent | undefined {
   if (!player) return undefined;
-  return demoParents.find((parent) => parent.playerIds.includes(player.id));
+  return source.find((parent) => parent.playerIds.includes(player.id));
 }
 
-export function selectPlayerBranch(player: Player | null) {
+export function selectPlayerBranch(player: Player | null, source: Branch[] = []): Branch | undefined {
   if (!player) return undefined;
-  return demoBranches.find((branch) => branch.playerIds.includes(player.id));
+  return source.find((branch) => branch.playerIds.includes(player.id));
 }
 
 export function selectPlayerFeedback(player: Player | null, source: CoachFeedback[]): CoachFeedback[] {
@@ -47,10 +42,16 @@ export function selectPlayerFeedback(player: Player | null, source: CoachFeedbac
 }
 
 export function selectPlayerOverallScore(player: Player | null): number | null {
-  if (!player) return null;
-  const values = getLatestPlayerMetrics(player.id)
-    .map((metric) => metric.current?.value)
-    .filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
+  if (!player?.performanceHistory?.length) return null;
+  const latestByMetric = new Map<string, { value: number; recordedAt: string }>();
+  for (const record of player.performanceHistory) {
+    if (!Number.isFinite(record.value)) continue;
+    const existing = latestByMetric.get(record.metricId);
+    if (!existing || new Date(record.recordedAt).getTime() > new Date(existing.recordedAt).getTime()) {
+      latestByMetric.set(record.metricId, { value: record.value, recordedAt: record.recordedAt });
+    }
+  }
+  const values = [...latestByMetric.values()].map((record) => record.value);
   if (!values.length) return null;
   return Math.round(values.reduce((total, value) => total + value, 0) / values.length);
 }

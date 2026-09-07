@@ -31,22 +31,21 @@ export interface PlayerAuthGateway {
 }
 
 /**
- * ProductionPlayerAuthGateway
- * Communicates with real production auth endpoints or services.
+ * Firebase can authenticate the Google identity, but the Player Portal still
+ * requires an explicit backend mapping from that identity to one athlete
+ * record. Until that mapping exists, no production Player session is issued.
  */
 export class ProductionPlayerAuthGateway implements PlayerAuthGateway {
   isProductionConfigured(): boolean {
-    return true; // We now have Firebase Auth
+    return false;
   }
 
   async getSession(): Promise<PlayerAuthSession | null> {
     const raw = localStorage.getItem('uos:player-portal:session');
     if (!raw) return null;
     try {
-      const session = JSON.parse(raw);
-      if (session && session.provider === 'production') {
-        return session;
-      }
+      const session = JSON.parse(raw) as PlayerAuthSession;
+      if (session?.provider === 'production' && session.playerId) return session;
       return null;
     } catch {
       return null;
@@ -56,25 +55,26 @@ export class ProductionPlayerAuthGateway implements PlayerAuthGateway {
   async signInWithGoogle(): Promise<AuthResult<PlayerAuthSession>> {
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-      
-      const session: PlayerAuthSession = {
-        userId: user.uid,
-        email: user.email ?? undefined,
-        provider: 'production',
-        createdAt: new Date().toISOString()
+      await firebaseSignOut(auth).catch(() => undefined);
+      localStorage.removeItem('uos:player-portal:session');
+      localStorage.removeItem('uos:player-portal:active-id');
+      localStorage.setItem('uos:player-portal:auth', 'false');
+
+      return {
+        success: false,
+        error: {
+          code: 'PLAYER_BINDING_UNCONFIGURED',
+          messageEn: `Google verified ${result.user.email ?? 'the account'}, but no production athlete-account binding service is connected yet. No Player Portal session was created.`,
+          messageAr: 'تم التحقق من حساب Google، لكن خدمة ربط الحساب بسجل لاعب إنتاجي غير متصلة حتى الآن. لم يتم إنشاء جلسة لبوابة اللاعب.',
+        },
       };
-      
-      localStorage.setItem('uos:player-portal:session', JSON.stringify(session));
-      localStorage.setItem('uos:player-portal:auth', 'true');
-      
-      return { success: true, data: session };
-    } catch (e: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Google authentication failed.';
       return {
         success: false,
         error: {
           code: 'AUTH_FAILED',
-          messageEn: e.message || 'Google authentication failed.',
+          messageEn: message,
           messageAr: 'فشلت عملية المصادقة عبر Google.',
         },
       };
@@ -115,16 +115,14 @@ export class ProductionPlayerAuthGateway implements PlayerAuthGateway {
   }
 
   async signOut(): Promise<void> {
-    await firebaseSignOut(auth).catch(() => {});
+    await firebaseSignOut(auth).catch(() => undefined);
     localStorage.removeItem('uos:player-portal:session');
+    localStorage.removeItem('uos:player-portal:active-id');
     localStorage.setItem('uos:player-portal:auth', 'false');
   }
 }
 
-/**
- * PreviewPlayerAuthGateway
- * Explicitly manages preview/demo athlete sessions with clear separation from production.
- */
+/** Explicit preview sessions are separated from production authentication. */
 export class PreviewPlayerAuthGateway implements PlayerAuthGateway {
   isProductionConfigured(): boolean {
     return false;
@@ -134,10 +132,8 @@ export class PreviewPlayerAuthGateway implements PlayerAuthGateway {
     const raw = localStorage.getItem('uos:player-portal:session');
     if (!raw) return null;
     try {
-      const session = JSON.parse(raw);
-      if (session && session.provider === 'preview') {
-        return session;
-      }
+      const session = JSON.parse(raw) as PlayerAuthSession;
+      if (session?.provider === 'preview' && session.playerId) return session;
       return null;
     } catch {
       return null;
@@ -189,6 +185,16 @@ export class PreviewPlayerAuthGateway implements PlayerAuthGateway {
   }
 
   async enterPreviewMode(playerId: string): Promise<AuthResult<PlayerAuthSession>> {
+    if (!playerId) {
+      return {
+        success: false,
+        error: {
+          code: 'PREVIEW_PLAYER_REQUIRED',
+          messageEn: 'Select an available preview athlete first.',
+          messageAr: 'اختر لاعب معاينة متاحًا أولاً.',
+        },
+      };
+    }
     const session: PlayerAuthSession = {
       userId: `preview-user-${playerId}`,
       playerId,
@@ -203,6 +209,7 @@ export class PreviewPlayerAuthGateway implements PlayerAuthGateway {
 
   async signOut(): Promise<void> {
     localStorage.removeItem('uos:player-portal:session');
+    localStorage.removeItem('uos:player-portal:active-id');
     localStorage.setItem('uos:player-portal:auth', 'false');
   }
 }

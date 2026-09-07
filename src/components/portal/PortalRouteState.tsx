@@ -3,9 +3,14 @@ import { AlertTriangle, ArrowLeft, Home, LoaderCircle, SearchX } from 'lucide-re
 import { Link } from 'react-router-dom';
 import { BilingualText, bi } from '../bilingual/BilingualText';
 
-export type SharedPortalKind = 'parent' | 'coach';
+export type SharedPortalKind = 'player' | 'parent' | 'coach';
 
-const portalHome: Record<SharedPortalKind, string> = { parent: '/parent', coach: '/coach' };
+const portalHome: Record<SharedPortalKind, string> = { player: '/player', parent: '/parent', coach: '/coach' };
+const portalLoadingCopy: Record<SharedPortalKind, { en: string; ar: string }> = {
+  player: bi('Player portal modules are being prepared.', 'جارٍ تجهيز وحدات بوابة اللاعب.'),
+  parent: bi('Family portal modules are being prepared.', 'جارٍ تجهيز وحدات بوابة الأسرة.'),
+  coach: bi('Coach portal modules are being prepared.', 'جارٍ تجهيز وحدات بوابة المدرب.'),
+};
 
 export function PortalRouteLoader({ portal }: { portal: SharedPortalKind }) {
   return (
@@ -13,7 +18,7 @@ export function PortalRouteLoader({ portal }: { portal: SharedPortalKind }) {
       <div className="portal-route-state__icon"><LoaderCircle aria-hidden="true" /></div>
       <div className="portal-route-state__copy">
         <strong><BilingualText value={bi('Loading workspace', 'جارٍ تحميل مساحة العمل')} /></strong>
-        <span><BilingualText value={portal === 'parent' ? bi('Family portal modules are being prepared.', 'جارٍ تجهيز وحدات بوابة الأسرة.') : bi('Coach portal modules are being prepared.', 'جارٍ تجهيز وحدات بوابة المدرب.')} /></span>
+        <span><BilingualText value={portalLoadingCopy[portal]} /></span>
       </div>
       <div className="portal-route-skeleton" aria-hidden="true"><i /><i /><i /></div>
     </div>
