@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import {
   useBranches,
   useGroups,
+  useMessages,
   useParents,
   usePayments,
   usePlayers,
@@ -19,6 +20,7 @@ export function useParentPortalGatewayData() {
   const sessionQuery = useSessions({ page: 1, pageSize: 1000 });
   const subscriptionQuery = useSubscriptions({ page: 1, pageSize: 1000 });
   const paymentQuery = usePayments({ page: 1, pageSize: 1000 });
+  const messageQuery = useMessages({ page: 1, pageSize: 1000 });
   const sportQuery = useSports({ page: 1, pageSize: 200 });
   const groupQuery = useGroups({ page: 1, pageSize: 500 });
   const programQuery = usePrograms({ page: 1, pageSize: 500 });
@@ -37,6 +39,7 @@ export function useParentPortalGatewayData() {
   }, [parent, playerQuery.data.items]);
 
   const childIds = useMemo(() => new Set(children.map((child) => child.id)), [children]);
+  const familyRecipientIds = useMemo(() => new Set([parentId, ...childIds]), [childIds, parentId]);
   const groupIds = useMemo(
     () => new Set(children.map((child) => child.groupId).filter((id): id is string => Boolean(id))),
     [children],
@@ -59,12 +62,20 @@ export function useParentPortalGatewayData() {
     [childIds, paymentQuery.data.items],
   );
 
+  const familyMessages = useMemo(
+    () => messageQuery.data.items
+      .filter((message) => familyRecipientIds.has(message.fromId) || message.toIds.some((id) => familyRecipientIds.has(id)))
+      .sort((a, b) => b.sentAt.localeCompare(a.sentAt)),
+    [familyRecipientIds, messageQuery.data.items],
+  );
+
   const loading = [
     parentQuery,
     playerQuery,
     sessionQuery,
     subscriptionQuery,
     paymentQuery,
+    messageQuery,
     sportQuery,
     groupQuery,
     programQuery,
@@ -77,6 +88,7 @@ export function useParentPortalGatewayData() {
     sessionQuery.error,
     subscriptionQuery.error,
     paymentQuery.error,
+    messageQuery.error,
     sportQuery.error,
     groupQuery.error,
     programQuery.error,
@@ -90,6 +102,7 @@ export function useParentPortalGatewayData() {
     familySessions,
     familySubscriptions,
     familyPayments,
+    familyMessages,
     sports: sportQuery.data.items,
     groups: groupQuery.data.items,
     programs: programQuery.data.items,
