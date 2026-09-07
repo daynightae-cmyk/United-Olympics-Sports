@@ -1,34 +1,41 @@
-import { Award, CalendarDays, CreditCard, FileText, HeartHandshake, MessageSquareText, Star, TrendingUp, UserRound, UsersRound } from 'lucide-react';
+import { CalendarDays, CreditCard, FileText, HeartHandshake, MessageSquareText, ShieldCheck, TrendingUp, UserRound, UsersRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
 import { BmActionCard, BmIdentityCard, BmMetricCard, BmPageHeader, BmSectionLabel } from '../../../components/benchmark/BenchmarkComponents';
-import { demoCoachFeedback } from '../../../data/demo/coachFeedback';
-import { demoParents } from '../../../data/demo/parents';
-import { demoSessions } from '../../../data/demo/sessions';
-import { getCoach, getGroup, getLatestPlayerMetrics, getPlayer, getPlayerOverall, getSport } from '../../../data/demo/selectors';
-import { previewSubscriptions } from '../portalData';
-
-function nextSessionForGroup(groupId?: string) {
-  if (!groupId) return null;
-  const now = Date.now();
-  return demoSessions
-    .filter((session) => session.groupId === groupId && new Date(session.startsAt).getTime() >= now)
-    .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())[0] ?? null;
-}
+import { EnterpriseEmpty, EnterpriseStatus } from '../../../components/enterprise/EnterpriseUI';
+import { useParentPortalGatewayData } from '../../../portals/parent/useParentPortalGatewayData';
 
 export function ParentPortalOverviewPage() {
-  const parent = demoParents[0];
-  const children = parent.playerIds.map(getPlayer).filter(Boolean);
-  const attended = children.reduce((sum, player) => sum + (player?.attendanceSummary?.attended ?? 0), 0);
-  const scheduled = children.reduce((sum, player) => sum + (player?.attendanceSummary?.scheduled ?? 0), 0);
-  const attendanceRate = scheduled > 0 ? Math.round((attended / scheduled) * 100) : null;
-  const feedbackCount = children.reduce((sum, player) => sum + demoCoachFeedback.filter((item) => item.playerId === player?.id).length, 0);
+  const {
+    parent,
+    children,
+    familySessions,
+    familySubscriptions,
+    familyPayments,
+    sports,
+    groups,
+    loading,
+    error,
+  } = useParentPortalGatewayData();
+
+  if (loading && !parent) return <div className="enterprise-empty" role="status"><BilingualText value={bi('Loading family overview…', 'جارٍ تحميل نظرة الأسرة…')} /></div>;
+  if (error) return <div className="enterprise-empty" role="alert"><BilingualText value={bi('Family provider is unavailable.', 'موفر بيانات الأسرة غير متاح.')} /></div>;
+  if (!parent) return <EnterpriseEmpty title={bi('Family profile unavailable', 'ملف الأسرة غير متاح')} description={bi('Sign in again from the Parent login page to select an active provider record.', 'سجّل الدخول مجددًا من صفحة ولي الأمر لاختيار سجل نشط من موفر البيانات.')} />;
+
+  const attendanceRate = children.length
+    ? Math.round(children.reduce((sum, child) => sum + child.attendanceRate, 0) / children.length)
+    : null;
+  const measuredChildren = children.filter((child) => child.performanceScore !== null);
+  const performanceAverage = measuredChildren.length
+    ? Math.round(measuredChildren.reduce((sum, child) => sum + (child.performanceScore ?? 0), 0) / measuredChildren.length)
+    : null;
+  const upcomingSessions = familySessions.filter((session) => new Date(session.startsAt).getTime() >= Date.now());
 
   return <div className="admin-page">
     <BmPageHeader
       eyebrow={bi('Parent Portal', 'بوابة ولي الأمر')}
       title={bi('Family Overview', 'نظرة عامة للأسرة')}
-      description={bi('Children, attendance and communication context in one truthful preview workspace.', 'سياق الأبناء والحضور والتواصل في مساحة معاينة صادقة واحدة.')}
+      description={bi('Provider-backed children, schedule, performance and finance context in one family workspace.', 'سياق الأبناء والجدول والأداء والمالية من موفر البيانات في مساحة أسرية واحدة.')}
       icon={<HeartHandshake aria-hidden="true" />}
     />
 
@@ -41,67 +48,65 @@ export function ParentPortalOverviewPage() {
           id={parent.id}
           fields={[
             { label: bi('Children', 'الأبناء'), value: children.length },
-            { label: bi('Coach feedback', 'ملاحظات المدرب'), value: feedbackCount },
+            { label: bi('Language', 'اللغة'), value: parent.preferredLanguage === 'ar' ? 'العربية' : 'English' },
           ]}
         />
-        <BmMetricCard icon={<UsersRound aria-hidden="true" />} label={bi('Linked Children', 'الأبناء المرتبطون')} value={children.length} detail={bi('Active roster', 'القائمة النشطة')} tier="featured" />
-        <BmMetricCard icon={<TrendingUp aria-hidden="true" />} label={bi('Attendance Context', 'سياق الحضور')} value={attendanceRate === null ? '—' : `${attendanceRate}%`} detail={bi(`${attended}/${scheduled} sessions`, `${attended}/${scheduled} حصص`)} />
+        <BmMetricCard icon={<UsersRound aria-hidden="true" />} label={bi('Linked Children', 'الأبناء المرتبطون')} value={children.length} detail={bi('Shared provider relationship', 'علاقة موفر البيانات المشترك')} tier="featured" />
+        <BmMetricCard icon={<TrendingUp aria-hidden="true" />} label={bi('Attendance Average', 'متوسط الحضور')} value={attendanceRate === null ? '—' : `${attendanceRate}%`} detail={bi('Current player summaries', 'ملخصات اللاعبين الحالية')} />
       </div>
     </div>
 
     <div style={{ marginBottom: 'clamp(20px, 3vw, 32px)' }}>
-      <BmSectionLabel num="02" icon={<CalendarDays aria-hidden="true" />} title={bi('Quick Actions', 'إجراءات سريعة')} />
+      <BmSectionLabel num="02" icon={<CalendarDays aria-hidden="true" />} title={bi('Operational Snapshot', 'لمحة تشغيلية')} />
+      <div className="bm-grid bm-grid-4">
+        <BmMetricCard icon={<CalendarDays aria-hidden="true" />} label={bi('Upcoming Sessions', 'الحصص القادمة')} value={upcomingSessions.length} detail={bi('Linked training groups', 'مجموعات التدريب المرتبطة')} />
+        <BmMetricCard icon={<TrendingUp aria-hidden="true" />} label={bi('Performance Average', 'متوسط الأداء')} value={performanceAverage === null ? '—' : `${performanceAverage}/100`} detail={bi('Measured linked profiles', 'الملفات المرتبطة المقاسة')} />
+        <BmMetricCard icon={<ShieldCheck aria-hidden="true" />} label={bi('Subscriptions', 'الاشتراكات')} value={familySubscriptions.length} detail={bi('Provider membership records', 'سجلات العضوية لدى الموفر')} />
+        <BmMetricCard icon={<CreditCard aria-hidden="true" />} label={bi('Payments', 'المدفوعات')} value={familyPayments.length} detail={bi('Read-only provider ledger', 'دفتر موفر البيانات للقراءة فقط')} />
+      </div>
+    </div>
+
+    <div style={{ marginBottom: 'clamp(20px, 3vw, 32px)' }}>
+      <BmSectionLabel num="03" icon={<CalendarDays aria-hidden="true" />} title={bi('Quick Actions', 'إجراءات سريعة')} />
       <div className="bm-grid bm-grid-4">
         <BmActionCard icon={<UsersRound aria-hidden="true" />} title={bi('Children', 'الأبناء')} description={bi('Review linked athlete profiles', 'مراجعة ملفات الرياضيين المرتبطين')} to="/parent/children" />
-        <BmActionCard icon={<CalendarDays aria-hidden="true" />} title={bi('Family Schedule', 'جدول الأسرة')} description={bi('Training context preview', 'معاينة سياق التدريب')} to="/parent/schedule" />
-        <BmActionCard icon={<TrendingUp aria-hidden="true" />} title={bi('Performance', 'الأداء')} description={bi('Track child progress', 'تتبع تقدم الأبناء')} to="/parent/performance" />
-        <BmActionCard icon={<MessageSquareText aria-hidden="true" />} title={bi('Messages', 'الرسائل')} description={bi('Communication-ready inbox', 'صندوق رسائل جاهز')} to="/parent/messages" />
-        <BmActionCard icon={<CreditCard aria-hidden="true" />} title={bi('Payments', 'المدفوعات')} description={bi('Preview payment status', 'معاينة حالة المدفوعات')} to="/parent/payments" />
-        <BmActionCard icon={<Award aria-hidden="true" />} title={bi('Feedback', 'الملاحظات')} description={bi('Coach feedback for your children', 'ملاحظات المدرب لأبنائك')} to="/parent/feedback" />
-        <BmActionCard icon={<FileText aria-hidden="true" />} title={bi('Documents', 'المستندات')} description={bi('Family document center', 'مركز مستندات الأسرة')} to="/parent/documents" />
+        <BmActionCard icon={<CalendarDays aria-hidden="true" />} title={bi('Family Schedule', 'جدول الأسرة')} description={bi('Current provider sessions', 'جلسات موفر البيانات الحالية')} to="/parent/schedule" />
+        <BmActionCard icon={<TrendingUp aria-hidden="true" />} title={bi('Performance', 'الأداء')} description={bi('Provider performance summaries', 'ملخصات الأداء من موفر البيانات')} to="/parent/performance" />
+        <BmActionCard icon={<MessageSquareText aria-hidden="true" />} title={bi('Messages', 'الرسائل')} description={bi('Communication workspace', 'مساحة التواصل')} to="/parent/messages" />
+        <BmActionCard icon={<CreditCard aria-hidden="true" />} title={bi('Payments', 'المدفوعات')} description={bi('Read provider payment records', 'عرض سجلات الدفع لدى الموفر')} to="/parent/payments" />
+        <BmActionCard icon={<ShieldCheck aria-hidden="true" />} title={bi('Subscriptions', 'الاشتراكات')} description={bi('Review membership records', 'مراجعة سجلات العضوية')} to="/parent/subscriptions" />
+        <BmActionCard icon={<FileText aria-hidden="true" />} title={bi('Documents', 'المستندات')} description={bi('Family document preview', 'معاينة مستندات الأسرة')} to="/parent/documents" />
       </div>
     </div>
 
     <div style={{ marginBottom: 'clamp(20px, 3vw, 32px)' }}>
-      <BmSectionLabel num="03" icon={<UsersRound aria-hidden="true" />} title={bi('Children Snapshot', 'لمحة عن الأبناء')} />
-      <div className="bm-grid bm-grid-2">
-        {children.map(player => {
-          if (!player) return null;
-          const sport = getSport(player.sportId);
-          const group = getGroup(player.groupId);
-          const coach = (player.coachIds ?? []).map(getCoach).find(Boolean);
-          const next = nextSessionForGroup(player.groupId);
-          const hasMetric = getLatestPlayerMetrics(player.id).some((metric) => typeof metric.current?.value === 'number');
-          const score = hasMetric ? getPlayerOverall(player.id) : null;
-          const feedback = demoCoachFeedback.filter((item) => item.playerId === player.id);
-          const subscription = previewSubscriptions.find((item) => item.playerId === player.id);
-          return (
-            <div key={player.id} className="bm-card bm-card-clickable" style={{ padding: '22px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px' }}>
-                <span className="bm-cell-avatar" style={{ width: '48px', height: '48px' }}><UserRound aria-hidden="true" /></span>
-                <div>
-                  <strong style={{ fontSize: '15px' }}>{player.nameEn}</strong>
-                  <div style={{ fontSize: '11px', color: 'var(--bm-gold, #d8b35a)', fontFamily: 'Cairo, sans-serif', direction: 'rtl' }}>{player.nameAr}</div>
-                  <div style={{ fontSize: '10px', color: 'var(--uos-text-muted, #a5a29c)', marginTop: '3px' }}>
-                    <BilingualText value={sport?.name ?? bi('Sport preview', 'معاينة الرياضة')} />{group ? ` · ${group.name.en}` : ''}
-                  </div>
-                </div>
+      <BmSectionLabel num="04" icon={<UsersRound aria-hidden="true" />} title={bi('Children Snapshot', 'لمحة عن الأبناء')} />
+      {children.length ? <div className="bm-grid bm-grid-2">
+        {children.map((child) => {
+          const sport = sports.find((item) => item.id === child.sportId);
+          const group = child.groupId ? groups.find((item) => item.id === child.groupId) : undefined;
+          const next = upcomingSessions.find((session) => session.groupId === child.groupId);
+          const subscription = familySubscriptions.find((item) => item.playerId === child.id);
+          return <div key={child.id} className="bm-card bm-card-clickable" style={{ padding: '22px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px' }}>
+              <span className="bm-cell-avatar" style={{ width: '48px', height: '48px' }}><UserRound aria-hidden="true" /></span>
+              <div style={{ flex: 1 }}>
+                <strong style={{ fontSize: '15px' }}>{child.nameEn}</strong>
+                <div style={{ fontSize: '11px', color: 'var(--bm-gold, #d8b35a)', fontFamily: 'Cairo, sans-serif', direction: 'rtl' }}>{child.nameAr}</div>
+                <div style={{ fontSize: '10px', color: 'var(--uos-text-muted, #a5a29c)', marginTop: '3px' }}><BilingualText value={sport?.name ?? bi(child.sportId, child.sportId)} />{group ? ` · ${group.name.en}` : ''}</div>
               </div>
-              <div className="bm-grid bm-grid-3" style={{ gap: '10px' }}>
-                <div><span style={{ fontSize: '9px', color: 'var(--uos-text-muted, #a5a29c)' }}><BilingualText value={bi('Next training', 'التدريب القادم')} /></span><strong style={{ display: 'block', fontSize: '12px', marginTop: '4px' }}>{next ? new Date(next.startsAt).toLocaleDateString([], { month: 'short', day: 'numeric' }) : <BilingualText value={bi('None scheduled', 'لا يوجد مجدول')} />}</strong></div>
-                <div><span style={{ fontSize: '9px', color: 'var(--uos-text-muted, #a5a29c)' }}><BilingualText value={bi('Attendance', 'الحضور')} /></span><strong style={{ display: 'block', fontSize: '12px', marginTop: '4px' }}>{player.attendanceSummary ? `${player.attendanceSummary.attended}/${player.attendanceSummary.scheduled}` : <BilingualText value={bi('Not recorded', 'غير مسجل')} />}</strong></div>
-                <div><span style={{ fontSize: '9px', color: 'var(--uos-text-muted, #a5a29c)' }}><BilingualText value={bi('Performance', 'الأداء')} /></span><strong style={{ display: 'block', fontSize: '12px', marginTop: '4px' }}>{score === null ? <BilingualText value={bi('Not available', 'غير متاح')} /> : `${score}/100`}</strong></div>
-                <div><span style={{ fontSize: '9px', color: 'var(--uos-text-muted, #a5a29c)' }}><BilingualText value={bi('Coach', 'المدرب')} /></span><strong style={{ display: 'block', fontSize: '12px', marginTop: '4px' }}>{coach?.nameEn ?? <BilingualText value={bi('Not assigned', 'غير معين')} />}</strong></div>
-                <div><span style={{ fontSize: '9px', color: 'var(--uos-text-muted, #a5a29c)', display: 'inline-flex', alignItems: 'center', gap: '3px' }}><Star size={10} /><BilingualText value={bi('Feedback', 'الملاحظات')} /></span><strong style={{ display: 'block', fontSize: '12px', marginTop: '4px' }}>{feedback.length ? <BilingualText value={bi(`${feedback.length} note${feedback.length === 1 ? '' : 's'}`, `${feedback.length} من الملاحظات`)} /> : <BilingualText value={bi('None yet', 'لا يوجد بعد')} />}</strong></div>
-                <div><span style={{ fontSize: '9px', color: 'var(--uos-text-muted, #a5a29c)' }}><BilingualText value={bi('Subscription', 'الاشتراك')} /></span><strong style={{ display: 'block', fontSize: '12px', marginTop: '4px' }}>{subscription ? <BilingualText value={subscription.status === 'active' ? bi('Active', 'نشط') : bi('Pending', 'معلق')} /> : <BilingualText value={bi('No record', 'لا سجل')} />}</strong></div>
-              </div>
-              <Link to={`/parent/children/${player.id}`} className="bm-btn bm-btn-tertiary" style={{ width: '100%', marginTop: '14px' }}>
-                <BilingualText value={bi('View Child Profile', 'عرض ملف الابن')} />
-              </Link>
+              <EnterpriseStatus label={child.status} tone="info" />
             </div>
-          );
+            <div className="bm-grid bm-grid-3" style={{ gap: '10px' }}>
+              <div><span style={{ fontSize: '9px', color: 'var(--uos-text-muted, #a5a29c)' }}><BilingualText value={bi('Next training', 'التدريب القادم')} /></span><strong style={{ display: 'block', fontSize: '12px', marginTop: '4px' }}>{next ? new Date(next.startsAt).toLocaleDateString([], { month: 'short', day: 'numeric' }) : <BilingualText value={bi('None scheduled', 'لا يوجد مجدول')} />}</strong></div>
+              <div><span style={{ fontSize: '9px', color: 'var(--uos-text-muted, #a5a29c)' }}><BilingualText value={bi('Attendance', 'الحضور')} /></span><strong style={{ display: 'block', fontSize: '12px', marginTop: '4px' }}>{child.attendanceRate}%</strong></div>
+              <div><span style={{ fontSize: '9px', color: 'var(--uos-text-muted, #a5a29c)' }}><BilingualText value={bi('Performance', 'الأداء')} /></span><strong style={{ display: 'block', fontSize: '12px', marginTop: '4px' }}>{child.performanceScore === null ? <BilingualText value={bi('Not measured', 'غير مقاس')} /> : `${child.performanceScore}/100`}</strong></div>
+              <div><span style={{ fontSize: '9px', color: 'var(--uos-text-muted, #a5a29c)' }}><BilingualText value={bi('Subscription', 'الاشتراك')} /></span><strong style={{ display: 'block', fontSize: '12px', marginTop: '4px' }}>{subscription ? <BilingualText value={bi(subscription.status, subscription.status === 'active' ? 'نشط' : 'غير نشط')} /> : <BilingualText value={bi('No record', 'لا يوجد سجل')} />}</strong></div>
+            </div>
+            <Link to={`/parent/children/${child.id}`} className="bm-btn bm-btn-tertiary" style={{ width: '100%', marginTop: '14px' }}><BilingualText value={bi('View Child Profile', 'عرض ملف الابن')} /></Link>
+          </div>;
         })}
-      </div>
+      </div> : <EnterpriseEmpty title={bi('No linked children', 'لا يوجد أبناء مرتبطون')} description={bi('Link an athlete to this parent profile from Admin to populate the family workspace.', 'اربط لاعبًا بملف ولي الأمر من الإدارة لملء مساحة الأسرة.')} />}
     </div>
   </div>;
 }
