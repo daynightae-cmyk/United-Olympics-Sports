@@ -3,8 +3,6 @@ on:
   push:
     branches:
       - work/admin-operations-closure-20260906
-    paths:
-      - '.github/workflows/admin-final-browser-qa.yml'
 permissions:
   contents: read
 jobs:
