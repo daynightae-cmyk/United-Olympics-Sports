@@ -2,6 +2,7 @@ import { ArrowRight, CheckCircle2, LockKeyhole, ShieldCheck, UsersRound } from '
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
+import { PortalEmblem } from '../../components/brand/PortalEmblem';
 import { demoParents } from '../../data/demo/parents';
 import { startParentPreview } from './parentData';
 
@@ -18,7 +19,9 @@ export function ParentLoginPage() {
   return (
     <main className="parent-login-shell">
       <section className="parent-login-brand">
-        <img src="/brand/united-olympics-sports-logo.png" alt="United Olympics Sports | يونايتد أوليمبيكس سبورت" />
+        <div style={{ marginBottom: '24px' }}>
+          <PortalEmblem portal="parent" size="header" priority role="primary" />
+        </div>
         <span className="parent-kicker"><ShieldCheck size={14} /><BilingualText value={bi('Family Access', 'دخول الأسرة')} /></span>
         <h1><BilingualText value={bi('Parent Portal', 'بوابة وليّ الأمر')} /></h1>
         <p><BilingualText value={bi('A focused family workspace for linked athletes, schedules, attendance, development records and account references.', 'مساحة أسرية مركزة للأبناء المرتبطين والجداول والحضور وسجلات التطور ومراجع الحساب.')} /></p>
