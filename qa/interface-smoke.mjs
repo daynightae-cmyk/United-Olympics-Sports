@@ -171,14 +171,36 @@ async function assertRoute(page, runtimeErrors, route, checkOverflow = true) {
   return state;
 }
 
+function isTransientWebKitNavigationError(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes('WebKit encountered an internal error')
+    || message.includes('Target page, context or browser has been closed');
+}
+
 async function routeSweep(browserType, browserName) {
   const browser = await browserType.launch({ headless: true });
+  let checked = null;
   try {
-    const { context, page, runtimeErrors } = await createCheckedPage(browser);
-    for (const route of allRoutes) await assertRoute(page, runtimeErrors, route, true);
-    await context.close();
+    checked = await createCheckedPage(browser);
+    for (const route of allRoutes) {
+      try {
+        await assertRoute(checked.page, checked.runtimeErrors, route, true);
+      } catch (error) {
+        if (browserName !== 'WebKit' || !isTransientWebKitNavigationError(error)) throw error;
+
+        // WebKit can occasionally terminate a navigation internally during a
+        // long route sweep. Recreate the isolated context and retry exactly
+        // once; all route assertions remain unchanged and a repeat failure is
+        // still fatal.
+        console.warn(`[browser] ${browserName}: transient navigation failure at ${route}; retrying once in a fresh context`);
+        await checked.context.close().catch(() => {});
+        checked = await createCheckedPage(browser);
+        await assertRoute(checked.page, checked.runtimeErrors, route, true);
+      }
+    }
     console.log(`[browser] ${browserName}: ${allRoutes.length} routes passed`);
   } finally {
+    if (checked) await checked.context.close().catch(() => {});
     await browser.close();
   }
 }
