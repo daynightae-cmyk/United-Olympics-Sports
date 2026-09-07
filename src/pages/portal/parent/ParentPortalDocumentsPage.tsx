@@ -1,107 +1,38 @@
-import { FileText, Download, Eye, FolderOpen, Shield, Award, Calendar, Users } from 'lucide-react';
+import { FileText, ShieldCheck, Users } from 'lucide-react';
 import { PageHeader } from '../../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
-import { demoParents } from '../../../data/demo/parents';
-import { demoPlayers } from '../../../data/demo/players';
-
-type ParentDocument = {
-  id: string;
-  name: { en: string; ar: string };
-  category: { en: string; ar: string };
-  icon: React.ComponentType<{ size?: number }>;
-  childName: { en: string; ar: string };
-  size: string;
-  date: string;
-  status: { en: string; ar: string };
-};
-
-const parentDocuments: ParentDocument[] = [
-  { id: 'pdoc-001', name: { en: 'Player 001 - Medical Clearance', ar: 'اللاعب 001 - شهادة طبية' }, category: { en: 'Medical', ar: 'طبية' }, icon: Shield, childName: { en: 'Player Demo 001', ar: 'لاعب تجريبي 001' }, size: '245 KB', date: '2026-08-15', status: { en: 'Valid', ar: 'صالحة' } },
-  { id: 'pdoc-002', name: { en: 'Player 001 - Registration Form', ar: 'اللاعب 001 - نموذج تسجيل' }, category: { en: 'Registration', ar: 'تسجيل' }, icon: FileText, childName: { en: 'Player Demo 001', ar: 'لاعب تجريبي 001' }, size: '180 KB', date: '2026-08-10', status: { en: 'Submitted', ar: 'مُرسلة' } },
-  { id: 'pdoc-003', name: { en: 'Player 002 - Consent Form', ar: 'اللاعب 002 - نموذج موافقة' }, category: { en: 'Consent', ar: 'موافقة' }, icon: FolderOpen, childName: { en: 'Player Demo 002', ar: 'لاعب تجريبي 002' }, size: '312 KB', date: '2026-07-28', status: { en: 'Signed', ar: 'موقعة' } },
-  { id: 'pdoc-004', name: { en: 'Season Schedule - All Children', ar: 'جدول الموسم - جميع الأطفال' }, category: { en: 'Schedule', ar: 'جدول' }, icon: Calendar, childName: { en: 'All Children', ar: 'جميع الأطفال' }, size: '410 KB', date: '2026-07-15', status: { en: 'Current', ar: 'حالي' } },
-  { id: 'pdoc-005', name: { en: 'Player 001 - Achievement Certificate', ar: 'اللاعب 001 - شهادة إنجاز' }, category: { en: 'Achievement', ar: 'إنجاز' }, icon: Award, childName: { en: 'Player Demo 001', ar: 'لاعب تجريبي 001' }, size: '890 KB', date: '2026-06-20', status: { en: 'Archived', ar: 'مؤرشفة' } },
-];
+import { EnterpriseEmpty, PreviewNotice } from '../../../components/enterprise/EnterpriseUI';
+import { useParentPortalGatewayData } from '../../../portals/parent/useParentPortalGatewayData';
 
 export function ParentPortalDocumentsPage() {
-  const parent = demoParents[0];
-  const children = parent.playerIds.map(id => demoPlayers.find(p => p.id === id)).filter(Boolean);
+  const { parent, children, loading, error } = useParentPortalGatewayData();
 
-  return (
-    <div className="admin-page">
-      <PageHeader
-        eyebrow={bi('Parent Portal | Documents', 'بوابة ولي الأمر | الوثائق')}
-        title={bi('Documents', 'الوثائق')}
-        description={bi('Family documents and certificates — preview data only.', 'وثائق وشهادات العائلة — بيانات تجريبية فقط.')}
-        actions={<span className="preview-badge"><BilingualText value={bi('Preview Data', 'بيانات تجريبية')} /></span>}
-      />
-      <section className="documents-filter" aria-label="Document filters">
-        <div className="filter-chips">
-          {['all', 'medical', 'registration', 'consent', 'schedule', 'achievement'].map((cat) => (
-            <button key={cat} className="filter-chip" type="button">
-              <BilingualText value={
-                cat === 'all' ? bi('All', 'الكل') :
-                cat === 'medical' ? bi('Medical', 'طبية') :
-                cat === 'registration' ? bi('Registration', 'تسجيل') :
-                cat === 'consent' ? bi('Consent', 'موافقة') :
-                cat === 'schedule' ? bi('Schedule', 'جدول') :
-                bi('Achievement', 'إنجاز')
-              } />
-            </button>
-          ))}
-        </div>
-        <div className="child-filter">
-          <label>
-            <BilingualText value={bi('Filter by Child', 'تصفية حسب الطفل')} />
-            <select>
-              <option value="all"><BilingualText value={bi('All Children', 'جميع الأطفال')} /></option>
-              {children.map(child => (
-                <option key={child!.id} value={child!.id}>
-                  <BilingualText value={{ en: child!.nameEn, ar: child!.nameAr }} />
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      </section>
-      <section className="documents-grid" aria-label="Documents list">
-        {parentDocuments.map((doc) => (
-          <article key={doc.id} className="document-card">
-            <div className="document-icon">
-              <doc.icon size={24} />
-            </div>
-            <div className="document-info">
-              <h4><BilingualText value={doc.name} /></h4>
-              <div className="document-meta">
-                <span className="doc-category"><BilingualText value={doc.category} /></span>
-                <span className="doc-child"><Users size={12} /><BilingualText value={doc.childName} /></span>
-                <span className="doc-size">{doc.size}</span>
-                <span className="doc-date">{doc.date}</span>
-              </div>
-              <div className="document-status">
-                <span className={`status-badge ${doc.status.en === 'Valid' || doc.status.en === 'Signed' || doc.status.en === 'Current' ? 'status-valid' : 'status-pending'}`}>
-                  <BilingualText value={doc.status} />
-                </span>
-              </div>
-            </div>
-            <div className="document-actions">
-              <button className="doc-action-btn" aria-label={bi('View', 'عرض').en} title={bi('View', 'عرض').en}>
-                <Eye size={16} />
-              </button>
-              <button className="doc-action-btn" aria-label={bi('Download', 'تحميل').en} title={bi('Download', 'تحميل').en}>
-                <Download size={16} />
-              </button>
-            </div>
-          </article>
-        ))}
-      </section>
-      <section className="documents-empty-note" aria-label="Documents note">
-        <div className="admin-preview-card" style={{ padding: 18 }}>
-          <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
-            <BilingualText value={bi('Document library is preview-only. Real documents will sync from verified backend.', 'مكتبة الوثائق تجريبية فقط. الوثائق الحقيقية ستتم مزامنتها من خادم موثق.')} />
-          </p>
-        </div>
-      </section>
-    </div>
-  );
+  if (loading && !parent) return <div className="enterprise-empty" role="status"><BilingualText value={bi('Loading family context…', 'جارٍ تحميل سياق الأسرة…')} /></div>;
+  if (error) return <div className="enterprise-empty" role="alert"><BilingualText value={bi('Family provider unavailable', 'موفر بيانات الأسرة غير متاح')} /></div>;
+  if (!parent) return <EnterpriseEmpty title={bi('Family profile unavailable', 'ملف الأسرة غير متاح')} description={bi('Sign in again from the Parent login page.', 'سجّل الدخول مجددًا من صفحة ولي الأمر.')} />;
+
+  return <div className="admin-page">
+    <PageHeader
+      icon={FileText}
+      eyebrow={bi('Parent Portal · Documents', 'بوابة ولي الأمر · الوثائق')}
+      title={bi('Documents', 'الوثائق')}
+      description={bi('Family document center with an explicit storage/provider boundary.', 'مركز وثائق الأسرة مع حدود صريحة للتخزين وموفر البيانات.')}
+      actions={<PreviewNotice />}
+    />
+
+    <section className="enterprise-kpi-grid">
+      <div className="enterprise-kpi-card"><span className="enterprise-kpi-icon"><Users size={18}/></span><div><small><BilingualText value={bi('Linked children', 'الأبناء المرتبطون')} /></small><strong>{children.length}</strong><p><BilingualText value={bi('Provider relationships', 'علاقات موفر البيانات')} /></p></div></div>
+      <div className="enterprise-kpi-card"><span className="enterprise-kpi-icon"><FileText size={18}/></span><div><small><BilingualText value={bi('Document records', 'سجلات الوثائق')} /></small><strong>—</strong><p><BilingualText value={bi('Document contract not connected', 'عقد الوثائق غير متصل')} /></p></div></div>
+    </section>
+
+    <section className="parent-panel">
+      <div className="parent-panel-head"><div><h2><BilingualText value={bi('Storage boundary', 'حدود التخزين')} /></h2><p><BilingualText value={bi('The current shared provider does not expose family document metadata, file storage, signed URLs, upload status or download permissions.', 'لا يعرض موفر البيانات المشترك الحالي بيانات وصفية لوثائق الأسرة أو تخزين الملفات أو الروابط الموقعة أو حالة الرفع أو صلاحيات التنزيل.')} /></p></div></div>
+      <div className="parent-truth" style={{ marginTop: 14 }}><ShieldCheck size={13}/><BilingualText value={bi('Fabricated medical certificates, consent forms, file sizes and download buttons have been removed. No document is claimed to exist until a verified document/storage contract provides it.', 'تمت إزالة الشهادات الطبية ونماذج الموافقة وأحجام الملفات وأزرار التنزيل المختلقة. لا يتم الادعاء بوجود أي وثيقة حتى يوفرها عقد وثائق/تخزين موثق.')} /></div>
+    </section>
+
+    <EnterpriseEmpty
+      title={bi('Document service not connected yet', 'خدمة الوثائق غير متصلة بعد')}
+      description={bi('When verified document metadata and storage permissions are connected, family-scoped files can be listed here safely.', 'عند ربط بيانات وصفية موثقة للوثائق وصلاحيات التخزين، يمكن عرض ملفات الأسرة هنا بأمان.')}
+    />
+  </div>;
 }
