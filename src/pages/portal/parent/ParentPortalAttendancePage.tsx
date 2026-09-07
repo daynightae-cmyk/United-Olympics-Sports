@@ -1,27 +1,54 @@
-import { CalendarDays, CheckCircle2, Clock, ShieldCheck, XCircle } from 'lucide-react';
-import { useState } from 'react';
+import { CheckCircle2, ShieldCheck, UserRound } from 'lucide-react';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
-import { getFamilyAttendance, getLinkedChildren } from '../../../portals/parent/parentData';
-
-const labels = {
-  present: bi('Present', 'حاضر'), late: bi('Late', 'متأخر'), excused: bi('Excused', 'بعذر'), absent: bi('Absent', 'غائب'),
-};
-
-type Filter = 'all' | keyof typeof labels;
+import { EnterpriseEmpty } from '../../../components/enterprise/EnterpriseUI';
+import { useParentPortalGatewayData } from '../../../portals/parent/useParentPortalGatewayData';
 
 export function ParentPortalAttendancePage() {
-  const children = getLinkedChildren();
-  const stats = getFamilyAttendance(children);
-  const [filter, setFilter] = useState<Filter>('all');
-  const rows = stats.records.filter((row) => filter === 'all' || row.status === filter);
+  const { parent, children, loading, error } = useParentPortalGatewayData();
+
+  if (loading && !parent) return <div className="parent-empty" role="status"><div><CheckCircle2/><h3><BilingualText value={bi('Loading attendance summaries…','جارٍ تحميل ملخصات الحضور…')}/></h3></div></div>;
+  if (error) return <div className="parent-empty" role="alert"><div><CheckCircle2/><h3><BilingualText value={bi('Attendance provider unavailable','موفر بيانات الحضور غير متاح')}/></h3></div></div>;
+  if (!parent) return <EnterpriseEmpty title={bi('Family profile unavailable','ملف الأسرة غير متاح')} description={bi('Sign in again from the Parent login page.','سجّل الدخول مجددًا من صفحة ولي الأمر.')} />;
+
+  const average = children.length ? Math.round(children.reduce((sum, child) => sum + child.attendanceRate, 0) / children.length) : null;
+  const strong = children.filter((child) => child.attendanceRate >= 85).length;
+  const attention = children.filter((child) => child.attendanceRate < 70).length;
 
   return <div className="parent-page">
-    <section className="parent-hero"><div className="parent-hero-row"><div><span className="parent-kicker"><CheckCircle2 size={18}/><BilingualText value={bi('Family Attendance Records','سجلات حضور الأسرة')}/></span><h1><BilingualText value={bi('Attendance','الحضور')}/></h1><p><BilingualText value={bi('Attendance is calculated only from recorded child attendance entries. Missing dates are not treated as absences.','يتم حساب الحضور فقط من سجلات الحضور الفعلية للأبناء. ولا يتم اعتبار التواريخ المفقودة حالات غياب.')}/></p></div><span className="parent-scope"><ShieldCheck size={12}/><BilingualText value={bi('Recorded entries only','السجلات المسجلة فقط')}/></span></div><div className="parent-metrics"><Metric label={bi('Family rate','نسبة الأسرة')} value={stats.rate===null?'Not recorded':`${stats.rate}%`} tone="green"/><Metric label={bi('Recorded entries','السجلات')} value={String(stats.total)}/><Metric label={bi('Present','حاضر')} value={String(stats.present)}/><Metric label={bi('Late','متأخر')} value={String(stats.late)} tone="gold"/></div></section>
+    <section className="parent-hero">
+      <div className="parent-hero-row">
+        <div>
+          <span className="parent-kicker"><CheckCircle2 size={18}/><BilingualText value={bi('Family Attendance Summary','ملخص حضور الأسرة')}/></span>
+          <h1><BilingualText value={bi('Attendance','الحضور')}/></h1>
+          <p><BilingualText value={bi('Attendance percentages are read from the shared provider player summaries. Detailed day-by-day records are not exposed by the current Parent data contract.','يتم قراءة نسب الحضور من ملخصات اللاعبين لدى موفر البيانات المشترك. السجل اليومي التفصيلي غير متاح حاليًا في عقد بيانات ولي الأمر.')}/></p>
+        </div>
+        <span className="parent-scope"><ShieldCheck size={12}/><BilingualText value={bi('Provider summaries only','ملخصات موفر البيانات فقط')}/></span>
+      </div>
+      <div className="parent-metrics">
+        <Metric label={bi('Family average','متوسط الأسرة')} value={average===null?'—':`${average}%`} tone="green"/>
+        <Metric label={bi('Linked children','الأبناء المرتبطون')} value={String(children.length)}/>
+        <Metric label={bi('85% or higher','85% أو أكثر')} value={String(strong)} tone="green"/>
+        <Metric label={bi('Below 70%','أقل من 70%')} value={String(attention)} tone={attention?'gold':''}/>
+      </div>
+    </section>
 
-    <section className="parent-panel"><div className="parent-panel-head"><div><h2><BilingualText value={bi('Attendance history','سجل الحضور')}/></h2><p><BilingualText value={bi('Filter recorded attendance across all linked children.','فلترة سجلات الحضور لجميع الأبناء المرتبطين.')}/></p></div></div><div className="parent-filter-row" style={{marginTop:14}}>{(['all','present','late','excused','absent'] as const).map(value=><button type="button" key={value} onClick={()=>setFilter(value)} className={filter===value?'active':''}><BilingualText value={value==='all'?bi('All','الكل'):labels[value]}/></button>)}</div>
-      {rows.length ? <div className="parent-list" style={{marginTop:14}}>{rows.map(row=><div className="parent-list-row" key={`${row.child.id}-${row.id}`}><div><strong>{row.child.nameEn} · {row.child.nameAr}</strong><small>{new Date(row.date).toLocaleDateString('en',{year:'numeric',month:'short',day:'numeric'})} · {new Date(row.date).toLocaleDateString('ar',{year:'numeric',month:'short',day:'numeric'})}</small></div><span className={`parent-status ${row.status==='present'?'good':row.status==='late'?'warn':'neutral'}`}>{row.status==='present'?<CheckCircle2 size={12}/>:row.status==='late'?<Clock size={12}/>:row.status==='absent'?<XCircle size={12}/>:<CalendarDays size={12}/>}<BilingualText value={labels[row.status]}/></span></div>)}</div> : <div className="parent-empty" style={{marginTop:14}}><div><CalendarDays/><h3><BilingualText value={bi('No attendance records match','لا توجد سجلات حضور مطابقة')}/></h3><p><BilingualText value={bi('No entry matches the current filter or no attendance has been recorded yet.','لا يوجد سجل يطابق الفلتر الحالي أو لم يتم تسجيل الحضور بعد.')}/></p></div></div>}
+    {children.length ? <section className="parent-grid-2">{children.map((child) => <article className="parent-panel" key={child.id}>
+      <div className="parent-card-head">
+        <span className="parent-avatar"><UserRound size={18}/></span>
+        <div><h2>{child.nameEn}</h2><small lang="ar" dir="rtl">{child.nameAr}</small></div>
+        <span className={`parent-status ${child.attendanceRate >= 85 ? 'good' : child.attendanceRate < 70 ? 'warn' : 'neutral'}`} style={{marginInlineStart:'auto'}}>{child.attendanceRate}%</span>
+      </div>
+      <div className="parent-field-grid" style={{marginTop:14}}>
+        <Field label={bi('Attendance rate','نسبة الحضور')} value={`${child.attendanceRate}%`}/>
+        <Field label={bi('Player status','حالة اللاعب')} value={`${child.status.en} · ${child.status.ar}`}/>
+      </div>
+    </article>)}</section> : <EnterpriseEmpty title={bi('No linked children','لا يوجد أبناء مرتبطون')} description={bi('No attendance summary can be shown until an athlete is linked to this Parent record.','لا يمكن عرض ملخص حضور حتى يتم ربط لاعب بسجل ولي الأمر.')} />}
+
+    <section className="parent-panel" style={{marginTop:16}}>
+      <div className="parent-panel-head"><div><h2><BilingualText value={bi('Detailed attendance history','سجل الحضور التفصيلي')}/></h2><p><BilingualText value={bi('Not available from the current provider contract. The portal does not fabricate present/late/absent dates.', 'غير متاح من عقد موفر البيانات الحالي. لا تقوم البوابة باختلاق تواريخ حضور أو تأخير أو غياب.')} /></p></div></div>
     </section>
   </div>;
 }
 
 function Metric({label,value,tone='' }:{label:{en:string;ar:string};value:string;tone?:string}){return <div className="parent-metric"><span><BilingualText value={label}/></span><strong className={tone}>{value}</strong></div>}
+function Field({label,value}:{label:{en:string;ar:string};value:string}){return <div className="parent-field"><span><BilingualText value={label}/></span><strong>{value}</strong></div>}
