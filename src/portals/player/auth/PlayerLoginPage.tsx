@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { PortalAuthPage, type PortalAuthNotice, type PortalAuthProvider } from '../../../components/auth/PortalAuthPage';
@@ -7,10 +7,18 @@ import { usePlayerSession } from '../PlayerSessionContext';
 import { previewAuthGateway, productionAuthGateway } from './PlayerAuthGateway';
 
 export function PlayerLoginPage() {
-  const { allPlayers, login } = usePlayerSession();
+  const { allPlayers, login, loading } = usePlayerSession();
   const navigate = useNavigate();
-  const [selectedAthleteId, setSelectedAthleteId] = useState(() => allPlayers[0]?.id ?? '');
+  const [selectedAthleteId, setSelectedAthleteId] = useState('');
   const [previewLoading, setPreviewLoading] = useState(false);
+
+  useEffect(() => {
+    if (!allPlayers.length) {
+      setSelectedAthleteId('');
+      return;
+    }
+    setSelectedAthleteId((current) => allPlayers.some((player) => player.id === current) ? current : allPlayers[0].id);
+  }, [allPlayers]);
 
   const handleProvider = async (provider: PortalAuthProvider): Promise<PortalAuthNotice | null> => {
     if (provider !== 'google' && provider !== 'apple') {
@@ -39,7 +47,7 @@ export function PlayerLoginPage() {
   };
 
   const enterPreview = async () => {
-    if (!selectedAthleteId) return;
+    if (!selectedAthleteId || !allPlayers.some((player) => player.id === selectedAthleteId)) return;
     setPreviewLoading(true);
     const result = await previewAuthGateway.enterPreviewMode(selectedAthleteId);
     setPreviewLoading(false);
@@ -55,21 +63,29 @@ export function PlayerLoginPage() {
         <span><Sparkles aria-hidden="true" /><BilingualText value={bi('Development preview', 'معاينة التطوير')} /></span>
         <span className="portal-auth-preview-badge">Preview</span>
       </div>
-      <label htmlFor="player-preview-identity">
-        <BilingualText value={bi('Select a clearly labelled preview athlete', 'اختر رياضي معاينة موضحًا بوضوح')} />
-      </label>
-      <select id="player-preview-identity" value={selectedAthleteId} onChange={(event) => setSelectedAthleteId(event.target.value)}>
-        {allPlayers.map((player) => (
-          <option key={player.id} value={player.id}>{player.nameEn} — {player.nameAr}</option>
-        ))}
-      </select>
-      <button type="button" onClick={() => void enterPreview()} disabled={previewLoading || !selectedAthleteId}>
-        {previewLoading
-          ? <BilingualText value={bi('Opening preview…', 'جارٍ فتح المعاينة…')} />
-          : <BilingualText value={bi('Enter Preview Athlete Mode', 'الدخول إلى وضع معاينة اللاعب')} />}
-      </button>
+      {loading ? (
+        <p><BilingualText value={bi('Loading available athlete records…', 'جارٍ تحميل سجلات اللاعبين المتاحة…')} /></p>
+      ) : allPlayers.length ? (
+        <>
+          <label htmlFor="player-preview-identity">
+            <BilingualText value={bi('Select an athlete record exposed by the shared provider', 'اختر سجل لاعب متاحًا من مزود البيانات المشترك')} />
+          </label>
+          <select id="player-preview-identity" value={selectedAthleteId} onChange={(event) => setSelectedAthleteId(event.target.value)}>
+            {allPlayers.map((player) => (
+              <option key={player.id} value={player.id}>{player.nameEn} — {player.nameAr}</option>
+            ))}
+          </select>
+          <button type="button" onClick={() => void enterPreview()} disabled={previewLoading || !selectedAthleteId}>
+            {previewLoading
+              ? <BilingualText value={bi('Opening preview…', 'جارٍ فتح المعاينة…')} />
+              : <BilingualText value={bi('Enter Preview Athlete Mode', 'الدخول إلى وضع معاينة اللاعب')} />}
+          </button>
+        </>
+      ) : (
+        <p><BilingualText value={bi('No athlete records are available from the current data provider. Preview sign-in cannot create a synthetic athlete.', 'لا توجد سجلات لاعبين متاحة من مزود البيانات الحالي. ولا يمكن لدخول المعاينة إنشاء لاعب اصطناعي.')} /></p>
+      )}
     </div>
   );
 
-  return <PortalAuthPage portal="player" busy={previewLoading} extraContent={previewContent} onProvider={handleProvider} />;
+  return <PortalAuthPage portal="player" busy={previewLoading || loading} extraContent={previewContent} onProvider={handleProvider} />;
 }
