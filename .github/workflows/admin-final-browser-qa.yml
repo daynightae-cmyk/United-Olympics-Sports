@@ -36,7 +36,11 @@ jobs:
           done
           cat /tmp/admin-final-preview.log
           exit 1
-      - name: Critical CRUD persistence and full browser matrix
+      - name: Critical CRUD persistence and baseline browser matrix
         env:
           UOS_BASE_URL: http://127.0.0.1:4173
         run: node qa/admin-final-closure.mjs
+      - name: Strict Settings theme direction and runtime matrix
+        env:
+          UOS_BASE_URL: http://127.0.0.1:4173
+        run: node qa/admin-theme-runtime-certification.mjs
