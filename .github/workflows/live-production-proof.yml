@@ -1,0 +1,73 @@
+name: Live Production Proof
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-production-proof
+  cancel-in-progress: true
+
+jobs:
+  live-production-browser-matrix:
+    name: Live Production (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: Chromium
+            engine: chromium
+          - browser: Firefox
+            engine: firefox
+          - browser: WebKit
+            engine: webkit
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install ${{ matrix.browser }} runtime
+        run: npx playwright install --with-deps ${{ matrix.engine }}
+
+      - name: Resolve live production URL
+        shell: bash
+        run: |
+          set -euo pipefail
+          selected=""
+          for candidate in \
+            "https://unitedolympicsports.store" \
+            "https://united-olympics-sports.vercel.app"
+          do
+            echo "Probing $candidate"
+            status="$(curl -L -sS -o /tmp/uos-live-probe.html -w '%{http_code}' --max-time 30 "$candidate/" || true)"
+            echo "$candidate -> HTTP $status"
+            if [[ "$status" =~ ^[123][0-9][0-9]$ ]]; then
+              selected="$candidate"
+              break
+            fi
+          done
+
+          if [ -z "$selected" ]; then
+            echo "No production candidate returned HTTP < 400"
+            exit 1
+          fi
+
+          echo "UOS_LIVE_URL=$selected" >> "$GITHUB_ENV"
+          echo "Selected production URL: $selected"
+
+      - name: Run live runtime matrix
+        env:
+          UOS_QA_BROWSER: ${{ matrix.browser }}
+        run: node qa/live-production-proof.mjs

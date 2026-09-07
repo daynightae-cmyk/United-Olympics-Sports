@@ -9,7 +9,7 @@ const portalHome: Record<SharedPortalKind, string> = { parent: '/parent', coach:
 
 export function PortalRouteLoader({ portal }: { portal: SharedPortalKind }) {
   return (
-    <div className="portal-route-state portal-route-loading" role="status" aria-live="polite">
+    <div data-route-loading="true" className="portal-route-state portal-route-loading" role="status" aria-live="polite" aria-busy="true">
       <div className="portal-route-state__icon"><LoaderCircle aria-hidden="true" /></div>
       <div className="portal-route-state__copy">
         <strong><BilingualText value={bi('Loading workspace', 'جارٍ تحميل مساحة العمل')} /></strong>

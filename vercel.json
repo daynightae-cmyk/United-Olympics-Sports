@@ -4,9 +4,13 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+    { "source": "/api/v1/health", "destination": "/api/index?route=health" },
+    { "source": "/api/v1/admin/whoami", "destination": "/api/index?route=admin-whoami" },
+    { "source": "/api/v1/requests/sports", "destination": "/api/index?route=sport-request" },
+    { "source": "/api/v1/catalog", "destination": "/api/index?route=catalog" },
+    { "source": "/auth/session", "destination": "/api/index?route=auth-session" },
+    { "source": "/auth/revoke", "destination": "/api/index?route=auth-revoke" },
+    { "source": "/public/enquiries", "destination": "/api/index?route=public-enquiries" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

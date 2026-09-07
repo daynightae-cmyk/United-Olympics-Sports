@@ -26,7 +26,7 @@ function LazyRoute({ Component }: { Component: ComponentType }) {
   return (
     <Suspense
       fallback={
-        <div className="athlete-glass-card" style={{ padding: 32, textAlign: 'center', margin: 24 }}>
+        <div data-route-loading="true" role="status" aria-live="polite" aria-busy="true" className="athlete-glass-card" style={{ padding: 32, textAlign: 'center', margin: 24 }}>
           <BilingualText value={{ en: 'Loading…', ar: 'جارٍ التحميل…' }} />
         </div>
       }
