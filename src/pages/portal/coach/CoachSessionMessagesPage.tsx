@@ -1,37 +1,23 @@
-import { MessageCircle, Send, UserRound } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { MessageCircle, UserRound } from 'lucide-react';
 import { PageHeader } from '../../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
 import { PreviewNotice } from '../../../components/enterprise/EnterpriseUI';
-import { PortalSection } from '../../../components/portal/PortalUI';
-import { UiButton } from '../../../components/ui/UiPrimitives';
-import { demoParents } from '../../../data/demo/parents';
-import { demoPlayers } from '../../../data/demo/players';
-import { useCoachSession } from '../../../portals/coach/CoachSessionContext';
-
-type LocalMessage = { id: string; body: string };
+import { PortalPreviewCard, PortalSection, PortalStatus } from '../../../components/portal/PortalUI';
+import { useCoachPortalGatewayData } from '../../../portals/coach/useCoachPortalGatewayData';
 
 export function CoachSessionMessagesPage() {
-  const { coach } = useCoachSession();
-  const scopedPlayers = useMemo(() => {
-    if (!coach) return [];
-    return demoPlayers.filter((player) => coach.playerIds.includes(player.id) || coach.groupIds.includes(player.groupId ?? ''));
-  }, [coach]);
-  const scopedPlayerIds = useMemo(() => new Set(scopedPlayers.map((player) => player.id)), [scopedPlayers]);
-  const scopedParents = useMemo(() => demoParents.filter((parent) => parent.playerIds.some((id) => scopedPlayerIds.has(id))), [scopedPlayerIds]);
-  const [selectedParentId, setSelectedParentId] = useState<string>('');
-  const selectedParent = scopedParents.find((parent) => parent.id === selectedParentId) ?? scopedParents[0];
-  const [messages, setMessages] = useState<Record<string, LocalMessage[]>>({});
-  const [draft, setDraft] = useState('');
+  const { coach, messages, players, parents, loading, error } = useCoachPortalGatewayData();
 
-  const send = () => {
-    if (!selectedParent || !draft.trim()) return;
-    const body = draft.trim();
-    setMessages((current) => ({
-      ...current,
-      [selectedParent.id]: [...(current[selectedParent.id] ?? []), { id: `${selectedParent.id}-${Date.now()}`, body }],
-    }));
-    setDraft('');
+  if (loading) return <div className="admin-page"><div className="ui-skeleton" role="status"><span><BilingualText value={bi('Loading messages…', 'جارٍ تحميل الرسائل…')} /></span><i /><i /><i /></div></div>;
+  if (error || !coach) return <div className="admin-page"><div className="enterprise-empty"><MessageCircle size={24} /><h3><BilingualText value={bi('Messages unavailable', 'الرسائل غير متاحة')} /></h3><p><BilingualText value={bi('The current provider could not supply coach messages.', 'تعذر على مصدر البيانات الحالي توفير رسائل المدرب.')} /></p></div></div>;
+
+  const labelFor = (id: string) => {
+    if (id === coach.id) return { en: coach.nameEn, ar: coach.nameAr };
+    const player = players.find((item) => item.id === id);
+    if (player) return { en: player.nameEn, ar: player.nameAr };
+    const parent = parents.find((item) => item.id === id);
+    if (parent) return { en: parent.nameEn, ar: parent.nameAr };
+    return { en: id, ar: id };
   };
 
   return (
@@ -39,38 +25,21 @@ export function CoachSessionMessagesPage() {
       <PageHeader
         icon={MessageCircle}
         eyebrow={bi('Coach Portal · Messages', 'بوابة المدرب · الرسائل')}
-        title={bi('Session-Scoped Inbox', 'صندوق الرسائل حسب جلسة المدرب')}
-        description={bi('Only family contacts connected to the active coach roster are available in this preview workspace.', 'تظهر في مساحة المعاينة هذه جهات الأسرة المرتبطة فقط بقائمة المدرب النشط.')}
+        title={bi('Coach Inbox', 'صندوق رسائل المدرب')}
+        description={bi('Only provider messages where the active coach is a sender or recipient are shown.', 'تظهر فقط رسائل مصدر البيانات التي يكون فيها المدرب النشط مرسلًا أو مستلمًا.')}
         actions={<PreviewNotice />}
       />
-      <div className="portal-card-grid">
-        <PortalSection title={bi('Roster contacts', 'جهات اتصال القائمة')} description={bi('Derived from the active coach assignment.', 'مشتقة من تكليف المدرب النشط.')}>
-          {scopedParents.length ? (
-            <div className="message-thread">
-              {scopedParents.map((parent) => (
-                <button key={parent.id} type="button" className="message-bubble" onClick={() => setSelectedParentId(parent.id)} aria-pressed={selectedParent?.id === parent.id}>
-                  <strong><BilingualText value={{ en: parent.nameEn, ar: parent.nameAr }} /></strong>
-                  <p>{parent.playerIds.filter((id) => scopedPlayerIds.has(id)).length} <BilingualText value={bi('linked athlete(s)', 'رياضي/رياضيون مرتبطون')} /></p>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="enterprise-empty"><UserRound size={24} /><h3><BilingualText value={bi('No family contacts in scope', 'لا توجد جهات أسرة ضمن النطاق')} /></h3></div>
-          )}
-        </PortalSection>
-        <PortalSection title={selectedParent ? { en: selectedParent.nameEn, ar: selectedParent.nameAr } : bi('Conversation', 'المحادثة')} description={bi('Local preview only — no delivery or backend write is claimed.', 'معاينة محلية فقط — لا يوجد ادعاء تسليم أو كتابة إلى الخادم.')}>
-          <div className="message-thread">
-            {(selectedParent ? messages[selectedParent.id] ?? [] : []).map((message) => (
-              <article className="message-bubble" key={message.id}><strong><BilingualText value={bi('Coach · Local preview', 'المدرب · معاينة محلية')} /></strong><p>{message.body}</p></article>
-            ))}
-            {selectedParent && !(messages[selectedParent.id]?.length) && <p><BilingualText value={bi('No local preview replies yet.', 'لا توجد ردود معاينة محلية بعد.')} /></p>}
-          </div>
-          <div className="portal-composer">
-            <textarea value={draft} onChange={(event) => setDraft(event.target.value)} rows={3} disabled={!selectedParent} placeholder="Write local preview reply | اكتب ردًا تجريبيًا محليًا" />
-            <UiButton type="button" variant="primary" onClick={send} disabled={!selectedParent || !draft.trim()}><Send size={14} /><BilingualText value={bi('Append locally', 'إضافة محليًا')} /></UiButton>
-          </div>
-        </PortalSection>
-      </div>
+      <PortalSection title={bi('Provider conversations', 'محادثات مصدر البيانات')} description={bi('Read-only until the Coach Portal has a production-safe message write contract.', 'للقراءة فقط حتى تتوفر لبوابة المدرب عملية كتابة رسائل آمنة للإنتاج.')}>
+        {messages.length ? <div className="message-thread">{messages.map((message) => (
+          <article className="message-bubble" key={message.id}>
+            <strong><BilingualText value={message.subject} /></strong>
+            <p><BilingualText value={message.body} /></p>
+            <small><BilingualText value={labelFor(message.fromId)} /> · {new Date(message.sentAt).toLocaleString()}</small>
+            <PortalStatus label={message.readAt ? bi('Read', 'مقروءة') : bi('Delivered record', 'سجل تسليم')} tone={message.readAt ? 'active' : 'neutral'} />
+          </article>
+        ))}</div> : <div className="enterprise-empty"><UserRound size={24} /><h3><BilingualText value={bi('No coach messages in scope', 'لا توجد رسائل للمدرب ضمن النطاق')} /></h3><p><BilingualText value={bi('No provider message currently includes the active coach as sender or recipient.', 'لا توجد رسالة في مصدر البيانات تتضمن المدرب النشط كمرسل أو مستلم حاليًا.')} /></p></div>}
+      </PortalSection>
+      <PortalPreviewCard title={bi('Message write boundary', 'حدود كتابة الرسائل')} description={bi('Send and Reply controls are intentionally absent until the gateway exposes a production-safe coach messaging mutation.', 'تمت إزالة عناصر الإرسال والرد عمدًا حتى توفر بوابة البيانات عملية مراسلة آمنة للمدرب في الإنتاج.')} />
     </div>
   );
 }
