@@ -20,26 +20,16 @@ import {
   UsersRound,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { UiEmptyState, UiStatusBadge } from '../../components/ui/UiPrimitives';
-import type { StoreCategory, StoreProduct } from '../storeTypes';
+import { StoreDataProvider, useStoreData } from '../data/StoreDataProvider';
 import '../../styles/store-commerce.css';
 
-const isPreview = import.meta.env.DEV;
-
-function usePreviewCatalog() {
-  const [data, setData] = useState<{ products: StoreProduct[]; categories: StoreCategory[] }>({ products: [], categories: [] });
-  useEffect(() => {
-    if (!isPreview) return;
-    let active = true;
-    void import('../storeData.preview').then((module) => {
-      if (active) setData({ products: module.previewProducts, categories: module.previewCategories });
-    });
-    return () => { active = false; };
-  }, []);
-  return data;
+function useCatalog() {
+  const { products, categories, mode } = useStoreData();
+  return { products, categories, isPreview: mode === 'preview' };
 }
 
 function AdminHeading({ eyebrow, title, description, action }: { eyebrow: { en: string; ar: string }; title: { en: string; ar: string }; description: { en: string; ar: string }; action?: ReactNode }) {
@@ -55,7 +45,7 @@ function EmptyAdmin({ title, description }: { title: { en: string; ar: string };
 }
 
 export function StoreAdminDashboard() {
-  const { products } = usePreviewCatalog();
+  const { products, isPreview } = useCatalog();
   const cards = [
     { icon: ClipboardList, label: bi('Total Orders', 'إجمالي الطلبات'), value: '—', note: bi('Source unavailable', 'المصدر غير متاح') },
     { icon: CircleDollarSign, label: bi('Revenue', 'الإيرادات'), value: '—', note: bi('No fabricated totals', 'لا توجد إجماليات مختلقة') },
@@ -75,14 +65,14 @@ function AdminTable({ children, headers }: { children: ReactNode; headers: Array
 }
 
 export function StoreAdminProducts() {
-  const { products } = usePreviewCatalog();
+  const { products } = useCatalog();
   const [query, setQuery] = useState('');
   const filtered = products.filter((product) => `${product.name.en} ${product.name.ar} ${product.sku} ${product.category}`.toLowerCase().includes(query.toLowerCase()));
   return <div className="store-admin-page"><AdminHeading eyebrow={bi('Catalog', 'الكتالوج')} title={bi('Products', 'المنتجات')} description={bi('Manage product identity, media, pricing, variants and publishing state.', 'إدارة هوية المنتج والوسائط والأسعار والمتغيرات وحالة النشر.')} /><TruthBanner /><ResourceToolbar query={query} onQuery={setQuery} createTo="/admin/store/products/new" createLabel={bi('Create Product', 'إنشاء منتج')} />{filtered.length ? <AdminTable headers={[bi('Product', 'المنتج'), bi('Category', 'الفئة'), bi('SKU', 'رمز SKU'), bi('Price', 'السعر'), bi('Stock', 'المخزون'), bi('Status', 'الحالة'), bi('Updated', 'التحديث'), bi('Actions', 'الإجراءات')]}>{filtered.map((product) => <tr key={product.id}><td><span className="store-admin-product-cell"><i><Package /></i><span><strong><BilingualText value={product.name} /></strong><small><BilingualText value={bi('Development fixture', 'بيانات تطوير تجريبية')} /></small></span></span></td><td>{product.category}</td><td><code>{product.sku}</code></td><td>{new Intl.NumberFormat('en-AE', { style: 'currency', currency: product.currency }).format(product.price)}</td><td>—</td><td><UiStatusBadge tone="preview" label={bi('Preview', 'معاينة')} /></td><td>—</td><td><Link to={`/admin/store/products/${product.id}`} aria-label={`Edit ${product.name.en} | تعديل ${product.name.ar}`}><Edit3 /></Link></td></tr>)}</AdminTable> : <EmptyAdmin title={bi('No matching verified products', 'لا توجد منتجات موثقة مطابقة')} description={bi('Adjust the search or connect a production product source.', 'عدّل البحث أو اربط مصدر منتجات إنتاجي.')} />}</div>;
 }
 
 export function StoreAdminCategories() {
-  const { categories } = usePreviewCatalog();
+  const { categories } = useCatalog();
   const [query, setQuery] = useState('');
   const filtered = categories.filter((category) => `${category.name.en} ${category.name.ar} ${category.slug}`.toLowerCase().includes(query.toLowerCase()));
   return <div className="store-admin-page"><AdminHeading eyebrow={bi('Catalog Structure', 'هيكل الكتالوج')} title={bi('Categories', 'الفئات')} description={bi('Organize bilingual sports, types, artwork and display order.', 'تنظيم الرياضات والأنواع والوسائط وترتيب العرض باللغتين.')} /><TruthBanner /><ResourceToolbar query={query} onQuery={setQuery} createTo="/admin/store/categories/new" createLabel={bi('Create Category', 'إنشاء فئة')} />{filtered.length ? <AdminTable headers={[bi('Category', 'الفئة'), bi('Slug', 'المعرّف'), bi('Sport', 'الرياضة'), bi('Artwork', 'الوسائط'), bi('Status', 'الحالة'), bi('Sort Order', 'ترتيب العرض'), bi('Actions', 'الإجراءات')]}>{filtered.map((category, index) => <tr key={category.slug}><td><strong><BilingualText value={category.name} /></strong></td><td><code>{category.slug}</code></td><td>{category.slug}</td><td>{category.hero ? <UiStatusBadge tone="success" label={bi('Local Asset', 'أصل محلي')} /> : <UiStatusBadge tone="warning" label={bi('Pending', 'معلق')} />}</td><td><UiStatusBadge tone="preview" label={bi('Preview', 'معاينة')} /></td><td>{index + 1}</td><td><Link to={`/admin/store/categories/${category.slug}`}><Edit3 /></Link></td></tr>)}</AdminTable> : <EmptyAdmin title={bi('No matching verified categories', 'لا توجد فئات موثقة مطابقة')} description={bi('Adjust the search or connect the catalog gateway.', 'عدّل البحث أو اربط بوابة الكتالوج.')} />}</div>;
@@ -93,7 +83,7 @@ export function StoreAdminOrders() {
 }
 
 export function StoreAdminInventory() {
-  const { products } = usePreviewCatalog();
+  const { products } = useCatalog();
   return <div className="store-admin-page"><AdminHeading eyebrow={bi('Operations', 'العمليات')} title={bi('Inventory', 'المخزون')} description={bi('Variant-level availability, reservations and threshold architecture.', 'بنية التوفر والحجز وحدود التنبيه على مستوى المتغيرات.')} /><TruthBanner /><ResourceToolbar />{products.length ? <AdminTable headers={[bi('Product', 'المنتج'), bi('SKU', 'رمز SKU'), bi('Variant', 'المتغير'), bi('Available', 'المتاح'), bi('Reserved', 'المحجوز'), bi('Threshold', 'حد التنبيه'), bi('Status', 'الحالة')]}>{products.map((product) => <tr key={product.id}><td><strong><BilingualText value={product.name} /></strong></td><td><code>{product.sku}</code></td><td>—</td><td>—</td><td>—</td><td>—</td><td><UiStatusBadge tone="warning" label={bi('Not Connected', 'غير متصل')} /></td></tr>)}</AdminTable> : <EmptyAdmin title={bi('No inventory source', 'لا يوجد مصدر مخزون')} description={bi('No available, reserved or low-stock figures are being fabricated.', 'لا يتم اختلاق أرقام المتاح أو المحجوز أو المخزون المنخفض.')} />}</div>;
 }
 
@@ -130,5 +120,5 @@ export function StoreAdminOrderDetail() {
 }
 
 export function StoreAdminRouter() {
-  return <Routes><Route index element={<StoreAdminDashboard />} /><Route path="products" element={<StoreAdminProducts />} /><Route path="products/new" element={<StoreAdminEditor type="product" />} /><Route path="products/:id" element={<StoreAdminEditor type="product" />} /><Route path="categories" element={<StoreAdminCategories />} /><Route path="categories/new" element={<StoreAdminEditor type="category" />} /><Route path="categories/:id" element={<StoreAdminEditor type="category" />} /><Route path="orders" element={<StoreAdminOrders />} /><Route path="orders/:id" element={<StoreAdminOrderDetail />} /><Route path="inventory" element={<StoreAdminInventory />} /><Route path="collections" element={<StoreAdminCollections />} /><Route path="collections/new" element={<StoreAdminEditor type="collection" />} /><Route path="collections/:id" element={<StoreAdminEditor type="collection" />} /><Route path="discounts" element={<StoreAdminDiscounts />} /><Route path="settings" element={<StoreAdminSettings />} /><Route path="*" element={<Navigate to="/admin/store" replace />} /></Routes>;
+  return <StoreDataProvider><Routes><Route index element={<StoreAdminDashboard />} /><Route path="products" element={<StoreAdminProducts />} /><Route path="products/new" element={<StoreAdminEditor type="product" />} /><Route path="products/:id" element={<StoreAdminEditor type="product" />} /><Route path="categories" element={<StoreAdminCategories />} /><Route path="categories/new" element={<StoreAdminEditor type="category" />} /><Route path="categories/:id" element={<StoreAdminEditor type="category" />} /><Route path="orders" element={<StoreAdminOrders />} /><Route path="orders/:id" element={<StoreAdminOrderDetail />} /><Route path="inventory" element={<StoreAdminInventory />} /><Route path="collections" element={<StoreAdminCollections />} /><Route path="collections/new" element={<StoreAdminEditor type="collection" />} /><Route path="collections/:id" element={<StoreAdminEditor type="collection" />} /><Route path="discounts" element={<StoreAdminDiscounts />} /><Route path="settings" element={<StoreAdminSettings />} /><Route path="*" element={<Navigate to="/admin/store" replace />} /></Routes></StoreDataProvider>;
 }
