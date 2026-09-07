@@ -1,0 +1,25 @@
+name: Admin Round 1 People Schedules Gate
+on:
+  push:
+    branches:
+      - work/admin-operations-closure-20260906
+    paths:
+      - '.github/workflows/admin-round1-people-schedules-gate.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: TypeScript gate
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+      - name: Diff integrity
+        run: git diff --check
