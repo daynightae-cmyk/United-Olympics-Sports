@@ -12,6 +12,7 @@ import {
   useSubscriptions,
   useUpdatePlayer,
 } from '../../admin/data/adminHooks';
+import { useAdminData } from '../../admin/data/AdminDataProvider';
 import type {
   AchievementViewModel,
   CoachViewModel,
@@ -34,6 +35,7 @@ import type {
   Subscription,
   TrainingGroup,
 } from '../../domain/contracts';
+import { previewAuthGateway, productionAuthGateway } from './auth/PlayerAuthGateway';
 
 const AUTH_KEY = 'uos:player-portal:auth';
 const ACTIVE_PLAYER_KEY = 'uos:player-portal:active-id';
@@ -93,6 +95,8 @@ export interface PlayerAchievementItem {
   criteria?: BilingualText;
 }
 
+type PlayerSessionProviderKind = 'production' | 'preview' | null;
+
 interface PlayerSessionContextType {
   player: Player | null;
   isPlayerNotFound: boolean;
@@ -110,7 +114,7 @@ interface PlayerSessionContextType {
     absent: number;
     excused: number;
     total: number;
-    rate: number;
+    rate: number | null;
     streak: number;
   };
   metrics: PerformanceRecord[];
@@ -124,6 +128,7 @@ interface PlayerSessionContextType {
   messages: PlayerChatThread[];
   achievements: PlayerAchievementItem[];
   isAuthenticated: boolean;
+  isPreviewSession: boolean;
   activePlayerId: string | null;
   loading: boolean;
   error: Error | null;
@@ -147,6 +152,18 @@ function readActivePlayerId(): string | null {
 function readAuthFlag(): boolean {
   if (typeof window === 'undefined') return false;
   return window.localStorage.getItem(AUTH_KEY) === 'true';
+}
+
+function readSessionProvider(): PlayerSessionProviderKind {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const provider = (JSON.parse(raw) as { provider?: string }).provider;
+    return provider === 'preview' || provider === 'production' ? provider : null;
+  } catch {
+    return null;
+  }
 }
 
 function toSport(item: SportViewModel): Sport {
@@ -301,6 +318,7 @@ function toPlayerThread(
 }
 
 export function PlayerSessionProvider({ children }: { children: React.ReactNode }) {
+  const { mode: dataMode } = useAdminData();
   const playersQuery = usePlayers({ page: 1, pageSize: 2000 });
   const sportsQuery = useSports({ page: 1, pageSize: 500 });
   const groupsQuery = useGroups({ page: 1, pageSize: 2000 });
@@ -315,6 +333,7 @@ export function PlayerSessionProvider({ children }: { children: React.ReactNode 
 
   const [activePlayerId, setActivePlayerIdState] = useState<string | null>(readActivePlayerId);
   const [authRequested, setAuthRequested] = useState<boolean>(readAuthFlag);
+  const [sessionProvider, setSessionProvider] = useState<PlayerSessionProviderKind>(readSessionProvider);
 
   const playerViews = playersQuery.data.items;
   const coachViews = coachesQuery.data.items;
@@ -326,15 +345,20 @@ export function PlayerSessionProvider({ children }: { children: React.ReactNode 
     [activePlayerId, playerViews],
   );
 
-  const allPlayers = useMemo(
-    () => playerViews.map((item) => toPlayer(item, coachViews, achievementViews)),
-    [achievementViews, coachViews, playerViews],
-  );
-
   const player = useMemo(
     () => playerView ? toPlayer(playerView, coachViews, achievementViews) : null,
     [achievementViews, coachViews, playerView],
   );
+
+  const mappedPlayers = useMemo(
+    () => playerViews.map((item) => toPlayer(item, coachViews, achievementViews)),
+    [achievementViews, coachViews, playerViews],
+  );
+
+  const allPlayers = useMemo(() => {
+    if (dataMode === 'preview') return mappedPlayers;
+    return player ? [player] : [];
+  }, [dataMode, mappedPlayers, player]);
 
   const sport = useMemo(
     () => player ? sportsQuery.data.items.find((item) => item.id === player.sportId) : undefined,
@@ -383,16 +407,17 @@ export function PlayerSessionProvider({ children }: { children: React.ReactNode 
     absent: 0,
     excused: 0,
     total: 0,
-    rate: playerView?.attendanceRate ?? 0,
+    rate: typeof playerView?.attendanceRate === 'number' && Number.isFinite(playerView.attendanceRate)
+      ? playerView.attendanceRate
+      : null,
     streak: 0,
   }), [playerView?.attendanceRate]);
 
   const metrics = player?.performanceHistory ?? [];
-  const overallScore = playerView?.performanceScore ?? null;
+  const overallScore = typeof playerView?.performanceScore === 'number' && Number.isFinite(playerView.performanceScore)
+    ? playerView.performanceScore
+    : null;
 
-  // The shared gateway currently exposes aggregate player performance but no
-  // coach-feedback collection or attendance-event collection. These stay empty
-  // rather than leaking legacy fixtures back into the Player portal.
   const feedback = useMemo<CoachFeedback[]>(() => [], []);
 
   const subscriptions = useMemo<Subscription[]>(() => {
@@ -493,12 +518,14 @@ export function PlayerSessionProvider({ children }: { children: React.ReactNode 
 
   const isPlayerNotFound = Boolean(activePlayerId && !playersQuery.loading && !playerView);
   const isAuthenticated = Boolean(authRequested && playerView);
+  const isPreviewSession = sessionProvider === 'preview';
 
   useEffect(() => {
     if (playersQuery.loading || !activePlayerId) return;
     if (!playerView) {
       setAuthRequested(false);
       setActivePlayerIdState(null);
+      setSessionProvider(null);
       if (typeof window !== 'undefined') {
         window.localStorage.setItem(AUTH_KEY, 'false');
         window.localStorage.removeItem(ACTIVE_PLAYER_KEY);
@@ -509,6 +536,7 @@ export function PlayerSessionProvider({ children }: { children: React.ReactNode 
 
   const setActivePlayerId = (id: string) => {
     if (!playerViews.some((item) => item.id === id)) return;
+    if (dataMode !== 'preview' && activePlayerId && id !== activePlayerId) return;
     setActivePlayerIdState(id);
     if (typeof window !== 'undefined') window.localStorage.setItem(ACTIVE_PLAYER_KEY, id);
   };
@@ -520,13 +548,17 @@ export function PlayerSessionProvider({ children }: { children: React.ReactNode 
       if (typeof window !== 'undefined') window.localStorage.setItem(AUTH_KEY, 'false');
       return;
     }
+    setSessionProvider(readSessionProvider());
     setActivePlayerId(idToUse);
     setAuthRequested(true);
     if (typeof window !== 'undefined') window.localStorage.setItem(AUTH_KEY, 'true');
   };
 
   const logout = () => {
+    const provider = readSessionProvider();
+    void (provider === 'production' ? productionAuthGateway : previewAuthGateway).signOut().catch(() => undefined);
     setAuthRequested(false);
+    setSessionProvider(null);
     setActivePlayerIdState(null);
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(AUTH_KEY, 'false');
@@ -590,6 +622,7 @@ export function PlayerSessionProvider({ children }: { children: React.ReactNode 
         messages: threads,
         achievements,
         isAuthenticated,
+        isPreviewSession,
         activePlayerId,
         loading,
         error,
