@@ -1,1 +1,1 @@
-export { ParentPortalPaymentsPage } from './ParentPortalWorkspaces';
+export { ParentPortalPaymentsPage } from './ParentPortalGatewayPages';
