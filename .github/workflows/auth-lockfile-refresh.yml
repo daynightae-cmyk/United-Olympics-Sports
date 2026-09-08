@@ -1,0 +1,53 @@
+name: Auth Lockfile Refresh
+
+on:
+  push:
+    branches:
+      - work/supabase-oauth-provider-neutral-auth
+    paths:
+      - package.json
+      - .github/workflows/auth-lockfile-refresh.yml
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/supabase-oauth-provider-neutral-auth
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Regenerate lockfile from package manifest
+        run: npm install --package-lock-only --ignore-scripts
+      - name: Clean install
+        run: npm ci
+      - name: Audit complete dependency tree
+        run: npm audit --audit-level=moderate
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=moderate
+      - name: TypeScript
+        run: npm run lint
+      - name: Server contracts
+        run: npx tsx tests/server-contracts.ts
+      - name: Authentication contracts
+        run: npx tsx tests/auth-contracts.ts
+      - name: Production build
+        run: npm run build
+      - name: Commit regenerated lockfile
+        shell: bash
+        run: |
+          if git diff --quiet -- package-lock.json; then
+            echo "package-lock.json already current"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "build: refresh lockfile for Supabase auth client"
+          git push origin HEAD:work/supabase-oauth-provider-neutral-auth
