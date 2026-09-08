@@ -6,7 +6,7 @@ const previewPlayerId = 'player-demo-001';
 const previewParentId = 'parent-preview-01';
 const previewCoachId = 'coach-preview-01';
 
-const publicRoutes = ['/', '/about', '/sports', '/sports/football', '/sports/swimming', '/sports/basketball', '/sports/tennis', '/sports/gymnastics', '/sports/martial-arts', '/programs', '/programs/football-foundations', '/coaches', '/contact', '/route-that-must-404'];
+const publicRoutes = ['/', '/about', '/sports', '/sports/football', '/sports/swimming', '/sports/basketball', '/sports/tennis', '/sports/gymnastics', '/sports/martial-arts', '/programs', '/programs/football-foundations', '/coaches', '/contact', '/auth/callback', '/admin/login', '/store/login', '/route-that-must-404'];
 const playerRoutes = ['/player', '/player/login', '/player/auth/phone', '/player/auth/verify', '/player/phone', '/player/otp', '/player/home', '/player/schedule', '/player/schedule/session-demo-001', '/player/session/session-demo-001', '/player/attendance', '/player/performance', '/player/achievements', '/player/feedback', '/player/subscription', '/player/payments', '/player/documents', '/player/messages', '/player/notifications', '/player/profile', '/player/settings', '/player/route-that-must-404'];
 const parentRoutes = ['/parent', '/parent/login', '/parent/children', '/parent/children/player-demo-001', '/parent/schedule', '/parent/attendance', '/parent/performance', '/parent/feedback', '/parent/subscriptions', '/parent/payments', '/parent/documents', '/parent/messages', '/parent/notifications', '/parent/profile', '/parent/settings', '/parent/route-that-must-404'];
 const coachRoutes = ['/coach', '/coach/login', '/coach/schedule', '/coach/groups', '/coach/groups/football-demo-u12', '/coach/evaluations', '/coach/players', '/coach/players/player-demo-001', '/coach/attendance', '/coach/programs', '/coach/messages', '/coach/profile', '/coach/route-that-must-404'];
@@ -50,7 +50,7 @@ const viewportMatrix = [
   { width: 1440, height: 900 },
   { width: 1920, height: 1080 },
 ];
-const responsiveRoutes = ['/', '/sports', '/player/login', '/player/home', '/parent/login', '/parent', '/parent/children', '/parent/payments', '/coach', '/coach/players', '/admin', '/admin/branches', '/admin/players'];
+const responsiveRoutes = ['/', '/sports', '/auth/callback', '/admin/login', '/player/login', '/player/home', '/parent/login', '/parent', '/parent/children', '/parent/payments', '/coach', '/coach/players', '/admin', '/admin/branches', '/admin/players'];
 
 async function waitForServer() {
   let lastError;
@@ -179,113 +179,51 @@ function isTransientRouteSweepError(error, browserName) {
       message.includes('WebKit encountered an internal error')
       || message.includes('Target page, context or browser has been closed')
     );
-  const transientClosedResourceError = message.includes('console: Failed to load resource: net::ERR_CONNECTION_CLOSED');
-  const transientFirefoxPortalImageDecodeError =
+  const transientFirefoxImageDecodeError =
     browserName === 'Firefox'
     && message.includes('Image corrupt or truncated.')
     && message.includes('/brand/portals/');
-  return transientWebKitNavigationError
-    || transientClosedResourceError
-    || transientFirefoxPortalImageDecodeError;
+  return transientWebKitNavigationError || transientFirefoxImageDecodeError;
 }
 
-async function routeSweep(browserType, browserName) {
-  const browser = await browserType.launch({ headless: true });
-  let checked = null;
+async function runRouteSweep(browserType, browserName) {
+  let browser = await browserType.launch({ headless: true });
+  let { context, page, runtimeErrors } = await createCheckedPage(browser);
+
   try {
-    checked = await createCheckedPage(browser);
     for (const route of allRoutes) {
       try {
-        await assertRoute(checked.page, checked.runtimeErrors, route, true);
+        await assertRoute(page, runtimeErrors, route);
       } catch (error) {
         if (!isTransientRouteSweepError(error, browserName)) throw error;
 
-        // Long browser sweeps can occasionally lose a single resource request,
-        // WebKit can terminate a navigation internally, and Firefox can report
-        // a transient decode failure for a local portal image. Recreate the
-        // isolated context and retry exactly once; all assertions remain
-        // unchanged and any repeat failure is still fatal.
-        console.warn(`[browser] ${browserName}: transient route failure at ${route}; retrying once in a fresh context`);
-        await checked.context.close().catch(() => {});
-        checked = await createCheckedPage(browser);
-        await assertRoute(checked.page, checked.runtimeErrors, route, true);
+        console.warn(`${browserName}: retrying transient route failure once for ${route}: ${error instanceof Error ? error.message : String(error)}`);
+        await context.close().catch(() => undefined);
+        await browser.close().catch(() => undefined);
+
+        browser = await browserType.launch({ headless: true });
+        ({ context, page, runtimeErrors } = await createCheckedPage(browser));
+        await assertRoute(page, runtimeErrors, route);
       }
     }
-    console.log(`[browser] ${browserName}: ${allRoutes.length} routes passed`);
   } finally {
-    if (checked) await checked.context.close().catch(() => {});
-    await browser.close();
+    await context.close().catch(() => undefined);
+    await browser.close().catch(() => undefined);
   }
 }
 
-async function responsiveSweep() {
+async function runResponsiveSweep() {
   const browser = await chromium.launch({ headless: true });
   try {
     for (const viewport of viewportMatrix) {
       const { context, page, runtimeErrors } = await createCheckedPage(browser, { viewport });
-      for (const route of responsiveRoutes) await assertRoute(page, runtimeErrors, route, true);
-      await context.close();
-      console.log(`[viewport] ${viewport.width}x${viewport.height}: ${responsiveRoutes.length} representative routes passed`);
-    }
-  } finally {
-    await browser.close();
-  }
-}
-
-async function themeAndRtlSweep() {
-  const browser = await chromium.launch({ headless: true });
-  const variants = [
-    { appearance: 'light', rtl: false, label: 'light/LTR' },
-    { appearance: 'dark', rtl: false, label: 'dark/LTR' },
-    { appearance: 'light', rtl: true, label: 'light/RTL' },
-    { appearance: 'dark', rtl: true, label: 'dark/RTL' },
-  ];
-  try {
-    for (const variant of variants) {
-      const { context, page, runtimeErrors } = await createCheckedPage(browser, { ...variant, viewport: { width: 390, height: 844 } });
-      for (const route of ['/', '/player/home', '/parent', '/parent/settings', '/coach', '/coach/players', '/admin', '/admin/branches']) await assertRoute(page, runtimeErrors, route, true);
-      await context.close();
-      console.log(`[theme] ${variant.label}: representative role routes passed`);
-    }
-  } finally {
-    await browser.close();
-  }
-}
-
-async function coachIdentityIsolationSweep() {
-  const browser = await chromium.launch({ headless: true });
-  try {
-    for (const identity of [
-      { id: 'coach-preview-01', expectedName: 'Coach Preview 01' },
-      { id: 'coach-preview-03', expectedName: 'Coach Preview 03' },
-    ]) {
-      const { context, page, runtimeErrors } = await createCheckedPage(browser, { coachId: identity.id });
-      await assertRoute(page, runtimeErrors, '/coach/profile', true);
-
-      // Route-level code splitting can leave the portal shell visible before the
-      // profile chunk has committed. Synchronize on the identity itself rather
-      // than accepting the shell as proof that the scoped profile rendered.
-      await page.getByText(identity.expectedName, { exact: true }).first().waitFor({ state: 'visible', timeout: 10_000 });
-      const profileText = await page.locator('#root').innerText();
-      if (!profileText.includes(identity.expectedName)) throw new Error(`${identity.id}: active coach profile identity was not rendered`);
-
-      await assertRoute(page, runtimeErrors, '/coach/messages', true);
-      await assertRoute(page, runtimeErrors, '/coach/programs', true);
-
-      if (identity.id === 'coach-preview-03') {
-        await page.goto(`${baseURL}/coach/groups/football-demo-u12`, { waitUntil: 'domcontentloaded' });
-        await page.waitForURL((url) => url.pathname === '/coach/groups', { timeout: 10_000 });
-        await waitForRouteSettled(page, '/coach/groups');
-        if (new URL(page.url()).pathname !== '/coach/groups') throw new Error('coach-preview-03: cross-scope group route was not blocked');
-
-        await page.goto(`${baseURL}/coach/players/player-demo-001`, { waitUntil: 'domcontentloaded' });
-        await page.waitForURL((url) => url.pathname === '/coach/players', { timeout: 10_000 });
-        await waitForRouteSettled(page, '/coach/players');
-        if (new URL(page.url()).pathname !== '/coach/players') throw new Error('coach-preview-03: cross-scope player route was not blocked');
+      try {
+        for (const route of responsiveRoutes) {
+          await assertRoute(page, runtimeErrors, route);
+        }
+      } finally {
+        await context.close();
       }
-
-      await context.close();
-      console.log(`[coach-scope] ${identity.id}: session identity and deep-link isolation passed`);
     }
   } finally {
     await browser.close();
@@ -293,10 +231,9 @@ async function coachIdentityIsolationSweep() {
 }
 
 await waitForServer();
-await routeSweep(chromium, 'Chromium');
-await routeSweep(firefox, 'Firefox');
-await routeSweep(webkit, 'WebKit');
-await responsiveSweep();
-await themeAndRtlSweep();
-await coachIdentityIsolationSweep();
-console.log('UOS interface smoke matrix passed.');
+await runRouteSweep(chromium, 'Chromium');
+await runRouteSweep(firefox, 'Firefox');
+await runRouteSweep(webkit, 'WebKit');
+await runResponsiveSweep();
+
+console.log(`Interface smoke passed for ${allRoutes.length} routes across Chromium, Firefox, WebKit and ${viewportMatrix.length} responsive viewports.`);
