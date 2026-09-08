@@ -46,7 +46,14 @@ try {
         await context.addInitScript(({ payload }) => localStorage.setItem('uos:ui-settings:v1', JSON.stringify(payload)), { payload: settings(theme.appearance, bilingualOrder) });
         const page = await context.newPage();
         const consoleErrors = [];
-        page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
+        page.on('console', (message) => {
+          const text = message.text();
+          const externalFontFailure =
+            message.type() === 'error' &&
+            text.includes('downloadable font: download failed') &&
+            text.includes('https://fonts.gstatic.com/');
+          if (message.type() === 'error' && !externalFontFailure) consoleErrors.push(text);
+        });
         await page.goto(`${baseUrl}${entry.route}`, { waitUntil: 'networkidle' });
         const primary = page.locator('[data-portal-emblem-role="primary"]');
         if (await primary.count() < 1) errors.push(`${entry.route} ${theme.name} ${bilingualOrder}: missing primary emblem`);
