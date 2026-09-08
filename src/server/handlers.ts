@@ -57,6 +57,7 @@ export const sessionHandler: RouteHandler = async (req, res) => {
     ok: true,
     session: {
       uid: identity.uid,
+      provider: identity.provider,
       ...(identity.email ? { email: identity.email } : {}),
       roles: identity.roles,
       scopes: identity.scopes,
@@ -67,11 +68,14 @@ export const sessionHandler: RouteHandler = async (req, res) => {
 export const revokeHandler: RouteHandler = async (req, res) => {
   assertMethod(req, ['POST']);
   const identity = await requireIdentity(req);
+  if (identity.provider !== 'firebase') {
+    throw new ApiError(501, 'AUTH_REVOCATION_PROVIDER_UNSUPPORTED', 'Server-side revocation is unavailable for this identity provider without privileged credentials.');
+  }
   if (!authAdministrativeActionsConfigured()) {
     throw new ApiError(503, 'AUTH_ADMIN_NOT_CONFIGURED', 'Session revocation is not configured in this environment.');
   }
   try {
-    await adminAuth.revokeRefreshTokens(identity.uid);
+    await adminAuth.revokeRefreshTokens(identity.subject);
   } catch {
     throw new ApiError(503, 'AUTH_ADMIN_UNAVAILABLE', 'Session revocation is temporarily unavailable.');
   }
@@ -86,6 +90,7 @@ export const adminWhoAmIHandler: RouteHandler = async (req, res) => {
     ok: true,
     identity: {
       uid: identity.uid,
+      provider: identity.provider,
       roles: identity.roles,
       scopes: identity.scopes,
     },
