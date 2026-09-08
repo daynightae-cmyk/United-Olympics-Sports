@@ -2,17 +2,100 @@ import { adminAuth } from '../lib/firebase-admin.ts';
 import { getPool, databaseConfigured } from '../db/index.ts';
 import { ApiError, getHeader, type ApiRequest } from './http.ts';
 
-export interface VerifiedIdentity {
+export type IdentityProvider = 'supabase' | 'firebase';
+
+export interface ProviderIdentity {
+  provider: IdentityProvider;
+  subject: string;
   uid: string;
   email?: string;
+}
+
+export interface VerifiedIdentity extends ProviderIdentity {
   roles: string[];
   scopes: string[];
 }
 
-function claimStrings(value: unknown): string[] {
-  if (typeof value === 'string') return [value];
-  if (Array.isArray(value)) return value.filter((entry): entry is string => typeof entry === 'string');
-  return [];
+const DEFAULT_SUPABASE_URL = 'https://olmbezzzqavgjwydlfey.supabase.co';
+const DEFAULT_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_BU7Yk24M8ClMH_w1XL8Wgw_zSMbaXEA';
+
+function supabaseConfig(): { url: string; publishableKey: string } {
+  return {
+    url: process.env.SUPABASE_URL?.trim() || process.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL,
+    publishableKey:
+      process.env.SUPABASE_PUBLISHABLE_KEY?.trim()
+      || process.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim()
+      || DEFAULT_SUPABASE_PUBLISHABLE_KEY,
+  };
+}
+
+function tokenIssuer(token: string): string | null {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+    const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as { iss?: unknown };
+    return typeof parsed.iss === 'string' ? parsed.iss : null;
+  } catch {
+    return null;
+  }
+}
+
+export function identityFromFirebaseDecoded(decoded: { uid: string; email?: string | null }): ProviderIdentity {
+  return {
+    provider: 'firebase',
+    subject: decoded.uid,
+    uid: decoded.uid,
+    ...(decoded.email ? { email: decoded.email } : {}),
+  };
+}
+
+export function identityFromSupabaseUser(user: { id: string; email?: string | null }): ProviderIdentity {
+  return {
+    provider: 'supabase',
+    subject: user.id,
+    uid: `supabase:${user.id}`,
+    ...(user.email ? { email: user.email } : {}),
+  };
+}
+
+export async function verifySupabaseAccessToken(
+  token: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<ProviderIdentity | null> {
+  const { url, publishableKey } = supabaseConfig();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+  try {
+    const response = await fetchImpl(`${url}/auth/v1/user`, {
+      method: 'GET',
+      headers: {
+        apikey: publishableKey,
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+      signal: controller.signal,
+    });
+    if (!response.ok) return null;
+    const user = await response.json() as { id?: unknown; email?: unknown };
+    if (typeof user.id !== 'string' || !user.id) return null;
+    return identityFromSupabaseUser({
+      id: user.id,
+      ...(typeof user.email === 'string' ? { email: user.email } : {}),
+    });
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function verifyFirebaseAccessToken(token: string): Promise<ProviderIdentity | null> {
+  try {
+    const decoded = await adminAuth.verifyIdToken(token);
+    return identityFromFirebaseDecoded(decoded);
+  } catch {
+    return null;
+  }
 }
 
 export async function verifyBearerIdentity(req: ApiRequest): Promise<VerifiedIdentity> {
@@ -24,28 +107,34 @@ export async function verifyBearerIdentity(req: ApiRequest): Promise<VerifiedIde
   const token = authorization.slice('Bearer '.length).trim();
   if (!token) throw new ApiError(401, 'AUTH_REQUIRED', 'A valid sign-in token is required.');
 
-  try {
-    const decoded = await adminAuth.verifyIdToken(token);
-    const roles = new Set<string>([
-      ...claimStrings(decoded.role),
-      ...claimStrings(decoded.roles),
-      ...(decoded.admin === true ? ['admin'] : []),
-    ]);
-    const scopes = new Set<string>(claimStrings(decoded.scopes));
+  const issuer = tokenIssuer(token);
+  const { url: supabaseUrl } = supabaseConfig();
+  const supabaseIssuer = `${supabaseUrl.replace(/\/$/, '')}/auth/v1`;
 
-    return {
-      uid: decoded.uid,
-      ...(decoded.email ? { email: decoded.email } : {}),
-      roles: [...roles],
-      scopes: [...scopes],
-    };
-  } catch {
+  let providerIdentity: ProviderIdentity | null = null;
+  if (issuer === supabaseIssuer) {
+    providerIdentity = await verifySupabaseAccessToken(token);
+  } else if (issuer?.startsWith('https://securetoken.google.com/')) {
+    providerIdentity = await verifyFirebaseAccessToken(token);
+  } else {
+    providerIdentity = await verifySupabaseAccessToken(token);
+    if (!providerIdentity) providerIdentity = await verifyFirebaseAccessToken(token);
+  }
+
+  if (!providerIdentity) {
     throw new ApiError(401, 'AUTH_INVALID', 'The sign-in token is invalid or expired.');
   }
+
+  return {
+    ...providerIdentity,
+    roles: [],
+    scopes: [],
+  };
 }
 
 export async function resolveAuthorization(identity: VerifiedIdentity): Promise<VerifiedIdentity> {
-  if (!databaseConfigured()) return identity;
+  const authorizationBase: VerifiedIdentity = { ...identity, roles: [], scopes: [] };
+  if (!databaseConfigured()) return authorizationBase;
 
   try {
     const pool = getPool();
@@ -55,9 +144,9 @@ export async function resolveAuthorization(identity: VerifiedIdentity): Promise<
     ]);
 
     return {
-      ...identity,
-      roles: [...new Set([...identity.roles, ...roleResult.rows.map((row) => row.role)])],
-      scopes: [...new Set([...identity.scopes, ...scopeResult.rows.map((row) => row.scope)])],
+      ...authorizationBase,
+      roles: [...new Set(roleResult.rows.map((row) => row.role.trim()).filter(Boolean))],
+      scopes: [...new Set(scopeResult.rows.map((row) => row.scope.trim()).filter(Boolean))],
     };
   } catch {
     throw new ApiError(503, 'AUTHORIZATION_UNAVAILABLE', 'Authorization data is temporarily unavailable.');
