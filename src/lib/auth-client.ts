@@ -18,6 +18,8 @@ export type PortalBindings = {
   guardianIds: string[];
   guardianPlayerIds: string[];
   coachIds: string[];
+  coachGroupIds: string[];
+  coachPlayerIds: string[];
 };
 
 export type PortalIdentity = {
