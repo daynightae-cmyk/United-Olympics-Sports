@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Sparkles, UserRound } from 'lucide-react';
 import { PortalAuthPage, type PortalAuthNotice, type PortalAuthProvider } from '../../components/auth/PortalAuthPage';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
+import { fetchPortalIdentity, firebaseGoogleFallbackToken, signOutEverywhere } from '../../lib/auth-client';
 import { useCoachSession } from './CoachSessionContext';
 
 export function CoachLoginPage() {
@@ -17,14 +18,54 @@ export function CoachLoginPage() {
     }
   }, [allCoaches, selectedCoachId]);
 
-  const handleProvider = async (_provider: PortalAuthProvider): Promise<PortalAuthNotice | null> => ({
-    tone: 'info',
-    message: bi('Authentication is not connected yet.', 'المصادقة غير متصلة حتى الآن.'),
-  });
+  const handleProvider = async (provider: PortalAuthProvider): Promise<PortalAuthNotice | null> => {
+    if (provider !== 'google') {
+      return {
+        tone: 'info',
+        message: bi('This sign-in method is not configured in the current environment.', 'طريقة تسجيل الدخول هذه غير مهيأة في البيئة الحالية.'),
+      };
+    }
+
+    try {
+      const token = await firebaseGoogleFallbackToken();
+      const portal = await fetchPortalIdentity(token);
+      if (portal.bindings.coachIds.length !== 1) {
+        await signOutEverywhere().catch(() => undefined);
+        return {
+          tone: 'error',
+          message: portal.bindings.coachIds.length === 0
+            ? bi('Google verified the account, but it is not linked to a Coach record.', 'تم التحقق من حساب Google، لكنه غير مرتبط بسجل مدرب.')
+            : bi('This identity is linked to multiple Coach records. An administrator must resolve the binding first.', 'هذه الهوية مرتبطة بعدة سجلات مدربين. يجب على المسؤول معالجة الربط أولًا.'),
+        };
+      }
+
+      const coachId = portal.bindings.coachIds[0];
+      if (!allCoaches.some((coach) => coach.id === coachId)) {
+        await signOutEverywhere().catch(() => undefined);
+        return {
+          tone: 'error',
+          message: bi('The bound Coach record is not available from the current production data provider.', 'سجل المدرب المرتبط غير متاح من مزود بيانات الإنتاج الحالي.'),
+        };
+      }
+
+      login(coachId, 'production');
+      navigate('/coach/home', { replace: true });
+      return null;
+    } catch (authError: unknown) {
+      await signOutEverywhere().catch(() => undefined);
+      return {
+        tone: 'error',
+        message: bi(
+          authError instanceof Error ? authError.message : 'Authentication or Coach binding failed.',
+          'فشلت المصادقة أو تعذر التحقق من ربط حساب المدرب.',
+        ),
+      };
+    }
+  };
 
   const enterPreview = () => {
     if (!selectedCoachId) return;
-    login(selectedCoachId);
+    login(selectedCoachId, 'preview');
     navigate('/coach/home');
   };
 
