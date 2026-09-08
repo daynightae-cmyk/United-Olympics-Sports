@@ -1,5 +1,4 @@
-import { signInWithPopup, signOut as firebaseSignOut } from 'firebase/auth';
-import { auth, googleProvider } from '../../../lib/firebase';
+import { fetchPortalIdentity, firebaseGoogleFallbackToken, signOutEverywhere } from '../../../lib/auth-client';
 
 export interface PlayerAuthSession {
   userId: string;
@@ -30,14 +29,20 @@ export interface PlayerAuthGateway {
   isProductionConfigured(): boolean;
 }
 
+function clearProductionSession(): void {
+  localStorage.removeItem('uos:player-portal:session');
+  localStorage.removeItem('uos:player-portal:active-id');
+  localStorage.setItem('uos:player-portal:auth', 'false');
+}
+
 /**
- * Firebase can authenticate the Google identity, but the Player Portal still
- * requires an explicit backend mapping from that identity to one athlete
- * record. Until that mapping exists, no production Player session is issued.
+ * Production identity is verified by the shared auth layer, then the server
+ * must bind that canonical UID to exactly one active Player record. Google
+ * success alone never creates a Player Portal session.
  */
 export class ProductionPlayerAuthGateway implements PlayerAuthGateway {
   isProductionConfigured(): boolean {
-    return false;
+    return true;
   }
 
   async getSession(): Promise<PlayerAuthSession | null> {
@@ -54,28 +59,47 @@ export class ProductionPlayerAuthGateway implements PlayerAuthGateway {
 
   async signInWithGoogle(): Promise<AuthResult<PlayerAuthSession>> {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      await firebaseSignOut(auth).catch(() => undefined);
-      localStorage.removeItem('uos:player-portal:session');
-      localStorage.removeItem('uos:player-portal:active-id');
-      localStorage.setItem('uos:player-portal:auth', 'false');
+      const token = await firebaseGoogleFallbackToken();
+      const portal = await fetchPortalIdentity(token);
+      if (portal.bindings.playerIds.length !== 1) {
+        await signOutEverywhere().catch(() => undefined);
+        clearProductionSession();
+        const missing = portal.bindings.playerIds.length === 0;
+        return {
+          success: false,
+          error: {
+            code: missing ? 'PLAYER_BINDING_NOT_FOUND' : 'PLAYER_BINDING_AMBIGUOUS',
+            messageEn: missing
+              ? 'Google verified the account, but it is not linked to an active Player record.'
+              : 'This identity is linked to more than one Player record. An administrator must resolve the account binding before sign-in.',
+            messageAr: missing
+              ? 'تم التحقق من حساب Google، لكنه غير مرتبط بسجل لاعب نشط.'
+              : 'هذه الهوية مرتبطة بأكثر من سجل لاعب. يجب على المسؤول معالجة ربط الحساب قبل تسجيل الدخول.',
+          },
+        };
+      }
 
-      return {
-        success: false,
-        error: {
-          code: 'PLAYER_BINDING_UNCONFIGURED',
-          messageEn: `Google verified ${result.user.email ?? 'the account'}, but no production athlete-account binding service is connected yet. No Player Portal session was created.`,
-          messageAr: 'تم التحقق من حساب Google، لكن خدمة ربط الحساب بسجل لاعب إنتاجي غير متصلة حتى الآن. لم يتم إنشاء جلسة لبوابة اللاعب.',
-        },
+      const playerId = portal.bindings.playerIds[0];
+      const session: PlayerAuthSession = {
+        userId: portal.identity.uid,
+        playerId,
+        ...(portal.identity.email ? { email: portal.identity.email } : {}),
+        provider: 'production',
+        createdAt: new Date().toISOString(),
       };
+      localStorage.setItem('uos:player-portal:session', JSON.stringify(session));
+      localStorage.setItem('uos:player-portal:active-id', playerId);
+      localStorage.setItem('uos:player-portal:auth', 'true');
+      return { success: true, data: session };
     } catch (error: unknown) {
+      clearProductionSession();
       const message = error instanceof Error ? error.message : 'Google authentication failed.';
       return {
         success: false,
         error: {
-          code: 'AUTH_FAILED',
+          code: message || 'AUTH_FAILED',
           messageEn: message,
-          messageAr: 'فشلت عملية المصادقة عبر Google.',
+          messageAr: 'فشلت المصادقة أو تعذر التحقق من ربط حساب اللاعب.',
         },
       };
     }
@@ -115,10 +139,8 @@ export class ProductionPlayerAuthGateway implements PlayerAuthGateway {
   }
 
   async signOut(): Promise<void> {
-    await firebaseSignOut(auth).catch(() => undefined);
-    localStorage.removeItem('uos:player-portal:session');
-    localStorage.removeItem('uos:player-portal:active-id');
-    localStorage.setItem('uos:player-portal:auth', 'false');
+    await signOutEverywhere();
+    clearProductionSession();
   }
 }
 
