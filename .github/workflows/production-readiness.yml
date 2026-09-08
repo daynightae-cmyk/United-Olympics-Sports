@@ -14,6 +14,11 @@ on:
       - 'src/components/auth/**'
       - 'src/portals/admin/AdminAccessGate.tsx'
       - 'src/app/AppRouter.tsx'
+      - 'public/media/**'
+      - 'public/brand/**'
+      - 'media-provenance.json'
+      - 'schemas/media-provenance.schema.json'
+      - 'qa/media-provenance-gate.mjs'
       - 'server.ts'
       - 'vercel.json'
       - 'tests/server-contracts.ts'
@@ -34,6 +39,11 @@ on:
       - 'src/components/auth/**'
       - 'src/portals/admin/AdminAccessGate.tsx'
       - 'src/app/AppRouter.tsx'
+      - 'public/media/**'
+      - 'public/brand/**'
+      - 'media-provenance.json'
+      - 'schemas/media-provenance.schema.json'
+      - 'qa/media-provenance-gate.mjs'
       - 'server.ts'
       - 'vercel.json'
       - 'tests/server-contracts.ts'
@@ -51,6 +61,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -60,6 +72,8 @@ jobs:
         run: npm audit --audit-level=moderate
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=moderate
+      - name: Media provenance gate
+        run: npm run qa:media-provenance
       - run: npm run lint
       - name: Server contracts
         run: npx tsx tests/server-contracts.ts
