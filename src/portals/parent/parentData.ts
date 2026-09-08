@@ -10,7 +10,13 @@ export type ParentPortalSession = {
   parentId: string;
   provider: 'production' | 'preview';
   createdAt: string;
+  authorizedPlayerIds?: string[];
 };
+
+function normalizeIds(values: unknown): string[] | undefined {
+  if (!Array.isArray(values)) return undefined;
+  return [...new Set(values.filter((value): value is string => typeof value === 'string' && Boolean(value.trim())).map((value) => value.trim()))];
+}
 
 export function readParentSession(): ParentPortalSession | null {
   if (typeof window === 'undefined') return null;
@@ -19,12 +25,22 @@ export function readParentSession(): ParentPortalSession | null {
     if (!raw) return null;
     const value = JSON.parse(raw) as Partial<ParentPortalSession>;
     if ((value.provider !== 'preview' && value.provider !== 'production') || typeof value.parentId !== 'string' || !value.parentId) return null;
-    return { parentId: value.parentId, provider: value.provider, createdAt: value.createdAt ?? '' };
+    return {
+      parentId: value.parentId,
+      provider: value.provider,
+      createdAt: value.createdAt ?? '',
+      ...(value.provider === 'production' ? { authorizedPlayerIds: normalizeIds(value.authorizedPlayerIds) ?? [] } : {}),
+    };
   } catch { return null; }
 }
 
-function startParentSession(parentId: string, provider: ParentPortalSession['provider']): ParentPortalSession {
-  const session: ParentPortalSession = { parentId, provider, createdAt: new Date().toISOString() };
+function startParentSession(parentId: string, provider: ParentPortalSession['provider'], authorizedPlayerIds?: string[]): ParentPortalSession {
+  const session: ParentPortalSession = {
+    parentId,
+    provider,
+    createdAt: new Date().toISOString(),
+    ...(provider === 'production' ? { authorizedPlayerIds: normalizeIds(authorizedPlayerIds) ?? [] } : {}),
+  };
   try { localStorage.setItem(PARENT_SESSION_KEY, JSON.stringify(session)); } catch { /* storage may be unavailable */ }
   return session;
 }
@@ -33,8 +49,8 @@ export function startParentPreview(parentId = 'parent-preview-01') {
   return startParentSession(parentId, 'preview');
 }
 
-export function startParentProduction(parentId: string) {
-  return startParentSession(parentId, 'production');
+export function startParentProduction(parentId: string, authorizedPlayerIds: string[]) {
+  return startParentSession(parentId, 'production', authorizedPlayerIds);
 }
 
 export function clearParentSession() {
