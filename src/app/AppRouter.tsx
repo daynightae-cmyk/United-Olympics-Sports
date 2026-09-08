@@ -4,6 +4,8 @@ import { UnitedAssistant } from '../assistant/UnitedAssistant';
 import { UpdateToast } from '../platform/UpdateToast';
 import { OlympicRouteTransition } from '../components/navigation/OlympicRouteTransition';
 import { OlympicLuxurySplash } from '../components/splash/OlympicLuxurySplash';
+import { AuthCallbackPage } from '../components/auth/AuthCallbackPage';
+import { PortalLoginRoute } from '../components/auth/PortalLoginRoute';
 
 const AdminLayout = lazy(() => import('../layouts/AdminLayout').then((module) => ({ default: module.AdminLayout })));
 const PlayerPortalRouter = lazy(() => import('../portals/PlayerPortalRouter').then((module) => ({ default: module.PlayerPortalRouter })));
@@ -12,7 +14,6 @@ const CoachPortalRouter = lazy(() => import('../portals/CoachPortalRouter').then
 const AdminAccessGate = lazy(() => import('../portals/admin/AdminAccessGate').then((module) => ({ default: module.AdminAccessGate })));
 const PublicExperience = lazy(() => import('../pages/public/PublicExperience').then((module) => ({ default: module.PublicExperience })));
 const BenchmarkShowcasePage = lazy(() => import('../pages/benchmark/BenchmarkShowcasePage').then((module) => ({ default: module.BenchmarkShowcasePage })));
-const PortalAuthPage = lazy(() => import('../components/auth/PortalAuthPage').then((module) => ({ default: module.PortalAuthPage })));
 const StoreApp = lazy(() => import('../store/StoreApp').then((module) => ({ default: module.StoreApp })));
 
 function RouteFallback() {
@@ -40,8 +41,9 @@ export function AppRouter() {
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/benchmark" element={<BenchmarkShowcasePage />} />
-          <Route path="/admin/login" element={<PortalAuthPage portal="admin" />} />
-          <Route path="/store/login" element={<PortalAuthPage portal="store" />} />
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
+          <Route path="/admin/login" element={<PortalLoginRoute portal="admin" />} />
+          <Route path="/store/login" element={<PortalLoginRoute portal="store" />} />
           <Route path="/store/*" element={<StoreApp />} />
           <Route path="/admin/*" element={<AdminAccessGate><AdminLayout /></AdminAccessGate>} />
           <Route path="/player/*" element={<PlayerPortalRouter />} />
