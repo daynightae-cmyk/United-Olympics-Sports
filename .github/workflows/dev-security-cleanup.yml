@@ -1,0 +1,46 @@
+name: Dev Security Cleanup
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/dev-security-cleanup.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  remove-unused-vulnerable-tooling:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Remove unused drizzle-kit and refresh lock
+        run: |
+          npm pkg delete devDependencies.drizzle-kit
+          npm install --package-lock-only --ignore-scripts --no-fund
+      - name: Require zero moderate-or-higher vulnerabilities across full tree
+        run: npm audit --audit-level=moderate
+      - name: Validate clean install
+        run: npm ci --ignore-scripts
+      - name: TypeScript
+        run: npm run lint
+      - name: Server contracts
+        run: npx tsx tests/server-contracts.ts
+      - name: Production build
+        run: npm run build
+      - name: Commit verified cleanup and remove temporary workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/dev-security-cleanup.yml
+          git add package.json package-lock.json
+          git diff --cached --check
+          git commit -m 'security: remove unused vulnerable drizzle-kit tooling'
+          git push origin HEAD:main
