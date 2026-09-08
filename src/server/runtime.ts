@@ -1,6 +1,8 @@
 export interface RuntimeReadiness {
   databaseConfigured: boolean;
   authVerificationConfigured: boolean;
+  supabaseAuthConfigured: boolean;
+  firebaseAuthConfigured: boolean;
   authAdministrativeActionsConfigured: boolean;
   paymentConfigured: boolean;
   paymentWebhookConfigured: boolean;
@@ -24,6 +26,20 @@ export function databaseConfigured(): boolean {
   );
 }
 
+export function supabaseAuthConfigured(): boolean {
+  const url = process.env.SUPABASE_URL?.trim()
+    || process.env.VITE_SUPABASE_URL?.trim()
+    || 'https://olmbezzzqavgjwydlfey.supabase.co';
+  const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY?.trim()
+    || process.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim()
+    || 'sb_publishable_BU7Yk24M8ClMH_w1XL8Wgw_zSMbaXEA';
+  return Boolean(url && publishableKey);
+}
+
+export function firebaseAuthConfigured(): boolean {
+  return Boolean(process.env.FIREBASE_PROJECT_ID?.trim() || 'gen-lang-client-0715083591');
+}
+
 export function authAdministrativeActionsConfigured(): boolean {
   return Boolean(
     process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim() ||
@@ -32,13 +48,16 @@ export function authAdministrativeActionsConfigured(): boolean {
 }
 
 export function getRuntimeReadiness(): RuntimeReadiness {
-  const projectId = process.env.FIREBASE_PROJECT_ID?.trim() || 'gen-lang-client-0715083591';
+  const supabaseConfigured = supabaseAuthConfigured();
+  const firebaseConfigured = firebaseAuthConfigured();
   const paymentConfigured = anyPresent(['PAYMENTS_PROVIDER']);
   const paymentWebhookConfigured = allPresent(['PAYMENTS_PROVIDER', 'PAYMENTS_WEBHOOK_SECRET']);
 
   return {
     databaseConfigured: databaseConfigured(),
-    authVerificationConfigured: Boolean(projectId),
+    authVerificationConfigured: supabaseConfigured || firebaseConfigured,
+    supabaseAuthConfigured: supabaseConfigured,
+    firebaseAuthConfigured: firebaseConfigured,
     authAdministrativeActionsConfigured: authAdministrativeActionsConfigured(),
     paymentConfigured,
     paymentWebhookConfigured,
