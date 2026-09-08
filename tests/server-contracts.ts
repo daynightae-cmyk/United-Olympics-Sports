@@ -46,6 +46,10 @@ const adminDenied = await call('admin-whoami', { method: 'GET' });
 assert.equal(adminDenied.statusCode, 401);
 assert.equal((adminDenied.json() as { error: { code: string } }).error.code, 'AUTH_REQUIRED');
 
+const portalDenied = await call('portal-whoami', { method: 'GET' });
+assert.equal(portalDenied.statusCode, 401);
+assert.equal((portalDenied.json() as { error: { code: string } }).error.code, 'AUTH_REQUIRED');
+
 const invalidEnquiry = await call('public-enquiries', {
   method: 'POST',
   body: { name: 'Test User' },
