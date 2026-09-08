@@ -4,7 +4,7 @@ import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { PortalLayout } from '../layouts/PortalLayout';
 import { PortalErrorBoundary, PortalNotFoundPage, PortalRouteLoader } from '../components/portal/PortalRouteState';
 import { fetchPortalIdentity, signOutEverywhere } from '../lib/auth-client';
-import { clearParentSession, readParentSession } from './parent/parentData';
+import { clearParentSession, readParentSession, startParentProduction } from './parent/parentData';
 
 const load = <T extends Record<string, ComponentType>>(factory: () => Promise<T>, key: keyof T) =>
   lazy(() => factory().then((module) => ({ default: module[key] })));
@@ -47,11 +47,14 @@ function ParentProtectedRoute({ children }: { children: React.ReactNode }) {
       .then((portal) => {
         if (!active) return;
         const valid = portal.bindings.guardianIds.length === 1 && portal.bindings.guardianIds[0] === session.parentId;
-        setValidated(valid);
-        if (!valid) {
-          clearParentSession();
-          void signOutEverywhere().catch(() => undefined);
+        if (valid) {
+          startParentProduction(session.parentId, portal.bindings.guardianPlayerIds);
+          setValidated(true);
+          return;
         }
+        setValidated(false);
+        clearParentSession();
+        void signOutEverywhere().catch(() => undefined);
       })
       .catch(() => {
         if (!active) return;
