@@ -43,7 +43,7 @@ export function ParentLoginPage() {
         return;
       }
 
-      startParentProduction(guardianId);
+      startParentProduction(guardianId, portal.bindings.guardianPlayerIds);
       navigate('/parent', { replace: true });
     } catch (authFailure: unknown) {
       await signOutEverywhere().catch(() => undefined);
