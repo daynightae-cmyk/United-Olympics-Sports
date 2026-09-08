@@ -41,6 +41,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # Keep moderate-or-higher runtime vulnerabilities as a hard production gate.
       - run: npm ci
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=moderate
