@@ -10,9 +10,9 @@ permissions:
   contents: write
 
 jobs:
-  remove-unused-vulnerable-tooling:
+  verify-patched-drizzle-tooling:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -21,14 +21,47 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - name: Remove unused drizzle-kit and refresh lock
+      - name: Pin patched esbuild inside deprecated esbuild-kit core
         run: |
-          npm pkg delete devDependencies.drizzle-kit
+          node <<'NODE'
+          const fs = require('node:fs');
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          pkg.overrides = {
+            ...(pkg.overrides || {}),
+            '@esbuild-kit/core-utils': {
+              ...((pkg.overrides || {})['@esbuild-kit/core-utils'] || {}),
+              esbuild: '0.25.12',
+            },
+          };
+          fs.writeFileSync('package.json', `${JSON.stringify(pkg, null, 2)}\n`);
+          NODE
           npm install --package-lock-only --ignore-scripts --no-fund
       - name: Require zero moderate-or-higher vulnerabilities across full tree
         run: npm audit --audit-level=moderate
       - name: Validate clean install
         run: npm ci --ignore-scripts
+      - name: Drizzle CLI startup smoke
+        run: npx drizzle-kit --version
+      - name: Drizzle schema generation smoke
+        env:
+          SQL_HOST: 127.0.0.1
+          SQL_DB_NAME: uos_ci
+          SQL_ADMIN_USER: uos_ci
+          SQL_ADMIN_PASSWORD: uos_ci
+        run: |
+          rm -rf /tmp/uos-drizzle-smoke
+          cp src/db/drizzle.config.ts /tmp/uos-drizzle.config.ts
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = '/tmp/uos-drizzle.config.ts';
+          let content = fs.readFileSync(path, 'utf8');
+          content = content
+            .replace('"./src/db/schema.ts"', `"${process.cwd()}/src/db/schema.ts"`)
+            .replace('"./drizzle"', '"/tmp/uos-drizzle-smoke"');
+          fs.writeFileSync(path, content);
+          NODE
+          npx drizzle-kit generate --config=/tmp/uos-drizzle.config.ts --name=ci_security_smoke
+          test -d /tmp/uos-drizzle-smoke
       - name: TypeScript
         run: npm run lint
       - name: Server contracts
@@ -42,5 +75,5 @@ jobs:
           git rm .github/workflows/dev-security-cleanup.yml
           git add package.json package-lock.json
           git diff --cached --check
-          git commit -m 'security: remove unused vulnerable drizzle-kit tooling'
+          git commit -m 'security: patch dev esbuild transitive dependency'
           git push origin HEAD:main
