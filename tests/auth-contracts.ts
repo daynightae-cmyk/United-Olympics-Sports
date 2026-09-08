@@ -66,13 +66,28 @@ for (const forbidden of ['decoded.role', 'decoded.roles', 'decoded.admin', 'deco
 
 const callbackSource = await readFile(new URL('../src/components/auth/AuthCallbackPage.tsx', import.meta.url), 'utf8');
 const routerSource = await readFile(new URL('../src/app/AppRouter.tsx', import.meta.url), 'utf8');
+const serverRoutesSource = await readFile(new URL('../src/server/routes.ts', import.meta.url), 'utf8');
+const portalBindingsSource = await readFile(new URL('../src/server/portal-bindings.ts', import.meta.url), 'utf8');
 const adminGateSource = await readFile(new URL('../src/portals/admin/AdminAccessGate.tsx', import.meta.url), 'utf8');
 const supabaseClientSource = await readFile(new URL('../src/lib/supabase.ts', import.meta.url), 'utf8');
 const authClientSource = await readFile(new URL('../src/lib/auth-client.ts', import.meta.url), 'utf8');
+const playerGatewaySource = await readFile(new URL('../src/portals/player/auth/PlayerAuthGateway.ts', import.meta.url), 'utf8');
+const parentLoginSource = await readFile(new URL('../src/portals/parent/ParentLoginPage.tsx', import.meta.url), 'utf8');
+const coachLoginSource = await readFile(new URL('../src/portals/coach/CoachLoginPage.tsx', import.meta.url), 'utf8');
 
 assert.match(routerSource, /path="\/auth\/callback"/);
 assert.match(callbackSource, /exchangeSupabaseAuthCode/);
+assert.match(callbackSource, /fetchPortalIdentity/);
 assert.match(adminGateSource, /route=admin-whoami/);
+assert.match(serverRoutesSource, /portal-whoami/);
+assert.match(portalBindingsSource, /players[\s\S]*user_uid = \$1/);
+assert.match(portalBindingsSource, /guardians[\s\S]*user_uid = \$1/);
+assert.match(portalBindingsSource, /coaches[\s\S]*user_uid = \$1/);
+assert.match(portalBindingsSource, /player_guardians[\s\S]*pg\.active = true/);
+assert.equal(/where[\s\S]{0,120}email\s*=\s*\$1/i.test(portalBindingsSource), false, 'portal bindings must not guess identity from email');
+assert.match(playerGatewaySource, /fetchPortalIdentity/);
+assert.match(parentLoginSource, /fetchPortalIdentity/);
+assert.match(coachLoginSource, /fetchPortalIdentity/);
 assert.match(supabaseClientSource, /VITE_SUPABASE_PUBLISHABLE_KEY/);
 assert.equal(`${supabaseClientSource}\n${authClientSource}`.includes('service_role'), false);
 
