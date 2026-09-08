@@ -72,8 +72,11 @@ const adminGateSource = await readFile(new URL('../src/portals/admin/AdminAccess
 const supabaseClientSource = await readFile(new URL('../src/lib/supabase.ts', import.meta.url), 'utf8');
 const authClientSource = await readFile(new URL('../src/lib/auth-client.ts', import.meta.url), 'utf8');
 const playerGatewaySource = await readFile(new URL('../src/portals/player/auth/PlayerAuthGateway.ts', import.meta.url), 'utf8');
+const playerProtectedSource = await readFile(new URL('../src/portals/player/PlayerProtectedRoute.tsx', import.meta.url), 'utf8');
 const parentLoginSource = await readFile(new URL('../src/portals/parent/ParentLoginPage.tsx', import.meta.url), 'utf8');
+const parentRouterSource = await readFile(new URL('../src/portals/ParentPortalRouter.tsx', import.meta.url), 'utf8');
 const coachLoginSource = await readFile(new URL('../src/portals/coach/CoachLoginPage.tsx', import.meta.url), 'utf8');
+const coachProtectedSource = await readFile(new URL('../src/portals/coach/CoachProtectedRoute.tsx', import.meta.url), 'utf8');
 
 assert.match(routerSource, /path="\/auth\/callback"/);
 assert.match(callbackSource, /exchangeSupabaseAuthCode/);
@@ -88,6 +91,14 @@ assert.equal(/where[\s\S]{0,120}email\s*=\s*\$1/i.test(portalBindingsSource), fa
 assert.match(playerGatewaySource, /fetchPortalIdentity/);
 assert.match(parentLoginSource, /fetchPortalIdentity/);
 assert.match(coachLoginSource, /fetchPortalIdentity/);
+for (const [name, source] of [
+  ['player protected route', playerProtectedSource],
+  ['parent protected route', parentRouterSource],
+  ['coach protected route', coachProtectedSource],
+] as const) {
+  assert.match(source, /fetchPortalIdentity/, `${name} must revalidate persisted production sessions`);
+  assert.match(source, /VITE_UOS_ADMIN_PREVIEW/, `${name} must not trust preview sessions in an ordinary production build`);
+}
 assert.match(supabaseClientSource, /VITE_SUPABASE_PUBLISHABLE_KEY/);
 assert.equal(`${supabaseClientSource}\n${authClientSource}`.includes('service_role'), false);
 
