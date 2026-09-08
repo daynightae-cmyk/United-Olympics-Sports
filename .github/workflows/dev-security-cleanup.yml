@@ -50,18 +50,16 @@ jobs:
           SQL_ADMIN_PASSWORD: uos_ci
         run: |
           rm -rf /tmp/uos-drizzle-smoke
-          cp src/db/drizzle.config.ts /tmp/uos-drizzle.config.ts
           node <<'NODE'
           const fs = require('node:fs');
-          const path = '/tmp/uos-drizzle.config.ts';
+          const path = 'src/db/drizzle.config.ts';
           let content = fs.readFileSync(path, 'utf8');
-          content = content
-            .replace('"./src/db/schema.ts"', `"${process.cwd()}/src/db/schema.ts"`)
-            .replace('"./drizzle"', '"/tmp/uos-drizzle-smoke"');
+          content = content.replace('out: "./drizzle"', 'out: "/tmp/uos-drizzle-smoke"');
           fs.writeFileSync(path, content);
           NODE
-          npx drizzle-kit generate --config=/tmp/uos-drizzle.config.ts --name=ci_security_smoke
+          npx drizzle-kit generate --config=src/db/drizzle.config.ts --name=ci_security_smoke
           test -d /tmp/uos-drizzle-smoke
+          git restore src/db/drizzle.config.ts
       - name: TypeScript
         run: npm run lint
       - name: Server contracts
