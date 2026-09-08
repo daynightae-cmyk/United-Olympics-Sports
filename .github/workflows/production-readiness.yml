@@ -8,9 +8,16 @@ on:
       - 'src/server/**'
       - 'src/db/**'
       - 'src/lib/firebase-admin.ts'
+      - 'src/lib/firebase.ts'
+      - 'src/lib/supabase.ts'
+      - 'src/lib/auth-client.ts'
+      - 'src/components/auth/**'
+      - 'src/portals/admin/AdminAccessGate.tsx'
+      - 'src/app/AppRouter.tsx'
       - 'server.ts'
       - 'vercel.json'
       - 'tests/server-contracts.ts'
+      - 'tests/auth-contracts.ts'
       - '.github/workflows/production-readiness.yml'
       - 'package.json'
       - 'package-lock.json'
@@ -21,9 +28,16 @@ on:
       - 'src/server/**'
       - 'src/db/**'
       - 'src/lib/firebase-admin.ts'
+      - 'src/lib/firebase.ts'
+      - 'src/lib/supabase.ts'
+      - 'src/lib/auth-client.ts'
+      - 'src/components/auth/**'
+      - 'src/portals/admin/AdminAccessGate.tsx'
+      - 'src/app/AppRouter.tsx'
       - 'server.ts'
       - 'vercel.json'
       - 'tests/server-contracts.ts'
+      - 'tests/auth-contracts.ts'
       - '.github/workflows/production-readiness.yml'
       - 'package.json'
       - 'package-lock.json'
@@ -47,5 +61,8 @@ jobs:
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=moderate
       - run: npm run lint
-      - run: npx tsx tests/server-contracts.ts
+      - name: Server contracts
+        run: npx tsx tests/server-contracts.ts
+      - name: Authentication contracts
+        run: npx tsx tests/auth-contracts.ts
       - run: npm run build
