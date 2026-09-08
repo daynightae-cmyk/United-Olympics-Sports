@@ -61,9 +61,30 @@ export function assertMethod(req: ApiRequest, allowed: string[]): void {
   }
 }
 
+function assertPayloadSize(value: string | Buffer | Record<string, unknown>, maxBytes: number): void {
+  let bytes: number;
+
+  if (typeof value === 'string') {
+    bytes = Buffer.byteLength(value, 'utf8');
+  } else if (Buffer.isBuffer(value)) {
+    bytes = value.length;
+  } else {
+    try {
+      bytes = Buffer.byteLength(JSON.stringify(value), 'utf8');
+    } catch {
+      throw new ApiError(400, 'INVALID_JSON', 'Request body must be JSON-serializable.');
+    }
+  }
+
+  if (bytes > maxBytes) {
+    throw new ApiError(413, 'PAYLOAD_TOO_LARGE', 'Request body is too large.');
+  }
+}
+
 export async function readJsonBody(req: ApiRequest, maxBytes = 256 * 1024): Promise<Record<string, unknown>> {
   if (req.body != null) {
     if (typeof req.body === 'string') {
+      assertPayloadSize(req.body, maxBytes);
       try {
         const parsed = JSON.parse(req.body) as unknown;
         if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
@@ -77,11 +98,14 @@ export async function readJsonBody(req: ApiRequest, maxBytes = 256 * 1024): Prom
     }
 
     if (Buffer.isBuffer(req.body)) {
+      assertPayloadSize(req.body, maxBytes);
       return readJsonBody({ ...req, body: req.body.toString('utf8') }, maxBytes);
     }
 
     if (typeof req.body === 'object' && !Array.isArray(req.body)) {
-      return req.body as Record<string, unknown>;
+      const body = req.body as Record<string, unknown>;
+      assertPayloadSize(body, maxBytes);
+      return body;
     }
 
     throw new ApiError(400, 'INVALID_JSON', 'JSON body must be an object.');
