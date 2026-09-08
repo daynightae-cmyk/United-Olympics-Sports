@@ -1,0 +1,18 @@
+{
+  "$schema": "./schemas/media-provenance.schema.json",
+  "version": 1,
+  "policy": {
+    "protectedRoots": [
+      "public/media",
+      "public/brand"
+    ],
+    "allowedApprovalStatus": "approved",
+    "baselineMeaning": "Technical grandfathering only. A baseline match means the file existed unchanged when this gate was introduced; it is not a claim of copyright ownership, license, model release, trademark permission, or other legal clearance.",
+    "newOrModifiedAssetRule": "Every new or byte-modified protected media asset must have an explicit approved record with a documented rights basis, source, approver, approval date, and evidence reference before production CI may pass."
+  },
+  "baselineTrees": {
+    "public/media": "3b9e5806219b389953ddc52fc42eee0ea4169e5e",
+    "public/brand": "4bc38926cdf368684cf8a8b27005699550dddd8e"
+  },
+  "assets": {}
+}
