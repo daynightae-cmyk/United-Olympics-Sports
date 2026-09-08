@@ -1,9 +1,10 @@
 import '../styles/parent-portal-final.css';
-import { lazy, Suspense, type ComponentType } from 'react';
+import { lazy, Suspense, useEffect, useState, type ComponentType } from 'react';
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { PortalLayout } from '../layouts/PortalLayout';
 import { PortalErrorBoundary, PortalNotFoundPage, PortalRouteLoader } from '../components/portal/PortalRouteState';
-import { readParentSession } from './parent/parentData';
+import { fetchPortalIdentity, signOutEverywhere } from '../lib/auth-client';
+import { clearParentSession, readParentSession, startParentProduction } from './parent/parentData';
 
 const load = <T extends Record<string, ComponentType>>(factory: () => Promise<T>, key: keyof T) =>
   lazy(() => factory().then((module) => ({ default: module[key] })));
@@ -25,7 +26,47 @@ const ParentPortalNotificationsPage = load(() => import('../pages/portal/parent/
 const ParentPortalSettingsPage = load(() => import('../pages/portal/parent/ParentPortalSettingsPage'), 'ParentPortalSettingsPage');
 
 function ParentProtectedRoute({ children }: { children: React.ReactNode }) {
-  return readParentSession() ? children : <Navigate to="/parent/login" replace />;
+  const session = readParentSession();
+  const previewRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true';
+  const [validated, setValidated] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!session) {
+      setValidated(false);
+      return;
+    }
+    if (session.provider === 'preview') {
+      if (!previewRuntime) clearParentSession();
+      setValidated(previewRuntime);
+      return;
+    }
+
+    let active = true;
+    setValidated(null);
+    void fetchPortalIdentity()
+      .then((portal) => {
+        if (!active) return;
+        const valid = portal.bindings.guardianIds.length === 1 && portal.bindings.guardianIds[0] === session.parentId;
+        if (valid) {
+          startParentProduction(session.parentId, portal.bindings.guardianPlayerIds);
+          setValidated(true);
+          return;
+        }
+        setValidated(false);
+        clearParentSession();
+        void signOutEverywhere().catch(() => undefined);
+      })
+      .catch(() => {
+        if (!active) return;
+        setValidated(false);
+        clearParentSession();
+        void signOutEverywhere().catch(() => undefined);
+      });
+    return () => { active = false; };
+  }, [previewRuntime, session?.parentId, session?.provider]);
+
+  if (session && validated === null) return <PortalRouteLoader portal="parent" />;
+  return session && validated ? children : <Navigate to="/parent/login" replace />;
 }
 
 function ParentShellLayout() {

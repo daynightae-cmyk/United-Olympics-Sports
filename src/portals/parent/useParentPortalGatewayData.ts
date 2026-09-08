@@ -14,7 +14,11 @@ import {
 import { readParentSession } from './parentData';
 
 export function useParentPortalGatewayData() {
-  const parentId = readParentSession()?.parentId ?? '';
+  const parentSession = readParentSession();
+  const parentId = parentSession?.parentId ?? '';
+  const authorizedProductionPlayerIds = parentSession?.provider === 'production'
+    ? parentSession.authorizedPlayerIds ?? []
+    : null;
   const parentQuery = useParents({ page: 1, pageSize: 500 });
   const playerQuery = usePlayers({ page: 1, pageSize: 1000 });
   const sessionQuery = useSessions({ page: 1, pageSize: 1000 });
@@ -33,10 +37,12 @@ export function useParentPortalGatewayData() {
 
   const children = useMemo(() => {
     if (!parent) return [];
+    const serverScope = authorizedProductionPlayerIds === null ? null : new Set(authorizedProductionPlayerIds);
     return parent.playerIds
+      .filter((id) => serverScope === null || serverScope.has(id))
       .map((id) => playerQuery.data.items.find((player) => player.id === id))
       .filter((player): player is NonNullable<typeof player> => Boolean(player));
-  }, [parent, playerQuery.data.items]);
+  }, [authorizedProductionPlayerIds, parent, playerQuery.data.items]);
 
   const childIds = useMemo(() => new Set(children.map((child) => child.id)), [children]);
   const familyRecipientIds = useMemo(() => new Set([parentId, ...childIds]), [childIds, parentId]);

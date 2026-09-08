@@ -13,6 +13,26 @@ export type ServerAuthSession = {
   scopes: string[];
 };
 
+export type PortalBindings = {
+  playerIds: string[];
+  guardianIds: string[];
+  guardianPlayerIds: string[];
+  coachIds: string[];
+  coachGroupIds: string[];
+  coachPlayerIds: string[];
+};
+
+export type PortalIdentity = {
+  identity: {
+    uid: string;
+    provider: ClientAuthProvider;
+    email?: string;
+  };
+  roles: string[];
+  scopes: string[];
+  bindings: PortalBindings;
+};
+
 export function safeReturnTo(value: string | null | undefined, fallback = '/'): string {
   if (!value || !value.startsWith('/') || value.startsWith('//')) return fallback;
   return value;
@@ -74,6 +94,22 @@ export async function fetchServerSession(token?: string): Promise<ServerAuthSess
     throw new Error(payload?.error?.code || 'AUTH_SESSION_FAILED');
   }
   return payload.session;
+}
+
+export async function fetchPortalIdentity(token?: string): Promise<PortalIdentity> {
+  const accessToken = token ?? await getAccessToken();
+  if (!accessToken) throw new Error('AUTH_REQUIRED');
+
+  const response = await fetch('/api?route=portal-whoami', {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  const payload = await response.json().catch(() => null) as (PortalIdentity & { ok?: boolean }) | { error?: { code?: string } } | null;
+  if (!response.ok || !payload || !('bindings' in payload)) {
+    const code = payload && 'error' in payload ? payload.error?.code : undefined;
+    throw new Error(code || 'PORTAL_BINDING_FAILED');
+  }
+  return payload;
 }
 
 export async function signOutEverywhere(): Promise<void> {

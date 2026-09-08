@@ -178,6 +178,7 @@ function isTransientRouteSweepError(error, browserName) {
     && (
       message.includes('WebKit encountered an internal error')
       || message.includes('Target page, context or browser has been closed')
+      || message.includes('Importing a module script failed')
     );
   const transientFirefoxImageDecodeError =
     browserName === 'Firefox'
