@@ -180,7 +180,13 @@ function isTransientRouteSweepError(error, browserName) {
       || message.includes('Target page, context or browser has been closed')
     );
   const transientClosedResourceError = message.includes('console: Failed to load resource: net::ERR_CONNECTION_CLOSED');
-  return transientWebKitNavigationError || transientClosedResourceError;
+  const transientFirefoxPortalImageDecodeError =
+    browserName === 'Firefox'
+    && message.includes('Image corrupt or truncated.')
+    && message.includes('/brand/portals/');
+  return transientWebKitNavigationError
+    || transientClosedResourceError
+    || transientFirefoxPortalImageDecodeError;
 }
 
 async function routeSweep(browserType, browserName) {
@@ -195,7 +201,8 @@ async function routeSweep(browserType, browserName) {
         if (!isTransientRouteSweepError(error, browserName)) throw error;
 
         // Long browser sweeps can occasionally lose a single resource request,
-        // and WebKit can also terminate a navigation internally. Recreate the
+        // WebKit can terminate a navigation internally, and Firefox can report
+        // a transient decode failure for a local portal image. Recreate the
         // isolated context and retry exactly once; all assertions remain
         // unchanged and any repeat failure is still fatal.
         console.warn(`[browser] ${browserName}: transient route failure at ${route}; retrying once in a fresh context`);
