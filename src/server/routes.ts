@@ -8,6 +8,7 @@ import {
   sportRequestHandler,
   type RouteHandler,
 } from './handlers.ts';
+import { portalWhoAmIHandler } from './portal-bindings.ts';
 import { ApiError, sendError, type ApiRequest, type ApiResponse } from './http.ts';
 
 export type RouteKey =
@@ -15,6 +16,7 @@ export type RouteKey =
   | 'auth-session'
   | 'auth-revoke'
   | 'admin-whoami'
+  | 'portal-whoami'
   | 'public-enquiries'
   | 'sport-request'
   | 'catalog';
@@ -24,6 +26,7 @@ const handlers: Record<RouteKey, RouteHandler> = {
   'auth-session': sessionHandler,
   'auth-revoke': revokeHandler,
   'admin-whoami': adminWhoAmIHandler,
+  'portal-whoami': portalWhoAmIHandler,
   'public-enquiries': publicEnquiriesHandler,
   'sport-request': sportRequestHandler,
   catalog: catalogHandler,
