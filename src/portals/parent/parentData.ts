@@ -6,31 +6,47 @@ import type { AttendanceRecord, Parent, Player, Session } from '../../domain/con
 
 export const PARENT_SESSION_KEY = 'uos:parent-portal:session:v1';
 
-export type ParentPreviewSession = { parentId: string; provider: 'preview'; createdAt: string };
+export type ParentPortalSession = {
+  parentId: string;
+  provider: 'production' | 'preview';
+  createdAt: string;
+};
 
-export function readParentSession(): ParentPreviewSession | null {
+export function readParentSession(): ParentPortalSession | null {
   if (typeof window === 'undefined') return null;
   try {
     const raw = localStorage.getItem(PARENT_SESSION_KEY);
     if (!raw) return null;
-    const value = JSON.parse(raw) as Partial<ParentPreviewSession>;
-    if (value.provider !== 'preview' || typeof value.parentId !== 'string') return null;
-    return { parentId: value.parentId, provider: 'preview', createdAt: value.createdAt ?? '' };
+    const value = JSON.parse(raw) as Partial<ParentPortalSession>;
+    if ((value.provider !== 'preview' && value.provider !== 'production') || typeof value.parentId !== 'string' || !value.parentId) return null;
+    return { parentId: value.parentId, provider: value.provider, createdAt: value.createdAt ?? '' };
   } catch { return null; }
 }
 
-export function startParentPreview(parentId = 'parent-preview-01') {
-  const session: ParentPreviewSession = { parentId, provider: 'preview', createdAt: new Date().toISOString() };
+function startParentSession(parentId: string, provider: ParentPortalSession['provider']): ParentPortalSession {
+  const session: ParentPortalSession = { parentId, provider, createdAt: new Date().toISOString() };
   try { localStorage.setItem(PARENT_SESSION_KEY, JSON.stringify(session)); } catch { /* storage may be unavailable */ }
   return session;
+}
+
+export function startParentPreview(parentId = 'parent-preview-01') {
+  return startParentSession(parentId, 'preview');
+}
+
+export function startParentProduction(parentId: string) {
+  return startParentSession(parentId, 'production');
 }
 
 export function clearParentSession() {
   try { localStorage.removeItem(PARENT_SESSION_KEY); } catch { /* storage may be unavailable */ }
 }
 
+// Legacy preview selectors remain preview-only. Production portal pages read through
+// useParentPortalGatewayData and the shared Admin data provider instead.
 export function getActiveParent(): Parent | undefined {
-  const id = readParentSession()?.parentId ?? 'parent-preview-01';
+  const session = readParentSession();
+  if (session?.provider === 'production') return undefined;
+  const id = session?.parentId ?? 'parent-preview-01';
   return demoParents.find((item) => item.id === id);
 }
 
