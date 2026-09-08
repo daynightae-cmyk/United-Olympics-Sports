@@ -171,10 +171,16 @@ async function assertRoute(page, runtimeErrors, route, checkOverflow = true) {
   return state;
 }
 
-function isTransientWebKitNavigationError(error) {
+function isTransientRouteSweepError(error, browserName) {
   const message = error instanceof Error ? error.message : String(error);
-  return message.includes('WebKit encountered an internal error')
-    || message.includes('Target page, context or browser has been closed');
+  const transientWebKitNavigationError =
+    browserName === 'WebKit'
+    && (
+      message.includes('WebKit encountered an internal error')
+      || message.includes('Target page, context or browser has been closed')
+    );
+  const transientClosedResourceError = message.includes('console: Failed to load resource: net::ERR_CONNECTION_CLOSED');
+  return transientWebKitNavigationError || transientClosedResourceError;
 }
 
 async function routeSweep(browserType, browserName) {
@@ -186,13 +192,13 @@ async function routeSweep(browserType, browserName) {
       try {
         await assertRoute(checked.page, checked.runtimeErrors, route, true);
       } catch (error) {
-        if (browserName !== 'WebKit' || !isTransientWebKitNavigationError(error)) throw error;
+        if (!isTransientRouteSweepError(error, browserName)) throw error;
 
-        // WebKit can occasionally terminate a navigation internally during a
-        // long route sweep. Recreate the isolated context and retry exactly
-        // once; all route assertions remain unchanged and a repeat failure is
-        // still fatal.
-        console.warn(`[browser] ${browserName}: transient navigation failure at ${route}; retrying once in a fresh context`);
+        // Long browser sweeps can occasionally lose a single resource request,
+        // and WebKit can also terminate a navigation internally. Recreate the
+        // isolated context and retry exactly once; all assertions remain
+        // unchanged and any repeat failure is still fatal.
+        console.warn(`[browser] ${browserName}: transient route failure at ${route}; retrying once in a fresh context`);
         await checked.context.close().catch(() => {});
         checked = await createCheckedPage(browser);
         await assertRoute(checked.page, checked.runtimeErrors, route, true);
