@@ -7,6 +7,8 @@ export interface PortalBindings {
   guardianIds: string[];
   guardianPlayerIds: string[];
   coachIds: string[];
+  coachGroupIds: string[];
+  coachPlayerIds: string[];
 }
 
 interface IdRow {
@@ -15,6 +17,10 @@ interface IdRow {
 
 interface PlayerIdRow {
   player_id: string;
+}
+
+interface GroupIdRow {
+  group_id: string;
 }
 
 function unique(values: string[]): string[] {
@@ -28,7 +34,7 @@ export async function resolvePortalBindings(identity: VerifiedIdentity): Promise
 
   try {
     const pool = getPool();
-    const [players, guardians, guardianPlayers, coaches] = await Promise.all([
+    const [players, guardians, guardianPlayers, coaches, coachGroups, coachPlayers] = await Promise.all([
       pool.query<IdRow>(
         `select id::text as id
            from players
@@ -62,6 +68,26 @@ export async function resolvePortalBindings(identity: VerifiedIdentity): Promise
           order by id`,
         [identity.uid],
       ),
+      pool.query<GroupIdRow>(
+        `select distinct cg.group_id::text as group_id
+           from coaches c
+           join coach_groups cg on cg.coach_id = c.id
+          where c.user_uid = $1
+            and cg.active = true
+          order by cg.group_id::text`,
+        [identity.uid],
+      ),
+      pool.query<PlayerIdRow>(
+        `select distinct p.id::text as player_id
+           from coaches c
+           join coach_groups cg on cg.coach_id = c.id
+           join players p on p.group_id = cg.group_id
+          where c.user_uid = $1
+            and cg.active = true
+            and p.archived_at is null
+          order by p.id::text`,
+        [identity.uid],
+      ),
     ]);
 
     return {
@@ -69,6 +95,8 @@ export async function resolvePortalBindings(identity: VerifiedIdentity): Promise
       guardianIds: unique(guardians.rows.map((row) => row.id)),
       guardianPlayerIds: unique(guardianPlayers.rows.map((row) => row.player_id)),
       coachIds: unique(coaches.rows.map((row) => row.id)),
+      coachGroupIds: unique(coachGroups.rows.map((row) => row.group_id)),
+      coachPlayerIds: unique(coachPlayers.rows.map((row) => row.player_id)),
     };
   } catch (error) {
     console.error('Portal identity binding lookup failed:', error);
