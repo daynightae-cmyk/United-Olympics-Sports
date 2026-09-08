@@ -5,6 +5,7 @@ import { mkdir } from 'node:fs/promises';
 const base = process.env.UOS_BASE_URL ?? 'http://127.0.0.1:4173';
 const preview = process.env.UOS_STORE_PREVIEW === 'true';
 const evidence = process.env.UOS_QA_OUTPUT;
+const qaBrowser = process.env.UOS_QA_BROWSER ?? '';
 const widths = [320, 360, 390, 430, 768, 1024, 1280, 1440, 1920];
 const routes = [
   '/store',
@@ -50,11 +51,19 @@ async function checkedContext(browser, width, theme = 'light', rtl = false) {
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('console', (message) => {
     const text = message.text();
+    const sourceUrl = message.location().url ?? '';
+    const localSource = sourceUrl.startsWith(base);
     const externalFontFailure =
       message.type() === 'error' &&
       text.includes('downloadable font: download failed') &&
       text.includes('https://fonts.gstatic.com/');
-    if (message.type() === 'error' && !externalFontFailure) errors.push(text);
+    const transientWebKitExternalTlsFailure =
+      qaBrowser === 'WebKit' &&
+      message.type() === 'error' &&
+      text.includes('Failed to load resource: Peer failed to perform TLS handshake') &&
+      text.includes('Connection reset by peer') &&
+      (!sourceUrl || !localSource);
+    if (message.type() === 'error' && !externalFontFailure && !transientWebKitExternalTlsFailure) errors.push(text);
   });
   return { context, page, errors };
 }
