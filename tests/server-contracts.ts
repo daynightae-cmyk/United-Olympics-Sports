@@ -53,6 +53,20 @@ const invalidEnquiry = await call('public-enquiries', {
 assert.equal(invalidEnquiry.statusCode, 400);
 assert.equal((invalidEnquiry.json() as { error: { code: string } }).error.code, 'VALIDATION_ERROR');
 
+const oversizedStringBody = await call('public-enquiries', {
+  method: 'POST',
+  body: JSON.stringify({ name: 'Test User', email: 'test@example.com', message: 'x'.repeat(256 * 1024) }),
+});
+assert.equal(oversizedStringBody.statusCode, 413);
+assert.equal((oversizedStringBody.json() as { error: { code: string } }).error.code, 'PAYLOAD_TOO_LARGE');
+
+const oversizedObjectBody = await call('public-enquiries', {
+  method: 'POST',
+  body: { name: 'Test User', email: 'test@example.com', message: 'x'.repeat(256 * 1024) },
+});
+assert.equal(oversizedObjectBody.statusCode, 413);
+assert.equal((oversizedObjectBody.json() as { error: { code: string } }).error.code, 'PAYLOAD_TOO_LARGE');
+
 const unknown = await call('missing-route', { method: 'GET' });
 assert.equal(unknown.statusCode, 404);
 assert.equal((unknown.json() as { error: { code: string } }).error.code, 'API_NOT_FOUND');
