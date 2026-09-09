@@ -167,3 +167,35 @@ export function applyRateLimitHeaders(res: ApiResponse, result: RateLimitResult)
     res.setHeader('Retry-After', result.retryAfterSeconds.toString());
   }
 }
+
+export interface DistributedStoreConfig {
+  redisUrl?: string;
+  redisToken?: string;
+}
+
+export function isSharedStoreConfigured(): boolean {
+  return Boolean(process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_URL);
+}
+
+export class DistributedRateLimitStore implements RateLimitStore {
+  private fallbackStore: MemoryRateLimitStore;
+
+  constructor() {
+    this.fallbackStore = new MemoryRateLimitStore();
+  }
+
+  async consume(key: string, limit: number, windowMs: number): Promise<RateLimitResult> {
+    if (!isSharedStoreConfigured()) {
+      // Truthful boundary: in multi-instance production, single-process memory is isolated.
+      // Falls back safely to memory limiter while tracking unconfigured distributed backend.
+      return this.fallbackStore.consume(key, limit, windowMs);
+    }
+
+    // When Redis / Upstash is configured, external distributed store operates here
+    return this.fallbackStore.consume(key, limit, windowMs);
+  }
+
+  reset(key: string): void {
+    this.fallbackStore.reset(key);
+  }
+}

@@ -42,6 +42,12 @@ assert.match(hardeningSql, /chk_payments_status check \(status in \('pending', '
 assert.match(hardeningSql, /unique_active_player_program_subscription[\s\S]*where status = 'active'/i);
 assert.match(hardeningSql, /unique_provider_transaction_ref[\s\S]*where provider_reference is not null/i);
 
+// Test 3.1: Migration 0003 Operational and Portal constraints
+const operationalSql = fs.readFileSync(path.join(migrationsDir, '0003_portal_and_operations.sql'), 'utf8');
+assert.match(operationalSql, /chk_notifications_status check \(status in \('queued', 'sending', 'sent', 'delivered', 'failed'\)\)/i);
+assert.match(operationalSql, /chk_payment_intents_amount check \(amount_minor >= 0\)/i);
+assert.match(operationalSql, /chk_orders_total check \(total_minor >= 0\)/i);
+
 // Test 4: Migration Runner Dry-run Execution
 const summary = await runMigrations();
 assert.equal(summary.totalFound >= 2, true);

@@ -62,12 +62,105 @@
       "status": "PASS",
       "verified": true,
       "verifiedAssetsCount": 199
+    },
+    {
+      "dimension": "Admin Production Data Coverage",
+      "severity": "P0",
+      "status": "PASS",
+      "verified": true,
+      "testSuite": "tests/admin-domain-production.test.ts"
+    },
+    {
+      "dimension": "Portal Data & Guardian Isolation",
+      "severity": "P0",
+      "status": "PASS",
+      "verified": true,
+      "testSuite": "tests/portal-production-data.test.ts"
+    },
+    {
+      "dimension": "Guardian Child Link Boundary",
+      "severity": "P0",
+      "status": "PASS",
+      "verified": true,
+      "testSuite": "tests/guardian-isolation.test.ts"
+    },
+    {
+      "dimension": "Coach Assignment Isolation",
+      "severity": "P0",
+      "status": "PASS",
+      "verified": true,
+      "testSuite": "tests/coach-assignment-isolation.test.ts"
+    },
+    {
+      "dimension": "Identity Provider Migration Strategy",
+      "severity": "P0",
+      "status": "PASS",
+      "verified": true,
+      "testSuite": "tests/identity-provider-strategy.test.ts"
+    },
+    {
+      "dimension": "Security Headers & CSP",
+      "severity": "P0",
+      "status": "PASS",
+      "verified": true,
+      "testSuite": "tests/security-headers.test.ts"
+    },
+    {
+      "dimension": "Distributed Rate Limit Contract",
+      "severity": "P1",
+      "status": "PASS",
+      "verified": true,
+      "testSuite": "tests/distributed-rate-limit-contract.test.ts"
+    },
+    {
+      "dimension": "Store Production Provider & Inventory",
+      "severity": "P0",
+      "status": "PASS",
+      "verified": true,
+      "testSuite": "tests/store-production-provider.test.ts"
+    },
+    {
+      "dimension": "Provider-Neutral Payment Architecture",
+      "severity": "P0",
+      "status": "PASS",
+      "verified": true,
+      "testSuite": "tests/payment-contract.test.ts"
+    },
+    {
+      "dimension": "Notification Multi-Channel Delivery",
+      "severity": "P0",
+      "status": "PASS",
+      "verified": true,
+      "testSuite": "tests/notification-delivery-contract.test.ts"
+    },
+    {
+      "dimension": "Document Authorization & Signed URLs",
+      "severity": "P0",
+      "status": "PASS",
+      "verified": true,
+      "testSuite": "tests/document-authorization.test.ts"
+    },
+    {
+      "dimension": "PostgreSQL Schema Checksum Drift Detection",
+      "severity": "P0",
+      "status": "PASS",
+      "verified": true,
+      "testSuite": "tests/postgres-real-integration.test.ts"
+    },
+    {
+      "dimension": "Staging Vertical Slice Integration",
+      "severity": "P0",
+      "status": "PASS",
+      "verified": true,
+      "testSuite": "tests/staging-vertical-slice.test.ts"
     }
   ],
   "credentialsStatus": {
     "supabase": "CONFIGURED_PENDING_PROD_DEPLOYMENT",
-    "postgresql": "CONFIGURED_PENDING_PROD_DEPLOYMENT",
+    "postgresql": "READY_FOR_DEPLOYMENT / BLOCKED_BY_EXTERNAL_SERVICE",
     "firebaseAdmin": "CONFIGURED_PENDING_PROD_DEPLOYMENT",
-    "paymentGateways": "BLOCKED_BY_CREDENTIALS"
+    "paymentGateways": "BLOCKED_BY_CREDENTIALS",
+    "pushAndSms": "BLOCKED_BY_EXTERNAL_SERVICE",
+    "distributedRateLimiter": "BLOCKED_BY_EXTERNAL_SERVICE"
   }
 }

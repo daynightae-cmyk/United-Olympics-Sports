@@ -235,3 +235,111 @@ export const auditLogs = pgTable('audit_logs', {
   metadata: jsonb('metadata').$type<Record<string, unknown>>().default({}).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
+
+export const notifications = pgTable('notifications', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  recipientUid: text('recipient_uid').notNull(),
+  channel: text('channel').default('in_app').notNull(),
+  status: text('status').default('queued').notNull(),
+  template: text('template'),
+  locale: text('locale').default('ar').notNull(),
+  title: text('title').notNull(),
+  titleAr: text('title_ar'),
+  body: text('body').notNull(),
+  bodyAr: text('body_ar'),
+  providerReference: text('provider_reference'),
+  attemptCount: integer('attempt_count').default(0).notNull(),
+  lastError: text('last_error'),
+  payload: jsonb('payload').$type<Record<string, unknown>>().default({}).notNull(),
+  dispatchedAt: timestamp('dispatched_at', { withTimezone: true }),
+  ...timestamps(),
+});
+
+export const achievements = pgTable('achievements', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  playerId: uuid('player_id').references(() => players.id).notNull(),
+  title: text('title').notNull(),
+  titleAr: text('title_ar'),
+  description: text('description'),
+  descriptionAr: text('description_ar'),
+  badge: text('badge'),
+  category: text('category').default('general').notNull(),
+  earnedAt: timestamp('earned_at', { withTimezone: true }).defaultNow().notNull(),
+  ...timestamps(),
+});
+
+export const events = pgTable('events', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').references(() => organizations.id).notNull(),
+  branchId: uuid('branch_id').references(() => branches.id),
+  sportId: uuid('sport_id').references(() => sports.id),
+  title: text('title').notNull(),
+  titleAr: text('title_ar'),
+  description: text('description'),
+  startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
+  endsAt: timestamp('ends_at', { withTimezone: true }),
+  location: text('location'),
+  status: text('status').default('scheduled').notNull(),
+  ...timestamps(),
+});
+
+export const announcements = pgTable('announcements', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').references(() => organizations.id).notNull(),
+  branchId: uuid('branch_id').references(() => branches.id),
+  title: text('title').notNull(),
+  titleAr: text('title_ar'),
+  body: text('body').notNull(),
+  bodyAr: text('body_ar'),
+  targetRole: text('target_role').default('all').notNull(),
+  status: text('status').default('active').notNull(),
+  ...timestamps(),
+});
+
+export const messages = pgTable('messages', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  senderUid: text('sender_uid').notNull(),
+  recipientUid: text('recipient_uid').notNull(),
+  threadId: text('thread_id').notNull(),
+  content: text('content').notNull(),
+  readAt: timestamp('read_at', { withTimezone: true }),
+  ...timestamps(),
+});
+
+export const paymentIntents = pgTable('payment_intents', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  idempotencyKey: text('idempotency_key').notNull().unique(),
+  playerId: uuid('player_id').references(() => players.id),
+  subscriptionId: uuid('subscription_id').references(() => subscriptions.id),
+  amountMinor: integer('amount_minor').notNull(),
+  currency: text('currency').default('AED').notNull(),
+  status: text('status').default('requires_payment_method').notNull(),
+  provider: text('provider').default('stripe').notNull(),
+  providerIntentId: text('provider_intent_id'),
+  metadata: jsonb('metadata').$type<Record<string, unknown>>().default({}).notNull(),
+  ...timestamps(),
+});
+
+export const paymentWebhooks = pgTable('payment_webhooks', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  eventId: text('event_id').notNull().unique(),
+  provider: text('provider').notNull(),
+  eventType: text('event_type').notNull(),
+  status: text('status').default('received').notNull(),
+  payload: jsonb('payload').$type<Record<string, unknown>>().default({}).notNull(),
+  processedAt: timestamp('processed_at', { withTimezone: true }),
+  error: text('error'),
+  ...timestamps(),
+});
+
+export const orders = pgTable('orders', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orderNumber: text('order_number').notNull().unique(),
+  customerUid: text('customer_uid').notNull(),
+  status: text('status').default('pending').notNull(),
+  totalMinor: integer('total_minor').notNull(),
+  currency: text('currency').default('AED').notNull(),
+  items: jsonb('items').$type<Array<{ productId: string; sku: string; name: string; quantity: number; unitPriceMinor: number }>>().notNull(),
+  shippingAddress: jsonb('shipping_address').$type<Record<string, unknown>>(),
+  ...timestamps(),
+});

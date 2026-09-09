@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 import type { AdminDataGateway } from './AdminDataGateway';
 import { previewAdminGateway, resetPreviewData } from './previewAdminGateway';
-import { unavailableAdminGateway } from './unavailableAdminGateway';
+import { productionAdminGateway } from './productionAdminGateway';
 import type { AdminDataMode } from './queryTypes';
 
 interface AdminDataContextValue {
@@ -18,7 +18,7 @@ function defaultAdminMode(): AdminDataMode {
 
 export function AdminDataProvider({ children, initialMode }: { children: ReactNode; initialMode?: AdminDataMode }) {
   const [mode] = useState<AdminDataMode>(() => initialMode ?? defaultAdminMode());
-  const gateway = mode === 'preview' ? previewAdminGateway : unavailableAdminGateway;
+  const gateway = mode === 'preview' ? previewAdminGateway : productionAdminGateway;
 
   const value = useMemo(() => ({
     gateway,

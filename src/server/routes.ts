@@ -9,6 +9,28 @@ import {
   sportRequestHandler,
   type RouteHandler,
 } from './handlers.ts';
+import {
+  adminBranchesHandler,
+  adminCoachesHandler,
+  adminCountriesHandler,
+  adminGroupsHandler,
+  adminOrganizationHandler,
+  adminParentsHandler,
+  adminPerformanceHandler,
+  adminPlayersHandler,
+  adminProgramsHandler,
+  adminRegistrationsHandler,
+  adminSessionsHandler,
+  adminSportsHandler,
+} from './admin-handlers.ts';
+import {
+  portalCoachScopeHandler,
+  portalParentChildrenHandler,
+  portalPlayerDataHandler,
+} from './portal-handlers.ts';
+import { storeCheckoutHandler, storeProductsHandler } from './store-handlers.ts';
+import { paymentIntentHandler, paymentWebhookHandler } from './payment-handlers.ts';
+import { documentDownloadUrlHandler, documentRegisterHandler } from './document-handlers.ts';
 import { portalWhoAmIHandler } from './portal-bindings.ts';
 import { ApiError, sendError, type ApiRequest, type ApiResponse } from './http.ts';
 
@@ -21,7 +43,28 @@ export type RouteKey =
   | 'public-enquiries'
   | 'sport-request'
   | 'catalog'
-  | 'attendance-record';
+  | 'attendance-record'
+  | 'admin-organization'
+  | 'admin-countries'
+  | 'admin-branches'
+  | 'admin-sports'
+  | 'admin-programs'
+  | 'admin-groups'
+  | 'admin-players'
+  | 'admin-coaches'
+  | 'admin-parents'
+  | 'admin-sessions'
+  | 'admin-registrations'
+  | 'admin-performance'
+  | 'portal-player-data'
+  | 'portal-parent-children'
+  | 'portal-coach-scope'
+  | 'store-products'
+  | 'store-checkout'
+  | 'payment-intent'
+  | 'payment-webhook'
+  | 'document-register'
+  | 'document-signed-url';
 
 const handlers: Record<RouteKey, RouteHandler> = {
   health: healthHandler,
@@ -33,6 +76,27 @@ const handlers: Record<RouteKey, RouteHandler> = {
   'sport-request': sportRequestHandler,
   catalog: catalogHandler,
   'attendance-record': recordAttendanceHandler,
+  'admin-organization': adminOrganizationHandler,
+  'admin-countries': adminCountriesHandler,
+  'admin-branches': adminBranchesHandler,
+  'admin-sports': adminSportsHandler,
+  'admin-programs': adminProgramsHandler,
+  'admin-groups': adminGroupsHandler,
+  'admin-players': adminPlayersHandler,
+  'admin-coaches': adminCoachesHandler,
+  'admin-parents': adminParentsHandler,
+  'admin-sessions': adminSessionsHandler,
+  'admin-registrations': adminRegistrationsHandler,
+  'admin-performance': adminPerformanceHandler,
+  'portal-player-data': portalPlayerDataHandler,
+  'portal-parent-children': portalParentChildrenHandler,
+  'portal-coach-scope': portalCoachScopeHandler,
+  'store-products': storeProductsHandler,
+  'store-checkout': storeCheckoutHandler,
+  'payment-intent': paymentIntentHandler,
+  'payment-webhook': paymentWebhookHandler,
+  'document-register': documentRegisterHandler,
+  'document-signed-url': documentDownloadUrlHandler,
 };
 
 export function resolveRouteKey(req: ApiRequest): RouteKey | null {
@@ -54,6 +118,27 @@ export function resolveRouteKey(req: ApiRequest): RouteKey | null {
   if (pathname === '/api/v1/requests/sports') return 'sport-request';
   if (pathname === '/api/v1/catalog' || pathname === '/catalog') return 'catalog';
   if (pathname === '/api/v1/attendance' || pathname === '/attendance') return 'attendance-record';
+  if (pathname === '/api/v1/admin/organization') return 'admin-organization';
+  if (pathname.startsWith('/api/v1/admin/countries')) return 'admin-countries';
+  if (pathname.startsWith('/api/v1/admin/branches')) return 'admin-branches';
+  if (pathname === '/api/v1/admin/sports') return 'admin-sports';
+  if (pathname === '/api/v1/admin/programs') return 'admin-programs';
+  if (pathname === '/api/v1/admin/groups') return 'admin-groups';
+  if (pathname.startsWith('/api/v1/admin/players')) return 'admin-players';
+  if (pathname === '/api/v1/admin/coaches') return 'admin-coaches';
+  if (pathname === '/api/v1/admin/parents') return 'admin-parents';
+  if (pathname === '/api/v1/admin/sessions') return 'admin-sessions';
+  if (pathname === '/api/v1/admin/registrations') return 'admin-registrations';
+  if (pathname === '/api/v1/admin/performance') return 'admin-performance';
+  if (pathname === '/api/v1/portal/player/data') return 'portal-player-data';
+  if (pathname === '/api/v1/portal/parent/children') return 'portal-parent-children';
+  if (pathname === '/api/v1/portal/coach/scope') return 'portal-coach-scope';
+  if (pathname === '/api/v1/store/products') return 'store-products';
+  if (pathname === '/api/v1/store/checkout') return 'store-checkout';
+  if (pathname === '/api/v1/payments/intent') return 'payment-intent';
+  if (pathname === '/api/v1/payments/webhook') return 'payment-webhook';
+  if (pathname === '/api/v1/documents/register') return 'document-register';
+  if (pathname === '/api/v1/documents/signed-url') return 'document-signed-url';
 
   return null;
 }
