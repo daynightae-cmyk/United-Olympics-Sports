@@ -1,6 +1,6 @@
 import { databaseConfigured, getPool } from '../../db/index.ts';
 import type { AuthorizationContext } from '../authorization-context.ts';
-import { assertCanManagePlayer, assertCanAccessBranch } from '../authorization-context.ts';
+import { assertCanManagePlayer } from '../authorization-context.ts';
 import { ApiError, isUuid } from '../http.ts';
 import type { DbQueryClient } from '../vertical-slice.ts';
 
@@ -60,13 +60,11 @@ export class PortalDomainRepository {
     throw new ApiError(503, 'DATA_SERVICE_NOT_CONFIGURED', 'Database service is not configured.');
   }
 
-  // --- PLAYER PORTAL DATA ---
   async getPlayerData(ctx: AuthorizationContext, playerId: string): Promise<PlayerPortalData> {
     if (!playerId || !isUuid(playerId)) {
       throw new ApiError(400, 'VALIDATION_ERROR', 'A valid playerId is required.');
     }
 
-    // Tenant / Player isolation check
     assertCanManagePlayer(ctx, playerId);
 
     const playerRes = await this.db.query<{
@@ -85,7 +83,8 @@ export class PortalDomainRepository {
       throw new ApiError(400, 'PLAYER_ARCHIVED', 'Player record is archived.');
     }
 
-    // Schedule / Sessions
+    // A player only sees sessions for the group persisted on their own player row.
+    // This closes the previous cross-player schedule leak where every session was returned.
     const scheduleRes = await this.db.query<{
       id: string;
       group_id: string;
@@ -94,11 +93,13 @@ export class PortalDomainRepository {
     }>(
       `select s.id, s.group_id, s.starts_at, s.status
          from sessions s
+         join players p on p.group_id = s.group_id
+        where p.id = $1 and p.archived_at is null
         order by s.starts_at desc
         limit 50`,
+      [playerId],
     );
 
-    // Attendance
     const attendanceRes = await this.db.query<{
       id: string;
       session_id: string;
@@ -113,7 +114,6 @@ export class PortalDomainRepository {
       [playerId],
     );
 
-    // Performance
     const perfRes = await this.db.query<{
       id: string;
       metric_key: string;
@@ -129,7 +129,6 @@ export class PortalDomainRepository {
       [playerId],
     );
 
-    // Subscriptions
     const subRes = await this.db.query<{
       id: string;
       program_id: string;
@@ -145,7 +144,6 @@ export class PortalDomainRepository {
       [playerId],
     );
 
-    // Achievements
     const achRes = await this.db.query<{
       id: string;
       title: string;
@@ -206,9 +204,7 @@ export class PortalDomainRepository {
     };
   }
 
-  // --- PARENT / GUARDIAN PORTAL DATA ---
   async getParentChildren(ctx: AuthorizationContext): Promise<Array<{ id: string; fullName: string; branchId: string | null }>> {
-    // Only linked children can ever be returned
     const linkedPlayerIds = ctx.bindings.guardianPlayerIds;
     if (!linkedPlayerIds || linkedPlayerIds.length === 0) {
       return [];
@@ -233,7 +229,6 @@ export class PortalDomainRepository {
     }));
   }
 
-  // --- COACH PORTAL DATA ---
   async getCoachScopeData(ctx: AuthorizationContext): Promise<{
     assignedBranches: string[];
     assignedGroups: string[];
