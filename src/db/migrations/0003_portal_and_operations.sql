@@ -44,7 +44,7 @@ create table if not exists events (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references organizations(id),
   branch_id uuid references branches(id),
-  sport_id uuid references sports.id,
+  sport_id uuid references sports(id),
   title text not null,
   title_ar text,
   description text,
@@ -127,3 +127,23 @@ create table if not exists orders (
 
 alter table orders drop constraint if exists chk_orders_total;
 alter table orders add constraint chk_orders_total check (total_minor >= 0);
+
+-- Supabase/PostgreSQL-safe default: new operational tables are not exposed through
+-- the Data API until explicit policies are added. Server-side database access is
+-- still governed by the database role used by the backend.
+alter table notifications enable row level security;
+alter table achievements enable row level security;
+alter table events enable row level security;
+alter table announcements enable row level security;
+alter table messages enable row level security;
+alter table payment_intents enable row level security;
+alter table payment_webhooks enable row level security;
+alter table orders enable row level security;
+
+create index if not exists idx_notifications_recipient on notifications(recipient_uid, created_at desc);
+create index if not exists idx_achievements_player on achievements(player_id, earned_at desc);
+create index if not exists idx_events_org_branch on events(organization_id, branch_id, starts_at);
+create index if not exists idx_announcements_org_branch on announcements(organization_id, branch_id, created_at desc);
+create index if not exists idx_messages_thread on messages(thread_id, created_at);
+create index if not exists idx_payment_intents_player on payment_intents(player_id, created_at desc);
+create index if not exists idx_orders_customer on orders(customer_uid, created_at desc);
