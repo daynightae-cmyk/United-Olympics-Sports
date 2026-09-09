@@ -192,3 +192,15 @@ export async function assertPlayerRelationship(identity: VerifiedIdentity, playe
 
   throw new ApiError(403, 'RELATIONSHIP_DENIED', 'You are not authorized for this player record.');
 }
+
+import {
+  type AuthorizationContext,
+  resolveAuthorizationContext,
+} from './authorization-context.ts';
+
+export * from './authorization-context.ts';
+
+export async function requireAuthorizationContext(req: ApiRequest): Promise<AuthorizationContext> {
+  const verified = await verifyBearerIdentity(req);
+  return resolveAuthorizationContext(verified);
+}

@@ -10,7 +10,8 @@
     "start": "node dist/server.cjs",
     "clean": "node -e \"const fs=require('fs'); ['dist','server.js'].forEach((p)=>fs.existsSync(p)&&fs.rmSync(p,{recursive:true,force:true}));\"",
     "lint": "tsc --noEmit",
-    "qa:media-provenance": "node qa/media-provenance-gate.mjs"
+    "qa:media-provenance": "node qa/media-provenance-gate.mjs",
+    "db:migrate": "tsx src/db/migrate.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

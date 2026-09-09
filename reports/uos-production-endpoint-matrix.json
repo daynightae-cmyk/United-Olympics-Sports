@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "documentId": "UOS-PRODUCTION-ENDPOINT-MATRIX",
+  "generatedAt": "2026-09-09T18:18:00.000Z",
+  "canonicalRepo": "https://github.com/daynightae-cmyk/United-Olympics-Sports.git",
+  "branch": "recovery/uos-production-closure-20260909",
+  "runtimeParity": {
+    "express": "server.ts",
+    "vercelServerless": "api/index.ts",
+    "dispatcher": "src/server/routes.ts -> dispatchApi",
+    "parityStatus": "100% PARITY VERIFIED"
+  },
+  "endpoints": [
+    {
+      "routeKey": "health",
+      "paths": ["/api/v1/health", "/health"],
+      "query": "?route=health",
+      "methods": ["GET"],
+      "authLevel": "public",
+      "requiredRoles": [],
+      "requiredScopes": [],
+      "domain": "system_infrastructure",
+      "rateLimit": "bounded_probe_5000ms",
+      "status": "OPERATIONAL"
+    },
+    {
+      "routeKey": "auth-session",
+      "paths": ["/auth/session", "/api/v1/auth/session"],
+      "query": "?route=auth-session",
+      "methods": ["POST"],
+      "authLevel": "authenticated",
+      "requiredRoles": [],
+      "requiredScopes": [],
+      "domain": "user_session",
+      "rateLimit": "standard",
+      "status": "OPERATIONAL"
+    },
+    {
+      "routeKey": "auth-revoke",
+      "paths": ["/auth/revoke", "/api/v1/auth/revoke"],
+      "query": "?route=auth-revoke",
+      "methods": ["POST"],
+      "authLevel": "privileged",
+      "requiredRoles": [],
+      "requiredScopes": [],
+      "domain": "session_revocation",
+      "rateLimit": "guarded_by_admin_config",
+      "status": "OPERATIONAL"
+    },
+    {
+      "routeKey": "admin-whoami",
+      "paths": ["/api/v1/admin/whoami", "/admin/whoami"],
+      "query": "?route=admin-whoami",
+      "methods": ["GET"],
+      "authLevel": "privileged_admin",
+      "requiredRoles": ["admin", "super_admin"],
+      "requiredScopes": [],
+      "domain": "multi_tenant_administration",
+      "rateLimit": "standard",
+      "status": "OPERATIONAL"
+    },
+    {
+      "routeKey": "portal-whoami",
+      "paths": ["/api/v1/portal/whoami", "/portal/whoami"],
+      "query": "?route=portal-whoami",
+      "methods": ["GET"],
+      "authLevel": "portal_authenticated",
+      "requiredRoles": ["player", "guardian", "coach"],
+      "requiredScopes": [],
+      "domain": "portal_domain_context",
+      "rateLimit": "standard",
+      "status": "OPERATIONAL"
+    },
+    {
+      "routeKey": "public-enquiries",
+      "paths": ["/public/enquiries", "/api/v1/public/enquiries"],
+      "query": "?route=public-enquiries",
+      "methods": ["POST"],
+      "authLevel": "public",
+      "requiredRoles": [],
+      "requiredScopes": [],
+      "domain": "public_admissions",
+      "rateLimit": "sliding_window_5_per_10m_per_ip",
+      "antiSpam": ["honeypot", "phone_regex", "email_regex"],
+      "status": "OPERATIONAL"
+    },
+    {
+      "routeKey": "sport-request",
+      "paths": ["/api/v1/requests/sports"],
+      "query": "?route=sport-request",
+      "methods": ["POST"],
+      "authLevel": "authenticated",
+      "requiredRoles": [],
+      "requiredScopes": [],
+      "domain": "service_requests",
+      "rateLimit": "standard",
+      "authorizationAssertion": "assertPlayerRelationship",
+      "status": "OPERATIONAL"
+    },
+    {
+      "routeKey": "catalog",
+      "paths": ["/api/v1/catalog", "/catalog"],
+      "query": "?route=catalog",
+      "methods": ["GET"],
+      "authLevel": "public",
+      "requiredRoles": [],
+      "requiredScopes": [],
+      "domain": "store_catalog",
+      "rateLimit": "standard",
+      "status": "OPERATIONAL"
+    },
+    {
+      "routeKey": "attendance-record",
+      "paths": ["/api/v1/attendance", "/attendance"],
+      "query": "?route=attendance-record",
+      "methods": ["POST"],
+      "authLevel": "authenticated_coach_admin",
+      "requiredRoles": ["coach", "branch_admin", "org_admin", "super_admin"],
+      "requiredScopes": ["attendance:write"],
+      "domain": "attendance_vertical_slice",
+      "rateLimit": "standard",
+      "features": ["multi_tenant_hierarchy", "idempotent_upsert", "audit_log", "notifications"],
+      "status": "OPERATIONAL"
+    }
+  ]
+}

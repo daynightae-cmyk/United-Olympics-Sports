@@ -3,6 +3,8 @@ import { adminAuth } from '../lib/firebase-admin.ts';
 import { databaseConfigured, getPool } from '../db/index.ts';
 import { assertPlayerRelationship, requireAnyRole, requireIdentity } from './auth.ts';
 import { authAdministrativeActionsConfigured, getRuntimeReadiness } from './runtime.ts';
+import { evaluateSystemReadiness } from './readiness.ts';
+
 import {
   ApiError,
   assertMethod,
@@ -13,6 +15,17 @@ import {
   type ApiRequest,
   type ApiResponse,
 } from './http.ts';
+import {
+  applyRateLimitHeaders,
+  defaultRateLimiter,
+  getClientIp,
+  validateHoneypot,
+} from './rate-limiter.ts';
+import {
+  type AttendanceStatus,
+  executeAttendanceVerticalSlice,
+} from './vertical-slice.ts';
+import { requireAuthorizationContext } from './auth.ts';
 
 export type RouteHandler = (req: ApiRequest, res: ApiResponse) => Promise<void>;
 
@@ -29,26 +42,10 @@ function requireDatabase(): void {
 
 export const healthHandler: RouteHandler = async (req, res) => {
   assertMethod(req, ['GET']);
-  const readiness = getRuntimeReadiness();
-  sendJson(res, 200, {
-    ok: true,
-    service: 'united-olympics-sports',
-    status: 'ok',
-    productionReady:
-      readiness.databaseConfigured &&
-      readiness.authVerificationConfigured &&
-      readiness.paymentConfigured &&
-      readiness.paymentWebhookConfigured,
-    dependencies: {
-      database: readiness.databaseConfigured ? 'configured' : 'not_configured',
-      authVerification: readiness.authVerificationConfigured ? 'configured' : 'not_configured',
-      authAdministrativeActions: readiness.authAdministrativeActionsConfigured ? 'configured' : 'not_configured',
-      payments: readiness.paymentConfigured ? 'configured' : 'not_configured',
-      paymentWebhook: readiness.paymentWebhookConfigured ? 'configured' : 'not_configured',
-      sms: readiness.smsConfigured ? 'configured' : 'not_configured',
-    },
-  });
+  const report = await evaluateSystemReadiness();
+  sendJson(res, 200, report);
 };
+
 
 export const sessionHandler: RouteHandler = async (req, res) => {
   assertMethod(req, ['POST']);
@@ -100,6 +97,25 @@ export const adminWhoAmIHandler: RouteHandler = async (req, res) => {
 export const publicEnquiriesHandler: RouteHandler = async (req, res) => {
   assertMethod(req, ['POST']);
   const body = await readJsonBody(req);
+
+  // Anti-abuse honeypot check
+  if (!validateHoneypot(body)) {
+    throw new ApiError(400, 'SPAM_DETECTED', 'Enquiry submission failed verification.');
+  }
+
+  // Sliding window rate limit: 5 requests per 10 minutes per client IP
+  const clientIp = getClientIp(req);
+  const rateResult = await defaultRateLimiter.consume(`public-enquiry:${clientIp}`, 5, 10 * 60_000);
+  applyRateLimitHeaders(res, rateResult);
+  if (!rateResult.allowed) {
+    throw new ApiError(
+      429,
+      'RATE_LIMIT_EXCEEDED',
+      `Too many enquiries submitted from your network. Please retry in ${rateResult.retryAfterSeconds} seconds.`,
+      { retryAfter: rateResult.retryAfterSeconds },
+    );
+  }
+
   const name = normalizeString(body.name, 120);
   const email = normalizeString(body.email, 254)?.toLowerCase();
   const phone = normalizeString(body.phone, 40);
@@ -112,6 +128,9 @@ export const publicEnquiriesHandler: RouteHandler = async (req, res) => {
   }
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     throw new ApiError(400, 'VALIDATION_ERROR', 'Email address is not valid.');
+  }
+  if (phone && !/^\+?[0-9\s\-()]{7,25}$/.test(phone)) {
+    throw new ApiError(400, 'VALIDATION_ERROR', 'Phone number format is invalid.');
   }
 
   requireDatabase();
@@ -194,4 +213,26 @@ export const catalogHandler: RouteHandler = async (req, res) => {
   } catch {
     throw new ApiError(503, 'DATA_SERVICE_UNAVAILABLE', 'Catalog data is temporarily unavailable.');
   }
+};
+
+export const recordAttendanceHandler: RouteHandler = async (req, res) => {
+  assertMethod(req, ['POST']);
+  const ctx = await requireAuthorizationContext(req);
+  const body = await readJsonBody(req);
+  const sessionId = normalizeString(body.sessionId, 64) || '';
+  const playerId = normalizeString(body.playerId, 64) || '';
+  const status = (normalizeString(body.status, 32) || '') as AttendanceStatus;
+  const notes = normalizeString(body.notes, 500);
+
+  const sliceResult = await executeAttendanceVerticalSlice(ctx, {
+    sessionId,
+    playerId,
+    status,
+    notes,
+  });
+
+  sendJson(res, 201, {
+    ok: true,
+    slice: sliceResult,
+  });
 };
