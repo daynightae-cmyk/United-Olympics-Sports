@@ -84,7 +84,17 @@ jobs:
           exit "$failed"
 
       - name: Install browser QA runtime
-        run: npx playwright install --with-deps chromium firefox webkit
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Playwright uses its bundled browsers; the preinstalled Google Chrome
+          # apt source is not required and can briefly publish inconsistent metadata.
+          for source in /etc/apt/sources.list.d/*; do
+            if [ -f "$source" ] && grep -q 'dl.google.com/linux/chrome-stable' "$source"; then
+              sudo mv "$source" "${source}.disabled"
+            fi
+          done
+          npx playwright install --with-deps chromium firefox webkit
 
       - name: Start ordinary production preview
         shell: bash
@@ -178,7 +188,15 @@ jobs:
         run: npm ci
 
       - name: Install ${{ matrix.browser }} runtime
-        run: npx playwright install --with-deps ${{ matrix.engine }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for source in /etc/apt/sources.list.d/*; do
+            if [ -f "$source" ] && grep -q 'dl.google.com/linux/chrome-stable' "$source"; then
+              sudo mv "$source" "${source}.disabled"
+            fi
+          done
+          npx playwright install --with-deps ${{ matrix.engine }}
 
       - name: Build Store QA preview
         env:
