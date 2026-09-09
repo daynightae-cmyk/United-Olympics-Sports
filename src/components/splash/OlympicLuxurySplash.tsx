@@ -38,7 +38,7 @@ export function OlympicLuxurySplash({ onComplete, forceShow = false }: OlympicLu
   const [visible, setVisible] = useState(() => {
     if (forceShow) return true;
     if (typeof window === 'undefined') return false;
-    return !sessionStorage.getItem('uos:luxury-splash-seen');
+    return !sessionStorage.getItem('uos:luxury-splash-seen') && !sessionStorage.getItem('uos:splash-seen');
   });
 
   const [progress, setProgress] = useState(12);
@@ -68,6 +68,7 @@ export function OlympicLuxurySplash({ onComplete, forceShow = false }: OlympicLu
   const handleDismiss = () => {
     try {
       sessionStorage.setItem('uos:luxury-splash-seen', 'true');
+      sessionStorage.setItem('uos:splash-seen', 'true');
     } catch {
       // ignore
     }
@@ -96,7 +97,7 @@ export function OlympicLuxurySplash({ onComplete, forceShow = false }: OlympicLu
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="fixed inset-0 z-[99999] flex items-center justify-center overflow-hidden bg-[#05070c] text-white select-none"
         >
-          <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full bg-[radial-gradient(circle,rgba(212,175,55,0.18)_0%,rgba(245,215,127,0.06)_40%,transparent_70%)] blur-2xl animate-pulse" style={{ animationDuration: '4s' }} />
             <div className="absolute top-1/4 left-1/3 w-[360px] h-[360px] rounded-full bg-[radial-gradient(circle,rgba(197,160,89,0.12)_0%,transparent_65%)] blur-xl" />
             <div className="absolute bottom-1/4 right-1/3 w-[420px] h-[420px] rounded-full bg-[radial-gradient(circle,rgba(212,175,55,0.09)_0%,transparent_65%)] blur-2xl" />

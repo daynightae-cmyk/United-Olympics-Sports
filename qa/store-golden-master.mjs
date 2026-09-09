@@ -33,6 +33,7 @@ async function checkedContext(browser, width, theme = 'light', rtl = false) {
   });
   await context.addInitScript(({ theme, rtl }) => {
     sessionStorage.setItem('uos:splash-seen', 'true');
+    sessionStorage.setItem('uos:luxury-splash-seen', 'true');
     sessionStorage.setItem('uos:assistant-dismissed', '1');
     localStorage.setItem(
       'uos:ui-settings:v1',

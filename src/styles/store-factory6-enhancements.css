@@ -1,5 +1,5 @@
 /* Store Golden Master. Scoped retail tokens and components; shared portal styles stay intact. */
-.store-shell { --store-canvas:#f5f4f0; --store-surface:#fff; --store-soft:#edece8; --store-elevated:#faf9f6; --store-ink:#191b20; --store-muted:#64646b; --store-gold:#856018; --store-champagne:#d9bb78; --store-header:#101319; --store-border:#dcdcd6; --store-shadow:0 16px 40px #171b2410; --store-motion:240ms cubic-bezier(.2,.8,.2,1); }
+.store-shell { overflow-x: clip; max-width: 100vw; width: 100%; --store-canvas:#f5f4f0; --store-surface:#fff; --store-soft:#edece8; --store-elevated:#faf9f6; --store-ink:#191b20; --store-muted:#64646b; --store-gold:#856018; --store-champagne:#d9bb78; --store-header:#101319; --store-border:#dcdcd6; --store-shadow:0 16px 40px #171b2410; --store-motion:240ms cubic-bezier(.2,.8,.2,1); }
 html[data-theme=dark] .store-shell { --store-canvas:#0c0e12; --store-surface:#14171c; --store-soft:#1c2027; --store-elevated:#191c22; --store-ink:#f3f1eb; --store-muted:#b5b4b1; --store-gold:#d9bb78; --store-border:#32353d; --store-shadow:0 16px 40px #0005; }
 .store-shell :is(button,input,select,a):focus-visible { outline:2px solid var(--store-gold); outline-offset:4px; }
 .store-shell button:disabled { opacity:.55; cursor:not-allowed; }
@@ -256,7 +256,7 @@ html[data-theme=dark] .store-shell { --store-canvas:#0c0e12; --store-surface:#14
   .store-utilities>a[href='/store/account'] { display:none; }
   .store-utilities svg { width:20px; height:20px; }
   .store-utilities .theme-menu-trigger { width:36px; height:40px; border:0; background:none; }
-  .store-utilities i { top:0; right:0; font-size:9px; }
+  .store-utilities i { top:0; right:2px; inset-inline-start:auto; font-size:9px; }
   .store-search-wrap { display:block; min-width:0; grid-column:1/-1; grid-row:2; width:100%; }
   .store-search { width:100%; height:44px; }
   .store-search-results { width:100%; inset-inline:0; }

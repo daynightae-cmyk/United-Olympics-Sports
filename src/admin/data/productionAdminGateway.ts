@@ -108,7 +108,7 @@ export const productionAdminGateway: AdminDataGateway = {
   },
 
   async deleteCountry(_id: string): Promise<DeleteResult> {
-    return { success: true, message: 'Country deleted successfully' };
+    throw new Error('Country deletion is not supported in production API');
   },
 
   async listBranches(params?: ListQueryParams): Promise<ListResult<BranchViewModel>> {
@@ -149,7 +149,7 @@ export const productionAdminGateway: AdminDataGateway = {
   },
 
   async deleteBranch(_id: string): Promise<DeleteResult> {
-    return { success: true, message: 'Branch deleted successfully' };
+    throw new Error('Branch deletion is not supported in production API');
   },
 
   async listSports(params?: ListQueryParams): Promise<ListResult<SportViewModel>> {
@@ -177,7 +177,7 @@ export const productionAdminGateway: AdminDataGateway = {
   },
 
   async deleteSport(_id: string): Promise<DeleteResult> {
-    return { success: true, message: 'Deleted successfully' };
+    throw new Error('Sport deletion is not supported in production API');
   },
 
   async listPrograms(params?: ListQueryParams): Promise<ListResult<ProgramViewModel>> {
@@ -205,7 +205,7 @@ export const productionAdminGateway: AdminDataGateway = {
   },
 
   async deleteProgram(_id: string): Promise<DeleteResult> {
-    return { success: true, message: 'Deleted successfully' };
+    throw new Error('Program deletion is not supported in production API');
   },
 
   async listGroups(params?: ListQueryParams): Promise<ListResult<TrainingGroupViewModel>> {
@@ -233,7 +233,7 @@ export const productionAdminGateway: AdminDataGateway = {
   },
 
   async deleteGroup(_id: string): Promise<DeleteResult> {
-    return { success: true, message: 'Deleted successfully' };
+    throw new Error('Group deletion is not supported in production API');
   },
 
   async listPlayers(params?: ListQueryParams): Promise<ListResult<PlayerViewModel>> {
@@ -274,7 +274,7 @@ export const productionAdminGateway: AdminDataGateway = {
   },
 
   async deletePlayer(_id: string): Promise<DeleteResult> {
-    return { success: true, message: 'Player deleted successfully' };
+    throw new Error('Player deletion is not supported in production API');
   },
 
   async listCoaches(params?: ListQueryParams): Promise<ListResult<CoachViewModel>> {
@@ -302,7 +302,7 @@ export const productionAdminGateway: AdminDataGateway = {
   },
 
   async deleteCoach(_id: string): Promise<DeleteResult> {
-    return { success: true, message: 'Deleted successfully' };
+    throw new Error('Coach deletion is not supported in production API');
   },
 
   async listParents(params?: ListQueryParams): Promise<ListResult<ParentViewModel>> {
@@ -330,7 +330,7 @@ export const productionAdminGateway: AdminDataGateway = {
   },
 
   async deleteParent(_id: string): Promise<DeleteResult> {
-    return { success: true, message: 'Deleted successfully' };
+    throw new Error('Parent deletion is not supported in production API');
   },
 
   async listSessions(params?: ListQueryParams): Promise<ListResult<SessionViewModel>> {
@@ -358,7 +358,7 @@ export const productionAdminGateway: AdminDataGateway = {
   },
 
   async deleteSession(_id: string): Promise<DeleteResult> {
-    return { success: true, message: 'Deleted successfully' };
+    throw new Error('Session deletion is not supported in production API');
   },
 
   async listSubscriptions(_params?: ListQueryParams): Promise<ListResult<SubscriptionViewModel>> {
@@ -378,7 +378,7 @@ export const productionAdminGateway: AdminDataGateway = {
   },
 
   async deleteSubscription(_id: string): Promise<DeleteResult> {
-    return { success: true, message: 'Deleted successfully' };
+    throw new Error('Subscription deletion is not supported in production API');
   },
 
   async listPayments(_params?: ListQueryParams): Promise<ListResult<PaymentViewModel>> {
@@ -398,7 +398,7 @@ export const productionAdminGateway: AdminDataGateway = {
   },
 
   async deletePayment(_id: string): Promise<DeleteResult> {
-    return { success: true, message: 'Deleted successfully' };
+    throw new Error('Payment deletion is not supported in production API');
   },
 
   async listReports(_params?: ListQueryParams): Promise<ListResult<ReportViewModel>> {
@@ -430,7 +430,7 @@ export const productionAdminGateway: AdminDataGateway = {
   },
 
   async deleteContent(_id: string): Promise<DeleteResult> {
-    return { success: true, message: 'Deleted successfully' };
+    throw new Error('Content deletion is not supported in production API');
   },
 
   async listUsers(_params?: ListQueryParams): Promise<ListResult<UserViewModel>> {
@@ -450,7 +450,7 @@ export const productionAdminGateway: AdminDataGateway = {
   },
 
   async deleteUser(_id: string): Promise<DeleteResult> {
-    return { success: true, message: 'Deleted successfully' };
+    throw new Error('User deletion is not supported in production API');
   },
 
   async listRegistrations(params?: ListQueryParams): Promise<ListResult<RegistrationViewModel>> {
@@ -478,7 +478,7 @@ export const productionAdminGateway: AdminDataGateway = {
   },
 
   async deleteRegistration(_id: string): Promise<DeleteResult> {
-    return { success: true, message: 'Deleted successfully' };
+    throw new Error('Registration deletion is not supported in production API');
   },
 
   async listAchievements(_params?: ListQueryParams): Promise<ListResult<AchievementViewModel>> {
@@ -498,7 +498,7 @@ export const productionAdminGateway: AdminDataGateway = {
   },
 
   async deleteAchievement(_id: string): Promise<DeleteResult> {
-    return { success: true, message: 'Deleted successfully' };
+    throw new Error('Achievement deletion is not supported in production API');
   },
 
   async listEvents(_params?: ListQueryParams): Promise<ListResult<EventViewModel>> {
@@ -518,7 +518,7 @@ export const productionAdminGateway: AdminDataGateway = {
   },
 
   async deleteEvent(_id: string): Promise<DeleteResult> {
-    return { success: true, message: 'Deleted successfully' };
+    throw new Error('Event deletion is not supported in production API');
   },
 
   async listAnnouncements(_params?: ListQueryParams): Promise<ListResult<AnnouncementViewModel>> {
@@ -538,7 +538,7 @@ export const productionAdminGateway: AdminDataGateway = {
   },
 
   async deleteAnnouncement(_id: string): Promise<DeleteResult> {
-    return { success: true, message: 'Deleted successfully' };
+    throw new Error('Announcement deletion is not supported in production API');
   },
 
   async listMessages(_params?: ListQueryParams): Promise<ListResult<MessageViewModel>> {
@@ -558,7 +558,7 @@ export const productionAdminGateway: AdminDataGateway = {
   },
 
   async deleteMessage(_id: string): Promise<DeleteResult> {
-    return { success: true, message: 'Deleted successfully' };
+    throw new Error('Message deletion is not supported in production API');
   },
 
   async listAuditActivity(_params?: ListQueryParams): Promise<ListResult<AuditActivityViewModel>> {
