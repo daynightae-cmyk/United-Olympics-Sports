@@ -1,6 +1,6 @@
 import { getPool, databaseConfigured } from '../db/index.ts';
 import { ApiError } from './http.ts';
-import type { ProviderIdentity, VerifiedIdentity } from './auth.ts';
+import type { VerifiedIdentity } from './auth.ts';
 
 export interface TenantBindings {
   organizationIds: string[];
@@ -125,7 +125,6 @@ export function canManageStore(ctx: AuthorizationContext): boolean {
   return ctx.roles.includes('store_admin') || ctx.scopes.includes('store:*');
 }
 
-// Assertions that throw 403 ApiError
 export function assertCanAccessOrganization(ctx: AuthorizationContext, orgId: string): void {
   if (!canAccessOrganization(ctx, orgId)) {
     throw new ApiError(403, 'CROSS_ORGANIZATION_DENIED', 'Access to the requested organization is denied.');
@@ -190,7 +189,15 @@ export async function resolveAuthorizationContext(identity: VerifiedIdentity): P
 
   const pool = getPool();
   try {
-    const [rolesResult, scopesResult, playersResult, guardiansResult, coachesResult] = await Promise.all([
+    const [
+      rolesResult,
+      scopesResult,
+      playersResult,
+      guardiansResult,
+      coachesResult,
+      coachGroupsResult,
+      coachPlayersResult,
+    ] = await Promise.all([
       pool.query<{ role: string; organization_id: string | null; country_id: string | null; branch_id: string | null }>(
         'select role, organization_id, country_id, branch_id from app_user_roles where uid = $1 and active = true',
         [identity.uid],
@@ -212,6 +219,21 @@ export async function resolveAuthorizationContext(identity: VerifiedIdentity): P
       ),
       pool.query<{ coach_id: string; branch_id: string | null }>(
         'select id as coach_id, branch_id from coaches where user_uid = $1',
+        [identity.uid],
+      ),
+      pool.query<{ group_id: string }>(
+        `select cg.group_id
+           from coach_groups cg
+           join coaches c on c.id = cg.coach_id
+          where c.user_uid = $1 and cg.active = true`,
+        [identity.uid],
+      ),
+      pool.query<{ player_id: string }>(
+        `select distinct p.id as player_id
+           from players p
+           join coach_groups cg on cg.group_id = p.group_id and cg.active = true
+           join coaches c on c.id = cg.coach_id
+          where c.user_uid = $1 and p.archived_at is null`,
         [identity.uid],
       ),
     ]);
@@ -241,6 +263,8 @@ export async function resolveAuthorizationContext(identity: VerifiedIdentity): P
     for (const r of coachesResult.rows) {
       if (r.branch_id) branchIds.add(r.branch_id);
     }
+    const coachGroupIds = [...new Set(coachGroupsResult.rows.map((r) => r.group_id))];
+    const coachPlayerIds = [...new Set(coachPlayersResult.rows.map((r) => r.player_id))];
 
     return {
       uid: identity.uid,
@@ -258,8 +282,8 @@ export async function resolveAuthorizationContext(identity: VerifiedIdentity): P
         guardianIds,
         guardianPlayerIds,
         coachIds,
-        coachGroupIds: [],
-        coachPlayerIds: [],
+        coachGroupIds,
+        coachPlayerIds,
       },
     };
   } catch (err) {
