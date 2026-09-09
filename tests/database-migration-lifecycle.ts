@@ -59,10 +59,27 @@ assert.match(rlsHardeningSql, /alter table if exists organizations enable row le
 assert.match(rlsHardeningSql, /alter table if exists public_enquiries enable row level security;/i);
 assert.match(rlsHardeningSql, /create policy "public_enquiries_anon_insert"/i);
 
+// Test 3.4: Migration 0006 Live RLS Policy Closure & Sensitive Table Isolation
+const rlsClosureSql = fs.readFileSync(path.join(migrationsDir, '0006_live_rls_policy_closure.sql'), 'utf8');
+assert.match(rlsClosureSql, /create table if not exists app_user_profiles/i);
+assert.match(rlsClosureSql, /alter table achievements add column if not exists is_public boolean/i);
+assert.match(rlsClosureSql, /revoke all on public\.payment_webhooks from anon;/i);
+assert.match(rlsClosureSql, /revoke all on public\.payment_intents from anon;/i);
+assert.match(rlsClosureSql, /revoke all on public\.orders from anon;/i);
+assert.match(rlsClosureSql, /revoke all on public\.messages from anon;/i);
+assert.match(rlsClosureSql, /revoke all on public\.notifications from anon;/i);
+assert.match(rlsClosureSql, /create policy "notifications_recipient_read" on public\.notifications/i);
+assert.match(rlsClosureSql, /create policy "messages_participant_read" on public\.messages/i);
+assert.match(rlsClosureSql, /create policy "orders_customer_read" on public\.orders/i);
+assert.match(rlsClosureSql, /create policy "payment_intents_owner_read" on public\.payment_intents/i);
+assert.match(rlsClosureSql, /create policy "events_public_read" on public\.events[\s\S]*status in \('scheduled', 'published'\)/i);
+assert.match(rlsClosureSql, /create policy "announcements_public_read" on public\.announcements[\s\S]*status = 'active' and target_role = 'all'/i);
+assert.match(rlsClosureSql, /create policy "achievements_public_read" on public\.achievements[\s\S]*is_public = true/i);
+
 // Test 4: Migration Runner Dry-run Execution
 const summary = await runMigrations();
-assert.equal(summary.totalFound >= 5, true);
-assert.equal(summary.results.length >= 5, true);
+assert.equal(summary.totalFound >= 6, true);
+assert.equal(summary.results.length >= 6, true);
 assert.equal(summary.results.every((r) => r.status === 'DRY_RUN' || r.status === 'APPLIED' || r.status === 'SKIPPED'), true);
 
 console.log('Database migration lifecycle tests: PASS');

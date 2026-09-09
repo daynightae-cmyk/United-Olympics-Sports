@@ -1,0 +1,64 @@
+{
+  "documentId": "UOS-MIGRATION-PARITY",
+  "generated": "2026-09-10",
+  "product": "United Olympics Sports",
+  "productAr": "يونايتد أوليمبيكس سبورت",
+  "supabaseProjectId": "olmbezzzqavgjwydlfey",
+  "migrations": [
+    {
+      "sequence": 1,
+      "file": "0001_production_foundation.sql",
+      "sha256": "a8116e5aebf32b34eca91ba0578c67a8f63f8812921bbc2c7cd29d93366281f0",
+      "liveEquivalent": ["20260908034016", "20260908044238", "20260908050937", "20260908051755"],
+      "liveStatus": "APPLIED",
+      "parityState": "RECONCILED"
+    },
+    {
+      "sequence": 2,
+      "file": "0002_constraints_and_hardening.sql",
+      "sha256": "1e551aa4ac59a26022431b7652b65ae303119691f640c7941302a8aff8ab8e51",
+      "liveEquivalent": ["20260908182236"],
+      "liveStatus": "APPLIED",
+      "parityState": "RECONCILED"
+    },
+    {
+      "sequence": 3,
+      "file": "0003_portal_and_operations.sql",
+      "sha256": "4791d88ed6a56ffbda76db902b348b13f93533b73f00660416d7d803ab1c8a10",
+      "liveEquivalent": ["20260909015039"],
+      "liveStatus": "APPLIED",
+      "parityState": "RECONCILED"
+    },
+    {
+      "sequence": 4,
+      "file": "0004_portal_assignment_parity.sql",
+      "sha256": "78f1666936acd5945f5bf04608ff022729b7de50271a79eb5607693934ba6393",
+      "liveEquivalent": ["20260909063715"],
+      "liveStatus": "APPLIED",
+      "parityState": "RECONCILED"
+    },
+    {
+      "sequence": 5,
+      "file": "0005_production_schema_parity_and_rls_hardening.sql",
+      "sha256": "5a3e4b81c5e7577fabb0f3685a038fdeb5d04d46196d2fc58e127b51e06c3f89",
+      "liveEquivalent": null,
+      "liveStatus": "UNAPPLIED",
+      "parityState": "REPOSITORY_ONLY"
+    },
+    {
+      "sequence": 6,
+      "file": "0006_live_rls_policy_closure.sql",
+      "sha256": "dc22a20627c509283d92f6b47d9c2c89c6e974c8b227b7f6bacb87358741e273",
+      "liveEquivalent": null,
+      "liveStatus": "PENDING_DEPLOY",
+      "parityState": "PROPOSED_CLOSURE"
+    }
+  ],
+  "bootstrapVerification": {
+    "engine": "PGlite (PostgreSQL 16.4 in-memory)",
+    "migrationsApplied": 6,
+    "tablesCreated": 33,
+    "rlsEnabledTables": 33,
+    "pass": true
+  }
+}

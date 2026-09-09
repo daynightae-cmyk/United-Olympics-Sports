@@ -71,6 +71,7 @@ export const players = pgTable('players', {
   id: uuid('id').defaultRandom().primaryKey(),
   userUid: text('user_uid').unique(),
   branchId: uuid('branch_id').references(() => branches.id),
+  groupId: uuid('group_id').references(() => groups.id),
   fullName: text('full_name').notNull(),
   archivedAt: timestamp('archived_at', { withTimezone: true }),
   ...timestamps(),
@@ -97,6 +98,14 @@ export const coaches = pgTable('coaches', {
   userUid: text('user_uid').unique(),
   branchId: uuid('branch_id').references(() => branches.id),
   fullName: text('full_name').notNull(),
+  ...timestamps(),
+});
+
+export const coachGroups = pgTable('coach_groups', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  coachId: uuid('coach_id').references(() => coaches.id).notNull(),
+  groupId: uuid('group_id').references(() => groups.id).notNull(),
+  active: boolean('active').default(true).notNull(),
   ...timestamps(),
 });
 
@@ -264,6 +273,7 @@ export const achievements = pgTable('achievements', {
   descriptionAr: text('description_ar'),
   badge: text('badge'),
   category: text('category').default('general').notNull(),
+  isPublic: boolean('is_public').default(false).notNull(),
   earnedAt: timestamp('earned_at', { withTimezone: true }).defaultNow().notNull(),
   ...timestamps(),
 });
@@ -341,5 +351,13 @@ export const orders = pgTable('orders', {
   currency: text('currency').default('AED').notNull(),
   items: jsonb('items').$type<Array<{ productId: string; sku: string; name: string; quantity: number; unitPriceMinor: number }>>().notNull(),
   shippingAddress: jsonb('shipping_address').$type<Record<string, unknown>>(),
+  ...timestamps(),
+});
+
+export const appUserProfiles = pgTable('app_user_profiles', {
+  userId: uuid('user_id').primaryKey(),
+  email: text('email'),
+  displayName: text('display_name'),
+  avatarUrl: text('avatar_url'),
   ...timestamps(),
 });
