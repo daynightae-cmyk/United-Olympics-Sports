@@ -63,7 +63,7 @@
 
 Under our strict **Truth in Engineering** mandate:
 - **Supabase Production URL & Key:** `CONFIGURED_PENDING_PROD_DEPLOYMENT` (Fallback to dry-run / staging in unconfigured environments; returnTo sanitization active).
-- **PostgreSQL Connection:** `READY_FOR_DEPLOYMENT / BLOCKED_BY_EXTERNAL_SERVICE` (3 migrations `0001`, `0002`, `0003` verified with checksum validation).
+- **PostgreSQL Connection:** `READY_FOR_DEPLOYMENT / BLOCKED_BY_EXTERNAL_SERVICE` (4 migrations `0001`, `0002`, `0003`, `0004` verified with checksum validation).
 - **Firebase Admin Service Account:** `CONFIGURED_PENDING_PROD_DEPLOYMENT` (Subject mapping and session revocation contracts verified).
 - **Payment Provider Keys (Stripe / Paymob):** `BLOCKED_BY_CREDENTIALS` (Idempotency and duplicate webhook event protection fully verified in repository contracts).
 - **Push / SMS Providers:** `BLOCKED_BY_EXTERNAL_SERVICE` (Retry count and status transition contracts verified).

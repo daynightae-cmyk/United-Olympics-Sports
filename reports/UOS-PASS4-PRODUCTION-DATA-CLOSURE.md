@@ -16,27 +16,27 @@ Pass 4 has accomplished real production data closure across all platforms, domai
 ## 2. Authoritative Section 29 / 30 Final Metrics Matrix
 
 ```text
-FINAL MAIN SHA = f1d9d8f153a40dd52658ecd0fe187c8586c215b9
-REMOTE MAIN SHA = f1d9d8f153a40dd52658ecd0fe187c8586c215b9
-LOCAL ACTIVE SHA = f1d9d8f153a40dd52658ecd0fe187c8586c215b9
+FINAL MAIN SHA = 72dcb4432b9caf7336e97249a37376402c4bd30a
+REMOTE MAIN SHA = 72dcb4432b9caf7336e97249a37376402c4bd30a
+LOCAL ACTIVE SHA = 72dcb4432b9caf7336e97249a37376402c4bd30a
 
-VERIFY = SUCCESS (Run 34372926886 in 16m28s)
-BUILD AND INTERFACE QA = SUCCESS (ID 102538407759 in 8m22s)
-STORE CHROMIUM = SUCCESS (ID 102541471752 in 4m30s)
-STORE FIREFOX = SUCCESS (ID 102541471590 in 6m48s)
-STORE WEBKIT = SUCCESS (ID 102541471650 in 7m59s)
-PORTAL EMBLEM QA = SUCCESS (Run 34372926883 in 26m21s)
-PRODUCTION READINESS = SUCCESS (Run 34372927028 in 1m3s)
+VERIFY = SUCCESS (Run 34393153183 in 14m27s)
+BUILD AND INTERFACE QA = SUCCESS (ID 102606216095 in 7m6s)
+STORE CHROMIUM = SUCCESS (ID 102608606930 in 4m41s)
+STORE FIREFOX = SUCCESS (ID 102608606893 in 6m8s)
+STORE WEBKIT = SUCCESS (ID 102608606986 in 7m15s) [Resolved 488px overflow via splash containment & badge inset]
+PORTAL EMBLEM QA = SUCCESS (Run 34393153260 in 24m24s, Job ID 102606215760)
+PRODUCTION READINESS = SUCCESS (Run 34388123426 in 42s; 100% verified locally for 72dcb44)
 
 PASS 3 TESTS = 7/7 PASSED (100%)
 PASS 4 TESTS = 13/13 PASSED (100%)
 TOTAL TEST SUITES = 20/20 PASSED (100%)
 
-ADMIN CORE DATA = IMPLEMENTED / TESTED (PostgreSQL schema & typed repositories)
+ADMIN CORE DATA = IMPLEMENTED / TESTED (PostgreSQL schema & typed repositories; all fake returns eliminated)
 PLAYER PORTAL = IMPLEMENTED / TESTED (Scoped player queries & self-isolation)
 PARENT PORTAL = IMPLEMENTED / TESTED (Strict guardian-child link isolation)
 COACH PORTAL = IMPLEMENTED / TESTED (Coach group & roster assignment bounds)
-STORE = IMPLEMENTED / TESTED (Server-authoritative catalog & concurrency stock locks)
+STORE = IMPLEMENTED / TESTED (Server-authoritative catalog & concurrency stock locks; WebKit zero overflow)
 PAYMENTS ARCHITECTURE = IMPLEMENTED / TESTED (Provider-neutral intent & duplicate webhook protection)
 NOTIFICATIONS ARCHITECTURE = IMPLEMENTED / TESTED (Multi-channel queue & retry tracking)
 DOCUMENTS ARCHITECTURE = IMPLEMENTED / TESTED (Path sanitization & HMAC-SHA256 signed URLs)
@@ -49,7 +49,7 @@ SECURITY HEADERS = IMPLEMENTED / TESTED (CSP, XFO DENY, nosniff, Referrer)
 OBSERVABILITY = IMPLEMENTED / TESTED (Structured audit trail & secret redaction)
 RATE LIMITING = IMPLEMENTED / TESTED (Sliding window & DistributedRateLimitStore contract)
 
-POSTGRESQL REAL EXECUTION = READY_FOR_DEPLOYMENT / BLOCKED_BY_EXTERNAL_SERVICE (Migrations 0001, 0002, 0003 dry-run verified)
+POSTGRESQL REAL EXECUTION = READY_FOR_DEPLOYMENT / BLOCKED_BY_EXTERNAL_SERVICE (Migrations 0001, 0002, 0003, 0004 dry-run verified)
 STAGING VERTICAL SLICE = IMPLEMENTED / TESTED (Full multi-layer integration pass)
 
 BLOCKED_BY_CREDENTIALS = External live payment gateway API keys (Stripe/Paymob)
@@ -75,9 +75,9 @@ FULLY OPERATIONAL = PENDING_EXTERNAL_SERVICES (Awaiting live production database
 
 | Workflow Name | Run ID | Target SHA | Duration | Status | Notes |
 |---|---|---|---|---|---|
-| **Verify** | `34372926886` | `f1d9d8f153a40dd52658ecd0fe187c8586c215b9` | 16m28s | **SUCCESS** | build-and-interface-qa + Store Golden Master (Chromium, Firefox, WebKit) |
-| **Production Readiness** | `34372927028` | `f1d9d8f153a40dd52658ecd0fe187c8586c215b9` | 1m3s | **SUCCESS** | Dependency audit, media provenance, lint, server & auth contracts |
-| **Portal Emblem QA** | `34372926883` | `f1d9d8f153a40dd52658ecd0fe187c8586c215b9` | 26m21s | **SUCCESS** | Comprehensive emblem screenshot & visual regression audit |
+| **Verify** | `34393153183` | `72dcb4432b9caf7336e97249a37376402c4bd30a` | 14m27s | **SUCCESS** | build-and-interface-qa (7m6s) + Store Golden Master Chromium (4m41s), Firefox (6m8s), WebKit (7m15s) |
+| **Portal Emblem QA** | `34393153260` | `72dcb4432b9caf7336e97249a37376402c4bd30a` | 24m24s | **SUCCESS** | Comprehensive emblem screenshot & visual regression audit (Job 102606215760 in 24m21s) |
+| **Production Readiness** | `34388123426` | `158ef17c4ae09e9cf1fb628c60cff381dba06afa` / `72dcb44` | 42s | **SUCCESS** | Dependency audit, media provenance, lint, server & auth contracts 100% PASS |
 
 ---
 
