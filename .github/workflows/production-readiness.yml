@@ -7,6 +7,7 @@ on:
       - 'api/**'
       - 'src/server/**'
       - 'src/db/**'
+      - 'src/admin/**'
       - 'src/lib/firebase-admin.ts'
       - 'src/lib/firebase.ts'
       - 'src/lib/supabase.ts'
@@ -21,8 +22,7 @@ on:
       - 'qa/media-provenance-gate.mjs'
       - 'server.ts'
       - 'vercel.json'
-      - 'tests/server-contracts.ts'
-      - 'tests/auth-contracts.ts'
+      - 'tests/**'
       - '.github/workflows/production-readiness.yml'
       - 'package.json'
       - 'package-lock.json'
@@ -32,6 +32,7 @@ on:
       - 'api/**'
       - 'src/server/**'
       - 'src/db/**'
+      - 'src/admin/**'
       - 'src/lib/firebase-admin.ts'
       - 'src/lib/firebase.ts'
       - 'src/lib/supabase.ts'
@@ -46,8 +47,7 @@ on:
       - 'qa/media-provenance-gate.mjs'
       - 'server.ts'
       - 'vercel.json'
-      - 'tests/server-contracts.ts'
-      - 'tests/auth-contracts.ts'
+      - 'tests/**'
       - '.github/workflows/production-readiness.yml'
       - 'package.json'
       - 'package-lock.json'
@@ -79,4 +79,6 @@ jobs:
         run: npx tsx tests/server-contracts.ts
       - name: Authentication contracts
         run: npx tsx tests/auth-contracts.ts
+      - name: Production comprehensive test suite
+        run: npm run test:production
       - run: npm run build

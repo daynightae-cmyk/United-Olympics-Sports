@@ -143,10 +143,10 @@ async function runStagingVerticalSliceTest() {
   await dispatchRoute('health', req, res);
   assert.equal(res.statusCode, 200);
 
-  console.log('Staging vertical slice integration test: PASS');
+  console.log('Staging contract simulation test: PASS (STAGING_CONTRACT_SIMULATION)');
 }
 
 runStagingVerticalSliceTest().catch((err) => {
-  console.error('FATAL: Staging vertical slice test failure:', err);
+  console.error('FATAL: Staging contract simulation test failure:', err);
   process.exit(1);
 });

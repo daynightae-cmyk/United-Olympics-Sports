@@ -48,10 +48,21 @@ assert.match(operationalSql, /chk_notifications_status check \(status in \('queu
 assert.match(operationalSql, /chk_payment_intents_amount check \(amount_minor >= 0\)/i);
 assert.match(operationalSql, /chk_orders_total check \(total_minor >= 0\)/i);
 
+// Test 3.2: Migration 0004 Portal assignment parity
+const assignmentSql = fs.readFileSync(path.join(migrationsDir, '0004_portal_assignment_parity.sql'), 'utf8');
+assert.match(assignmentSql, /alter table players[\s\S]*add column if not exists group_id uuid/i);
+assert.match(assignmentSql, /create table if not exists coach_groups/i);
+
+// Test 3.3: Migration 0005 Production schema parity and RLS hardening
+const rlsHardeningSql = fs.readFileSync(path.join(migrationsDir, '0005_production_schema_parity_and_rls_hardening.sql'), 'utf8');
+assert.match(rlsHardeningSql, /alter table if exists organizations enable row level security;/i);
+assert.match(rlsHardeningSql, /alter table if exists public_enquiries enable row level security;/i);
+assert.match(rlsHardeningSql, /create policy "public_enquiries_anon_insert"/i);
+
 // Test 4: Migration Runner Dry-run Execution
 const summary = await runMigrations();
-assert.equal(summary.totalFound >= 2, true);
-assert.equal(summary.results.length >= 2, true);
+assert.equal(summary.totalFound >= 5, true);
+assert.equal(summary.results.length >= 5, true);
 assert.equal(summary.results.every((r) => r.status === 'DRY_RUN' || r.status === 'APPLIED' || r.status === 'SKIPPED'), true);
 
 console.log('Database migration lifecycle tests: PASS');

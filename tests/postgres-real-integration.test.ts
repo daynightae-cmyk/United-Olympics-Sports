@@ -11,14 +11,15 @@ async function runPostgresRealIntegrationTest() {
   if (!configured) {
     console.log('  [TRUTH] PostgreSQL environment credentials not configured.');
     console.log('  [TRUTH] Status: POSTGRES INTEGRATION = BLOCKED_BY_EXTERNAL_SERVICE');
+    console.log('  [TRUTH] execution_mode = TRUTHFUL_DRY_RUN');
     console.log('  Running migration dry-run checksum verification instead...');
 
     const summary = await runMigrations();
     assert.equal(summary.configured, false);
-    assert.ok(summary.totalFound >= 3);
+    assert.ok(summary.totalFound >= 5);
     assert.ok(summary.results.every((r) => r.status === 'DRY_RUN'));
     console.log('  Checksum verification: PASS (Dry-run)');
-    console.log('PostgreSQL real integration test: PASS (TRUTHFUL DRY_RUN / BLOCKED_BY_EXTERNAL_SERVICE)');
+    console.log('PostgreSQL real integration test: PASS (execution_mode = TRUTHFUL_DRY_RUN / BLOCKED_BY_EXTERNAL_SERVICE)');
     return;
   }
 

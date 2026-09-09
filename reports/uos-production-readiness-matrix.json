@@ -153,11 +153,18 @@
       "status": "PASS",
       "verified": true,
       "testSuite": "tests/staging-vertical-slice.test.ts"
+    },
+    {
+      "dimension": "Production Gateway Completeness & Capability Governance",
+      "severity": "P0",
+      "status": "PASS",
+      "verified": true,
+      "testSuite": "tests/production-gateway-completeness.test.ts"
     }
   ],
   "credentialsStatus": {
-    "supabase": "CONFIGURED_PENDING_PROD_DEPLOYMENT",
-    "postgresql": "READY_FOR_DEPLOYMENT / BLOCKED_BY_EXTERNAL_SERVICE",
+    "supabase": "CONFIGURED_AND_PROVEN_LIVE_REST",
+    "postgresql": "TRUTHFUL_DRY_RUN / BLOCKED_BY_EXTERNAL_SERVICE",
     "firebaseAdmin": "CONFIGURED_PENDING_PROD_DEPLOYMENT",
     "paymentGateways": "BLOCKED_BY_CREDENTIALS",
     "pushAndSms": "BLOCKED_BY_EXTERNAL_SERVICE",

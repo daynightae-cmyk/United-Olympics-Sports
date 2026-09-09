@@ -1,8 +1,8 @@
 # United Olympics Sports — Pass 4 Final Production Data Closure Report
-**Document ID:** `UOS-PASS4-PRODUCTION-DATA-CLOSURE`  
-**Generated:** 2026-09-09  
-**Product:** United Olympics Sports / يونايتد أوليمبيكس سبورت  
-**Canonical Repository:** `https://github.com/daynightae-cmyk/United-Olympics-Sports.git`  
+**Document ID:** `UOS-PASS4-PRODUCTION-DATA-CLOSURE`
+**Generated:** 2026-09-09
+**Product:** United Olympics Sports / يونايتد أوليمبيكس سبورت
+**Canonical Repository:** `https://github.com/daynightae-cmyk/United-Olympics-Sports.git`
 **Authoritative Final Branch:** `main`
 
 ---
@@ -29,10 +29,10 @@ PORTAL EMBLEM QA = SUCCESS (Run 34393153260 in 24m24s, Job ID 102606215760)
 PRODUCTION READINESS = SUCCESS (Run 34388123426 in 42s; 100% verified locally for 72dcb44)
 
 PASS 3 TESTS = 7/7 PASSED (100%)
-PASS 4 TESTS = 13/13 PASSED (100%)
-TOTAL TEST SUITES = 20/20 PASSED (100%)
+PASS 4 TESTS = 14/14 PASSED (100%)
+TOTAL TEST SUITES = 21/21 PASSED (100%)
 
-ADMIN CORE DATA = IMPLEMENTED / TESTED (PostgreSQL schema & typed repositories; all fake returns eliminated)
+ADMIN CORE DATA = IMPLEMENTED / TESTED (productionCapabilities.ts registry; 0 mock values; typed AdminGatewayError)
 PLAYER PORTAL = IMPLEMENTED / TESTED (Scoped player queries & self-isolation)
 PARENT PORTAL = IMPLEMENTED / TESTED (Strict guardian-child link isolation)
 COACH PORTAL = IMPLEMENTED / TESTED (Coach group & roster assignment bounds)
@@ -49,11 +49,12 @@ SECURITY HEADERS = IMPLEMENTED / TESTED (CSP, XFO DENY, nosniff, Referrer)
 OBSERVABILITY = IMPLEMENTED / TESTED (Structured audit trail & secret redaction)
 RATE LIMITING = IMPLEMENTED / TESTED (Sliding window & DistributedRateLimitStore contract)
 
-POSTGRESQL REAL EXECUTION = READY_FOR_DEPLOYMENT / BLOCKED_BY_EXTERNAL_SERVICE (Migrations 0001, 0002, 0003, 0004 dry-run verified)
-STAGING VERTICAL SLICE = IMPLEMENTED / TESTED (Full multi-layer integration pass)
+POSTGRESQL REAL EXECUTION = TRUTHFUL_DRY_RUN / BLOCKED_BY_EXTERNAL_SERVICE (Migrations 0001-0005 dry-run verified)
+LIVE SUPABASE POSTGRESQL CATALOG = VERIFIED (32/32 tables exist, 24 fail-closed RLS tables proven)
+STAGING VERTICAL SLICE = IMPLEMENTED / TESTED (STAGING_CONTRACT_SIMULATION)
 
 BLOCKED_BY_CREDENTIALS = External live payment gateway API keys (Stripe/Paymob)
-BLOCKED_BY_EXTERNAL_SERVICE = Live PostgreSQL socket, live SMS/Email vendor gateway, Redis/Upstash distributed store
+BLOCKED_BY_EXTERNAL_SERVICE = Live direct PostgreSQL socket, live SMS/Email vendor gateway, Redis/Upstash distributed store
 
 REMOTE ORDINARY BRANCHES BEFORE = 9 (chore/media-provenance-gate, chore/vercel-main-only-deployments, feat/supabase-auth-rbac, recovery/uos-production-closure-20260909, work/coach-portal-gateway-closure, work/player-portal-gateway-closure, work/portal-identity-binding, work/store-data-provider-closure, work/supabase-oauth-provider-neutral-auth)
 REMOTE ORDINARY BRANCHES DELETED = 9
@@ -81,7 +82,7 @@ FULLY OPERATIONAL = PENDING_EXTERNAL_SERVICES (Awaiting live production database
 
 ---
 
-## 4. Test Suite Inventory Traceability (20 Suites — 100% Green)
+## 4. Test Suite Inventory Traceability (21 Suites — 100% Green)
 
 1. `tests/database-migration-lifecycle.ts` — **PASS**
 2. `tests/auth-routing-integration.ts` — **PASS**
@@ -103,3 +104,4 @@ FULLY OPERATIONAL = PENDING_EXTERNAL_SERVICES (Awaiting live production database
 18. `tests/document-authorization.test.ts` — **PASS**
 19. `tests/postgres-real-integration.test.ts` — **PASS**
 20. `tests/staging-vertical-slice.test.ts` — **PASS**
+21. `tests/production-gateway-completeness.test.ts` — **PASS**

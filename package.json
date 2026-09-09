@@ -11,7 +11,8 @@
     "clean": "node -e \"const fs=require('fs'); ['dist','server.js'].forEach((p)=>fs.existsSync(p)&&fs.rmSync(p,{recursive:true,force:true}));\"",
     "lint": "tsc --noEmit",
     "qa:media-provenance": "node qa/media-provenance-gate.mjs",
-    "db:migrate": "tsx src/db/migrate.ts"
+    "db:migrate": "tsx src/db/migrate.ts",
+    "test:production": "tsx tests/auth-routing-integration.ts && tsx tests/readiness-truth.ts && tsx tests/multi-tenant-authorization.ts && tsx tests/provider-boundary.ts && tsx tests/database-migration-lifecycle.ts && tsx tests/vertical-slice.ts && tsx tests/security-controls.ts && tsx tests/admin-domain-production.test.ts && tsx tests/portal-production-data.test.ts && tsx tests/guardian-isolation.test.ts && tsx tests/coach-assignment-isolation.test.ts && tsx tests/identity-provider-strategy.test.ts && tsx tests/security-headers.test.ts && tsx tests/distributed-rate-limit-contract.test.ts && tsx tests/store-production-provider.test.ts && tsx tests/payment-contract.test.ts && tsx tests/notification-delivery-contract.test.ts && tsx tests/document-authorization.test.ts && tsx tests/postgres-real-integration.test.ts && tsx tests/staging-vertical-slice.test.ts && tsx tests/production-gateway-completeness.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

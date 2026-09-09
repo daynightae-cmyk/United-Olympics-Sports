@@ -191,6 +191,45 @@ export class AdminDomainRepository {
     return { item: created, message: 'Country created successfully' };
   }
 
+  async updateCountry(
+    ctx: AuthorizationContext,
+    id: string,
+    data: Partial<CountryViewModel>,
+  ): Promise<UpdateResult<CountryViewModel>> {
+    assertCanAccessCountry(ctx, id);
+    const existing = await this.getCountry(ctx, id);
+    if (!existing) {
+      throw new ApiError(404, 'NOT_FOUND', 'Country not found.');
+    }
+
+    const nameEn = normalizeString(data.name?.en, 100) || existing.name.en;
+    const nameAr = normalizeString(data.name?.ar, 100) || existing.name.ar;
+    const status = data.status === 'inactive' ? 'inactive' : 'active';
+
+    await this.db.query(
+      `update countries
+          set name = $1, name_ar = $2, status = $3, updated_at = now()
+        where id = $4`,
+      [nameEn, nameAr, status, id],
+    );
+
+    await recordAudit(ctx, {
+      action: 'country.update',
+      entityType: 'country',
+      entityId: id,
+      organizationId: existing.organizationId,
+      countryId: id,
+      metadata: { nameEn, nameAr, status },
+    });
+
+    const updated: CountryViewModel = {
+      ...existing,
+      name: { en: nameEn, ar: nameAr },
+      status,
+    };
+    return { item: updated, message: 'Country updated successfully' };
+  }
+
   // --- 3. BRANCHES ---
   async listBranches(ctx: AuthorizationContext, params?: ListQueryParams): Promise<ListResult<BranchViewModel>> {
     const page = Math.max(1, params?.page || 1);
@@ -335,6 +374,45 @@ export class AdminDomainRepository {
     return { item: created, message: 'Branch created successfully' };
   }
 
+  async updateBranch(
+    ctx: AuthorizationContext,
+    id: string,
+    data: Partial<BranchViewModel>,
+  ): Promise<UpdateResult<BranchViewModel>> {
+    assertCanAccessBranch(ctx, id);
+    const existing = await this.getBranch(ctx, id);
+    if (!existing) {
+      throw new ApiError(404, 'NOT_FOUND', 'Branch not found.');
+    }
+
+    const nameEn = normalizeString(data.name?.en, 100) || existing.name.en;
+    const nameAr = normalizeString(data.name?.ar, 100) || existing.name.ar;
+    const status = data.status === 'inactive' ? 'inactive' : 'active';
+
+    await this.db.query(
+      `update branches
+          set name = $1, name_ar = $2, status = $3, updated_at = now()
+        where id = $4`,
+      [nameEn, nameAr, status, id],
+    );
+
+    await recordAudit(ctx, {
+      action: 'branch.update',
+      entityType: 'branch',
+      entityId: id,
+      countryId: existing.countryId,
+      branchId: id,
+      metadata: { nameEn, nameAr, status },
+    });
+
+    const updated: BranchViewModel = {
+      ...existing,
+      name: { en: nameEn, ar: nameAr },
+      status,
+    };
+    return { item: updated, message: 'Branch updated successfully' };
+  }
+
   // --- 4. SPORTS ---
   async listSports(ctx: AuthorizationContext, params?: ListQueryParams): Promise<ListResult<SportViewModel>> {
     const page = Math.max(1, params?.page || 1);
@@ -369,6 +447,28 @@ export class AdminDomainRepository {
     }));
 
     return { items, total, page, pageSize };
+  }
+
+  async getSport(ctx: AuthorizationContext, id: string): Promise<SportViewModel | null> {
+    const res = await this.db.query<{
+      id: string;
+      code: string;
+      name: string;
+      name_ar: string | null;
+      status: string;
+    }>('select id, code, name, name_ar, status from sports where id = $1', [id]);
+
+    if (!res.rows.length) return null;
+    const row = res.rows[0];
+    return {
+      id: row.id,
+      name: { en: row.name, ar: row.name_ar || row.name },
+      description: { en: `${row.name} training curriculum.`, ar: `منهج تدريب ${row.name_ar || row.name}.` },
+      ageGroups: [{ en: 'U8-U18', ar: 'تحت 8 - تحت 18' }],
+      programIds: [],
+      icon: row.code.toLowerCase(),
+      status: row.status === 'active' ? 'active' : 'inactive',
+    };
   }
 
   // --- 5. PROGRAMS ---
@@ -415,6 +515,29 @@ export class AdminDomainRepository {
     }));
 
     return { items, total, page, pageSize };
+  }
+
+  async getProgram(ctx: AuthorizationContext, id: string): Promise<ProgramViewModel | null> {
+    const res = await this.db.query<{
+      id: string;
+      branch_id: string;
+      sport_id: string;
+      name: string;
+      name_ar: string | null;
+      status: string;
+    }>('select id, branch_id, sport_id, name, name_ar, status from programs where id = $1', [id]);
+
+    if (!res.rows.length) return null;
+    const row = res.rows[0];
+    return {
+      id: row.id,
+      sportId: row.sport_id,
+      name: { en: row.name, ar: row.name_ar || row.name },
+      description: { en: `${row.name} developmental program.`, ar: `برنامج تطوير ${row.name_ar || row.name}.` },
+      ageGroups: [{ en: 'Youth', ar: 'الناشئين' }],
+      level: { en: 'Developmental', ar: 'تطويري' },
+      status: row.status === 'active' ? 'active' : 'inactive',
+    };
   }
 
   // --- 6. GROUPS ---
@@ -467,6 +590,37 @@ export class AdminDomainRepository {
     return { items, total, page, pageSize };
   }
 
+  async getGroup(ctx: AuthorizationContext, id: string): Promise<TrainingGroupViewModel | null> {
+    const res = await this.db.query<{
+      id: string;
+      branch_id: string;
+      program_id: string;
+      name: string;
+      sport_id: string;
+      status: string;
+    }>(
+      `select g.id, g.branch_id, g.program_id, g.name, p.sport_id, g.status
+         from groups g
+         join programs p on g.program_id = p.id
+        where g.id = $1`,
+      [id],
+    );
+
+    if (!res.rows.length) return null;
+    const row = res.rows[0];
+    return {
+      id: row.id,
+      sportId: row.sport_id,
+      name: { en: row.name, ar: row.name },
+      ageGroup: { en: 'U14', ar: 'تحت 14' },
+      level: { en: 'Intermediate', ar: 'متوسط' },
+      playerCount: 0,
+      coachCount: 0,
+      programIds: [row.program_id],
+      status: row.status === 'active' ? 'active' : 'inactive',
+    };
+  }
+
   // --- 7. PLAYERS ---
   async listPlayers(ctx: AuthorizationContext, params?: ListQueryParams): Promise<ListResult<PlayerViewModel>> {
     const page = Math.max(1, params?.page || 1);
@@ -498,10 +652,17 @@ export class AdminDomainRepository {
       full_name: string;
       branch_id: string | null;
       user_uid: string | null;
+      attendance_rate?: number;
+      avg_performance_score?: number | null;
     }>(
-      `select p.id, p.full_name, p.branch_id, p.user_uid
+      `select p.id, p.full_name, p.branch_id, p.user_uid,
+              coalesce(round((count(distinct case when a.status in ('present', 'late') then a.id end)::numeric / nullif(count(distinct a.id), 0)) * 100), 0)::int as attendance_rate,
+              round(avg(pe.score))::int as avg_performance_score
          from players p
+         left join attendance a on a.player_id = p.id
+         left join performance_evaluations pe on pe.player_id = p.id
        ${whereClause}
+        group by p.id, p.full_name, p.branch_id, p.user_uid
         order by p.full_name asc
         limit $${queryParams.length - 1} offset $${queryParams.length}`,
       queryParams,
@@ -514,8 +675,8 @@ export class AdminDomainRepository {
       sportId: '',
       level: { en: 'Active', ar: 'نشط' },
       status: { en: 'Registered', ar: 'مسجل' },
-      attendanceRate: 92,
-      performanceScore: 88,
+      attendanceRate: typeof row.attendance_rate === 'number' ? row.attendance_rate : 0,
+      performanceScore: typeof row.avg_performance_score === 'number' ? row.avg_performance_score : null,
     }));
 
     return { items, total, page, pageSize };
@@ -528,7 +689,19 @@ export class AdminDomainRepository {
       full_name: string;
       branch_id: string | null;
       user_uid: string | null;
-    }>('select id, full_name, branch_id, user_uid from players where id = $1 and archived_at is null', [id]);
+      attendance_rate?: number;
+      avg_performance_score?: number | null;
+    }>(
+      `select p.id, p.full_name, p.branch_id, p.user_uid,
+              coalesce(round((count(distinct case when a.status in ('present', 'late') then a.id end)::numeric / nullif(count(distinct a.id), 0)) * 100), 0)::int as attendance_rate,
+              round(avg(pe.score))::int as avg_performance_score
+         from players p
+         left join attendance a on a.player_id = p.id
+         left join performance_evaluations pe on pe.player_id = p.id
+        where p.id = $1 and p.archived_at is null
+        group by p.id, p.full_name, p.branch_id, p.user_uid`,
+      [id],
+    );
 
     if (!res.rows.length) return null;
     const row = res.rows[0];
@@ -539,8 +712,8 @@ export class AdminDomainRepository {
       sportId: '',
       level: { en: 'Active', ar: 'نشط' },
       status: { en: 'Registered', ar: 'مسجل' },
-      attendanceRate: 92,
-      performanceScore: 88,
+      attendanceRate: typeof row.attendance_rate === 'number' ? row.attendance_rate : 0,
+      performanceScore: typeof row.avg_performance_score === 'number' ? row.avg_performance_score : null,
     };
   }
 
@@ -575,10 +748,45 @@ export class AdminDomainRepository {
       sportId: data.sportId || '',
       level: { en: 'Active', ar: 'نشط' },
       status: { en: 'Registered', ar: 'مسجل' },
-      attendanceRate: 100,
+      attendanceRate: 0,
       performanceScore: null,
     };
     return { item: created, message: 'Player created successfully' };
+  }
+
+  async updatePlayer(
+    ctx: AuthorizationContext,
+    id: string,
+    data: Partial<PlayerViewModel>,
+  ): Promise<UpdateResult<PlayerViewModel>> {
+    assertCanManagePlayer(ctx, id);
+    const existing = await this.getPlayer(ctx, id);
+    if (!existing) {
+      throw new ApiError(404, 'NOT_FOUND', 'Player not found.');
+    }
+
+    const fullName = normalizeString(data.nameEn || data.nameAr, 120) || existing.nameEn;
+
+    await this.db.query(
+      `update players
+          set full_name = $1, updated_at = now()
+        where id = $2 and archived_at is null`,
+      [fullName, id],
+    );
+
+    await recordAudit(ctx, {
+      action: 'player.update',
+      entityType: 'player',
+      entityId: id,
+      metadata: { fullName },
+    });
+
+    const updated: PlayerViewModel = {
+      ...existing,
+      nameEn: fullName,
+      nameAr: fullName,
+    };
+    return { item: updated, message: 'Player updated successfully' };
   }
 
   // --- 8. COACHES ---
@@ -629,6 +837,30 @@ export class AdminDomainRepository {
     return { items, total, page, pageSize };
   }
 
+  async getCoach(ctx: AuthorizationContext, id: string): Promise<CoachViewModel | null> {
+    const res = await this.db.query<{
+      id: string;
+      full_name: string;
+      branch_id: string | null;
+      user_uid: string | null;
+    }>('select c.id, c.full_name, c.branch_id, c.user_uid from coaches c where c.id = $1', [id]);
+
+    if (!res.rows.length) return null;
+    const row = res.rows[0];
+    return {
+      id: row.id,
+      nameEn: row.full_name,
+      nameAr: row.full_name,
+      sportIds: [],
+      branchIds: row.branch_id ? [row.branch_id] : [],
+      groupIds: [],
+      playerCount: 0,
+      specializations: [{ en: 'Olympic Coaching', ar: 'تدريب أولمبي' }],
+      certifications: [{ en: 'IOC Certified', ar: 'معتمد من اللجنة الأولمبية' }],
+      status: 'active',
+    };
+  }
+
   // --- 9. GUARDIANS / PARENTS ---
   async listParents(ctx: AuthorizationContext, params?: ListQueryParams): Promise<ListResult<ParentViewModel>> {
     const page = Math.max(1, params?.page || 1);
@@ -661,6 +893,26 @@ export class AdminDomainRepository {
     }));
 
     return { items, total, page, pageSize };
+  }
+
+  async getParent(ctx: AuthorizationContext, id: string): Promise<ParentViewModel | null> {
+    const res = await this.db.query<{
+      id: string;
+      full_name: string;
+      user_uid: string;
+    }>('select g.id, g.full_name, g.user_uid from guardians g where g.id = $1', [id]);
+
+    if (!res.rows.length) return null;
+    const row = res.rows[0];
+    return {
+      id: row.id,
+      nameEn: row.full_name,
+      nameAr: row.full_name,
+      playerIds: [],
+      playerCount: 0,
+      preferredLanguage: 'ar',
+      status: 'active',
+    };
   }
 
   // --- 10. SESSIONS ---
@@ -716,6 +968,34 @@ export class AdminDomainRepository {
     return { items, total, page, pageSize };
   }
 
+  async getSession(ctx: AuthorizationContext, id: string): Promise<SessionViewModel | null> {
+    const res = await this.db.query<{
+      id: string;
+      group_id: string;
+      starts_at: string | Date;
+      status: string;
+      sport_id: string;
+    }>(
+      `select s.id, s.group_id, s.starts_at, s.status, p.sport_id
+         from sessions s
+         join groups g on s.group_id = g.id
+         join programs p on g.program_id = p.id
+        where s.id = $1`,
+      [id],
+    );
+
+    if (!res.rows.length) return null;
+    const row = res.rows[0];
+    return {
+      id: row.id,
+      sportId: row.sport_id,
+      groupId: row.group_id,
+      startsAt: new Date(row.starts_at).toISOString(),
+      status: { en: row.status, ar: row.status === 'scheduled' ? 'مجدول' : 'مكتمل' },
+      coachIds: [],
+    };
+  }
+
   // --- 11. REGISTRATIONS / SERVICE REQUESTS ---
   async listRegistrations(ctx: AuthorizationContext, params?: ListQueryParams): Promise<ListResult<RegistrationViewModel>> {
     const page = Math.max(1, params?.page || 1);
@@ -748,6 +1028,26 @@ export class AdminDomainRepository {
     }));
 
     return { items, total, page, pageSize };
+  }
+
+  async getRegistration(ctx: AuthorizationContext, id: string): Promise<RegistrationViewModel | null> {
+    const res = await this.db.query<{
+      id: string;
+      player_id: string;
+      status: string;
+      created_at: string | Date;
+      payload: Record<string, unknown>;
+    }>('select id, player_id, status, created_at, payload from service_requests where id = $1', [id]);
+
+    if (!res.rows.length) return null;
+    const row = res.rows[0];
+    return {
+      id: row.id,
+      playerId: row.player_id,
+      programId: (row.payload?.programId as string) || '',
+      status: (row.status as any) || 'pending',
+      requestedAt: new Date(row.created_at).toISOString(),
+    };
   }
 
   // --- 12. PERFORMANCE EVALUATIONS ---
@@ -809,5 +1109,265 @@ export class AdminDomainRepository {
     });
 
     return { id: evalId, success: true };
+  }
+
+  // --- 13. ACHIEVEMENTS ---
+  async listAchievements(ctx: AuthorizationContext, params?: ListQueryParams): Promise<ListResult<AchievementViewModel>> {
+    const page = Math.max(1, params?.page || 1);
+    const pageSize = Math.min(100, Math.max(1, params?.pageSize || 20));
+    const offset = (page - 1) * pageSize;
+
+    const countRes = await this.db.query<{ count: string }>('select count(*)::text as count from achievements');
+    const total = parseInt(countRes.rows[0]?.count || '0', 10);
+
+    const dataRes = await this.db.query<{
+      id: string;
+      player_id: string | null;
+      title: string;
+      title_ar: string | null;
+      badge: string | null;
+      category: string;
+      earned_at: string | Date;
+    }>(
+      `select id, player_id, title, title_ar, badge, category, earned_at
+         from achievements
+        order by earned_at desc
+        limit $1 offset $2`,
+      [pageSize, offset],
+    );
+
+    const items: AchievementViewModel[] = dataRes.rows.map((row) => ({
+      id: row.id,
+      title: { en: row.title, ar: row.title_ar || row.title },
+      description: { en: row.title, ar: row.title_ar || row.title },
+      category: { en: row.category, ar: row.category },
+      playerId: row.player_id || undefined,
+      awardedAt: new Date(row.earned_at).toISOString(),
+      status: 'awarded',
+    }));
+
+    return { items, total, page, pageSize };
+  }
+
+  async getAchievement(ctx: AuthorizationContext, id: string): Promise<AchievementViewModel | null> {
+    const res = await this.db.query<{
+      id: string;
+      player_id: string | null;
+      title: string;
+      title_ar: string | null;
+      badge: string | null;
+      category: string;
+      earned_at: string | Date;
+    }>('select id, player_id, title, title_ar, badge, category, earned_at from achievements where id = $1', [id]);
+
+    if (!res.rows.length) return null;
+    const row = res.rows[0];
+    return {
+      id: row.id,
+      title: { en: row.title, ar: row.title_ar || row.title },
+      description: { en: row.title, ar: row.title_ar || row.title },
+      category: { en: row.category, ar: row.category },
+      playerId: row.player_id || undefined,
+      awardedAt: new Date(row.earned_at).toISOString(),
+      status: 'awarded',
+    };
+  }
+
+  // --- 14. EVENTS ---
+  async listEvents(ctx: AuthorizationContext, params?: ListQueryParams): Promise<ListResult<EventViewModel>> {
+    const page = Math.max(1, params?.page || 1);
+    const pageSize = Math.min(100, Math.max(1, params?.pageSize || 20));
+    const offset = (page - 1) * pageSize;
+
+    const countRes = await this.db.query<{ count: string }>('select count(*)::text as count from events');
+    const total = parseInt(countRes.rows[0]?.count || '0', 10);
+
+    const dataRes = await this.db.query<{
+      id: string;
+      title: string;
+      title_ar: string | null;
+      description: string | null;
+      description_ar: string | null;
+      starts_at: string | Date;
+      ends_at: string | Date;
+      location: string | null;
+      status: string;
+    }>(
+      `select id, title, title_ar, description, description_ar, starts_at, ends_at, location, status
+         from events
+        order by starts_at asc
+        limit $1 offset $2`,
+      [pageSize, offset],
+    );
+
+    const items: EventViewModel[] = dataRes.rows.map((row) => ({
+      id: row.id,
+      title: { en: row.title, ar: row.title_ar || row.title },
+      description: { en: row.description || row.title, ar: row.description_ar || row.description || row.title },
+      type: { en: 'Olympic Event', ar: 'حدث أولمبي' },
+      startDate: new Date(row.starts_at).toISOString(),
+      endDate: new Date(row.ends_at).toISOString(),
+      location: row.location ? { en: row.location, ar: row.location } : undefined,
+      status: (row.status as any) || 'scheduled',
+    }));
+
+    return { items, total, page, pageSize };
+  }
+
+  async getEvent(ctx: AuthorizationContext, id: string): Promise<EventViewModel | null> {
+    const res = await this.db.query<{
+      id: string;
+      title: string;
+      title_ar: string | null;
+      description: string | null;
+      description_ar: string | null;
+      starts_at: string | Date;
+      ends_at: string | Date;
+      location: string | null;
+      status: string;
+    }>('select id, title, title_ar, description, description_ar, starts_at, ends_at, location, status from events where id = $1', [id]);
+
+    if (!res.rows.length) return null;
+    const row = res.rows[0];
+    return {
+      id: row.id,
+      title: { en: row.title, ar: row.title_ar || row.title },
+      description: { en: row.description || row.title, ar: row.description_ar || row.description || row.title },
+      type: { en: 'Olympic Event', ar: 'حدث أولمبي' },
+      startDate: new Date(row.starts_at).toISOString(),
+      endDate: new Date(row.ends_at).toISOString(),
+      location: row.location ? { en: row.location, ar: row.location } : undefined,
+      status: (row.status as any) || 'scheduled',
+    };
+  }
+
+  // --- 15. ANNOUNCEMENTS ---
+  async listAnnouncements(ctx: AuthorizationContext, params?: ListQueryParams): Promise<ListResult<AnnouncementViewModel>> {
+    const page = Math.max(1, params?.page || 1);
+    const pageSize = Math.min(100, Math.max(1, params?.pageSize || 20));
+    const offset = (page - 1) * pageSize;
+
+    const countRes = await this.db.query<{ count: string }>('select count(*)::text as count from announcements');
+    const total = parseInt(countRes.rows[0]?.count || '0', 10);
+
+    const dataRes = await this.db.query<{
+      id: string;
+      title: string;
+      title_ar: string | null;
+      content: string;
+      content_ar: string | null;
+      priority: string;
+      status: string;
+      published_at: string | Date | null;
+    }>(
+      `select id, title, title_ar, content, content_ar, priority, status, published_at
+         from announcements
+        order by created_at desc
+        limit $1 offset $2`,
+      [pageSize, offset],
+    );
+
+    const items: AnnouncementViewModel[] = dataRes.rows.map((row) => ({
+      id: row.id,
+      title: { en: row.title, ar: row.title_ar || row.title },
+      body: { en: row.content, ar: row.content_ar || row.content },
+      audience: { en: 'All Academy Members', ar: 'جميع أعضاء الأكاديمية' },
+      priority: (row.priority as any) || 'normal',
+      publishedAt: row.published_at ? new Date(row.published_at).toISOString() : undefined,
+      status: (row.status as any) || 'published',
+    }));
+
+    return { items, total, page, pageSize };
+  }
+
+  async getAnnouncement(ctx: AuthorizationContext, id: string): Promise<AnnouncementViewModel | null> {
+    const res = await this.db.query<{
+      id: string;
+      title: string;
+      title_ar: string | null;
+      content: string;
+      content_ar: string | null;
+      priority: string;
+      status: string;
+      published_at: string | Date | null;
+    }>('select id, title, title_ar, content, content_ar, priority, status, published_at from announcements where id = $1', [id]);
+
+    if (!res.rows.length) return null;
+    const row = res.rows[0];
+    return {
+      id: row.id,
+      title: { en: row.title, ar: row.title_ar || row.title },
+      body: { en: row.content, ar: row.content_ar || row.content },
+      audience: { en: 'All Academy Members', ar: 'جميع أعضاء الأكاديمية' },
+      priority: (row.priority as any) || 'normal',
+      publishedAt: row.published_at ? new Date(row.published_at).toISOString() : undefined,
+      status: (row.status as any) || 'published',
+    };
+  }
+
+  // --- 16. AUDIT ACTIVITY ---
+  async listAuditActivity(ctx: AuthorizationContext, params?: ListQueryParams): Promise<ListResult<AuditActivityViewModel>> {
+    const page = Math.max(1, params?.page || 1);
+    const pageSize = Math.min(100, Math.max(1, params?.pageSize || 20));
+    const offset = (page - 1) * pageSize;
+
+    const countRes = await this.db.query<{ count: string }>('select count(*)::text as count from audit_logs');
+    const total = parseInt(countRes.rows[0]?.count || '0', 10);
+
+    const dataRes = await this.db.query<{
+      id: string;
+      actor_uid: string;
+      action: string;
+      entity_type: string;
+      entity_id: string;
+      ip_address: string | null;
+      created_at: string | Date;
+    }>(
+      `select id, actor_uid, action, entity_type, entity_id, ip_address, created_at
+         from audit_logs
+        order by created_at desc
+        limit $1 offset $2`,
+      [pageSize, offset],
+    );
+
+    const items: AuditActivityViewModel[] = dataRes.rows.map((row) => ({
+      id: row.id,
+      actorId: row.actor_uid,
+      actorName: { en: `User ${row.actor_uid}`, ar: `المستخدم ${row.actor_uid}` },
+      action: { en: row.action, ar: row.action },
+      entityType: { en: row.entity_type, ar: row.entity_type },
+      entityId: row.entity_id,
+      details: { en: `Action ${row.action} on ${row.entity_type}`, ar: `إجراء ${row.action} على ${row.entity_type}` },
+      timestamp: new Date(row.created_at).toISOString(),
+      ip: row.ip_address || undefined,
+    }));
+
+    return { items, total, page, pageSize };
+  }
+
+  async getAuditActivity(ctx: AuthorizationContext, id: string): Promise<AuditActivityViewModel | null> {
+    const res = await this.db.query<{
+      id: string;
+      actor_uid: string;
+      action: string;
+      entity_type: string;
+      entity_id: string;
+      ip_address: string | null;
+      created_at: string | Date;
+    }>('select id, actor_uid, action, entity_type, entity_id, ip_address, created_at from audit_logs where id = $1', [id]);
+
+    if (!res.rows.length) return null;
+    const row = res.rows[0];
+    return {
+      id: row.id,
+      actorId: row.actor_uid,
+      actorName: { en: `User ${row.actor_uid}`, ar: `المستخدم ${row.actor_uid}` },
+      action: { en: row.action, ar: row.action },
+      entityType: { en: row.entity_type, ar: row.entity_type },
+      entityId: row.entity_id,
+      details: { en: `Action ${row.action} on ${row.entity_type}`, ar: `إجراء ${row.action} على ${row.entity_type}` },
+      timestamp: new Date(row.created_at).toISOString(),
+      ip: row.ip_address || undefined,
+    };
   }
 }

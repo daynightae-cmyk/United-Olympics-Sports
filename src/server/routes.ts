@@ -10,9 +10,13 @@ import {
   type RouteHandler,
 } from './handlers.ts';
 import {
+  adminAchievementsHandler,
+  adminAnnouncementsHandler,
+  adminAuditHandler,
   adminBranchesHandler,
   adminCoachesHandler,
   adminCountriesHandler,
+  adminEventsHandler,
   adminGroupsHandler,
   adminOrganizationHandler,
   adminParentsHandler,
@@ -56,6 +60,10 @@ export type RouteKey =
   | 'admin-sessions'
   | 'admin-registrations'
   | 'admin-performance'
+  | 'admin-achievements'
+  | 'admin-events'
+  | 'admin-announcements'
+  | 'admin-audit'
   | 'portal-player-data'
   | 'portal-parent-children'
   | 'portal-coach-scope'
@@ -88,6 +96,10 @@ const handlers: Record<RouteKey, RouteHandler> = {
   'admin-sessions': adminSessionsHandler,
   'admin-registrations': adminRegistrationsHandler,
   'admin-performance': adminPerformanceHandler,
+  'admin-achievements': adminAchievementsHandler,
+  'admin-events': adminEventsHandler,
+  'admin-announcements': adminAnnouncementsHandler,
+  'admin-audit': adminAuditHandler,
   'portal-player-data': portalPlayerDataHandler,
   'portal-parent-children': portalParentChildrenHandler,
   'portal-coach-scope': portalCoachScopeHandler,
@@ -121,15 +133,19 @@ export function resolveRouteKey(req: ApiRequest): RouteKey | null {
   if (pathname === '/api/v1/admin/organization') return 'admin-organization';
   if (pathname.startsWith('/api/v1/admin/countries')) return 'admin-countries';
   if (pathname.startsWith('/api/v1/admin/branches')) return 'admin-branches';
-  if (pathname === '/api/v1/admin/sports') return 'admin-sports';
-  if (pathname === '/api/v1/admin/programs') return 'admin-programs';
-  if (pathname === '/api/v1/admin/groups') return 'admin-groups';
+  if (pathname.startsWith('/api/v1/admin/sports')) return 'admin-sports';
+  if (pathname.startsWith('/api/v1/admin/programs')) return 'admin-programs';
+  if (pathname.startsWith('/api/v1/admin/groups')) return 'admin-groups';
   if (pathname.startsWith('/api/v1/admin/players')) return 'admin-players';
-  if (pathname === '/api/v1/admin/coaches') return 'admin-coaches';
-  if (pathname === '/api/v1/admin/parents') return 'admin-parents';
-  if (pathname === '/api/v1/admin/sessions') return 'admin-sessions';
-  if (pathname === '/api/v1/admin/registrations') return 'admin-registrations';
-  if (pathname === '/api/v1/admin/performance') return 'admin-performance';
+  if (pathname.startsWith('/api/v1/admin/coaches')) return 'admin-coaches';
+  if (pathname.startsWith('/api/v1/admin/parents')) return 'admin-parents';
+  if (pathname.startsWith('/api/v1/admin/sessions')) return 'admin-sessions';
+  if (pathname.startsWith('/api/v1/admin/registrations')) return 'admin-registrations';
+  if (pathname.startsWith('/api/v1/admin/performance')) return 'admin-performance';
+  if (pathname.startsWith('/api/v1/admin/achievements')) return 'admin-achievements';
+  if (pathname.startsWith('/api/v1/admin/events')) return 'admin-events';
+  if (pathname.startsWith('/api/v1/admin/announcements')) return 'admin-announcements';
+  if (pathname.startsWith('/api/v1/admin/audit')) return 'admin-audit';
   if (pathname === '/api/v1/portal/player/data') return 'portal-player-data';
   if (pathname === '/api/v1/portal/parent/children') return 'portal-parent-children';
   if (pathname === '/api/v1/portal/coach/scope') return 'portal-coach-scope';
