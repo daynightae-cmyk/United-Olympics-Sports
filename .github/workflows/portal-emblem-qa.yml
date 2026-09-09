@@ -30,7 +30,17 @@ jobs:
         run: git diff --check
 
       - name: Install Playwright browser matrix
-        run: npx playwright install --with-deps
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Playwright uses its bundled browsers; the preinstalled Google Chrome
+          # apt source is not required and can briefly publish inconsistent metadata.
+          for source in /etc/apt/sources.list.d/*; do
+            if [ -f "$source" ] && grep -q 'dl.google.com/linux/chrome-stable' "$source"; then
+              sudo mv "$source" "${source}.disabled"
+            fi
+          done
+          npx playwright install --with-deps
 
       - name: Build portal QA preview with explicit preview providers
         env:
