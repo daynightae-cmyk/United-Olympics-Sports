@@ -10,6 +10,27 @@ const db = new PGlite({
   extensions: { pgcrypto }
 });
 
+// Section 21: Emulate Supabase facilities in test harness, NOT inside production migrations
+await db.exec(`
+  create schema if not exists auth;
+  create or replace function auth.uid() returns uuid as $$
+    select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid;
+  $$ language sql stable;
+
+  do $$
+  begin
+    if not exists (select 1 from pg_roles where rolname = 'anon') then
+      create role anon nologin;
+    end if;
+    if not exists (select 1 from pg_roles where rolname = 'authenticated') then
+      create role authenticated nologin;
+    end if;
+    if not exists (select 1 from pg_roles where rolname = 'service_role') then
+      create role service_role nologin;
+    end if;
+  end $$;
+`);
+
 const migrationsDir = path.resolve(import.meta.dirname, '../src/db/migrations');
 const migrationFiles = [
   '0001_production_foundation.sql',
@@ -24,6 +45,25 @@ for (const file of migrationFiles) {
   const filePath = path.join(migrationsDir, file);
   assert.ok(fs.existsSync(filePath), `Migration file ${file} must exist`);
   const sql = fs.readFileSync(filePath, 'utf8');
+
+  // Verify production migrations do NOT redefine auth.uid()
+  assert.ok(
+    !sql.includes('create or replace function auth.uid'),
+    `Migration ${file} must not create/replace auth.uid()`
+  );
+  assert.ok(
+    !sql.includes('create role anon'),
+    `Migration ${file} must not create platform role anon`
+  );
+  assert.ok(
+    !sql.includes('create role authenticated'),
+    `Migration ${file} must not create platform role authenticated`
+  );
+  assert.ok(
+    !sql.includes('create role service_role'),
+    `Migration ${file} must not create platform role service_role`
+  );
+
   await db.exec(sql);
 }
 
@@ -110,4 +150,15 @@ for (const row of rlsRes.rows) {
   assert.equal(row.rowsecurity, true, `Table ${row.tablename} must have rowsecurity = true`);
 }
 
-console.log('PASS: Fresh empty database bootstrap across migrations 0001 -> 0006 verified with 33 RLS-hardened tables.');
+// 4. Assert auth.uid() return type is uuid
+const procRes = await db.query<{ typname: string }>(`
+  select t.typname
+    from pg_proc p
+    join pg_type t on t.oid = p.prorettype
+    join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'auth'
+     and p.proname = 'uid';
+`);
+assert.equal(procRes.rows[0].typname, 'uuid', 'auth.uid() return type must be uuid');
+
+console.log('PASS: Fresh empty database bootstrap across migrations 0001 -> 0006 verified with 33 RLS-hardened tables and uuid auth.uid().');

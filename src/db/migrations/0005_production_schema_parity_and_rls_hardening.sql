@@ -28,7 +28,11 @@ alter table if exists app_user_roles enable row level security;
 alter table if exists app_user_scopes enable row level security;
 alter table if exists audit_logs enable row level security;
 
--- 2. Public / Anonymous policies where explicitly permitted
+-- 2. Schema addition for public achievements scoping
+alter table if exists achievements add column if not exists is_public boolean not null default false;
+create index if not exists idx_achievements_public on achievements(is_public) where is_public = true;
+
+-- 3. Public / Anonymous policies where explicitly permitted
 do $$
 begin
   if not exists (select 1 from pg_policies where policyname = 'public_enquiries_anon_insert' and tablename = 'public_enquiries') then
@@ -44,19 +48,19 @@ begin
   end if;
 
   if not exists (select 1 from pg_policies where policyname = 'achievements_public_read' and tablename = 'achievements') then
-    create policy "achievements_public_read" on public.achievements for select using (true);
+    create policy "achievements_public_read" on public.achievements for select using (is_public = true);
   end if;
 
   if not exists (select 1 from pg_policies where policyname = 'events_public_read' and tablename = 'events') then
-    create policy "events_public_read" on public.events for select using (status = 'scheduled');
+    create policy "events_public_read" on public.events for select using (status in ('scheduled', 'published'));
   end if;
 
   if not exists (select 1 from pg_policies where policyname = 'announcements_public_read' and tablename = 'announcements') then
-    create policy "announcements_public_read" on public.announcements for select using (status = 'active');
+    create policy "announcements_public_read" on public.announcements for select using (status = 'active' and target_role = 'all');
   end if;
 end $$;
 
--- 3. Additional performance and lookup indices
+-- 4. Additional performance and lookup indices
 create index if not exists idx_players_branch_id on players(branch_id);
 create index if not exists idx_sessions_starts_at on sessions(starts_at desc);
 create index if not exists idx_attendance_player on attendance(player_id);
