@@ -3,9 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { PageHeader, StatusBadge } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { useAdminData } from '../../admin/data/AdminDataProvider';
-import { useAchievement, useUpdateAchievement } from '../../admin/data/adminHooks';
-import { demoPlayers } from '../../data/demo/players';
-import { demoTrainingGroups } from '../../data/demo/trainingGroups';
+import { useAchievement, useGroup, usePlayer, useUpdateAchievement } from '../../admin/data/adminHooks';
 
 export function AdminAchievementsDetailPage() {
   const { achievementId } = useParams();
@@ -13,12 +11,11 @@ export function AdminAchievementsDetailPage() {
   const isPreview = mode === 'preview';
   const { item: achievement, loading, error } = useAchievement(achievementId);
   const { update, loading: updateLoading } = useUpdateAchievement();
+  const { item: player } = usePlayer(achievement?.playerId);
+  const { item: group } = useGroup(achievement?.groupId);
 
   if (loading) return <div className="admin-page"><PageHeader icon={Medal} eyebrow={bi('Training Operations', 'عمليات التدريب')} title={bi('Achievement Detail', 'تفاصيل الإنجاز')} description={bi('Loading...', 'جاري التحميل...')} /></div>;
   if (error || !achievement) return <div className="admin-page"><PageHeader icon={Medal} eyebrow={bi('Training Operations', 'عمليات التدريب')} title={bi('Achievement not found', 'الإنجاز غير موجود')} description={bi('Choose a valid achievement from the Achievements directory.', 'اختر إنجازاً صالحاً من دليل الإنجازات.')} /></div>;
-
-  const player = achievement.playerId ? demoPlayers.find(p => p.id === achievement.playerId) : null;
-  const group = achievement.groupId ? demoTrainingGroups.find(g => g.id === achievement.groupId) : null;
 
   return <div className="admin-page">
     <PageHeader

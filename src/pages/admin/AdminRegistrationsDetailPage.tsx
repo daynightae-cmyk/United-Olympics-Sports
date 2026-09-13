@@ -3,10 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { PageHeader, StatusBadge } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { useAdminData } from '../../admin/data/AdminDataProvider';
-import { useRegistration, useUpdateRegistration } from '../../admin/data/adminHooks';
-import { demoPlayers } from '../../data/demo/players';
-import { demoPrograms } from '../../data/demo/programs';
-import { demoTrainingGroups } from '../../data/demo/trainingGroups';
+import { useGroup, usePlayer, useProgram, useRegistration, useUpdateRegistration } from '../../admin/data/adminHooks';
 
 export function AdminRegistrationsDetailPage() {
   const { registrationId } = useParams();
@@ -14,13 +11,12 @@ export function AdminRegistrationsDetailPage() {
   const isPreview = mode === 'preview';
   const { item: registration, loading, error } = useRegistration(registrationId);
   const { update, loading: updateLoading } = useUpdateRegistration();
+  const { item: player } = usePlayer(registration?.playerId);
+  const { item: program } = useProgram(registration?.programId);
+  const { item: group } = useGroup(registration?.groupId);
 
   if (loading) return <div className="admin-page"><PageHeader icon={ClipboardCheck} eyebrow={bi('Training Operations', 'عمليات التدريب')} title={bi('Registration Detail', 'تفاصيل التسجيل')} description={bi('Loading...', 'جاري التحميل...')} /></div>;
   if (error || !registration) return <div className="admin-page"><PageHeader icon={ClipboardCheck} eyebrow={bi('Training Operations', 'عمليات التدريب')} title={bi('Registration not found', 'التسجيل غير موجود')} description={bi('Choose a valid registration from the Registrations directory.', 'اختر تسجيلاً صالحاً من دليل التسجيلات.')} /></div>;
-
-  const player = demoPlayers.find(p => p.id === registration.playerId);
-  const program = demoPrograms.find(p => p.id === registration.programId);
-  const group = registration.groupId ? demoTrainingGroups.find(g => g.id === registration.groupId) : null;
 
   return <div className="admin-page">
     <PageHeader

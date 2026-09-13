@@ -98,8 +98,6 @@ jobs:
             --exclude='parentData.ts' \
             --exclude='BenchmarkShowcasePage.tsx' \
             --exclude='ProductPreviewPages.tsx' \
-            --exclude='AdminFutureModulePage.tsx' \
-            --exclude='AdminOperationalWorkspaces.tsx' \
             --exclude='AdminSportDetailPage.tsx' \
             --exclude='AdminAchievementsDetailPage.tsx' \
             --exclude='AdminRegistrationsDetailPage.tsx' \
