@@ -85,6 +85,9 @@ async function runCoachIsolationTests() {
     },
   );
 
+  // 4. Unassigned group is outside the coach scope
+  assert.ok(!scope.assignedGroups.includes(OTHER_GROUP), 'Coach scope must not contain unassigned groups');
+
   console.log('Coach assignment isolation tests: PASS');
 }
 

@@ -33,7 +33,13 @@ export async function createApp(options: AppOptions = {}): Promise<Express> {
     next();
   });
 
-  app.use(express.json({ limit: '256kb' }));
+  app.use(express.json({
+    limit: '256kb',
+    // Preserve raw bytes for HMAC webhook verification (see readRawBody).
+    verify: (req, _res, buf) => {
+      (req as unknown as { rawBody?: Buffer }).rawBody = Buffer.from(buf);
+    },
+  }));
 
   // Unified API & Auth Route Dispatcher (P0 / Section 7)
   // Intercepts both query routing (/api?route=...) and direct path routing (/auth/session, /api/v1/health, etc.)

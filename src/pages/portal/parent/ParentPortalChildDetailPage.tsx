@@ -1,7 +1,7 @@
 import { Activity, ArrowLeft, CalendarDays, CreditCard, ShieldCheck, UserRound, WalletCards } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
-import { EnterpriseEmpty, EnterpriseStatus } from '../../../components/enterprise/EnterpriseUI';
+import { EnterpriseStatus } from '../../../components/enterprise/EnterpriseUI';
 import { useParentPortalGatewayData } from '../../../portals/parent/useParentPortalGatewayData';
 
 export function ParentPortalChildDetailPage() {

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://unitedolympicsports.store/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://unitedolympicsports.store/about</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://unitedolympicsports.store/sports</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://unitedolympicsports.store/sports/football</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://unitedolympicsports.store/sports/swimming</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://unitedolympicsports.store/sports/basketball</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://unitedolympicsports.store/sports/tennis</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://unitedolympicsports.store/sports/gymnastics</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://unitedolympicsports.store/sports/martial-arts</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://unitedolympicsports.store/programs</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://unitedolympicsports.store/coaches</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://unitedolympicsports.store/contact</loc><changefreq>yearly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://unitedolympicsports.store/privacy</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://unitedolympicsports.store/terms</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://unitedolympicsports.store/shipping</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://unitedolympicsports.store/returns</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://unitedolympicsports.store/store</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://unitedolympicsports.store/store/shop</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+</urlset>

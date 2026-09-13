@@ -1,5 +1,4 @@
 import {
-  Activity,
   AlertTriangle,
   ArrowRight,
   Award,
@@ -8,7 +7,6 @@ import {
   CalendarClock,
   CheckCircle2,
   CreditCard,
-  Download,
   Flag,
   Inbox,
   LayoutDashboard,
@@ -21,8 +19,6 @@ import {
   Settings,
   SlidersHorizontal,
   Trash2,
-  TrendingDown,
-  TrendingUp,
   Trophy,
   User,
   UserRound,
@@ -60,7 +56,6 @@ import {
 import { demoPlayers } from '../../data/demo/players';
 import { demoSports } from '../../data/demo/sports';
 import { demoBranches } from '../../data/demo/business';
-import { demoCountries } from '../../data/demo/business';
 import { getSport } from '../../data/demo/selectors';
 
 type DemoRow = {

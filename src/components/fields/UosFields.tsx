@@ -39,7 +39,6 @@ import {
   AlertCircle,
   CheckCircle2,
   Lock,
-  Plus,
   Trash2,
 } from 'lucide-react';
 import { BilingualText, bi } from '../bilingual/BilingualText';

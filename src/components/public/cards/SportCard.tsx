@@ -39,9 +39,6 @@ export function SportCard({ sport, mediaAsset, featured = false, className = '' 
   const asset = mediaAsset ?? MediaRegistry.getSportAsset(sport.id, 'card');
   const destination = sportRouteMap[sport.id] ?? `/sports/${sport.slug || sport.id}`;
 
-  const avifSet = asset ? MediaRegistry.getSourceSet(asset, 'avif') : undefined;
-  const webpSet = asset ? MediaRegistry.getSourceSet(asset, 'webp') : undefined;
-
   const sportIconKey = (
     sport.id === 'martial-arts' || sport.id === 'martialarts' ? 'martial-arts' :
     sport.id as 'football' | 'basketball' | 'swimming' | 'tennis' | 'gymnastics'

@@ -96,7 +96,6 @@ export function PlayerPortalSchedulePage() {
         <section className="schedule-list-view" aria-label="Schedule list">
           <div className="schedule-list">
             {orderedSessions.map((session) => {
-              const date = new Date(session.startsAt);
               return (
                 <article key={session.id} className="schedule-session-card list-card">
                   <div className="list-session-date"><CalendarClock size={16} /><BilingualText value={formatDate(session.startsAt)} /></div>

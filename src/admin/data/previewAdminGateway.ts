@@ -1,4 +1,3 @@
-import type { AdminDataMode } from './queryTypes';
 import type { AdminDataGateway } from './AdminDataGateway';
 import type {
   OrganizationViewModel,
@@ -36,7 +35,7 @@ import { demoSessions } from '../../data/demo/sessions';
 import { demoSports } from '../../data/demo/sports';
 import { demoPrograms } from '../../data/demo/programs';
 import { demoTrainingGroups } from '../../data/demo/trainingGroups';
-import { getPlayerOverall, getGroup, getSport, getBranch, getCountry, getCoach, getParent, getProgram } from '../../data/demo/selectors';
+import { getPlayerOverall } from '../../data/demo/selectors';
 import { previewAchievements, previewAnnouncements, previewAuditActivity, previewContent, previewEvents, previewMessages, previewPayments, previewRegistrations, previewReports, previewSubscriptions, previewUsers } from '../../data/demo/adminRecords';
 
 const PREVIEW_STORAGE_KEY = 'uos-admin-preview-data-v1';
@@ -123,6 +122,10 @@ export const previewAdminGateway: AdminDataGateway = {
       countryCount: demoOrganization.countryIds.length,
       status: demoOrganization.status,
     };
+  },
+
+  async bootstrapOrganization(): Promise<CreateResult<OrganizationViewModel>> {
+    throw new Error('First Setup is not applicable in Preview mode: a demo organization already exists.');
   },
 
   // Countries

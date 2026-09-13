@@ -1,4 +1,4 @@
-import { ApiError, getHeader, type ApiRequest, type ApiResponse } from './http.ts';
+import { ApiError, getHeader, type ApiRequest, type ApiResponse } from './http';
 
 export interface RateLimitResult {
   allowed: boolean;

@@ -11,9 +11,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-interface-qa:
+  static-gates:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -29,11 +29,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: TypeScript
-        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
 
-      - name: Ordinary production build
-        run: npm run build
+      - name: ESLint
+        run: npm run lint
 
       - name: Diff check
         shell: bash
@@ -81,7 +81,97 @@ jobs:
             failed=1
           fi
 
+          # Portal demo isolation: production portal/admin data paths must not
+          # silently consume demo fixtures. Explicit preview surfaces are
+          # allowlisted; everything else fails closed.
+          if grep -RInE \
+            --exclude-dir=node_modules \
+            --exclude-dir=dist \
+            --include='*.ts' \
+            --include='*.tsx' \
+            --exclude='previewAdminGateway.ts' \
+            --exclude='previewStoreGateway.ts' \
+            --exclude='portalData.ts' \
+            --exclude='parentData.ts' \
+            --exclude='BenchmarkShowcasePage.tsx' \
+            --exclude='ProductPreviewPages.tsx' \
+            --exclude='AdminSportDetailPage.tsx' \
+            --exclude='AdminAchievementsDetailPage.tsx' \
+            --exclude='AdminRegistrationsDetailPage.tsx' \
+            --exclude='ParentPortalWorkspaces.tsx' \
+            -- "from ['\"][^'\"]*data/demo/" src/portals src/pages/portal src/pages/admin src/admin; then
+            echo "Portal demo isolation violation: production portal/admin module imports demo fixtures outside the explicit preview allowlist"
+            failed=1
+          fi
+
           exit "$failed"
+
+  build:
+    needs: static-gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Ordinary production build
+        run: npm run build
+
+  production-tests:
+    name: Production test suite
+    needs: static-gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Live-provider isolated integration
+        run: npm run test:production
+
+  browser-qa:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Ordinary production build
+        run: npm run build
 
       - name: Install browser QA runtime
         shell: bash
@@ -99,8 +189,23 @@ jobs:
       - name: Start ordinary production preview
         shell: bash
         run: |
-          ./node_modules/.bin/vite preview --host 127.0.0.1 --port 4173 > /tmp/uos-production-preview.log 2>&1 &
+          # Serve the real production server (static dist + API function), so the
+          # ordinary-build boundary QA exercises the same shape as Vercel.
+          NODE_ENV=production PORT=4173 node dist/server.cjs > /tmp/uos-production-preview.log 2>&1 &
           echo $! > /tmp/uos-production-preview.pid
+          ready=0
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error http://127.0.0.1:4173/api/v1/health > /dev/null; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            echo "Ordinary production server did not become healthy"
+            cat /tmp/uos-production-preview.log || true
+            exit 1
+          fi
 
       - name: Production provider boundary
         env:
@@ -159,7 +264,7 @@ jobs:
 
   store-golden-master:
     name: Store Golden Master (${{ matrix.browser }})
-    needs: build-and-interface-qa
+    needs: browser-qa
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:

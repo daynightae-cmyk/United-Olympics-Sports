@@ -4,7 +4,9 @@ import { useState, useMemo } from 'react';
 import { PageHeader } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { PreviewNotice, EnterpriseSelect } from '../../components/enterprise/EnterpriseUI';
-import { useBranches, useCountries, useCreateBranch, useSports } from '../../admin/data/adminHooks';
+import { UosSelectField, UosTextField } from '../../components/fields/UosFields';
+import { useAdminData } from '../../admin/data/AdminDataProvider';
+import { useBranches, useCountries, useCreateBranch, useOrganization, useSports } from '../../admin/data/adminHooks';
 
 const emptyBranchDraft = {
   nameEn: '',
@@ -25,9 +27,12 @@ export function AdminBranchesPage() {
   const [draft, setDraft] = useState(emptyBranchDraft);
   const [formError, setFormError] = useState('');
   const [savedNotice, setSavedNotice] = useState(false);
+  const { mode } = useAdminData();
+  const isPreview = mode === 'preview';
   const { data: branchResult, loading: branchesLoading, error: branchesError } = useBranches({ page: 1, pageSize: 100 });
   const { data: countryResult, loading: countriesLoading, error: countriesError } = useCountries({ page: 1, pageSize: 100 });
   const { data: sportResult } = useSports({ page: 1, pageSize: 100 });
+  const { item: organization } = useOrganization();
   const { create, loading: createLoading } = useCreateBranch();
   const branches = branchResult.items;
   const countries = countryResult.items;
@@ -55,11 +60,16 @@ export function AdminBranchesPage() {
       setFormError('Branch names, country, and primary sport are required. | اسم الفرع باللغتين والدولة والرياضة الأساسية مطلوبة.');
       return;
     }
+    const organizationId = organization?.id;
+    if (!isPreview && !organizationId) {
+      setFormError('Organization is not configured yet. Complete First Setup before creating branches. | المنظمة غير مهيأة بعد. أكمل الإعداد الأول قبل إنشاء الفروع.');
+      return;
+    }
     setFormError('');
     await create({
       name: { en: draft.nameEn.trim(), ar: draft.nameAr.trim() },
       countryId: draft.countryId,
-      organizationId: 'org-united-olympics',
+      organizationId: organizationId ?? 'preview-organization',
       sportIds: [draft.sportId],
       programIds: [],
       groupIds: [],
@@ -90,17 +100,21 @@ export function AdminBranchesPage() {
         icon={Building2}
         eyebrow={bi('Branch Workspaces', 'مساحات الفروع')}
         title={bi('Branches', 'الفروع')}
-        description={bi('Manage branch workspaces, sports coverage, athlete rosters and coach assignments from one preview cockpit.', 'أدر مساحات الفروع وتغطية الرياضات وقوائم الرياضيين وتكليفات المدربين من مركز معاينة واحد.')}
-        actions={<div className="admin-header-actions"><PreviewNotice /><button type="button" className="admin-primary-button" onClick={openCreate}><Plus size={16} /><BilingualText value={bi('Add Branch', 'إضافة فرع')} /></button></div>}
+        description={isPreview
+          ? bi('Manage branch workspaces, sports coverage, athlete rosters and coach assignments from one preview cockpit.', 'أدر مساحات الفروع وتغطية الرياضات وقوائم الرياضيين وتكليفات المدربين من مركز معاينة واحد.')
+          : bi('Manage branch workspaces, sports coverage, athlete rosters and coach assignments.', 'أدر مساحات الفروع وتغطية الرياضات وقوائم الرياضيين وتكليفات المدربين.')}
+        actions={<div className="admin-header-actions">{isPreview && <PreviewNotice />}<button type="button" className="admin-primary-button" onClick={openCreate}><Plus size={16} /><BilingualText value={bi('Add Branch', 'إضافة فرع')} /></button></div>}
       />
 
-      {savedNotice && <div className="preview-warning" role="status"><BilingualText value={bi('Branch saved to the browser preview store. Production backend data was not changed.', 'تم حفظ الفرع في مخزن المعاينة بالمتصفح. لم يتم تغيير بيانات نظام إنتاجي خلفي.')} /></div>}
+      {savedNotice && <div className={isPreview ? 'preview-warning' : 'enterprise-result'} role="status"><BilingualText value={isPreview
+        ? bi('Branch saved to the browser preview store. Production backend data was not changed.', 'تم حفظ الفرع في مخزن المعاينة بالمتصفح. لم يتم تغيير بيانات نظام إنتاجي خلفي.')
+        : bi('Branch saved successfully.', 'تم حفظ الفرع بنجاح.')} /></div>}
 
       <section className="admin-stat-grid branches-kpi" aria-label="Branch KPIs">
-        <article className="admin-stat-card kpi-card accent-branches-main"><div className="kpi-icon"><Building2 size={22} /></div><strong>{branches.length}</strong><span><BilingualText value={bi('Branch Workspaces', 'مساحات الفروع')} /></span><small><BilingualText value={bi('Preview data source', 'مصدر بيانات المعاينة')} /></small></article>
+        <article className="admin-stat-card kpi-card accent-branches-main"><div className="kpi-icon"><Building2 size={22} /></div><strong>{branches.length}</strong><span><BilingualText value={bi('Branch Workspaces', 'مساحات الفروع')} /></span><small><BilingualText value={isPreview ? bi('Preview data source', 'مصدر بيانات المعاينة') : bi('Live database', 'قاعدة البيانات الحية')} /></small></article>
         <article className="admin-stat-card kpi-card accent-countries-b"><div className="kpi-icon"><Flag size={22} /></div><strong>{activeCountries}</strong><span><BilingualText value={bi('Active Countries', 'الدول النشطة')} /></span><small><BilingualText value={bi('Country workspaces', 'مساحات الدول')} /></small></article>
-        <article className="admin-stat-card kpi-card accent-players-b"><div className="kpi-icon"><UsersRound size={22} /></div><strong>{totalPlayers}</strong><span><BilingualText value={bi('Total Players', 'إجمالي اللاعبين')} /></span><small><BilingualText value={bi('Preview records', 'سجلات معاينة')} /></small></article>
-        <article className="admin-stat-card kpi-card accent-coaches-b"><div className="kpi-icon"><ShieldCheck size={22} /></div><strong>{totalCoaches}</strong><span><BilingualText value={bi('Total Coaches', 'إجمالي المدربين')} /></span><small><BilingualText value={bi('Preview records', 'سجلات معاينة')} /></small></article>
+        <article className="admin-stat-card kpi-card accent-players-b"><div className="kpi-icon"><UsersRound size={22} /></div><strong>{totalPlayers}</strong><span><BilingualText value={bi('Total Players', 'إجمالي اللاعبين')} /></span><small><BilingualText value={isPreview ? bi('Preview records', 'سجلات معاينة') : bi('Live records', 'سجلات حية')} /></small></article>
+        <article className="admin-stat-card kpi-card accent-coaches-b"><div className="kpi-icon"><ShieldCheck size={22} /></div><strong>{totalCoaches}</strong><span><BilingualText value={bi('Total Coaches', 'إجمالي المدربين')} /></span><small><BilingualText value={isPreview ? bi('Preview records', 'سجلات معاينة') : bi('Live records', 'سجلات حية')} /></small></article>
         <article className="admin-stat-card kpi-card accent-sports-b"><div className="kpi-icon"><Trophy size={22} /></div><strong>{totalSports}</strong><span><BilingualText value={bi('Active Sports', 'الرياضات النشطة')} /></span><small><BilingualText value={bi('Across branch workspaces', 'عبر مساحات الفروع')} /></small></article>
       </section>
 
@@ -150,8 +164,8 @@ export function AdminBranchesPage() {
       <section className="branches-integrity" aria-label="Data integrity">
         <h2 className="section-title"><BilingualText value={bi('Data Integrity', 'سلامة البيانات')} /></h2>
         <div className="integrity-grid">
-          <article className="integrity-card"><div className="integrity-icon"><CheckCircle size={20} /></div><div><h3><BilingualText value={bi('Preview Source', 'مصدر معاينة')} /></h3><p><BilingualText value={bi('Branch records are supplied by the Admin data gateway.', 'سجلات الفروع مقدمة عبر بوابة بيانات الإدارة.')} /></p></div></article>
-          <article className="integrity-card"><div className="integrity-icon"><ShieldCheck size={20} /></div><div><h3><BilingualText value={bi('Zero Production Claims', 'صفر ادعاءات إنتاج')} /></h3><p><BilingualText value={bi('Preview state is not presented as a live database.', 'حالة المعاينة لا تُعرض كقاعدة بيانات حية.')} /></p></div></article>
+          <article className="integrity-card"><div className="integrity-icon"><CheckCircle size={20} /></div><div><h3><BilingualText value={isPreview ? bi('Preview Source', 'مصدر معاينة') : bi('Live Source', 'مصدر حي')} /></h3><p><BilingualText value={bi('Branch records are supplied by the Admin data gateway.', 'سجلات الفروع مقدمة عبر بوابة بيانات الإدارة.')} /></p></div></article>
+          <article className="integrity-card"><div className="integrity-icon"><ShieldCheck size={20} /></div><div><h3><BilingualText value={isPreview ? bi('Zero Production Claims', 'صفر ادعاءات إنتاج') : bi('Live Data Source', 'مصدر بيانات حي')} /></h3><p><BilingualText value={isPreview ? bi('Preview state is not presented as a live database.', 'حالة المعاينة لا تُعرض كقاعدة بيانات حية.') : bi('Records are read from and written to the live database.', 'تُقرأ السجلات وتُكتب في قاعدة البيانات الحية.')} /></p></div></article>
           <article className="integrity-card"><div className="integrity-icon"><Target size={20} /></div><div><h3><BilingualText value={bi('Provider Ready', 'جاهزة للموفر')} /></h3><p><BilingualText value={bi('The page can consume a production gateway when one is configured.', 'يمكن للصفحة استهلاك بوابة إنتاج عند تهيئتها.')} /></p></div></article>
           <article className="integrity-card"><div className="integrity-icon"><Flag size={20} /></div><div><h3><BilingualText value={bi('Multi-Country Ready', 'متعددة الدول')} /></h3><p><BilingualText value={bi('Country filtering is driven by gateway records.', 'تصفية الدول مدفوعة بسجلات البوابة.')} /></p></div></article>
         </div>
@@ -159,18 +173,18 @@ export function AdminBranchesPage() {
 
       {showCreate && <div className="admin-modal-backdrop" role="presentation" onMouseDown={closeCreate}>
         <section className="admin-modal" role="dialog" aria-modal="true" aria-label="Add Branch | إضافة فرع" onMouseDown={(event) => event.stopPropagation()}>
-          <div className="modal-head"><div><BilingualText value={bi('Add Branch', 'إضافة فرع')} /><small><BilingualText value={bi('Browser-persistent preview record', 'سجل معاينة محفوظ في المتصفح')} /></small></div><button type="button" className="admin-icon-button" onClick={closeCreate} aria-label="Close | إغلاق"><X /></button></div>
-          <div className="preview-warning"><BilingualText value={bi('This creates a persistent Preview record in this browser. It does not write to a production backend.', 'ينشئ هذا سجل معاينة محفوظًا في هذا المتصفح. لا يكتب إلى نظام خلفي إنتاجي.')} /></div>
+          <div className="modal-head"><div><BilingualText value={bi('Add Branch', 'إضافة فرع')} /><small><BilingualText value={isPreview ? bi('Browser-persistent preview record', 'سجل معاينة محفوظ في المتصفح') : bi('Live organization record', 'سجل منظمة حي')} /></small></div><button type="button" className="admin-icon-button" onClick={closeCreate} aria-label="Close | إغلاق"><X /></button></div>
+          {isPreview && <div className="preview-warning"><BilingualText value={bi('This creates a persistent Preview record in this browser. It does not write to a production backend.', 'ينشئ هذا سجل معاينة محفوظًا في هذا المتصفح. لا يكتب إلى نظام خلفي إنتاجي.')} /></div>}
           {formError && <p role="alert" className="form-error">{formError}</p>}
-          <div className="preview-form-grid">
-            <label><BilingualText value={bi('Branch name (English)', 'اسم الفرع (إنجليزي)')} /><input value={draft.nameEn} onChange={(event) => setDraftField('nameEn', event.target.value)} placeholder="Abu Dhabi Branch" /></label>
-            <label><BilingualText value={bi('Branch name (Arabic)', 'اسم الفرع (عربي)')} /><input value={draft.nameAr} onChange={(event) => setDraftField('nameAr', event.target.value)} placeholder="فرع أبوظبي" /></label>
-            <label><BilingualText value={bi('Country', 'الدولة')} /><select value={draft.countryId} onChange={(event) => setDraftField('countryId', event.target.value)}><option value="">Select Country | اختر الدولة</option>{countries.map((country) => <option key={country.id} value={country.id}>{country.name.en} | {country.name.ar}</option>)}</select></label>
-            <label><BilingualText value={bi('Primary sport', 'الرياضة الأساسية')} /><select value={draft.sportId} onChange={(event) => setDraftField('sportId', event.target.value)}><option value="">Select Sport | اختر الرياضة</option>{sportsCatalog.map((sport) => <option key={sport.id} value={sport.id}>{sport.name.en} | {sport.name.ar}</option>)}</select></label>
-            <label><BilingualText value={bi('Address (English)', 'العنوان (إنجليزي)')} /><input value={draft.addressEn} onChange={(event) => setDraftField('addressEn', event.target.value)} placeholder="Branch address" /></label>
-            <label><BilingualText value={bi('Address (Arabic)', 'العنوان (عربي)')} /><input value={draft.addressAr} onChange={(event) => setDraftField('addressAr', event.target.value)} placeholder="عنوان الفرع" /></label>
-            <label><BilingualText value={bi('Phone', 'الهاتف')} /><input value={draft.phone} onChange={(event) => setDraftField('phone', event.target.value)} placeholder="+971..." /></label>
-            <label><BilingualText value={bi('Email', 'البريد الإلكتروني')} /><input type="email" value={draft.email} onChange={(event) => setDraftField('email', event.target.value)} placeholder="branch@example.com" /></label>
+          <div className="uos-form-grid">
+            <UosTextField label={bi('Branch name (English)', 'اسم الفرع (إنجليزي)')} value={draft.nameEn} onChange={(event) => setDraftField('nameEn', event.target.value)} placeholder="Abu Dhabi Branch" required disabled={createLoading} />
+            <UosTextField label={bi('Branch name (Arabic)', 'اسم الفرع (عربي)')} value={draft.nameAr} onChange={(event) => setDraftField('nameAr', event.target.value)} placeholder="فرع أبوظبي" required disabled={createLoading} />
+            <UosSelectField label={bi('Country', 'الدولة')} value={draft.countryId} onChange={(event) => setDraftField('countryId', event.target.value)} required disabled={createLoading} placeholder={bi('Select Country', 'اختر الدولة')} options={countries.map((country) => ({ value: country.id, label: country.name }))} />
+            <UosSelectField label={bi('Primary sport', 'الرياضة الأساسية')} value={draft.sportId} onChange={(event) => setDraftField('sportId', event.target.value)} required disabled={createLoading} placeholder={bi('Select Sport', 'اختر الرياضة')} options={sportsCatalog.map((sport) => ({ value: sport.id, label: sport.name }))} />
+            <UosTextField label={bi('Address (English)', 'العنوان (إنجليزي)')} value={draft.addressEn} onChange={(event) => setDraftField('addressEn', event.target.value)} placeholder="Branch address" optional disabled={createLoading} />
+            <UosTextField label={bi('Address (Arabic)', 'العنوان (عربي)')} value={draft.addressAr} onChange={(event) => setDraftField('addressAr', event.target.value)} placeholder="عنوان الفرع" optional disabled={createLoading} />
+            <UosTextField label={bi('Phone', 'الهاتف')} type="tel" value={draft.phone} onChange={(event) => setDraftField('phone', event.target.value)} placeholder="+971..." optional disabled={createLoading} />
+            <UosTextField label={bi('Email', 'البريد الإلكتروني')} type="email" value={draft.email} onChange={(event) => setDraftField('email', event.target.value)} placeholder="branch@example.com" optional disabled={createLoading} />
           </div>
           <div className="dialog-actions"><button type="button" className="admin-secondary-button" onClick={closeCreate} disabled={createLoading}><BilingualText value={bi('Cancel', 'إلغاء')} /></button><button type="button" className="admin-primary-button" onClick={() => void submitBranch()} disabled={createLoading}><BilingualText value={bi(createLoading ? 'Saving…' : 'Save Branch', createLoading ? 'جارٍ الحفظ…' : 'حفظ الفرع')} /></button></div>
         </section>

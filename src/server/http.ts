@@ -129,6 +129,42 @@ export async function readJsonBody(req: ApiRequest, maxBytes = 256 * 1024): Prom
   return readJsonBody({ ...req, body: Buffer.concat(chunks).toString('utf8') }, maxBytes);
 }
 
+/**
+ * Reads the RAW request body bytes (for HMAC webhook verification).
+ * Prefers a captured `rawBody` (Express verify callback), then string/Buffer
+ * bodies, then the request stream. Never parses.
+ */
+export async function readRawBody(req: ApiRequest, maxBytes = 256 * 1024): Promise<Buffer> {
+  const captured = (req as unknown as { rawBody?: unknown }).rawBody;
+  if (typeof captured === 'string') {
+    assertPayloadSize(captured, maxBytes);
+    return Buffer.from(captured, 'utf8');
+  }
+  if (Buffer.isBuffer(captured)) {
+    assertPayloadSize(captured, maxBytes);
+    return captured;
+  }
+  if (typeof req.body === 'string') {
+    assertPayloadSize(req.body, maxBytes);
+    return Buffer.from(req.body, 'utf8');
+  }
+  if (Buffer.isBuffer(req.body)) {
+    assertPayloadSize(req.body, maxBytes);
+    return req.body;
+  }
+  const stream = req as ApiRequest & AsyncIterable<Uint8Array | string>;
+  if (typeof stream[Symbol.asyncIterator] !== 'function') return Buffer.alloc(0);
+  const chunks: Buffer[] = [];
+  let total = 0;
+  for await (const chunk of stream) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    total += buffer.length;
+    if (total > maxBytes) throw new ApiError(413, 'PAYLOAD_TOO_LARGE', 'Request body is too large.');
+    chunks.push(buffer);
+  }
+  return Buffer.concat(chunks);
+}
+
 export function normalizeString(value: unknown, maxLength: number): string | undefined {
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();

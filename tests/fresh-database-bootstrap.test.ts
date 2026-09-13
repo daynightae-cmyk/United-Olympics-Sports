@@ -4,7 +4,7 @@ import path from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
 
-console.log('--- RUNNING FRESH DATABASE BOOTSTRAP TEST (0001 -> 0006) ---');
+console.log('--- RUNNING FRESH DATABASE BOOTSTRAP TEST (0001 -> 0007) ---');
 
 const db = new PGlite({
   extensions: { pgcrypto }
@@ -38,7 +38,8 @@ const migrationFiles = [
   '0003_portal_and_operations.sql',
   '0004_portal_assignment_parity.sql',
   '0005_production_schema_parity_and_rls_hardening.sql',
-  '0006_live_rls_policy_closure.sql'
+  '0006_live_rls_policy_closure.sql',
+  '0007_covering_fk_indexes.sql'
 ];
 
 for (const file of migrationFiles) {
@@ -161,4 +162,12 @@ const procRes = await db.query<{ typname: string }>(`
 `);
 assert.equal(procRes.rows[0].typname, 'uuid', 'auth.uid() return type must be uuid');
 
-console.log('PASS: Fresh empty database bootstrap across migrations 0001 -> 0006 verified with 33 RLS-hardened tables and uuid auth.uid().');
+// 5. Assert covering FK indexes from 0007 exist
+for (const indexName of ['idx_events_sport_id', 'idx_payment_intents_subscription_id', 'idx_payment_intents_player_id']) {
+  const idxRes = await db.query<{ indexname: string }>(`
+    select indexname from pg_indexes where schemaname = 'public' and indexname = $1;
+  `, [indexName]);
+  assert.equal(idxRes.rows.length, 1, `Covering index ${indexName} must exist`);
+}
+
+console.log('PASS: Fresh empty database bootstrap across migrations 0001 -> 0007 verified with 33 RLS-hardened tables and uuid auth.uid().');

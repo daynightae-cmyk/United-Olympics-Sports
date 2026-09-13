@@ -266,14 +266,12 @@ export function PortalSidebar({
   user,
   onLogout,
   collapsed = false,
-  onToggleCollapse,
 }: {
   portalTitle: BilingualValue;
   navItems: PortalNavItem[];
   user?: PortalUserSession;
   onLogout?: () => void;
   collapsed?: boolean;
-  onToggleCollapse?: () => void;
 }) {
   const location = useLocation();
 

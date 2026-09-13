@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, Flame, Trophy, Compass, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Flame, Trophy, Compass, ArrowRight } from 'lucide-react';
 
 interface OlympicLuxurySplashProps {
   onComplete?: () => void;

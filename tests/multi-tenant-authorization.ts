@@ -5,7 +5,6 @@ import {
   canAccessCountry,
   canAccessBranch,
   canManagePlayer,
-  canManageCoach,
   canRecordAttendance,
   canRecordPerformance,
   canManageFinance,

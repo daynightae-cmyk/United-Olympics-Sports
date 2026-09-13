@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { databaseConfigured, getPool } from '../../db/index.ts';
-import type { AuthorizationContext } from '../authorization-context.ts';
+import { databaseConfigured, getPool } from '../../db/index';
+import type { AuthorizationContext } from '../authorization-context';
 import {
   assertCanAccessBranch,
   assertCanAccessCountry,
@@ -8,10 +8,10 @@ import {
   assertCanManagePlayer,
   assertCanRecordPerformance,
   isSuperAdmin,
-} from '../authorization-context.ts';
-import { recordAudit } from '../audit.ts';
-import { ApiError, isUuid, normalizeString } from '../http.ts';
-import type { DbQueryClient } from '../vertical-slice.ts';
+} from '../authorization-context';
+import { recordAudit } from '../audit';
+import { ApiError, isUuid, normalizeString } from '../http';
+import type { DbQueryClient } from '../vertical-slice';
 import type {
   OrganizationViewModel,
   CountryViewModel,
@@ -23,21 +23,16 @@ import type {
   CoachViewModel,
   ParentViewModel,
   SessionViewModel,
-  SubscriptionViewModel,
-  PaymentViewModel,
-  UserViewModel,
   RegistrationViewModel,
   AchievementViewModel,
   EventViewModel,
   AnnouncementViewModel,
-  MessageViewModel,
   AuditActivityViewModel,
   ListResult,
   ListQueryParams,
   CreateResult,
   UpdateResult,
-  DeleteResult,
-} from '../../admin/data/viewModels.ts';
+} from '../../admin/data/viewModels';
 
 export class AdminDomainRepository {
   private clientOverride?: DbQueryClient;
@@ -78,6 +73,73 @@ export class AdminDomainRepository {
       },
       countryCount: parseInt(countriesCountRes.rows[0]?.count || '0', 10),
       status: row.status === 'active' ? 'active' : 'inactive',
+    };
+  }
+
+  /**
+   * First-run production bootstrap. Creates the initial organization and binds
+   * the calling authenticated identity as super_admin. Allowed ONLY when the
+   * organizations table is empty — afterwards the bootstrap is permanently
+   * closed (403 BOOTSTRAP_CLOSED). No owner UID is ever hard-coded.
+   */
+  async bootstrapOrganization(
+    identity: { uid: string; provider: string; email?: string },
+    data: { name: string; nameAr?: string },
+  ): Promise<OrganizationViewModel> {
+    const name = normalizeString(data.name, 160);
+    const nameAr = normalizeString(data.nameAr, 160);
+    if (!name) {
+      throw new ApiError(400, 'VALIDATION_ERROR', 'Organization name in English is required.');
+    }
+
+    const countRes = await this.db.query<{ count: string }>('select count(*)::text as count from organizations');
+    if (parseInt(countRes.rows[0]?.count || '0', 10) > 0) {
+      throw new ApiError(403, 'BOOTSTRAP_CLOSED', 'First setup is already complete. Bootstrap is permanently closed.');
+    }
+
+    const orgId = randomUUID();
+    await this.db.query('insert into organizations (id, name, name_ar, status) values ($1, $2, $3, $4)', [
+      orgId,
+      name,
+      nameAr ?? name,
+      'active',
+    ]);
+    if (identity.email) {
+      await this.db.query(
+        'insert into users (uid, email) values ($1, $2) on conflict (uid) do update set email = excluded.email',
+        [identity.uid, identity.email],
+      );
+    }
+    await this.db.query('insert into app_user_roles (uid, role, active, organization_id) values ($1, $2, true, $3)', [
+      identity.uid,
+      'super_admin',
+      orgId,
+    ]);
+    await this.db.query('insert into app_user_scopes (uid, scope, active) values ($1, $2, true)', [identity.uid, '*']);
+
+    const ctx: AuthorizationContext = {
+      uid: identity.uid,
+      provider: (identity.provider === 'firebase' ? 'firebase' : 'supabase') as AuthorizationContext['provider'],
+      ...(identity.email ? { email: identity.email } : {}),
+      roles: ['super_admin'],
+      scopes: ['*'],
+      tenant: { organizationIds: [orgId], countryIds: [], branchIds: [] },
+      bindings: { playerIds: [], guardianIds: [], guardianPlayerIds: [], coachIds: [], coachGroupIds: [], coachPlayerIds: [] },
+    };
+    await recordAudit(ctx, {
+      action: 'organization.bootstrap',
+      entityType: 'organization',
+      entityId: orgId,
+      organizationId: orgId,
+      metadata: { name },
+    });
+
+    return {
+      id: orgId,
+      name: { en: name, ar: nameAr || name },
+      description: { en: 'Organization record created by first-run setup.', ar: 'سجل المنظمة المنشأ من الإعداد الأول.' },
+      countryCount: 0,
+      status: 'active',
     };
   }
 

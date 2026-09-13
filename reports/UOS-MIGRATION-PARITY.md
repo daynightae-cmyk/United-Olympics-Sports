@@ -1,6 +1,8 @@
 # United Olympics Sports — Migration Parity & Reconciliation Report
 **Document ID:** `UOS-MIGRATION-PARITY`
 **Generated:** 2026-09-10
+**Pass 4.3B Implementation SHA:** `6383aaba633ccc24d940a9388c10848ffae597ea`
+**Previous Pass 4.3 SHA:** `f115da8f90d450a1fbe34370a1eeee873045400f`
 **Product:** United Olympics Sports / يونايتد أوليمبيكس سبورت
 **Canonical Repository:** `https://github.com/daynightae-cmyk/United-Olympics-Sports.git`
 **Supabase Endpoint:** `https://olmbezzzqavgjwydlfey.supabase.co`

@@ -8,7 +8,8 @@ import {
   sessionHandler,
   sportRequestHandler,
   type RouteHandler,
-} from './handlers.ts';
+} from './handlers';
+import { phoneOtpRequestHandler, phoneOtpVerifyHandler } from './phone-auth-handlers';
 import {
   adminAchievementsHandler,
   adminAnnouncementsHandler,
@@ -18,6 +19,7 @@ import {
   adminCountriesHandler,
   adminEventsHandler,
   adminGroupsHandler,
+  adminOrganizationBootstrapHandler,
   adminOrganizationHandler,
   adminParentsHandler,
   adminPerformanceHandler,
@@ -26,22 +28,24 @@ import {
   adminRegistrationsHandler,
   adminSessionsHandler,
   adminSportsHandler,
-} from './admin-handlers.ts';
+} from './admin-handlers';
 import {
   portalCoachScopeHandler,
   portalParentChildrenHandler,
   portalPlayerDataHandler,
-} from './portal-handlers.ts';
-import { storeCheckoutHandler, storeProductsHandler } from './store-handlers.ts';
-import { paymentIntentHandler, paymentWebhookHandler } from './payment-handlers.ts';
-import { documentDownloadUrlHandler, documentRegisterHandler } from './document-handlers.ts';
-import { portalWhoAmIHandler } from './portal-bindings.ts';
-import { ApiError, sendError, type ApiRequest, type ApiResponse } from './http.ts';
+} from './portal-handlers';
+import { storeCheckoutHandler, storeProductsHandler } from './store-handlers';
+import { paymentIntentHandler, paymentWebhookHandler } from './payment-handlers';
+import { documentDownloadUrlHandler, documentRegisterHandler } from './document-handlers';
+import { portalWhoAmIHandler } from './portal-bindings';
+import { ApiError, sendError, type ApiRequest, type ApiResponse } from './http';
 
 export type RouteKey =
   | 'health'
   | 'auth-session'
   | 'auth-revoke'
+  | 'auth-phone-request'
+  | 'auth-phone-verify'
   | 'admin-whoami'
   | 'portal-whoami'
   | 'public-enquiries'
@@ -49,6 +53,7 @@ export type RouteKey =
   | 'catalog'
   | 'attendance-record'
   | 'admin-organization'
+  | 'admin-organization-bootstrap'
   | 'admin-countries'
   | 'admin-branches'
   | 'admin-sports'
@@ -78,6 +83,8 @@ const handlers: Record<RouteKey, RouteHandler> = {
   health: healthHandler,
   'auth-session': sessionHandler,
   'auth-revoke': revokeHandler,
+  'auth-phone-request': phoneOtpRequestHandler,
+  'auth-phone-verify': phoneOtpVerifyHandler,
   'admin-whoami': adminWhoAmIHandler,
   'portal-whoami': portalWhoAmIHandler,
   'public-enquiries': publicEnquiriesHandler,
@@ -85,6 +92,7 @@ const handlers: Record<RouteKey, RouteHandler> = {
   catalog: catalogHandler,
   'attendance-record': recordAttendanceHandler,
   'admin-organization': adminOrganizationHandler,
+  'admin-organization-bootstrap': adminOrganizationBootstrapHandler,
   'admin-countries': adminCountriesHandler,
   'admin-branches': adminBranchesHandler,
   'admin-sports': adminSportsHandler,
@@ -124,12 +132,15 @@ export function resolveRouteKey(req: ApiRequest): RouteKey | null {
   if (pathname === '/api/v1/health' || pathname === '/health') return 'health';
   if (pathname === '/auth/session' || pathname === '/api/v1/auth/session') return 'auth-session';
   if (pathname === '/auth/revoke' || pathname === '/api/v1/auth/revoke') return 'auth-revoke';
+  if (pathname === '/api/v1/auth/phone/request') return 'auth-phone-request';
+  if (pathname === '/api/v1/auth/phone/verify') return 'auth-phone-verify';
   if (pathname === '/api/v1/admin/whoami' || pathname === '/admin/whoami') return 'admin-whoami';
   if (pathname === '/api/v1/portal/whoami' || pathname === '/portal/whoami') return 'portal-whoami';
   if (pathname === '/public/enquiries' || pathname === '/api/v1/public/enquiries') return 'public-enquiries';
   if (pathname === '/api/v1/requests/sports') return 'sport-request';
   if (pathname === '/api/v1/catalog' || pathname === '/catalog') return 'catalog';
   if (pathname === '/api/v1/attendance' || pathname === '/attendance') return 'attendance-record';
+  if (pathname === '/api/v1/admin/organization/bootstrap') return 'admin-organization-bootstrap';
   if (pathname === '/api/v1/admin/organization') return 'admin-organization';
   if (pathname.startsWith('/api/v1/admin/countries')) return 'admin-countries';
   if (pathname.startsWith('/api/v1/admin/branches')) return 'admin-branches';

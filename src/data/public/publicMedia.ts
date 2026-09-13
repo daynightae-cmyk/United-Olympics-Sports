@@ -17,29 +17,6 @@ export type PublicMediaAsset = Readonly<{
   localWidths?: readonly number[];
 }>;
 
-const remote = (
-  key: string,
-  src: string,
-  altAr: string,
-  altEn: string,
-  width: number,
-  height: number,
-  role: PublicMediaAsset['role'],
-  positions: [string, string, string],
-  priority = false,
-): PublicMediaAsset => ({
-  key,
-  src,
-  remoteUrl: src,
-  alt: { ar: altAr, en: altEn },
-  width,
-  height,
-  aspectRatio: `${width} / ${height}`,
-  objectPosition: { desktop: positions[0], tablet: positions[1], mobile: positions[2] },
-  role,
-  priority,
-});
-
 const local = (
   key: string,
   number: string,

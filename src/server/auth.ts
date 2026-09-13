@@ -1,6 +1,6 @@
-import { adminAuth } from '../lib/firebase-admin.ts';
-import { getPool, databaseConfigured } from '../db/index.ts';
-import { ApiError, getHeader, type ApiRequest } from './http.ts';
+import { adminAuth } from '../lib/firebase-admin';
+import { getPool, databaseConfigured } from '../db/index';
+import { ApiError, getHeader, type ApiRequest } from './http';
 
 export type IdentityProvider = 'supabase' | 'firebase';
 
@@ -111,15 +111,12 @@ export async function verifyBearerIdentity(req: ApiRequest): Promise<VerifiedIde
   const { url: supabaseUrl } = supabaseConfig();
   const supabaseIssuer = `${supabaseUrl.replace(/\/$/, '')}/auth/v1`;
 
-  let providerIdentity: ProviderIdentity | null = null;
-  if (issuer === supabaseIssuer) {
-    providerIdentity = await verifySupabaseAccessToken(token);
-  } else if (issuer?.startsWith('https://securetoken.google.com/')) {
-    providerIdentity = await verifyFirebaseAccessToken(token);
-  } else {
-    providerIdentity = await verifySupabaseAccessToken(token);
-    if (!providerIdentity) providerIdentity = await verifyFirebaseAccessToken(token);
-  }
+  const providerIdentity: ProviderIdentity | null =
+    issuer === supabaseIssuer
+      ? await verifySupabaseAccessToken(token)
+      : issuer?.startsWith('https://securetoken.google.com/')
+        ? await verifyFirebaseAccessToken(token)
+        : ((await verifySupabaseAccessToken(token)) ?? (await verifyFirebaseAccessToken(token)));
 
   if (!providerIdentity) {
     throw new ApiError(401, 'AUTH_INVALID', 'The sign-in token is invalid or expired.');
@@ -196,9 +193,9 @@ export async function assertPlayerRelationship(identity: VerifiedIdentity, playe
 import {
   type AuthorizationContext,
   resolveAuthorizationContext,
-} from './authorization-context.ts';
+} from './authorization-context';
 
-export * from './authorization-context.ts';
+export * from './authorization-context';
 
 export async function requireAuthorizationContext(req: ApiRequest): Promise<AuthorizationContext> {
   const verified = await verifyBearerIdentity(req);

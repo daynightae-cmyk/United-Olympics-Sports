@@ -45,12 +45,13 @@ export function UnitedAssistant() {
 
   useEffect(() => {
     if (open || isAuthRoute) return;
-    let dismissed = false;
-    try {
-      dismissed = window.sessionStorage.getItem(DISMISS_KEY) === '1';
-    } catch {
-      dismissed = false;
-    }
+    const dismissed = (() => {
+      try {
+        return window.sessionStorage.getItem(DISMISS_KEY) === '1';
+      } catch {
+        return false;
+      }
+    })();
     if (dismissed) return;
     const timer = window.setTimeout(() => setInvited(true), 2600);
     return () => window.clearTimeout(timer);

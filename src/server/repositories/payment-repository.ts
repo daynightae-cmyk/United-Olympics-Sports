@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { databaseConfigured, getPool } from '../../db/index.ts';
-import type { AuthorizationContext } from '../authorization-context.ts';
-import { recordAudit } from '../audit.ts';
-import { ApiError, normalizeString } from '../http.ts';
-import type { DbQueryClient } from '../vertical-slice.ts';
+import { databaseConfigured, getPool } from '../../db/index';
+import type { AuthorizationContext } from '../authorization-context';
+import { recordAudit } from '../audit';
+import { ApiError, normalizeString } from '../http';
+import type { DbQueryClient } from '../vertical-slice';
 
 export type PaymentIntentStatus =
   | 'requires_payment_method'
@@ -75,8 +75,13 @@ export class PaymentDomainRepository {
       playerId?: string;
       subscriptionId?: string;
       provider?: string;
+      orderId?: string;
+      charge?: boolean;
+      clientSecret?: string;
+      remoteStatus?: string;
+      providerIntentId?: string;
     },
-  ): Promise<PaymentIntent> {
+  ): Promise<PaymentIntent & { clientSecret?: string }> {
     const key = normalizeString(input.idempotencyKey, 128);
     if (!key) {
       throw new ApiError(400, 'VALIDATION_ERROR', 'Idempotency key is required.');
@@ -119,31 +124,105 @@ export class PaymentDomainRepository {
     }
 
     const id = randomUUID();
+    const metadata: Record<string, unknown> = {};
+    if (input.orderId) metadata.orderId = input.orderId;
     await this.db.query(
       `insert into payment_intents
-         (id, idempotency_key, player_id, subscription_id, amount_minor, currency, status, provider, created_at, updated_at)
-       values ($1, $2, $3, $4, $5, $6, 'requires_payment_method', $7, now(), now())`,
-      [id, key, input.playerId || null, input.subscriptionId || null, input.amountMinor, currency, provider],
+         (id, idempotency_key, player_id, subscription_id, amount_minor, currency, status, provider, provider_intent_id, metadata, created_at, updated_at)
+        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, now(), now())`,
+      [
+        id,
+        key,
+        input.playerId || null,
+        input.subscriptionId || null,
+        input.amountMinor,
+        currency,
+        input.remoteStatus || 'requires_payment_method',
+        provider,
+        input.providerIntentId || null,
+        JSON.stringify(metadata),
+      ],
     );
 
     await recordAudit(ctx, {
       action: 'payment.intent.create',
       entityType: 'payment_intent',
       entityId: id,
-      metadata: { idempotencyKey: key, amountMinor: input.amountMinor, currency, provider },
+      metadata: {
+        idempotencyKey: key,
+        amountMinor: input.amountMinor,
+        currency,
+        provider,
+        ...(input.orderId ? { orderId: input.orderId } : {}),
+        ...(input.providerIntentId ? { providerIntentId: input.providerIntentId, charged: true } : {}),
+      },
     });
 
-    return {
+    const created: PaymentIntent & { clientSecret?: string } = {
       id,
       idempotencyKey: key,
       playerId: input.playerId,
       subscriptionId: input.subscriptionId,
       amountMinor: input.amountMinor,
       currency,
-      status: 'requires_payment_method',
+      status: (input.remoteStatus as PaymentIntentStatus) || 'requires_payment_method',
       provider,
       createdAt: new Date().toISOString(),
     };
+    if (input.providerIntentId) created.providerIntentId = input.providerIntentId;
+    if (input.clientSecret) created.clientSecret = input.clientSecret;
+    return created;
+  }
+
+  /**
+   * Reconciles a VERIFIED provider event (idempotent): updates the linked
+   * payment intent and, on success, transitions the linked order
+   * pending -> paid. Unknown events record only.
+   */
+  async reconcileProviderEvent(input: {
+    provider: string;
+    providerIntentId?: string;
+    eventType: string;
+    orderId?: string;
+  }): Promise<{ intentUpdated: boolean; orderUpdated: boolean }> {
+    let intentUpdated = false;
+    let orderUpdated = false;
+
+    const terminalStatus =
+      input.eventType === 'payment_intent.succeeded'
+        ? 'succeeded'
+        : input.eventType === 'payment_intent.payment_failed' || input.eventType === 'payment_intent.canceled'
+          ? 'failed'
+          : null;
+
+    if (input.providerIntentId && terminalStatus) {
+      const updated = await this.db.query(
+        `update payment_intents
+            set status = $1, updated_at = now()
+          where provider_intent_id = $2 and status <> $1`,
+        [terminalStatus, input.providerIntentId],
+      );
+      intentUpdated = (updated.rowCount ?? 0) > 0;
+
+      const linkRes = await this.db.query<{ metadata: { orderId?: unknown } }>(
+        'select metadata from payment_intents where provider_intent_id = $1 limit 1',
+        [input.providerIntentId],
+      );
+      const linkedOrderId =
+        (typeof linkRes.rows[0]?.metadata?.orderId === 'string' ? (linkRes.rows[0].metadata.orderId as string) : null) ||
+        input.orderId ||
+        null;
+
+      if (linkedOrderId && terminalStatus === 'succeeded') {
+        const orderUpdatedRes = await this.db.query(
+          `update orders set status = 'paid', updated_at = now() where id = $1 and status = 'pending'`,
+          [linkedOrderId],
+        );
+        orderUpdated = (orderUpdatedRes.rowCount ?? 0) > 0;
+      }
+    }
+
+    return { intentUpdated, orderUpdated };
   }
 
   // --- PROCESS SIGNED WEBHOOK WITH DUPLICATE PROTECTION ---

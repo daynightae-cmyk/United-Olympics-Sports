@@ -1,10 +1,10 @@
 import { randomUUID, createHmac } from 'node:crypto';
-import { databaseConfigured, getPool } from '../../db/index.ts';
-import type { AuthorizationContext } from '../authorization-context.ts';
-import { assertCanManagePlayer } from '../authorization-context.ts';
-import { recordAudit } from '../audit.ts';
-import { ApiError, normalizeString, isUuid } from '../http.ts';
-import type { DbQueryClient } from '../vertical-slice.ts';
+import { databaseConfigured, getPool } from '../../db/index';
+import type { AuthorizationContext } from '../authorization-context';
+import { assertCanManagePlayer } from '../authorization-context';
+import { recordAudit } from '../audit';
+import { ApiError, normalizeString, isUuid } from '../http';
+import type { DbQueryClient } from '../vertical-slice';
 
 export interface DocumentRecord {
   id: string;

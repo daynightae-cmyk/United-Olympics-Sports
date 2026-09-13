@@ -1,12 +1,15 @@
-import { ArrowLeft, ArrowRight, CalendarDays, MapPin, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, CalendarDays, ShieldCheck } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { PageHeader, StatusBadge } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
+import { useAdminData } from '../../admin/data/AdminDataProvider';
 import { useEvent, useUpdateEvent } from '../../admin/data/adminHooks';
 
 export function AdminEventsDetailPage() {
   const { eventId } = useParams();
-  const { item: event, loading, error, refetch } = useEvent(eventId);
+  const { mode } = useAdminData();
+  const isPreview = mode === 'preview';
+  const { item: event, loading, error } = useEvent(eventId);
   const { update, loading: updateLoading } = useUpdateEvent();
 
   if (loading) return <div className="admin-page"><PageHeader icon={CalendarDays} eyebrow={bi('Training Operations', 'عمليات التدريب')} title={bi('Event Detail', 'تفاصيل الفعالية')} description={bi('Loading...', 'جاري التحميل...')} /></div>;
@@ -36,9 +39,9 @@ export function AdminEventsDetailPage() {
     <section className="admin-panel">
       <div className="panel-heading"><BilingualText value={bi('Actions', 'الإجراءات')} /><ShieldCheck /></div>
       <div className="preview-form-grid">
-        <label><BilingualText value={bi('Status', 'الحالة')} /><select defaultValue={event.status} onChange={(e) => update(event.id!, { status: e.target.value as any })}><option value="scheduled">Scheduled | مجدول</option><option value="ongoing">Ongoing | جاري</option><option value="completed">Completed | مكتمل</option><option value="cancelled">Cancelled | ملغي</option></select></label>
+        <label><BilingualText value={bi('Status', 'الحالة')} /><select defaultValue={event.status} disabled={!isPreview || updateLoading} onChange={(e) => update(event.id!, { status: e.target.value as any })}><option value="scheduled">Scheduled | مجدول</option><option value="ongoing">Ongoing | جاري</option><option value="completed">Completed | مكتمل</option><option value="cancelled">Cancelled | ملغي</option></select></label>
       </div>
-      <p className="preview-warning"><BilingualText value={bi('Changes are saved in preview session only.', 'التغييرات محفوظة في جلسة المعاينة فقط.')} /></p>
+      {isPreview ? <p className="preview-warning"><BilingualText value={bi('Changes are saved in preview session only.', 'التغييرات محفوظة في جلسة المعاينة فقط.')} /></p> : <p className="enterprise-result"><BilingualText value={bi('Events are managed by the tournament calendar and are read-only in production.', 'الفعاليات تُدار عبر تقويم البطولات وهي للقراءة فقط في الإنتاج.')} /></p>}
     </section>
   </div>;
 }

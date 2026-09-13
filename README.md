@@ -20,9 +20,9 @@
 **يونايتد أوليمبيكس سبورت | United Olympics Sports** تجربة واجهات رياضية متجاوبة وثنائية اللغة مبنية على لغة منتج موحدة. يتضمن المصدر الحالي موقعًا عامًا ومساحة للإدارة الرئيسية ومعاينات مخصصة لبوابات اللاعب وولي الأمر والمدرب.
 
 > [!IMPORTANT]
-> This repository is currently a high-fidelity frontend prototype. It uses isolated, anonymized preview fixtures; backend persistence, authentication, live payments and production operational data are not claimed.
+> This repository is a production delivery: a live Supabase/PostgreSQL backend with scoped RLS, server-side authorization, Supabase Auth (Google OAuth) with Firebase migration compatibility, a production store catalog gateway with server-authoritative checkout, and explicit Preview modes for owner demos. Live payments, SMS/Email delivery and native apps remain external activations — see `docs/CLIENT-HANDOFF.md` and `docs/EXTERNAL-PROVIDERS.md`.
 >
-> هذا المستودع حاليًا نموذج واجهات عالي الجودة يستخدم بيانات معاينة معزولة ومجهولة؛ ولا يدّعي وجود حفظ عبر خادم أو مصادقة أو مدفوعات حية أو بيانات تشغيل فعلية.
+> هذا المستودع منتج إنتاجي: خلفية Supabase/PostgreSQL حية بسياسات RLS محددة النطاق، وتخويل عبر الخادم، ومصادقة Supabase (Google OAuth) مع توافق ترحيلي لـ Firebase، وبوابة كتالوج متجر إنتاجية مع إتمام طلب موثوق عبر الخادم، وأوضاع معاينة صريحة لعروض المالك. تبقى المدفوعات الحية وتسليم SMS/البريد والتطبيقات الأصلية تفعيلات خارجية — راجع `docs/CLIENT-HANDOFF.md` و`docs/EXTERNAL-PROVIDERS.md`.
 
 ## Connected ecosystem | المنظومة المترابطة
 
@@ -34,11 +34,12 @@ The artwork above summarizes the source-backed product topology. The same archit
 
 | Surface | الواجهة | Verified current experience | التجربة الحالية المتحققة | Source status |
 | --- | --- | --- | --- | --- |
-| Public Website | الموقع العام | Sport experience, program discovery, coaching experience, portal access | تجربة الرياضات، اكتشاف البرامج، تجربة المدربين، الوصول للبوابات | Implemented frontend routes |
-| Super Admin | الإدارة الرئيسية | Organization structure, sports and programs, people and groups, training operations | هيكل المؤسسة، الرياضات والبرامج، الأشخاص والمجموعات، عمليات التدريب | Core screens plus clearly marked UI previews |
-| Player Portal | بوابة اللاعب | Overview, attendance, performance, coach feedback | النظرة العامة، الحضور، الأداء، ملاحظات المدرب | Interactive UI preview |
-| Parent Portal | بوابة ولي الأمر | Children, attendance, performance, schedule and coach-feedback previews | الأبناء، الحضور، الأداء، معاينة الجدول وملاحظات المدرب | Interactive UI preview |
-| Coach Portal | بوابة المدرب | Groups, players, session timeline, attendance workflow and evaluations | المجموعات، اللاعبون، الخط الزمني للحصص، سير الحضور والتقييمات | Interactive UI preview |
+| Public Website | الموقع العام | Sport experience, program discovery, coaching experience, live contact enquiries, legal routes, portal access | تجربة الرياضات، اكتشاف البرامج، تجربة المدربين، استفسارات تواصل حية، صفحات قانونية، الوصول للبوابات | Live routes + server enquiry API |
+| Super Admin | الإدارة الرئيسية | First Setup bootstrap, countries/branches/players/performance writes, live read scope, users/roles workflow | الإعداد الأول، كتابة الدول/الفروع/اللاعبين/الأداء، نطاق قراءة حي، سير المستخدمين والأدوار | Live gateway + explicit Preview mode |
+| Player Portal | بوابة اللاعب | Overview, attendance, performance, coach feedback | النظرة العامة، الحضور، الأداء، ملاحظات المدرب | Authenticated live binding + preview sessions |
+| Parent Portal | بوابة ولي الأمر | Children, attendance, performance, schedule and coach feedback | الأبناء، الحضور، الأداء، الجدول وملاحظات المدرب | Guardian-isolated live binding |
+| Coach Portal | بوابة المدرب | Groups, players, session timeline, attendance workflow and evaluations | المجموعات، اللاعبون، الخط الزمني للحصص، سير الحضور والتقييمات | Assignment-scoped live binding |
+| Store | المتجر | Live catalog, persistent cart/wishlist, server-authoritative checkout, honest admin | كتالوج حي، سلة/مفضلة دائمة، إتمام طلب موثوق عبر الخادم، إدارة صادقة | Production gateway; payments external |
 
 ## What is in the current source | ما الموجود في المصدر الحالي
 

@@ -1,5 +1,5 @@
-import { getPool, databaseConfigured } from '../db/index.ts';
-import { supabaseAuthConfigured, firebaseAuthConfigured, authAdministrativeActionsConfigured } from './runtime.ts';
+import { getPool, databaseConfigured } from '../db/index';
+import { supabaseAuthConfigured, firebaseAuthConfigured, authAdministrativeActionsConfigured } from './runtime';
 
 export type DependencyStage = 'not_configured' | 'configured' | 'reachable' | 'verified' | 'operational';
 export type DependencyStatus = 'PASS' | 'PARTIAL' | 'BLOCKED' | 'FAIL' | 'NOT_CONFIGURED';

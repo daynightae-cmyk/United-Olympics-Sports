@@ -49,15 +49,6 @@ type Sport = Bilingual & { id: string; description: Bilingual; ages: Bilingual; 
 const brand = "United Olympics Sports";
 const brandAr = "يونايتد أوليمبيكس سبورت";
 const splashSessionKey = "uos:splash-seen";
-const sportDetailRoutes: Record<string, string> = {
-  football: "/sports/football",
-  swimming: "/sports/swimming",
-  basketball: "/sports/basketball",
-  tennis: "/sports/tennis",
-  gymnastics: "/sports/gymnastics",
-  "martial-arts": "/sports/martial-arts",
-};
-
 const sports: Sport[] = [
   {
     id: "football",

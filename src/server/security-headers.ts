@@ -1,4 +1,4 @@
-import type { ApiResponse } from './http.ts';
+import type { ApiResponse } from './http';
 
 export interface SecurityHeadersConfig {
   enableHsts?: boolean;

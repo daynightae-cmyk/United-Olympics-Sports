@@ -1,12 +1,15 @@
-import { ArrowLeft, ArrowRight, MessageSquare, Mail, MailOpen, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, MessageSquare, MailOpen, ShieldCheck } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { PageHeader, StatusBadge } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
+import { useAdminData } from '../../admin/data/AdminDataProvider';
 import { useMessage, useUpdateMessage } from '../../admin/data/adminHooks';
 
 export function AdminMessagesDetailPage() {
   const { messageId } = useParams();
-  const { item: message, loading, error, refetch } = useMessage(messageId);
+  const { mode } = useAdminData();
+  const isPreview = mode === 'preview';
+  const { item: message, loading, error } = useMessage(messageId);
   const { update, loading: updateLoading } = useUpdateMessage();
 
   if (loading) return <div className="admin-page"><PageHeader icon={MessageSquare} eyebrow={bi('Communications', 'التواصل')} title={bi('Message Detail', 'تفاصيل الرسالة')} description={bi('Loading...', 'جاري التحميل...')} /></div>;
@@ -36,9 +39,9 @@ export function AdminMessagesDetailPage() {
     <section className="admin-panel">
       <div className="panel-heading"><BilingualText value={bi('Actions', 'الإجراءات')} /><ShieldCheck /></div>
       <div className="preview-form-grid">
-        <label><BilingualText value={bi('Status', 'الحالة')} /><select defaultValue={message.status} onChange={(e) => update(message.id!, { status: e.target.value as any })}><option value="sent">Sent | مرسل</option><option value="delivered">Delivered | تم التسليم</option><option value="read">Read | مقروء</option><option value="failed">Failed | فشل</option></select></label>
+        <label><BilingualText value={bi('Status', 'الحالة')} /><select defaultValue={message.status} disabled={!isPreview || updateLoading} onChange={(e) => update(message.id!, { status: e.target.value as any })}><option value="sent">Sent | مرسل</option><option value="delivered">Delivered | تم التسليم</option><option value="read">Read | مقروء</option><option value="failed">Failed | فشل</option></select></label>
       </div>
-      <p className="preview-warning"><BilingualText value={bi('Changes are saved in preview session only.', 'التغييرات محفوظة في جلسة المعاينة فقط.')} /></p>
+      {isPreview ? <p className="preview-warning"><BilingualText value={bi('Changes are saved in preview session only.', 'التغييرات محفوظة في جلسة المعاينة فقط.')} /></p> : <p className="enterprise-result"><BilingualText value={bi('Message status follows gateway delivery webhooks and cannot be edited here.', 'حالة الرسائل تتبع إشعارات بوابة التسليم ولا يمكن تحريرها هنا.')} /></p>}
     </section>
   </div>;
 }

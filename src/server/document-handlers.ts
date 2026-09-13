@@ -1,6 +1,6 @@
-import { DocumentDomainRepository } from './repositories/document-repository.ts';
-import { requireAuthorizationContext } from './auth.ts';
-import { assertMethod, readJsonBody, sendJson, type ApiRequest, type ApiResponse } from './http.ts';
+import { DocumentDomainRepository } from './repositories/document-repository';
+import { requireAuthorizationContext } from './auth';
+import { assertMethod, readJsonBody, sendJson, type ApiRequest, type ApiResponse } from './http';
 
 const docRepo = new DocumentDomainRepository();
 

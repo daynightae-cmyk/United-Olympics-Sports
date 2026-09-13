@@ -25,7 +25,7 @@ class MockPaymentDb implements DbQueryClient {
       return { rows: found ? [found as unknown as T] : [], rowCount: found ? 1 : 0 };
     }
     if (s.includes('insert into payment_intents')) {
-      const [id, key, playerId, subId, amountMinor, currency, provider] = params as any[];
+      const [id, key, playerId, subId, amountMinor, currency, status, provider, providerIntentId, metadataJson] = params as any[];
       const record = {
         id,
         idempotency_key: key,
@@ -33,9 +33,10 @@ class MockPaymentDb implements DbQueryClient {
         subscription_id: subId,
         amount_minor: amountMinor,
         currency,
-        status: 'requires_payment_method',
+        status,
         provider,
-        provider_intent_id: null,
+        provider_intent_id: providerIntentId,
+        metadata: metadataJson ? JSON.parse(metadataJson) : {},
         created_at: new Date().toISOString(),
       };
       this.intents.set(key, record);
@@ -47,7 +48,7 @@ class MockPaymentDb implements DbQueryClient {
       return { rows: found ? [found as unknown as T] : [], rowCount: found ? 1 : 0 };
     }
     if (s.includes('insert into payment_webhooks')) {
-      const [id, eventId, provider, eventType, payload] = params as any[];
+      const [id, eventId, provider, eventType] = params as any[];
       const w = { id, event_id: eventId, provider, event_type: eventType, status: 'processed' };
       this.webhooks.set(eventId, w);
       return { rows: [w as unknown as T], rowCount: 1 };
