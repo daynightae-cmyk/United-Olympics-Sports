@@ -47,10 +47,10 @@ export function PlayerPortalRouter() {
       <Routes>
         <Route path="login" element={<PlayerLoginPage />} />
 
-        {/* Legacy auth URLs remain renderable while phone/OTP production auth is not configured. */}
-        <Route path="auth/phone" element={<PlayerLoginPage />} />
-        <Route path="auth/verify" element={<PlayerLoginPage />} />
-        <Route path="otp" element={<PlayerLoginPage />} />
+        {/* Legacy authentication entry points resolve to one canonical login screen. */}
+        <Route path="auth/phone" element={<Navigate to="/player/login" replace />} />
+        <Route path="auth/verify" element={<Navigate to="/player/login" replace />} />
+        <Route path="otp" element={<Navigate to="/player/login" replace />} />
         <Route path="phone" element={<Navigate to="/player/login" replace />} />
         <Route path="verify" element={<Navigate to="/player/login" replace />} />
 
