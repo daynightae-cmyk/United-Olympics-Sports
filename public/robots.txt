@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /$
+Allow: /about
+Allow: /sports
+Allow: /sports/
+Allow: /programs
+Allow: /coaches
+Allow: /contact
+Allow: /privacy
+Allow: /terms
+Allow: /shipping
+Allow: /returns
+Allow: /store
+Allow: /store/
+Disallow: /admin
+Disallow: /player/
+Disallow: /parent/
+Disallow: /coach/
+Disallow: /benchmark
+Disallow: /auth/
+Disallow: /api/
+
+Sitemap: https://unitedolympicsports.store/sitemap.xml

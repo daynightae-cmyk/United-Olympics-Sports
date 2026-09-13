@@ -277,12 +277,39 @@ function CoachingPage() {
   ].map(({ icon: Icon, title, body }, index) => <article className="uos-reveal" key={title.en}><span>0{index + 1}</span><Icon /><h3><Copy>{title}</Copy></h3><p><Copy>{body}</Copy></p></article>)}</div></section><section className="uos-section uos-coaching-reflection"><PublicImage asset={UOS_PUBLIC_MEDIA.about.reflection} /><div className="uos-reveal"><span><Copy>{{ ar: 'التأمل', en: 'Reflection' }}</Copy></span><h2><Copy>{{ ar: 'التطور يحتاج إلى اتساق، لا استعجال', en: 'Development needs consistency, not haste' }}</Copy></h2><p><Copy>{{ ar: 'الممارسة اليومية والملاحظة الصادقة والثقة المتدرجة تصنع أساسًا أقوى من الوعود السريعة.', en: 'Daily practice, honest observation and gradual confidence create a stronger foundation than quick promises.' }}</Copy></p></div></section>{PUBLIC_COACHES.length === 0 ? null : null}<ClosingCta crop="coaching" /></>;
 }
 
+type EnquiryStatus = { state: 'idle' } | { state: 'sending' } | { state: 'sent'; reference: string } | { state: 'error'; message: { ar: string; en: string } };
+
 function ContactPage() {
   usePageMeta({ ar: 'تواصل معنا', en: 'Contact us' }, { ar: 'أرسل استفسارك عن الرياضات والمسارات المتاحة.', en: 'Send an enquiry about sports and available pathways.' });
   const { locale } = usePublicLocale();
-  const [notice, setNotice] = useState(false);
-  const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); setNotice(true); };
-  return <><PageHero asset={UOS_PUBLIC_MEDIA.home.closing} eyebrow={{ ar: 'تواصل معنا', en: 'Contact us' }} title={{ ar: 'لنبدأ بسؤالك', en: 'Let us begin with your question' }} body={{ ar: 'أخبرنا بالرياضة التي تهمك، وسنجهز وسيلة التواصل الإلكتروني فور اعتمادها.', en: 'Tell us which sport interests you. The electronic enquiry channel will appear once approved.' }} /><section className="uos-section uos-contact-layout"><div className="uos-contact-intro"><span><Copy>{{ ar: 'الاستفسارات', en: 'Enquiries' }}</Copy></span><h2><Copy>{{ ar: 'اكتب رسالتك بوضوح', en: 'Write your message clearly' }}</Copy></h2><p><Copy>{{ ar: 'لن نعرض رقم هاتف أو عنوانًا أو ساعات عمل قبل اعتمادها من إدارة يونايتد أوليمبيكس سبورت.', en: 'No phone number, address or opening hours will be shown before approval by United Olympics Sports.' }}</Copy></p><Mail aria-hidden="true" /></div><form className="uos-contact-form" onSubmit={submit}><label><Copy>{{ ar: 'الاسم', en: 'Name' }}</Copy><input name="name" autoComplete="name" required /></label><label><Copy>{{ ar: 'البريد الإلكتروني', en: 'Email' }}</Copy><input name="email" type="email" autoComplete="email" required /></label><label><Copy>{{ ar: 'الرياضة', en: 'Sport' }}</Copy><select name="sport" defaultValue=""><option value=""><Copy>{{ ar: 'اختر الرياضة', en: 'Choose a sport' }}</Copy></option>{PUBLIC_SPORTS.map((sport) => <option key={sport.id} value={sport.slug}>{t(sport.name, locale)}</option>)}</select></label><label><Copy>{{ ar: 'الرسالة', en: 'Message' }}</Copy><textarea name="message" rows={5} required /></label><button className="uos-button is-primary" type="submit"><Copy>{{ ar: 'تحقق من الإرسال', en: 'Check submission' }}</Copy><Send /></button>{notice ? <p className="uos-form-notice" role="status"><ShieldCheck /><Copy>{{ ar: 'الإرسال الإلكتروني غير متصل حاليًا؛ لم يتم إرسال أو حفظ بياناتك.', en: 'Electronic submission is not connected yet; your data was not sent or saved.' }}</Copy></p> : null}</form></section>{PUBLIC_BRANCHES.length === 0 ? null : null}<ClosingCta crop="contact" /></>;
+  const [status, setStatus] = useState<EnquiryStatus>({ state: 'idle' });
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (status.state === 'sending' || status.state === 'sent') return;
+    const form = new FormData(event.currentTarget);
+    const payload = {
+      name: String(form.get('name') ?? '').trim(),
+      email: String(form.get('email') ?? '').trim(),
+      sport: String(form.get('sport') ?? '').trim() || undefined,
+      message: String(form.get('message') ?? '').trim() || undefined,
+      website: String(form.get('website') ?? ''),
+    };
+    setStatus({ state: 'sending' });
+    fetch('/public/enquiries', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => null) as { ok?: boolean; reference?: string } | null;
+        if (!res.ok || !data?.ok) throw new Error(`HTTP_${res.status}`);
+        setStatus({ state: 'sent', reference: data.reference ?? '' });
+      })
+      .catch(() => {
+        setStatus({ state: 'error', message: { ar: 'تعذر إرسال استفسارك الآن. حاول مجددًا لاحقًا.', en: 'Your enquiry could not be sent right now. Please try again later.' } });
+      });
+  };
+  return <><PageHero asset={UOS_PUBLIC_MEDIA.home.closing} eyebrow={{ ar: 'تواصل معنا', en: 'Contact us' }} title={{ ar: 'لنبدأ بسؤالك', en: 'Let us begin with your question' }} body={{ ar: 'أخبرنا بالرياضة التي تهمك، وسيصل استفسارك مباشرة إلى فريقنا.', en: 'Tell us which sport interests you. Your enquiry reaches our team directly.' }} /><section className="uos-section uos-contact-layout"><div className="uos-contact-intro"><span><Copy>{{ ar: 'الاستفسارات', en: 'Enquiries' }}</Copy></span><h2><Copy>{{ ar: 'اكتب رسالتك بوضوح', en: 'Write your message clearly' }}</Copy></h2><p><Copy>{{ ar: 'لن نعرض رقم هاتف أو عنوانًا أو ساعات عمل قبل اعتمادها من إدارة يونايتد أوليمبيكس سبورت.', en: 'No phone number, address or opening hours will be shown before approval by United Olympics Sports.' }}</Copy></p><Mail aria-hidden="true" /></div><form className="uos-contact-form" onSubmit={submit}><label><Copy>{{ ar: 'الاسم', en: 'Name' }}</Copy><input name="name" autoComplete="name" required disabled={status.state !== 'idle' && status.state !== 'error'} /></label><label><Copy>{{ ar: 'البريد الإلكتروني', en: 'Email' }}</Copy><input name="email" type="email" autoComplete="email" required disabled={status.state !== 'idle' && status.state !== 'error'} /></label><label><Copy>{{ ar: 'الرياضة', en: 'Sport' }}</Copy><select name="sport" defaultValue="" disabled={status.state !== 'idle' && status.state !== 'error'}><option value=""><Copy>{{ ar: 'اختر الرياضة', en: 'Choose a sport' }}</Copy></option>{PUBLIC_SPORTS.map((sport) => <option key={sport.id} value={sport.slug}>{t(sport.name, locale)}</option>)}</select></label><label><Copy>{{ ar: 'الرسالة', en: 'Message' }}</Copy><textarea name="message" rows={5} required disabled={status.state !== 'idle' && status.state !== 'error'} /></label><input type="text" name="website" autoComplete="off" tabIndex={-1} aria-hidden="true" className="uos-honeypot" /><button className="uos-button is-primary" type="submit" disabled={status.state === 'sending' || status.state === 'sent'}><Copy>{{ ar: status.state === 'sending' ? 'جارٍ الإرسال…' : status.state === 'sent' ? 'تم الإرسال' : 'إرسال الاستفسار', en: status.state === 'sending' ? 'Sending…' : status.state === 'sent' ? 'Sent' : 'Send enquiry' }}</Copy><Send /></button>{status.state === 'sent' ? <p className="uos-form-notice is-success" role="status"><ShieldCheck /><Copy>{{ ar: `تم استلام استفسارك بنجاح${status.reference ? ` · المرجع ${status.reference}` : ''}.`, en: `Your enquiry was received${status.reference ? ` · Reference ${status.reference}` : ''}.` }}</Copy></p> : null}{status.state === 'error' ? <p className="uos-form-notice is-error" role="alert"><ShieldCheck /><Copy>{status.message}</Copy></p> : null}</form></section>{PUBLIC_BRANCHES.length === 0 ? null : null}<ClosingCta crop="contact" /></>;
 }
 
 function NotFoundPage() {
@@ -293,7 +320,74 @@ function NotFoundPage() {
 function PublicFooter() {
   const { locale } = usePublicLocale();
   const activeSocials = Object.entries(PUBLIC_SOCIAL_LINKS).filter(([, url]) => Boolean(url));
-  return <footer className="uos-site-footer"><div className="uos-footer-main"><div><Brand /><p><Copy>{{ ar: 'بيئة رياضية منظمة للنمو والثقة وروح الفريق.', en: 'A structured sporting environment for growth, confidence and teamwork.' }}</Copy></p></div><div><h2><Copy>{{ ar: 'استكشف', en: 'Explore' }}</Copy></h2>{PUBLIC_NAV.slice(1).map((item) => <Link key={item.path} to={item.path}><Copy>{item.label}</Copy></Link>)}</div><div><h2><Copy>{{ ar: 'الرياضات', en: 'Sports' }}</Copy></h2>{PUBLIC_SPORTS.map((sport) => <Link key={sport.id} to={`/sports/${sport.slug}`}><Copy>{sport.name}</Copy></Link>)}</div><div><h2><Copy>{{ ar: 'الدخول', en: 'Access' }}</Copy></h2><Link to="/store"><Copy>{{ ar: 'المتجر', en: 'Store' }}</Copy></Link><Link to="/player/login"><Copy>{{ ar: 'البوابات', en: 'Portals' }}</Copy></Link>{activeSocials.length ? <div aria-label={locale === 'ar' ? 'روابط التواصل الاجتماعي' : 'Social links'}>{activeSocials.map(([network, url]) => <a key={network} href={url}>{network}</a>)}</div> : null}</div></div><div className="uos-footer-bottom"><span>© {new Date().getFullYear()} United Olympics Sports</span><span>DISCIPLINE · PROGRESS · CONFIDENCE</span></div></footer>;
+  return <footer className="uos-site-footer"><div className="uos-footer-main"><div><Brand /><p><Copy>{{ ar: 'بيئة رياضية منظمة للنمو والثقة وروح الفريق.', en: 'A structured sporting environment for growth, confidence and teamwork.' }}</Copy></p></div><div><h2><Copy>{{ ar: 'استكشف', en: 'Explore' }}</Copy></h2>{PUBLIC_NAV.slice(1).map((item) => <Link key={item.path} to={item.path}><Copy>{item.label}</Copy></Link>)}</div><div><h2><Copy>{{ ar: 'الرياضات', en: 'Sports' }}</Copy></h2>{PUBLIC_SPORTS.map((sport) => <Link key={sport.id} to={`/sports/${sport.slug}`}><Copy>{sport.name}</Copy></Link>)}</div><div><h2><Copy>{{ ar: 'الدخول', en: 'Access' }}</Copy></h2><Link to="/store"><Copy>{{ ar: 'المتجر', en: 'Store' }}</Copy></Link><Link to="/player/login"><Copy>{{ ar: 'البوابات', en: 'Portals' }}</Copy></Link><Link to="/privacy"><Copy>{{ ar: 'سياسة الخصوصية', en: 'Privacy' }}</Copy></Link><Link to="/terms"><Copy>{{ ar: 'الشروط', en: 'Terms' }}</Copy></Link><Link to="/shipping"><Copy>{{ ar: 'الشحن', en: 'Shipping' }}</Copy></Link><Link to="/returns"><Copy>{{ ar: 'الإرجاع', en: 'Returns' }}</Copy></Link>{activeSocials.length ? <div aria-label={locale === 'ar' ? 'روابط التواصل الاجتماعي' : 'Social links'}>{activeSocials.map(([network, url]) => <a key={network} href={url}>{network}</a>)}</div> : null}</div></div><div className="uos-footer-bottom"><span>© {new Date().getFullYear()} United Olympics Sports</span><span>DISCIPLINE · PROGRESS · CONFIDENCE</span></div></footer>;
+}
+
+type LegalSection = { heading: LocalizedText; body: LocalizedText; ownerReview?: boolean };
+
+function LegalPage({ title, intro, sections }: { title: LocalizedText; intro: LocalizedText; sections: LegalSection[] }) {
+  usePageMeta(title, intro);
+  return (
+    <section className="uos-section uos-legal">
+      <div className="uos-editorial-head uos-reveal">
+        <span><Copy>{{ ar: 'معلومات قانونية', en: 'Legal information' }}</Copy></span>
+        <h1><Copy>{title}</Copy></h1>
+        <p><Copy>{intro}</Copy></p>
+      </div>
+      <div className="uos-legal-body">
+        {sections.map((section) => (
+          <article key={section.heading.en}>
+            <h2><Copy>{section.heading}</Copy></h2>
+            <p><Copy>{section.body}</Copy></p>
+            {section.ownerReview ? <p className="uos-form-notice" role="note"><ShieldCheck /><Copy>{{ ar: 'تتطلب هذه الصياغة مراجعة واعتماد مالك النادي قبل اعتبارها نهائية.', en: 'This wording requires owner review and approval before it is considered final.' }}</Copy></p> : null}
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function PrivacyPage() {
+  return <LegalPage
+    title={{ ar: 'سياسة الخصوصية', en: 'Privacy Policy' }}
+    intro={{ ar: 'كيف نجمع بيانات الاستفسارات ونستخدمها ونحميها.', en: 'How enquiry data is collected, used and protected.' }}
+    sections={[
+      { heading: { ar: 'البيانات التي نجمعها', en: 'Data we collect' }, body: { ar: 'عند إرسال استفسار عبر نموذج التواصل، نحتفظ بالاسم ووسيلة الاتصال والرياضة المختارة ونص الرسالة لغرض الرد على استفسارك فقط.', en: 'When you submit an enquiry through the contact form, we keep your name, contact details, chosen sport and message text solely to respond to your enquiry.' } },
+      { heading: { ar: 'استخدام البيانات', en: 'How data is used' }, body: { ar: 'تُستخدم بيانات الاستفسار للرد عليك وإدارة طلبك داخل أنظمة النادي المصرح بها فقط، ولا تُباع لأطراف خارجية.', en: 'Enquiry data is used to respond to you and to manage your request inside authorized club systems only. It is never sold to third parties.' } },
+      { heading: { ar: 'طلب حذف البيانات', en: 'Request data deletion' }, body: { ar: 'يمكنك طلب حذف بيانات استفسارك في أي وقت عبر صفحة التواصل مع ذكر مرجع الاستفسار.', en: 'You may request deletion of your enquiry data at any time through the contact page by quoting your enquiry reference.' }, ownerReview: true },
+    ]}
+  />;
+}
+
+function TermsPage() {
+  return <LegalPage
+    title={{ ar: 'الشروط والأحكام', en: 'Terms of Service' }}
+    intro={{ ar: 'قواعد استخدام الموقع والبوابات والمتجر.', en: 'Rules for using the website, portals and store.' }}
+    sections={[
+      { heading: { ar: 'الاستخدام المقبول', en: 'Acceptable use' }, body: { ar: 'يُستخدم الموقع للاستفسارات المشروعة عن الرياضات والبرامج والمتجر. يُمنع إساءة استخدام النماذج أو محاولة الوصول غير المصرح به.', en: 'The website is for legitimate enquiries about sports, programs and the store. Misuse of forms or attempts at unauthorized access are prohibited.' } },
+      { heading: { ar: 'الحسابات والبوابات', en: 'Accounts and portals' }, body: { ar: 'الوصول إلى بوابات اللاعبين وأولياء الأمور والمدربين والإدارة مخصص للحسابات المصرح بها فقط ويخضع لصلاحيات الدور والنطاق.', en: 'Access to player, parent, coach and admin portals is reserved for authorized accounts and governed by role and scope permissions.' }, ownerReview: true },
+    ]}
+  />;
+}
+
+function ShippingPage() {
+  return <LegalPage
+    title={{ ar: 'الشحن والتوصيل', en: 'Shipping & Delivery' }}
+    intro={{ ar: 'سياسة شحن منتجات المتجر قيد الاعتماد النهائي.', en: 'Store shipping policy pending final approval.' }}
+    sections={[
+      { heading: { ar: 'النطاق', en: 'Coverage' }, body: { ar: 'تُحدد مناطق التوصيل والرسوم والمدد الزمنية من إدارة المتجر قبل تفعيل الدفع.', en: 'Delivery zones, fees and timeframes are set by store management before payments are enabled.' }, ownerReview: true },
+    ]}
+  />;
+}
+
+function ReturnsPage() {
+  return <LegalPage
+    title={{ ar: 'الإرجاع والاسترداد', en: 'Returns & Refunds' }}
+    intro={{ ar: 'سياسة إرجاع منتجات المتجر قيد الاعتماد النهائي.', en: 'Store returns policy pending final approval.' }}
+    sections={[
+      { heading: { ar: 'المبدأ', en: 'Principle' }, body: { ar: 'لن يتم تحصيل أي مبلغ قبل اعتماد بوابة الدفع ونشر سياسة الإرجاع النهائية.', en: 'No amount is charged before the payment gateway is approved and the final returns policy is published.' }, ownerReview: true },
+    ]}
+  />;
 }
 
 function PublicRoutes() {
@@ -309,6 +403,10 @@ function PublicRoutes() {
       <Route path="/philosophy" element={<CoachingPage />} />
       <Route path="/coaches" element={<CoachingPage />} />
       <Route path="/contact" element={<ContactPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/shipping" element={<ShippingPage />} />
+      <Route path="/returns" element={<ReturnsPage />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );

@@ -244,6 +244,15 @@
 .uos-contact-form .uos-button { justify-self: start; border: 0; }
 .uos-form-notice { grid-column: 1 / -1; display: flex; align-items: flex-start; gap: 10px; padding: 14px; border-radius: 10px; background: #f4ead0; color: #5e4a20; font-size: 12px; line-height: 1.65; }
 .uos-form-notice svg { flex: 0 0 auto; width: 18px; }
+.uos-form-notice.is-success { background: #e4efe0; color: #2e5233; }
+.uos-form-notice.is-error { background: #f6e0dc; color: #7a2e22; }
+.uos-honeypot { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0 0 0 0) !important; white-space: nowrap !important; border: 0 !important; }
+
+.uos-legal-body { display: grid; gap: 26px; max-width: 860px; }
+.uos-legal-body article { padding: 26px; border: 1px solid #e3dcc9; border-radius: 14px; background: #fffdf8; }
+.uos-legal-body h2 { margin: 0 0 10px; font-size: 20px; }
+.uos-legal-body p { margin: 0; color: var(--uos-muted); line-height: 1.9; }
+.uos-legal-body .uos-form-notice { margin-top: 14px; }
 
 .uos-not-found { min-height: 80vh; display: grid; place-content: center; justify-items: center; gap: 20px; padding: 140px 20px 80px; text-align: center; }
 .uos-not-found > span { color: var(--uos-gold); font: 800 12px "DM Mono", monospace; }
