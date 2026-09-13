@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { StoreDomainRepository } from '../src/server/repositories/store-repository.ts';
+import { storeProductsHandler } from '../src/server/store-handlers.ts';
 import type { AuthorizationContext } from '../src/server/authorization-context.ts';
-import { ApiError } from '../src/server/http.ts';
+import { ApiError, type ApiRequest, type ApiResponse } from '../src/server/http.ts';
 import type { DbQueryClient } from '../src/server/vertical-slice.ts';
 
 const userCtx: AuthorizationContext = {
@@ -70,6 +71,30 @@ async function runStoreProductionTests() {
       return true;
     },
   );
+
+  // 4. Public catalog without a configured database is truthfully empty (200),
+  // never a crash: operators read the degraded health signal instead.
+  delete process.env.DATABASE_URL;
+  delete process.env.SQL_HOST;
+  const req = { url: '/api/v1/store/products', method: 'GET', headers: {} } as ApiRequest;
+  let statusCode = 0;
+  let body = '';
+  const res = {
+    statusCode: 0,
+    setHeader() { /* header sink */ },
+    end(data?: string) { if (data) body = data; },
+  } as unknown as ApiResponse & { statusCode: number };
+  const capturing = new Proxy(res, {
+    set(target, prop, value) {
+      if (prop === 'statusCode') statusCode = value as number;
+      return Reflect.set(target, prop, value);
+    },
+  });
+  await storeProductsHandler(req, capturing);
+  assert.equal(statusCode, 200);
+  const payload = JSON.parse(body) as { ok?: boolean; items?: unknown[] };
+  assert.equal(payload.ok, true);
+  assert.deepEqual(payload.items, []);
 
   console.log('Store production data tests: PASS');
 }

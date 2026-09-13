@@ -189,8 +189,23 @@ jobs:
       - name: Start ordinary production preview
         shell: bash
         run: |
-          ./node_modules/.bin/vite preview --host 127.0.0.1 --port 4173 > /tmp/uos-production-preview.log 2>&1 &
+          # Serve the real production server (static dist + API function), so the
+          # ordinary-build boundary QA exercises the same shape as Vercel.
+          NODE_ENV=production PORT=4173 node dist/server.cjs > /tmp/uos-production-preview.log 2>&1 &
           echo $! > /tmp/uos-production-preview.pid
+          ready=0
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error http://127.0.0.1:4173/api/v1/health > /dev/null; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            echo "Ordinary production server did not become healthy"
+            cat /tmp/uos-production-preview.log || true
+            exit 1
+          fi
 
       - name: Production provider boundary
         env:
