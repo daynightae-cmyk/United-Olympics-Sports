@@ -55,6 +55,11 @@ export async function beginSupabaseGoogleOAuth(returnTo = '/'): Promise<void> {
   window.location.assign(data.url);
 }
 
+export function peekAuthReturnTo(fallback = '/'): string {
+  const stored = sessionStorage.getItem(RETURN_TO_KEY);
+  return safeReturnTo(stored, fallback);
+}
+
 export function consumeAuthReturnTo(fallback = '/'): string {
   const stored = sessionStorage.getItem(RETURN_TO_KEY);
   sessionStorage.removeItem(RETURN_TO_KEY);
