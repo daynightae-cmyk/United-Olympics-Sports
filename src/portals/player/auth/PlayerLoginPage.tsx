@@ -4,12 +4,12 @@ import { Sparkles } from 'lucide-react';
 import { PortalAuthPage, type PortalAuthNotice, type PortalAuthProvider } from '../../../components/auth/PortalAuthPage';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
 import { beginSupabaseGoogleOAuth } from '../../../lib/auth-client';
-import { usePlayerSession } from '../PlayerSessionContext';
+import { PlayerSessionProvider, usePlayerSession } from '../PlayerSessionContext';
 import { previewAuthGateway, productionAuthGateway } from './PlayerAuthGateway';
 
 const previewRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true';
 
-export function PlayerLoginPage() {
+function PlayerPreviewAccess() {
   const { allPlayers, login, loading } = usePlayerSession();
   const navigate = useNavigate();
   const [selectedAthleteId, setSelectedAthleteId] = useState('');
@@ -23,41 +23,6 @@ export function PlayerLoginPage() {
     setSelectedAthleteId((current) => allPlayers.some((player) => player.id === current) ? current : allPlayers[0].id);
   }, [allPlayers]);
 
-  const handleProvider = async (provider: PortalAuthProvider): Promise<PortalAuthNotice | null> => {
-    if (provider === 'google') {
-      try {
-        await beginSupabaseGoogleOAuth('/player/home');
-        return null;
-      } catch {
-        return {
-          tone: 'error',
-          message: bi('Google sign-in could not start. Please try again.', 'تعذر بدء تسجيل الدخول عبر Google. يرجى المحاولة مرة أخرى.'),
-        };
-      }
-    }
-
-    if (provider !== 'apple') {
-      return {
-        tone: 'info',
-        message: bi('This sign-in method is not available yet.', 'طريقة تسجيل الدخول هذه غير متاحة بعد.'),
-      };
-    }
-
-    const result = await productionAuthGateway.signInWithApple();
-    if (result.success && result.data?.playerId) {
-      login(result.data.playerId);
-      navigate('/player/home');
-      return null;
-    }
-
-    return {
-      tone: 'info',
-      message: result.error
-        ? { en: result.error.messageEn, ar: result.error.messageAr }
-        : bi('Apple sign-in is not available yet.', 'تسجيل الدخول عبر Apple غير متاح بعد.'),
-    };
-  };
-
   const enterPreview = async () => {
     if (!selectedAthleteId || !allPlayers.some((player) => player.id === selectedAthleteId)) return;
     setPreviewLoading(true);
@@ -69,7 +34,7 @@ export function PlayerLoginPage() {
     }
   };
 
-  const previewContent = (
+  return (
     <div className="portal-auth-preview">
       <div className="portal-auth-preview-header">
         <span><Sparkles aria-hidden="true" /><BilingualText value={bi('Development preview', 'معاينة التطوير')} /></span>
@@ -98,12 +63,53 @@ export function PlayerLoginPage() {
       )}
     </div>
   );
+}
+
+export function PlayerLoginPage() {
+  const navigate = useNavigate();
+
+  const handleProvider = async (provider: PortalAuthProvider): Promise<PortalAuthNotice | null> => {
+    if (provider === 'google') {
+      try {
+        await beginSupabaseGoogleOAuth('/player/home');
+        return null;
+      } catch {
+        return {
+          tone: 'error',
+          message: bi('Google sign-in could not start. Please try again.', 'تعذر بدء تسجيل الدخول عبر Google. يرجى المحاولة مرة أخرى.'),
+        };
+      }
+    }
+
+    if (provider !== 'apple') {
+      return {
+        tone: 'info',
+        message: bi('This sign-in method is not available yet.', 'طريقة تسجيل الدخول هذه غير متاحة بعد.'),
+      };
+    }
+
+    const result = await productionAuthGateway.signInWithApple();
+    if (result.success && result.data?.playerId) {
+      navigate('/player/home');
+      return null;
+    }
+
+    return {
+      tone: 'info',
+      message: result.error
+        ? { en: result.error.messageEn, ar: result.error.messageAr }
+        : bi('Apple sign-in is not available yet.', 'تسجيل الدخول عبر Apple غير متاح بعد.'),
+    };
+  };
 
   return (
     <PortalAuthPage
       portal="player"
-      busy={previewRuntime ? previewLoading || loading : false}
-      extraContent={previewRuntime ? previewContent : undefined}
+      extraContent={previewRuntime ? (
+        <PlayerSessionProvider>
+          <PlayerPreviewAccess />
+        </PlayerSessionProvider>
+      ) : undefined}
       onProvider={handleProvider}
     />
   );
