@@ -1,6 +1,6 @@
-import { databaseConfigured, getPool } from '../db/index.ts';
-import { requireIdentity, type VerifiedIdentity } from './auth.ts';
-import { ApiError, assertMethod, sendJson, type ApiRequest, type ApiResponse } from './http.ts';
+import { databaseConfigured, getPool } from '../db/index';
+import { requireIdentity, type VerifiedIdentity } from './auth';
+import { ApiError, assertMethod, sendJson, type ApiRequest, type ApiResponse } from './http';
 
 export interface PortalBindings {
   playerIds: string[];

@@ -8,7 +8,7 @@ import {
   sessionHandler,
   sportRequestHandler,
   type RouteHandler,
-} from './handlers.ts';
+} from './handlers';
 import {
   adminAchievementsHandler,
   adminAnnouncementsHandler,
@@ -27,17 +27,17 @@ import {
   adminRegistrationsHandler,
   adminSessionsHandler,
   adminSportsHandler,
-} from './admin-handlers.ts';
+} from './admin-handlers';
 import {
   portalCoachScopeHandler,
   portalParentChildrenHandler,
   portalPlayerDataHandler,
-} from './portal-handlers.ts';
-import { storeCheckoutHandler, storeProductsHandler } from './store-handlers.ts';
-import { paymentIntentHandler, paymentWebhookHandler } from './payment-handlers.ts';
-import { documentDownloadUrlHandler, documentRegisterHandler } from './document-handlers.ts';
-import { portalWhoAmIHandler } from './portal-bindings.ts';
-import { ApiError, sendError, type ApiRequest, type ApiResponse } from './http.ts';
+} from './portal-handlers';
+import { storeCheckoutHandler, storeProductsHandler } from './store-handlers';
+import { paymentIntentHandler, paymentWebhookHandler } from './payment-handlers';
+import { documentDownloadUrlHandler, documentRegisterHandler } from './document-handlers';
+import { portalWhoAmIHandler } from './portal-bindings';
+import { ApiError, sendError, type ApiRequest, type ApiResponse } from './http';
 
 export type RouteKey =
   | 'health'

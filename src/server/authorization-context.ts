@@ -1,6 +1,6 @@
-import { getPool, databaseConfigured } from '../db/index.ts';
-import { ApiError } from './http.ts';
-import type { VerifiedIdentity } from './auth.ts';
+import { getPool, databaseConfigured } from '../db/index';
+import { ApiError } from './http';
+import type { VerifiedIdentity } from './auth';
 
 export interface TenantBindings {
   organizationIds: string[];

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { databaseConfigured, getPool } from '../../db/index.ts';
-import type { AuthorizationContext } from '../authorization-context.ts';
+import { databaseConfigured, getPool } from '../../db/index';
+import type { AuthorizationContext } from '../authorization-context';
 import {
   assertCanAccessBranch,
   assertCanAccessCountry,
@@ -8,10 +8,10 @@ import {
   assertCanManagePlayer,
   assertCanRecordPerformance,
   isSuperAdmin,
-} from '../authorization-context.ts';
-import { recordAudit } from '../audit.ts';
-import { ApiError, isUuid, normalizeString } from '../http.ts';
-import type { DbQueryClient } from '../vertical-slice.ts';
+} from '../authorization-context';
+import { recordAudit } from '../audit';
+import { ApiError, isUuid, normalizeString } from '../http';
+import type { DbQueryClient } from '../vertical-slice';
 import type {
   OrganizationViewModel,
   CountryViewModel,
@@ -32,7 +32,7 @@ import type {
   ListQueryParams,
   CreateResult,
   UpdateResult,
-} from '../../admin/data/viewModels.ts';
+} from '../../admin/data/viewModels';
 
 export class AdminDomainRepository {
   private clientOverride?: DbQueryClient;

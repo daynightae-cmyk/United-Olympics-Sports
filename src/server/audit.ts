@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { databaseConfigured, getPool } from '../db/index.ts';
-import type { AuthorizationContext } from './authorization-context.ts';
+import { databaseConfigured, getPool } from '../db/index';
+import type { AuthorizationContext } from './authorization-context';
 
 export interface AuditLogEntry {
   id: string;

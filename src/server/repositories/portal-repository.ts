@@ -1,8 +1,8 @@
-import { databaseConfigured, getPool } from '../../db/index.ts';
-import type { AuthorizationContext } from '../authorization-context.ts';
-import { assertCanManagePlayer } from '../authorization-context.ts';
-import { ApiError, isUuid } from '../http.ts';
-import type { DbQueryClient } from '../vertical-slice.ts';
+import { databaseConfigured, getPool } from '../../db/index';
+import type { AuthorizationContext } from '../authorization-context';
+import { assertCanManagePlayer } from '../authorization-context';
+import { ApiError, isUuid } from '../http';
+import type { DbQueryClient } from '../vertical-slice';
 
 export interface PlayerPortalData {
   player: {

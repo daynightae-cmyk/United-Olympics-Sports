@@ -1,6 +1,6 @@
-import { adminAuth } from '../lib/firebase-admin.ts';
-import { getPool, databaseConfigured } from '../db/index.ts';
-import { ApiError, getHeader, type ApiRequest } from './http.ts';
+import { adminAuth } from '../lib/firebase-admin';
+import { getPool, databaseConfigured } from '../db/index';
+import { ApiError, getHeader, type ApiRequest } from './http';
 
 export type IdentityProvider = 'supabase' | 'firebase';
 
@@ -193,9 +193,9 @@ export async function assertPlayerRelationship(identity: VerifiedIdentity, playe
 import {
   type AuthorizationContext,
   resolveAuthorizationContext,
-} from './authorization-context.ts';
+} from './authorization-context';
 
-export * from './authorization-context.ts';
+export * from './authorization-context';
 
 export async function requireAuthorizationContext(req: ApiRequest): Promise<AuthorizationContext> {
   const verified = await verifyBearerIdentity(req);

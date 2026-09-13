@@ -1,6 +1,6 @@
-import { AdminDomainRepository } from './repositories/admin-repository.ts';
-import { requireAuthorizationContext, requireIdentity } from './auth.ts';
-import { assertMethod, readJsonBody, sendJson, ApiError, type ApiRequest, type ApiResponse } from './http.ts';
+import { AdminDomainRepository } from './repositories/admin-repository';
+import { requireAuthorizationContext, requireIdentity } from './auth';
+import { assertMethod, readJsonBody, sendJson, ApiError, type ApiRequest, type ApiResponse } from './http';
 
 const adminRepo = new AdminDomainRepository();
 

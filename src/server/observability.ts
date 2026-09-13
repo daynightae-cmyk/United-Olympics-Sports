@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { ApiRequest } from './http.ts';
+import type { ApiRequest } from './http';
 
 export interface StructuredLogEntry {
   timestamp: string;

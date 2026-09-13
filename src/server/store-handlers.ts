@@ -1,6 +1,6 @@
-import { StoreDomainRepository } from './repositories/store-repository.ts';
-import { requireAuthorizationContext } from './auth.ts';
-import { assertMethod, readJsonBody, sendJson, type ApiRequest, type ApiResponse } from './http.ts';
+import { StoreDomainRepository } from './repositories/store-repository';
+import { requireAuthorizationContext } from './auth';
+import { assertMethod, readJsonBody, sendJson, type ApiRequest, type ApiResponse } from './http';
 
 const storeRepo = new StoreDomainRepository();
 
