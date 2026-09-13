@@ -4,11 +4,11 @@ import { Sparkles, UserRound } from 'lucide-react';
 import { PortalAuthPage, type PortalAuthNotice, type PortalAuthProvider } from '../../components/auth/PortalAuthPage';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { beginSupabaseGoogleOAuth } from '../../lib/auth-client';
-import { useCoachSession } from './CoachSessionContext';
+import { CoachSessionProvider, useCoachSession } from './CoachSessionContext';
 
 const previewRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true';
 
-export function CoachLoginPage() {
+function CoachPreviewAccess() {
   const { allCoaches, login, loading, error } = useCoachSession();
   const navigate = useNavigate();
   const [selectedCoachId, setSelectedCoachId] = useState('');
@@ -20,32 +20,13 @@ export function CoachLoginPage() {
     }
   }, [allCoaches, selectedCoachId]);
 
-  const handleProvider = async (provider: PortalAuthProvider): Promise<PortalAuthNotice | null> => {
-    if (provider !== 'google') {
-      return {
-        tone: 'info',
-        message: bi('This sign-in method is not available yet.', 'طريقة تسجيل الدخول هذه غير متاحة بعد.'),
-      };
-    }
-
-    try {
-      await beginSupabaseGoogleOAuth('/coach/home');
-      return null;
-    } catch {
-      return {
-        tone: 'error',
-        message: bi('Google sign-in could not start. Please try again.', 'تعذر بدء تسجيل الدخول عبر Google. يرجى المحاولة مرة أخرى.'),
-      };
-    }
-  };
-
   const enterPreview = () => {
     if (!selectedCoachId) return;
     login(selectedCoachId, 'preview');
     navigate('/coach/home');
   };
 
-  const previewContent = (
+  return (
     <div className="portal-auth-preview">
       <div className="portal-auth-preview-header">
         <span><Sparkles aria-hidden="true" /><BilingualText value={bi('Development preview', 'معاينة التطوير')} /></span>
@@ -82,12 +63,36 @@ export function CoachLoginPage() {
       )}
     </div>
   );
+}
+
+export function CoachLoginPage() {
+  const handleProvider = async (provider: PortalAuthProvider): Promise<PortalAuthNotice | null> => {
+    if (provider !== 'google') {
+      return {
+        tone: 'info',
+        message: bi('This sign-in method is not available yet.', 'طريقة تسجيل الدخول هذه غير متاحة بعد.'),
+      };
+    }
+
+    try {
+      await beginSupabaseGoogleOAuth('/coach/home');
+      return null;
+    } catch {
+      return {
+        tone: 'error',
+        message: bi('Google sign-in could not start. Please try again.', 'تعذر بدء تسجيل الدخول عبر Google. يرجى المحاولة مرة أخرى.'),
+      };
+    }
+  };
 
   return (
     <PortalAuthPage
       portal="coach"
-      busy={previewRuntime ? loading : false}
-      extraContent={previewRuntime ? previewContent : undefined}
+      extraContent={previewRuntime ? (
+        <CoachSessionProvider>
+          <CoachPreviewAccess />
+        </CoachSessionProvider>
+      ) : undefined}
       onProvider={handleProvider}
     />
   );
