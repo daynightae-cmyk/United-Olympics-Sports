@@ -57,6 +57,7 @@ function persistSinglePortalBinding(destination: string, portal: PortalIdentity)
       parentId: portal.bindings.guardianIds[0],
       provider: 'production',
       createdAt: now,
+      authorizedPlayerIds: portal.bindings.guardianPlayerIds,
     }));
     return true;
   }
