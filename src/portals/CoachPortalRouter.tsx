@@ -31,36 +31,37 @@ function CoachShellLayout() {
   );
 }
 
-export function CoachPortalRouter() {
+function CoachPortalApp() {
   return (
     <CoachSessionProvider>
-      <Routes>
-        <Route path="login" element={<CoachLoginPage />} />
-        <Route
-          path="*"
-          element={
-            <CoachProtectedRoute>
-              <Routes>
-                <Route element={<CoachShellLayout />}>
-                  <Route index element={<Navigate to="home" replace />} />
-                  <Route path="home" element={<CoachPortalOverviewPage />} />
-                  <Route path="schedule" element={<CoachPortalSchedulePage />} />
-                  <Route path="groups" element={<CoachPortalGroupsPage />} />
-                  <Route path="evaluations" element={<CoachPortalEvaluationsPage />} />
-                  <Route path="players" element={<CoachPortalPlayersPage />} />
-                  <Route path="players/:playerId" element={<CoachPortalPlayerDetailPage />} />
-                  <Route path="groups/:groupId" element={<CoachPortalGroupDetailPage />} />
-                  <Route path="attendance" element={<CoachPortalAttendancePage />} />
-                  <Route path="programs" element={<CoachSessionProgramsPage />} />
-                  <Route path="messages" element={<CoachSessionMessagesPage />} />
-                  <Route path="profile" element={<CoachPortalProfilePage />} />
-                  <Route path="*" element={<PortalNotFoundPage portal="coach" />} />
-                </Route>
-              </Routes>
-            </CoachProtectedRoute>
-          }
-        />
-      </Routes>
+      <CoachProtectedRoute>
+        <Routes>
+          <Route element={<CoachShellLayout />}>
+            <Route index element={<Navigate to="home" replace />} />
+            <Route path="home" element={<CoachPortalOverviewPage />} />
+            <Route path="schedule" element={<CoachPortalSchedulePage />} />
+            <Route path="groups" element={<CoachPortalGroupsPage />} />
+            <Route path="evaluations" element={<CoachPortalEvaluationsPage />} />
+            <Route path="players" element={<CoachPortalPlayersPage />} />
+            <Route path="players/:playerId" element={<CoachPortalPlayerDetailPage />} />
+            <Route path="groups/:groupId" element={<CoachPortalGroupDetailPage />} />
+            <Route path="attendance" element={<CoachPortalAttendancePage />} />
+            <Route path="programs" element={<CoachSessionProgramsPage />} />
+            <Route path="messages" element={<CoachSessionMessagesPage />} />
+            <Route path="profile" element={<CoachPortalProfilePage />} />
+            <Route path="*" element={<PortalNotFoundPage portal="coach" />} />
+          </Route>
+        </Routes>
+      </CoachProtectedRoute>
     </CoachSessionProvider>
+  );
+}
+
+export function CoachPortalRouter() {
+  return (
+    <Routes>
+      <Route path="login" element={<CoachLoginPage />} />
+      <Route path="*" element={<CoachPortalApp />} />
+    </Routes>
   );
 }
