@@ -1,4 +1,28 @@
 import { fetchPortalIdentity, firebaseGoogleFallbackToken, signOutEverywhere } from '../../../lib/auth-client';
+import { supabase } from '../../../lib/supabase';
+
+type OtpErrorBody = { error?: { code?: string; message?: string } };
+
+async function postOtpEndpoint(path: '/api/v1/auth/phone/request' | '/api/v1/auth/phone/verify', payload: Record<string, string>) {
+  const response = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = (await response.json().catch(() => null)) as (Record<string, unknown> & OtpErrorBody) | null;
+  return { status: response.status, ok: response.ok, data };
+}
+
+function otpFailure(code: string | undefined, fallbackEn: string, fallbackAr: string) {
+  return {
+    success: false as const,
+    error: {
+      code: code || 'OTP_FAILED',
+      messageEn: fallbackEn,
+      messageAr: fallbackAr,
+    },
+  };
+}
 
 export interface PlayerAuthSession {
   userId: string;
@@ -116,26 +140,76 @@ export class ProductionPlayerAuthGateway implements PlayerAuthGateway {
     };
   }
 
-  async requestPhoneOtp(_phone: string): Promise<AuthResult<{ requestedAt: string }>> {
-    return {
-      success: false,
-      error: {
-        code: 'SMS_GATEWAY_UNCONFIGURED',
-        messageEn: 'Phone verification requires authentication service integration.',
-        messageAr: 'يتطلب التحقق عبر الهاتف ربط خدمة المصادقة.',
-      },
-    };
+  async requestPhoneOtp(phone: string): Promise<AuthResult<{ requestedAt: string }>> {
+    try {
+      const { status, ok } = await postOtpEndpoint('/api/v1/auth/phone/request', { phone });
+      if (!ok) {
+        if (status === 429) {
+          return otpFailure('RATE_LIMIT_EXCEEDED', 'Too many code requests. Please retry later.', 'طلبات كثيرة لرمز التحقق. حاول لاحقًا.');
+        }
+        if (status === 503) {
+          return otpFailure('SMS_GATEWAY_UNCONFIGURED', 'SMS delivery is not enabled. Please use Google sign-in.', 'خدمة الرسائل غير مفعلة. استخدم تسجيل الدخول عبر Google.');
+        }
+        return otpFailure('OTP_REQUEST_FAILED', 'Verification code could not be sent right now.', 'تعذر إرسال رمز التحقق الآن.');
+      }
+      return { success: true, data: { requestedAt: new Date().toISOString() } };
+    } catch {
+      return otpFailure('OTP_REQUEST_FAILED', 'Verification code could not be sent right now.', 'تعذر إرسال رمز التحقق الآن.');
+    }
   }
 
-  async verifyPhoneOtp(_phone: string, _otp: string): Promise<AuthResult<PlayerAuthSession>> {
-    return {
-      success: false,
-      error: {
-        code: 'SMS_GATEWAY_UNCONFIGURED',
-        messageEn: 'Phone verification requires authentication service integration.',
-        messageAr: 'يتطلب التحقق عبر الهاتف ربط خدمة المصادقة.',
-      },
-    };
+  async verifyPhoneOtp(phone: string, otp: string): Promise<AuthResult<PlayerAuthSession>> {
+    try {
+      const { status, ok, data } = await postOtpEndpoint('/api/v1/auth/phone/verify', { phone, code: otp });
+      if (!ok) {
+        if (status === 429) {
+          return otpFailure('RATE_LIMIT_EXCEEDED', 'Too many attempts. Request a new code later.', 'محاولات كثيرة. اطلب رمزًا جديدًا لاحقًا.');
+        }
+        return otpFailure('OTP_INVALID', 'Verification code is invalid or expired.', 'رمز التحقق غير صالح أو منتهي.');
+      }
+      const session = data?.session as { access_token?: string; refresh_token?: string | null } | undefined;
+      if (!session?.access_token) {
+        return otpFailure('OTP_INVALID', 'Verification did not return a session.', 'لم يُرجع التحقق جلسة صالحة.');
+      }
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token ?? '',
+      });
+      if (sessionError) {
+        return otpFailure('AUTH_SESSION_FAILED', sessionError.message, 'تعذر إنشاء الجلسة.');
+      }
+      const portal = await fetchPortalIdentity(session.access_token);
+      if (portal.bindings.playerIds.length !== 1) {
+        await signOutEverywhere().catch(() => undefined);
+        clearProductionSession();
+        const missing = portal.bindings.playerIds.length === 0;
+        return otpFailure(
+          missing ? 'PLAYER_BINDING_NOT_FOUND' : 'PLAYER_BINDING_AMBIGUOUS',
+          missing
+            ? 'Phone verified, but it is not linked to an active Player record.'
+            : 'This identity is linked to more than one Player record. An administrator must resolve the binding.',
+          missing
+            ? 'تم التحقق من الهاتف، لكنه غير مرتبط بسجل لاعب نشط.'
+            : 'هذه الهوية مرتبطة بأكثر من سجل لاعب. يجب على المسؤول معالجة الربط.',
+        );
+      }
+      const playerId = portal.bindings.playerIds[0];
+      const playerSession: PlayerAuthSession = {
+        userId: portal.identity.uid,
+        playerId,
+        ...(portal.identity.email ? { email: portal.identity.email } : {}),
+        ...(phone ? { phone } : {}),
+        provider: 'production',
+        createdAt: new Date().toISOString(),
+      };
+      localStorage.setItem('uos:player-portal:session', JSON.stringify(playerSession));
+      localStorage.setItem('uos:player-portal:active-id', playerId);
+      localStorage.setItem('uos:player-portal:auth', 'true');
+      return { success: true, data: playerSession };
+    } catch {
+      clearProductionSession();
+      return otpFailure('OTP_INVALID', 'Verification code is invalid or expired.', 'رمز التحقق غير صالح أو منتهي.');
+    }
   }
 
   async signOut(): Promise<void> {

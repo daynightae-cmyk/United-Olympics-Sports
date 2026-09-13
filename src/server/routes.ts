@@ -9,6 +9,7 @@ import {
   sportRequestHandler,
   type RouteHandler,
 } from './handlers';
+import { phoneOtpRequestHandler, phoneOtpVerifyHandler } from './phone-auth-handlers';
 import {
   adminAchievementsHandler,
   adminAnnouncementsHandler,
@@ -43,6 +44,8 @@ export type RouteKey =
   | 'health'
   | 'auth-session'
   | 'auth-revoke'
+  | 'auth-phone-request'
+  | 'auth-phone-verify'
   | 'admin-whoami'
   | 'portal-whoami'
   | 'public-enquiries'
@@ -80,6 +83,8 @@ const handlers: Record<RouteKey, RouteHandler> = {
   health: healthHandler,
   'auth-session': sessionHandler,
   'auth-revoke': revokeHandler,
+  'auth-phone-request': phoneOtpRequestHandler,
+  'auth-phone-verify': phoneOtpVerifyHandler,
   'admin-whoami': adminWhoAmIHandler,
   'portal-whoami': portalWhoAmIHandler,
   'public-enquiries': publicEnquiriesHandler,
@@ -127,6 +132,8 @@ export function resolveRouteKey(req: ApiRequest): RouteKey | null {
   if (pathname === '/api/v1/health' || pathname === '/health') return 'health';
   if (pathname === '/auth/session' || pathname === '/api/v1/auth/session') return 'auth-session';
   if (pathname === '/auth/revoke' || pathname === '/api/v1/auth/revoke') return 'auth-revoke';
+  if (pathname === '/api/v1/auth/phone/request') return 'auth-phone-request';
+  if (pathname === '/api/v1/auth/phone/verify') return 'auth-phone-verify';
   if (pathname === '/api/v1/admin/whoami' || pathname === '/admin/whoami') return 'admin-whoami';
   if (pathname === '/api/v1/portal/whoami' || pathname === '/portal/whoami') return 'portal-whoami';
   if (pathname === '/public/enquiries' || pathname === '/api/v1/public/enquiries') return 'public-enquiries';

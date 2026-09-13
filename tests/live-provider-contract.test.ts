@@ -19,6 +19,10 @@ async function runLiveProviderContractTests() {
   assert.equal(resolveRouteKey(fakeReq('/api/v1/store/products')), 'store-products');
   assert.equal(resolveRouteKey(fakeReq('/api/v1/store/checkout')), 'store-checkout');
   assert.equal(resolveRouteKey(fakeReq('/public/enquiries')), 'public-enquiries');
+  assert.equal(resolveRouteKey(fakeReq('/api/v1/auth/phone/request')), 'auth-phone-request');
+  assert.equal(resolveRouteKey(fakeReq('/api/v1/auth/phone/verify')), 'auth-phone-verify');
+  assert.equal(resolveRouteKey(fakeReq('/api/v1/payments/intent')), 'payment-intent');
+  assert.equal(resolveRouteKey(fakeReq('/api/v1/payments/webhook')), 'payment-webhook');
 
   // 2. Production store gateway maps the server catalog shape truthfully
   const calls: Array<{ url: string; init?: RequestInit }> = [];
