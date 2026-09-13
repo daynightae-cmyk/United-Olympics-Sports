@@ -41,48 +41,49 @@ function LegacyPlayerSessionRedirect() {
   return <Navigate to={sessionId ? `/player/schedule/${sessionId}` : '/player/schedule'} replace />;
 }
 
-export function PlayerPortalRouter() {
+function PlayerPortalApp() {
   return (
     <PlayerSessionProvider>
-      <Routes>
-        <Route path="login" element={<PlayerLoginPage />} />
-
-        {/* Legacy authentication entry points resolve to one canonical login screen. */}
-        <Route path="auth/phone" element={<Navigate to="/player/login" replace />} />
-        <Route path="auth/verify" element={<Navigate to="/player/login" replace />} />
-        <Route path="otp" element={<Navigate to="/player/login" replace />} />
-        <Route path="phone" element={<Navigate to="/player/login" replace />} />
-        <Route path="verify" element={<Navigate to="/player/login" replace />} />
-
-        <Route
-          path="*"
-          element={
-            <PlayerProtectedRoute>
-              <PlayerPortalShell>
-                <Routes>
-                  <Route index element={<Navigate to="/player/home" replace />} />
-                  <Route path="home" element={<LazyRoute Component={PlayerPortalOverviewPage} />} />
-                  <Route path="schedule" element={<LazyRoute Component={PlayerPortalSchedulePage} />} />
-                  <Route path="schedule/:sessionId" element={<LazyRoute Component={PlayerPortalSessionDetailPage} />} />
-                  <Route path="session/:sessionId" element={<LegacyPlayerSessionRedirect />} />
-                  <Route path="performance" element={<LazyRoute Component={PlayerPortalPerformancePage} />} />
-                  <Route path="feedback" element={<LazyRoute Component={PlayerPortalFeedbackPage} />} />
-                  <Route path="achievements" element={<LazyRoute Component={PlayerPortalAchievementsPage} />} />
-                  <Route path="attendance" element={<LazyRoute Component={PlayerPortalAttendancePage} />} />
-                  <Route path="documents" element={<LazyRoute Component={PlayerPortalDocumentsPage} />} />
-                  <Route path="messages" element={<LazyRoute Component={PlayerPortalMessagesPage} />} />
-                  <Route path="notifications" element={<LazyRoute Component={PlayerPortalNotificationsPage} />} />
-                  <Route path="subscription" element={<LazyRoute Component={PlayerPortalSubscriptionPage} />} />
-                  <Route path="payments" element={<LazyRoute Component={PlayerPortalPaymentsPage} />} />
-                  <Route path="profile" element={<LazyRoute Component={PlayerPortalProfilePage} />} />
-                  <Route path="settings" element={<LazyRoute Component={PlayerPortalSettingsPage} />} />
-                  <Route path="*" element={<PlayerPortalNotFoundPage />} />
-                </Routes>
-              </PlayerPortalShell>
-            </PlayerProtectedRoute>
-          }
-        />
-      </Routes>
+      <PlayerProtectedRoute>
+        <PlayerPortalShell>
+          <Routes>
+            <Route index element={<Navigate to="/player/home" replace />} />
+            <Route path="home" element={<LazyRoute Component={PlayerPortalOverviewPage} />} />
+            <Route path="schedule" element={<LazyRoute Component={PlayerPortalSchedulePage} />} />
+            <Route path="schedule/:sessionId" element={<LazyRoute Component={PlayerPortalSessionDetailPage} />} />
+            <Route path="session/:sessionId" element={<LegacyPlayerSessionRedirect />} />
+            <Route path="performance" element={<LazyRoute Component={PlayerPortalPerformancePage} />} />
+            <Route path="feedback" element={<LazyRoute Component={PlayerPortalFeedbackPage} />} />
+            <Route path="achievements" element={<LazyRoute Component={PlayerPortalAchievementsPage} />} />
+            <Route path="attendance" element={<LazyRoute Component={PlayerPortalAttendancePage} />} />
+            <Route path="documents" element={<LazyRoute Component={PlayerPortalDocumentsPage} />} />
+            <Route path="messages" element={<LazyRoute Component={PlayerPortalMessagesPage} />} />
+            <Route path="notifications" element={<LazyRoute Component={PlayerPortalNotificationsPage} />} />
+            <Route path="subscription" element={<LazyRoute Component={PlayerPortalSubscriptionPage} />} />
+            <Route path="payments" element={<LazyRoute Component={PlayerPortalPaymentsPage} />} />
+            <Route path="profile" element={<LazyRoute Component={PlayerPortalProfilePage} />} />
+            <Route path="settings" element={<LazyRoute Component={PlayerPortalSettingsPage} />} />
+            <Route path="*" element={<PlayerPortalNotFoundPage />} />
+          </Routes>
+        </PlayerPortalShell>
+      </PlayerProtectedRoute>
     </PlayerSessionProvider>
+  );
+}
+
+export function PlayerPortalRouter() {
+  return (
+    <Routes>
+      <Route path="login" element={<PlayerLoginPage />} />
+
+      {/* Legacy authentication entry points resolve to one canonical login screen. */}
+      <Route path="auth/phone" element={<Navigate to="/player/login" replace />} />
+      <Route path="auth/verify" element={<Navigate to="/player/login" replace />} />
+      <Route path="otp" element={<Navigate to="/player/login" replace />} />
+      <Route path="phone" element={<Navigate to="/player/login" replace />} />
+      <Route path="verify" element={<Navigate to="/player/login" replace />} />
+
+      <Route path="*" element={<PlayerPortalApp />} />
+    </Routes>
   );
 }
