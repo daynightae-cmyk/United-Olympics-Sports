@@ -3,8 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { PortalAuthPage, type PortalAuthNotice, type PortalAuthProvider } from '../../../components/auth/PortalAuthPage';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
+import { beginSupabaseGoogleOAuth } from '../../../lib/auth-client';
 import { usePlayerSession } from '../PlayerSessionContext';
 import { previewAuthGateway, productionAuthGateway } from './PlayerAuthGateway';
+
+const previewRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true';
 
 export function PlayerLoginPage() {
   const { allPlayers, login, loading } = usePlayerSession();
@@ -21,17 +24,26 @@ export function PlayerLoginPage() {
   }, [allPlayers]);
 
   const handleProvider = async (provider: PortalAuthProvider): Promise<PortalAuthNotice | null> => {
-    if (provider !== 'google' && provider !== 'apple') {
+    if (provider === 'google') {
+      try {
+        await beginSupabaseGoogleOAuth('/player/home');
+        return null;
+      } catch {
+        return {
+          tone: 'error',
+          message: bi('Google sign-in could not start. Please try again.', 'تعذر بدء تسجيل الدخول عبر Google. يرجى المحاولة مرة أخرى.'),
+        };
+      }
+    }
+
+    if (provider !== 'apple') {
       return {
         tone: 'info',
-        message: bi('This sign-in method is not configured in the current environment.', 'طريقة تسجيل الدخول هذه غير مهيأة في البيئة الحالية.'),
+        message: bi('This sign-in method is not available yet.', 'طريقة تسجيل الدخول هذه غير متاحة بعد.'),
       };
     }
 
-    const result = provider === 'google'
-      ? await productionAuthGateway.signInWithGoogle()
-      : await productionAuthGateway.signInWithApple();
-
+    const result = await productionAuthGateway.signInWithApple();
     if (result.success && result.data?.playerId) {
       login(result.data.playerId);
       navigate('/player/home');
@@ -39,10 +51,10 @@ export function PlayerLoginPage() {
     }
 
     return {
-      tone: 'error',
+      tone: 'info',
       message: result.error
         ? { en: result.error.messageEn, ar: result.error.messageAr }
-        : bi('Authentication is unavailable.', 'المصادقة غير متاحة.'),
+        : bi('Apple sign-in is not available yet.', 'تسجيل الدخول عبر Apple غير متاح بعد.'),
     };
   };
 
@@ -68,7 +80,7 @@ export function PlayerLoginPage() {
       ) : allPlayers.length ? (
         <>
           <label htmlFor="player-preview-identity">
-            <BilingualText value={bi('Select an athlete record exposed by the shared provider', 'اختر سجل لاعب متاحًا من مزود البيانات المشترك')} />
+            <BilingualText value={bi('Select an athlete record exposed by the preview provider', 'اختر سجل لاعب متاحًا من مزود المعاينة')} />
           </label>
           <select id="player-preview-identity" value={selectedAthleteId} onChange={(event) => setSelectedAthleteId(event.target.value)}>
             {allPlayers.map((player) => (
@@ -82,10 +94,17 @@ export function PlayerLoginPage() {
           </button>
         </>
       ) : (
-        <p><BilingualText value={bi('No athlete records are available from the current data provider. Preview sign-in cannot create a synthetic athlete.', 'لا توجد سجلات لاعبين متاحة من مزود البيانات الحالي. ولا يمكن لدخول المعاينة إنشاء لاعب اصطناعي.')} /></p>
+        <p><BilingualText value={bi('No athlete records are available from the preview provider.', 'لا توجد سجلات لاعبين متاحة من مزود المعاينة.')} /></p>
       )}
     </div>
   );
 
-  return <PortalAuthPage portal="player" busy={previewLoading || loading} extraContent={previewContent} onProvider={handleProvider} />;
+  return (
+    <PortalAuthPage
+      portal="player"
+      busy={previewRuntime ? previewLoading || loading : false}
+      extraContent={previewRuntime ? previewContent : undefined}
+      onProvider={handleProvider}
+    />
+  );
 }
