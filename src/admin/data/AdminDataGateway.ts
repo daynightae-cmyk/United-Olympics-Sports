@@ -33,6 +33,7 @@ export interface AdminDataGateway {
 
   // Organization
   getOrganization(): Promise<OrganizationViewModel | null>;
+  bootstrapOrganization(data: { name: string; nameAr?: string }): Promise<CreateResult<OrganizationViewModel>>;
 
   // Countries
   listCountries(params?: ListQueryParams): Promise<ListResult<CountryViewModel>>;

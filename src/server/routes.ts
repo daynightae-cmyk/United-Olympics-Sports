@@ -18,6 +18,7 @@ import {
   adminCountriesHandler,
   adminEventsHandler,
   adminGroupsHandler,
+  adminOrganizationBootstrapHandler,
   adminOrganizationHandler,
   adminParentsHandler,
   adminPerformanceHandler,
@@ -49,6 +50,7 @@ export type RouteKey =
   | 'catalog'
   | 'attendance-record'
   | 'admin-organization'
+  | 'admin-organization-bootstrap'
   | 'admin-countries'
   | 'admin-branches'
   | 'admin-sports'
@@ -85,6 +87,7 @@ const handlers: Record<RouteKey, RouteHandler> = {
   catalog: catalogHandler,
   'attendance-record': recordAttendanceHandler,
   'admin-organization': adminOrganizationHandler,
+  'admin-organization-bootstrap': adminOrganizationBootstrapHandler,
   'admin-countries': adminCountriesHandler,
   'admin-branches': adminBranchesHandler,
   'admin-sports': adminSportsHandler,
@@ -130,6 +133,7 @@ export function resolveRouteKey(req: ApiRequest): RouteKey | null {
   if (pathname === '/api/v1/requests/sports') return 'sport-request';
   if (pathname === '/api/v1/catalog' || pathname === '/catalog') return 'catalog';
   if (pathname === '/api/v1/attendance' || pathname === '/attendance') return 'attendance-record';
+  if (pathname === '/api/v1/admin/organization/bootstrap') return 'admin-organization-bootstrap';
   if (pathname === '/api/v1/admin/organization') return 'admin-organization';
   if (pathname.startsWith('/api/v1/admin/countries')) return 'admin-countries';
   if (pathname.startsWith('/api/v1/admin/branches')) return 'admin-branches';

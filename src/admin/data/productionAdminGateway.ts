@@ -94,6 +94,14 @@ export const productionAdminGateway: AdminDataGateway = {
     });
   },
 
+  async bootstrapOrganization(data: { name: string; nameAr?: string }): Promise<CreateResult<OrganizationViewModel>> {
+    const res = await apiRequest<{ ok: boolean; organization: OrganizationViewModel }>('/api/v1/admin/organization/bootstrap', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return { item: res.organization, message: 'Organization created successfully' };
+  },
+
   // --- 2. COUNTRIES ---
   async listCountries(params?: ListQueryParams): Promise<ListResult<CountryViewModel>> {
     const query = new URLSearchParams({

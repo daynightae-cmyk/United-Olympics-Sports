@@ -168,6 +168,22 @@ export function useOrganization() {
   return { item, loading, error, refetch };
 }
 
+export function useBootstrapOrganization() {
+  const gateway = useAdminGateway();
+  const [loading, setLoading] = useState(false);
+  const bootstrap = useCallback(async (data: { name: string; nameAr?: string }) => {
+    setLoading(true);
+    try {
+      const result = await gateway.bootstrapOrganization(data);
+      notifyAdminDataChanged();
+      return result;
+    } finally {
+      setLoading(false);
+    }
+  }, [gateway]);
+  return { bootstrap, loading };
+}
+
 export function useCountries(params?: ListQueryParams) {
   const gateway = useAdminGateway();
   return useList<CountryViewModel>(gateway.listCountries.bind(gateway), params);

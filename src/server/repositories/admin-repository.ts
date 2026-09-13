@@ -76,6 +76,73 @@ export class AdminDomainRepository {
     };
   }
 
+  /**
+   * First-run production bootstrap. Creates the initial organization and binds
+   * the calling authenticated identity as super_admin. Allowed ONLY when the
+   * organizations table is empty — afterwards the bootstrap is permanently
+   * closed (403 BOOTSTRAP_CLOSED). No owner UID is ever hard-coded.
+   */
+  async bootstrapOrganization(
+    identity: { uid: string; provider: string; email?: string },
+    data: { name: string; nameAr?: string },
+  ): Promise<OrganizationViewModel> {
+    const name = normalizeString(data.name, 160);
+    const nameAr = normalizeString(data.nameAr, 160);
+    if (!name) {
+      throw new ApiError(400, 'VALIDATION_ERROR', 'Organization name in English is required.');
+    }
+
+    const countRes = await this.db.query<{ count: string }>('select count(*)::text as count from organizations');
+    if (parseInt(countRes.rows[0]?.count || '0', 10) > 0) {
+      throw new ApiError(403, 'BOOTSTRAP_CLOSED', 'First setup is already complete. Bootstrap is permanently closed.');
+    }
+
+    const orgId = randomUUID();
+    await this.db.query('insert into organizations (id, name, name_ar, status) values ($1, $2, $3, $4)', [
+      orgId,
+      name,
+      nameAr ?? name,
+      'active',
+    ]);
+    if (identity.email) {
+      await this.db.query(
+        'insert into users (uid, email) values ($1, $2) on conflict (uid) do update set email = excluded.email',
+        [identity.uid, identity.email],
+      );
+    }
+    await this.db.query('insert into app_user_roles (uid, role, active, organization_id) values ($1, $2, true, $3)', [
+      identity.uid,
+      'super_admin',
+      orgId,
+    ]);
+    await this.db.query('insert into app_user_scopes (uid, scope, active) values ($1, $2, true)', [identity.uid, '*']);
+
+    const ctx: AuthorizationContext = {
+      uid: identity.uid,
+      provider: (identity.provider === 'firebase' ? 'firebase' : 'supabase') as AuthorizationContext['provider'],
+      ...(identity.email ? { email: identity.email } : {}),
+      roles: ['super_admin'],
+      scopes: ['*'],
+      tenant: { organizationIds: [orgId], countryIds: [], branchIds: [] },
+      bindings: { playerIds: [], guardianIds: [], guardianPlayerIds: [], coachIds: [], coachGroupIds: [], coachPlayerIds: [] },
+    };
+    await recordAudit(ctx, {
+      action: 'organization.bootstrap',
+      entityType: 'organization',
+      entityId: orgId,
+      organizationId: orgId,
+      metadata: { name },
+    });
+
+    return {
+      id: orgId,
+      name: { en: name, ar: nameAr || name },
+      description: { en: 'Organization record created by first-run setup.', ar: 'سجل المنظمة المنشأ من الإعداد الأول.' },
+      countryCount: 0,
+      status: 'active',
+    };
+  }
+
   // --- 2. COUNTRIES ---
   async listCountries(ctx: AuthorizationContext, params?: ListQueryParams): Promise<ListResult<CountryViewModel>> {
     const page = Math.max(1, params?.page || 1);

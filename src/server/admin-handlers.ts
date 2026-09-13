@@ -1,5 +1,5 @@
 import { AdminDomainRepository } from './repositories/admin-repository.ts';
-import { requireAuthorizationContext } from './auth.ts';
+import { requireAuthorizationContext, requireIdentity } from './auth.ts';
 import { assertMethod, readJsonBody, sendJson, ApiError, type ApiRequest, type ApiResponse } from './http.ts';
 
 const adminRepo = new AdminDomainRepository();
@@ -19,6 +19,17 @@ export const adminOrganizationHandler = async (req: ApiRequest, res: ApiResponse
   const ctx = await requireAuthorizationContext(req);
   const org = await adminRepo.getOrganization(ctx);
   sendJson(res, 200, { ok: true, organization: org });
+};
+
+export const adminOrganizationBootstrapHandler = async (req: ApiRequest, res: ApiResponse): Promise<void> => {
+  assertMethod(req, ['POST']);
+  const identity = await requireIdentity(req);
+  const body = await readJsonBody(req);
+  const organization = await adminRepo.bootstrapOrganization(
+    { uid: identity.uid, provider: identity.provider, ...(identity.email ? { email: identity.email } : {}) },
+    { name: String(body.name ?? ''), ...(body.nameAr ? { nameAr: String(body.nameAr) } : {}) },
+  );
+  sendJson(res, 201, { ok: true, organization });
 };
 
 export const adminCountriesHandler = async (req: ApiRequest, res: ApiResponse): Promise<void> => {

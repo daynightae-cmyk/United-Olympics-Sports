@@ -124,6 +124,10 @@ export const previewAdminGateway: AdminDataGateway = {
     };
   },
 
+  async bootstrapOrganization(): Promise<CreateResult<OrganizationViewModel>> {
+    throw new Error('First Setup is not applicable in Preview mode: a demo organization already exists.');
+  },
+
   // Countries
   async listCountries(params?: ListQueryParams): Promise<ListResult<CountryViewModel>> {
     await previewDelay();
