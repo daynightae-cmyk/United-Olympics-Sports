@@ -37,7 +37,13 @@ const adminRoutes = [
   '/admin/audit-activity',
 ];
 const allRoutes = [...publicRoutes, ...playerRoutes, ...parentRoutes, ...coachRoutes, ...adminRoutes];
-const intentionalPlayerLoginRedirects = new Set(['/player/phone', '/player/verify']);
+const intentionalPlayerLoginRedirects = new Set([
+  '/player/auth/phone',
+  '/player/auth/verify',
+  '/player/phone',
+  '/player/otp',
+  '/player/verify',
+]);
 
 const viewportMatrix = [
   { width: 320, height: 568 },
@@ -135,8 +141,6 @@ async function createCheckedPage(browser, options = {}) {
 }
 
 async function waitForRouteSettled(page, route) {
-  // Let React mount the route first, then require every standardized Suspense
-  // fallback to leave the DOM before the next navigation can abort a chunk.
   await page.waitForTimeout(100);
   try {
     await page.locator('[data-route-loading="true"]').waitFor({ state: 'hidden', timeout: 10_000 });
