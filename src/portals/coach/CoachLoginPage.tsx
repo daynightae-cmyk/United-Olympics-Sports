@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, UserRound } from 'lucide-react';
 import { PortalAuthPage, type PortalAuthNotice, type PortalAuthProvider } from '../../components/auth/PortalAuthPage';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
-import { fetchPortalIdentity, firebaseGoogleFallbackToken, signOutEverywhere } from '../../lib/auth-client';
+import { beginSupabaseGoogleOAuth } from '../../lib/auth-client';
 import { useCoachSession } from './CoachSessionContext';
+
+const previewRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true';
 
 export function CoachLoginPage() {
   const { allCoaches, login, loading, error } = useCoachSession();
@@ -22,43 +24,17 @@ export function CoachLoginPage() {
     if (provider !== 'google') {
       return {
         tone: 'info',
-        message: bi('This sign-in method is not configured in the current environment.', 'طريقة تسجيل الدخول هذه غير مهيأة في البيئة الحالية.'),
+        message: bi('This sign-in method is not available yet.', 'طريقة تسجيل الدخول هذه غير متاحة بعد.'),
       };
     }
 
     try {
-      const token = await firebaseGoogleFallbackToken();
-      const portal = await fetchPortalIdentity(token);
-      if (portal.bindings.coachIds.length !== 1) {
-        await signOutEverywhere().catch(() => undefined);
-        return {
-          tone: 'error',
-          message: portal.bindings.coachIds.length === 0
-            ? bi('Google verified the account, but it is not linked to a Coach record.', 'تم التحقق من حساب Google، لكنه غير مرتبط بسجل مدرب.')
-            : bi('This identity is linked to multiple Coach records. An administrator must resolve the binding first.', 'هذه الهوية مرتبطة بعدة سجلات مدربين. يجب على المسؤول معالجة الربط أولًا.'),
-        };
-      }
-
-      const coachId = portal.bindings.coachIds[0];
-      if (!allCoaches.some((coach) => coach.id === coachId)) {
-        await signOutEverywhere().catch(() => undefined);
-        return {
-          tone: 'error',
-          message: bi('The bound Coach record is not available from the current production data provider.', 'سجل المدرب المرتبط غير متاح من مزود بيانات الإنتاج الحالي.'),
-        };
-      }
-
-      login(coachId, 'production');
-      navigate('/coach/home', { replace: true });
+      await beginSupabaseGoogleOAuth('/coach/home');
       return null;
-    } catch (authError: unknown) {
-      await signOutEverywhere().catch(() => undefined);
+    } catch {
       return {
         tone: 'error',
-        message: bi(
-          authError instanceof Error ? authError.message : 'Authentication or Coach binding failed.',
-          'فشلت المصادقة أو تعذر التحقق من ربط حساب المدرب.',
-        ),
+        message: bi('Google sign-in could not start. Please try again.', 'تعذر بدء تسجيل الدخول عبر Google. يرجى المحاولة مرة أخرى.'),
       };
     }
   };
@@ -81,7 +57,7 @@ export function CoachLoginPage() {
         <div className="enterprise-empty" role="status">
           <UserRound size={22} />
           <h3><BilingualText value={bi('Coach data is unavailable', 'بيانات المدربين غير متاحة')} /></h3>
-          <p><BilingualText value={bi('The production data service is not connected yet.', 'خدمة بيانات الإنتاج غير متصلة حتى الآن.')} /></p>
+          <p><BilingualText value={bi('The preview data service is unavailable in this session.', 'خدمة بيانات المعاينة غير متاحة في هذه الجلسة.')} /></p>
         </div>
       ) : allCoaches.length ? (
         <>
@@ -101,11 +77,18 @@ export function CoachLoginPage() {
         <div className="enterprise-empty" role="status">
           <UserRound size={22} />
           <h3><BilingualText value={bi('No active coaches available', 'لا يوجد مدربون نشطون متاحون')} /></h3>
-          <p><BilingualText value={bi('Active coach records will appear here when the data provider supplies them.', 'ستظهر سجلات المدربين النشطين هنا عندما يوفرها مصدر البيانات.')} /></p>
+          <p><BilingualText value={bi('Active coach records will appear here when the preview provider supplies them.', 'ستظهر سجلات المدربين النشطين هنا عندما يوفرها مزود المعاينة.')} /></p>
         </div>
       )}
     </div>
   );
 
-  return <PortalAuthPage portal="coach" busy={loading} extraContent={previewContent} onProvider={handleProvider} />;
+  return (
+    <PortalAuthPage
+      portal="coach"
+      busy={previewRuntime ? loading : false}
+      extraContent={previewRuntime ? previewContent : undefined}
+      onProvider={handleProvider}
+    />
+  );
 }
