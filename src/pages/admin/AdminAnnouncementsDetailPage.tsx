@@ -1,12 +1,15 @@
-import { ArrowLeft, ArrowRight, Megaphone, AlertCircle, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Megaphone, ShieldCheck } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { PageHeader, StatusBadge } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
+import { useAdminData } from '../../admin/data/AdminDataProvider';
 import { useAnnouncement, useUpdateAnnouncement } from '../../admin/data/adminHooks';
 
 export function AdminAnnouncementsDetailPage() {
   const { announcementId } = useParams();
-  const { item: announcement, loading, error, refetch } = useAnnouncement(announcementId);
+  const { mode } = useAdminData();
+  const isPreview = mode === 'preview';
+  const { item: announcement, loading, error } = useAnnouncement(announcementId);
   const { update, loading: updateLoading } = useUpdateAnnouncement();
 
   if (loading) return <div className="admin-page"><PageHeader icon={Megaphone} eyebrow={bi('Communications', 'التواصل')} title={bi('Announcement Detail', 'تفاصيل الإعلان')} description={bi('Loading...', 'جاري التحميل...')} /></div>;
@@ -35,10 +38,10 @@ export function AdminAnnouncementsDetailPage() {
     <section className="admin-panel">
       <div className="panel-heading"><BilingualText value={bi('Actions', 'الإجراءات')} /><ShieldCheck /></div>
       <div className="preview-form-grid">
-        <label><BilingualText value={bi('Status', 'الحالة')} /><select defaultValue={announcement.status} onChange={(e) => update(announcement.id!, { status: e.target.value as any })}><option value="draft">Draft | مسودة</option><option value="published">Published | منشور</option><option value="archived">Archived | مؤرشف</option></select></label>
-        <label><BilingualText value={bi('Priority', 'الأولوية')} /><select defaultValue={announcement.priority} onChange={(e) => update(announcement.id!, { priority: e.target.value as any })}><option value="low">Low | منخفض</option><option value="normal">Normal | عادي</option><option value="high">High | عالي</option><option value="urgent">Urgent | عاجل</option></select></label>
+        <label><BilingualText value={bi('Status', 'الحالة')} /><select defaultValue={announcement.status} disabled={!isPreview || updateLoading} onChange={(e) => update(announcement.id!, { status: e.target.value as any })}><option value="draft">Draft | مسودة</option><option value="published">Published | منشور</option><option value="archived">Archived | مؤرشف</option></select></label>
+        <label><BilingualText value={bi('Priority', 'الأولوية')} /><select defaultValue={announcement.priority} disabled={!isPreview || updateLoading} onChange={(e) => update(announcement.id!, { priority: e.target.value as any })}><option value="low">Low | منخفض</option><option value="normal">Normal | عادي</option><option value="high">High | عالي</option><option value="urgent">Urgent | عاجل</option></select></label>
       </div>
-      <p className="preview-warning"><BilingualText value={bi('Changes are saved in preview session only.', 'التغييرات محفوظة في جلسة المعاينة فقط.')} /></p>
+      {isPreview ? <p className="preview-warning"><BilingualText value={bi('Changes are saved in preview session only.', 'التغييرات محفوظة في جلسة المعاينة فقط.')} /></p> : <p className="enterprise-result"><BilingualText value={bi('Announcements are managed by the communications desk and are read-only in production.', 'الإعلانات تُدار عبر مكتب الاتصالات وهي للقراءة فقط في الإنتاج.')} /></p>}
     </section>
   </div>;
 }

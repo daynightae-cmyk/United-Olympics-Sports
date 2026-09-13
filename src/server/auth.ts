@@ -111,15 +111,12 @@ export async function verifyBearerIdentity(req: ApiRequest): Promise<VerifiedIde
   const { url: supabaseUrl } = supabaseConfig();
   const supabaseIssuer = `${supabaseUrl.replace(/\/$/, '')}/auth/v1`;
 
-  let providerIdentity: ProviderIdentity | null = null;
-  if (issuer === supabaseIssuer) {
-    providerIdentity = await verifySupabaseAccessToken(token);
-  } else if (issuer?.startsWith('https://securetoken.google.com/')) {
-    providerIdentity = await verifyFirebaseAccessToken(token);
-  } else {
-    providerIdentity = await verifySupabaseAccessToken(token);
-    if (!providerIdentity) providerIdentity = await verifyFirebaseAccessToken(token);
-  }
+  const providerIdentity: ProviderIdentity | null =
+    issuer === supabaseIssuer
+      ? await verifySupabaseAccessToken(token)
+      : issuer?.startsWith('https://securetoken.google.com/')
+        ? await verifyFirebaseAccessToken(token)
+        : ((await verifySupabaseAccessToken(token)) ?? (await verifyFirebaseAccessToken(token)));
 
   if (!providerIdentity) {
     throw new ApiError(401, 'AUTH_INVALID', 'The sign-in token is invalid or expired.');

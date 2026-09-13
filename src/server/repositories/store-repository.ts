@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { databaseConfigured, getPool } from '../../db/index.ts';
 import type { AuthorizationContext } from '../authorization-context.ts';
 import { recordAudit } from '../audit.ts';
-import { ApiError, normalizeString } from '../http.ts';
+import { ApiError } from '../http.ts';
 import type { DbQueryClient } from '../vertical-slice.ts';
 
 export interface StoreProductItem {

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   Trophy,
   Award,
-  ShieldCheck,
   X,
   CheckCircle2,
   Calendar,

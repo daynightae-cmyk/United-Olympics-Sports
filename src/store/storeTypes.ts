@@ -82,4 +82,4 @@ export type StoreCartLine = {
   color?: string;
 };
 
-export type StoreDataState = 'preview' | 'empty' | 'loading' | 'error';
+export type StoreDataState = 'preview' | 'production' | 'empty' | 'loading' | 'error';

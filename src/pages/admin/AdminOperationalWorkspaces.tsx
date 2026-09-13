@@ -8,7 +8,6 @@ import {
   FileText,
   Flag,
   LayoutGrid,
-  MapPin,
   Megaphone,
   ShieldCheck,
   Sparkles,

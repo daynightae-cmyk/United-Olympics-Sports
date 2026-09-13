@@ -28,9 +28,6 @@ import type {
   AnnouncementViewModel,
   MessageViewModel,
   AuditActivityViewModel,
-  CreateResult,
-  UpdateResult,
-  DeleteResult,
 } from './viewModels';
 
 function useList<T>(fetch: (params?: ListQueryParams) => Promise<ListResult<T>>, initialParams?: ListQueryParams) {
@@ -143,7 +140,32 @@ export function useAdminGateway() {
 
 export function useOrganization() {
   const gateway = useAdminGateway();
-  return useDetail(gateway.getOrganization.bind(gateway), 'org-united-olympics');
+  const [item, setItem] = useState<OrganizationViewModel | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const refetch = useCallback(async () => {
+    setError(null);
+    try {
+      setItem(await gateway.getOrganization());
+    } catch (e) {
+      setError(e as Error);
+    } finally {
+      setLoading(false);
+    }
+  }, [gateway]);
+
+  useEffect(() => {
+    void refetch();
+  }, [refetch]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onDataChanged = () => { void refetch(); };
+    window.addEventListener(ADMIN_DATA_CHANGED, onDataChanged);
+    return () => window.removeEventListener(ADMIN_DATA_CHANGED, onDataChanged);
+  }, [refetch]);
+
+  return { item, loading, error, refetch };
 }
 
 export function useCountries(params?: ListQueryParams) {

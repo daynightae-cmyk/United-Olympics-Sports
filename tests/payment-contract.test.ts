@@ -47,7 +47,7 @@ class MockPaymentDb implements DbQueryClient {
       return { rows: found ? [found as unknown as T] : [], rowCount: found ? 1 : 0 };
     }
     if (s.includes('insert into payment_webhooks')) {
-      const [id, eventId, provider, eventType, payload] = params as any[];
+      const [id, eventId, provider, eventType] = params as any[];
       const w = { id, event_id: eventId, provider, event_type: eventType, status: 'processed' };
       this.webhooks.set(eventId, w);
       return { rows: [w as unknown as T], rowCount: 1 };

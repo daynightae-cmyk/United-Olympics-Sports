@@ -33,6 +33,8 @@ function InternalProductUtilities() {
   return isInternalRoute ? <><UnitedAssistant /><UpdateToast /></> : null;
 }
 
+const isBenchmarkEnabled = import.meta.env.DEV === true;
+
 export function AppRouter() {
   return (
     <BrowserRouter>
@@ -40,7 +42,7 @@ export function AppRouter() {
       <OlympicRouteTransition />
       <Suspense fallback={<RouteFallback />}>
         <Routes>
-          <Route path="/benchmark" element={<BenchmarkShowcasePage />} />
+          {isBenchmarkEnabled && <Route path="/benchmark" element={<BenchmarkShowcasePage />} />}
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/admin/login" element={<PortalLoginRoute portal="admin" />} />
           <Route path="/store/login" element={<PortalLoginRoute portal="store" />} />

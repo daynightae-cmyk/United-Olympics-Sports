@@ -1,13 +1,13 @@
-import { ArrowRight, Filter, Search, SlidersHorizontal, X, ShieldCheck, Clock, UserRound, Activity } from 'lucide-react';
+import { ArrowRight, Filter, Search, SlidersHorizontal, Clock, UserRound, Activity } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PageHeader, StatusBadge } from '../../components/admin/AdminUI';
+import { PageHeader } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { useAuditActivity } from '../../admin/data/adminHooks';
 
 export function AdminAuditActivityPage() {
   const [query, setQuery] = useState(''); const [entityType, setEntityType] = useState('all'); const [action, setAction] = useState('all'); const [filtersOpen, setFiltersOpen] = useState(false);
-  const { data, loading, params, setParams, refetch } = useAuditActivity({ page: 1, pageSize: 50 });
+  const { data } = useAuditActivity({ page: 1, pageSize: 50 });
 
   const activities = useMemo(() => data?.items.filter(act => {
     const matchesQuery = `${act.action.en} ${act.action.ar} ${act.entityType.en} ${act.entityType.ar} ${act.actorName.en} ${act.actorName.ar} ${act.entityId}`.toLowerCase().includes(query.toLowerCase());

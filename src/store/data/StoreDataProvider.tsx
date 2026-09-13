@@ -3,6 +3,7 @@ import { storeCategories } from '../storeCategories';
 import type { StoreCategory, StoreDataState, StoreProduct } from '../storeTypes';
 import type { StoreDataGateway, StoreDataMode } from './StoreDataGateway';
 import { previewStoreGateway } from './previewStoreGateway';
+import { productionStoreGateway } from './productionStoreGateway';
 import { unavailableStoreGateway } from './unavailableStoreGateway';
 
 type StoreDataContextValue = {
@@ -18,28 +19,35 @@ const StoreDataContext = createContext<StoreDataContextValue | undefined>(undefi
 
 function defaultGateway(): StoreDataGateway {
   const previewEnabled = import.meta.env.DEV || import.meta.env.VITE_UOS_STORE_PREVIEW === 'true';
-  return previewEnabled ? previewStoreGateway : unavailableStoreGateway;
+  if (previewEnabled) return previewStoreGateway;
+  // Production default: live server catalog. The provider surfaces fetch
+  // failures as an error state and never silently falls back to preview
+  // fixtures in production builds.
+  if (typeof window !== 'undefined') return productionStoreGateway;
+  return unavailableStoreGateway;
 }
 
 export function StoreDataProvider({ children, gateway }: { children: ReactNode; gateway?: StoreDataGateway }) {
   const selectedGateway = useMemo(() => gateway ?? defaultGateway(), [gateway]);
   const [products, setProducts] = useState<StoreProduct[]>([]);
   const [categories, setCategories] = useState<StoreCategory[]>(storeCategories);
-  const [state, setState] = useState<StoreDataState>(selectedGateway.mode === 'preview' ? 'loading' : 'empty');
+  const [state, setState] = useState<StoreDataState>(selectedGateway.mode === 'unavailable' ? 'empty' : 'loading');
   const [error, setError] = useState<string | null>(null);
   const [revision, setRevision] = useState(0);
 
   useEffect(() => {
     let active = true;
     setError(null);
-    setState(selectedGateway.mode === 'preview' ? 'loading' : 'empty');
+    setState(selectedGateway.mode === 'unavailable' ? 'empty' : 'loading');
 
     void selectedGateway.loadCatalog()
       .then((snapshot) => {
         if (!active) return;
         setProducts(snapshot.products);
         setCategories(snapshot.categories);
-        setState(selectedGateway.mode === 'preview' ? 'preview' : 'empty');
+        if (selectedGateway.mode === 'preview') setState('preview');
+        else if (selectedGateway.mode === 'production') setState(snapshot.products.length > 0 ? 'production' : 'empty');
+        else setState('empty');
       })
       .catch(() => {
         if (!active) return;

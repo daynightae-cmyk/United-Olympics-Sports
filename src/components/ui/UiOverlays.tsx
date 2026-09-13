@@ -20,7 +20,6 @@ import {
   X,
   AlertTriangle,
   Info,
-  CheckCircle2,
   Loader2,
   Search,
   ArrowRight,

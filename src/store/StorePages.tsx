@@ -13,8 +13,6 @@ import {
   LogOut,
   MapPin,
   Package,
-  RotateCcw,
-  Search,
   Settings,
   ShieldCheck,
   ShoppingBag,
@@ -25,13 +23,12 @@ import {
   WalletCards,
   X,
 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode, type RefObject } from 'react';
+import { useMemo, useRef, useState, type FormEvent, type ReactNode, type RefObject } from 'react';
 import { Link, NavLink, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useStore } from './StoreContext';
 import {
   CategoryRail,
   DirectionArrow,
-  ProductCard,
   ProductGrid,
   ProductMedia,
   ProductPrice,
@@ -39,11 +36,6 @@ import {
   StoreCopy,
   StoreState,
 } from './StoreComponents';
-import type { StoreCategorySlug, StoreProduct } from './storeTypes';
-
-function SectionHeading({ eyebrow, title, action }: { eyebrow: { en: string; ar: string }; title: { en: string; ar: string }; action?: ReactNode }) {
-  return <header className="store-section-heading"><div><span><StoreCopy value={eyebrow} inline /></span><h2><StoreCopy value={title} /></h2></div>{action}</header>;
-}
 
 export { StoreHomePage } from './components/collections/StoreHome';
 
@@ -64,7 +56,7 @@ export function CatalogPage({ categoriesOnly = false, fixedCategory }: { categor
   const collection = params.get('collection');
   const filtered = useMemo(() => products.filter((product) => (!selected || product.category === selected) && (!collection || (collection === 'new' ? product.badge === 'new' : collection === 'featured' ? product.badge === 'featured' : product.collectionIds?.includes(collection)))).sort((a, b) => sort === 'price-low' ? a.price - b.price : sort === 'price-high' ? b.price - a.price : 0), [products, selected, sort, collection]);
   const navigate = useNavigate();
-  const selectCategory = (category: string) => { if (fixedCategory) { navigate(category ? `/store/category/${category}` : '/store/shop'); return; } const next = new URLSearchParams(params); category ? next.set('category', category) : next.delete('category'); setParams(next); };
+  const selectCategory = (category: string) => { if (fixedCategory) { navigate(category ? `/store/category/${category}` : '/store/shop'); return; } const next = new URLSearchParams(params); if (category) next.set('category', category); else next.delete('category'); setParams(next); };
   useStoreDialog(filtersOpen, filterRef, () => setFiltersOpen(false));
   return <div className="store-catalog-page">
     <div className="store-page-heading">
@@ -88,7 +80,7 @@ export function CatalogPage({ categoriesOnly = false, fixedCategory }: { categor
 
 export function CategoryPage() {
   const { slug } = useParams();
-  const { categories, products, locale, isPreview } = useStore();
+  const { categories } = useStore();
   const category = categories.find((item) => item.slug === slug);
   if (!category) return <div className="store-page-pad"><StoreState kind="empty" title={{ en: 'Category unavailable', ar: 'الفئة غير متاحة' }} description={{ en: 'This category is not present in the verified catalog.', ar: 'هذه الفئة غير موجودة في الكتالوج الموثق.' }} action={<Link className="store-button store-button-primary" to="/store/categories"><StoreCopy value={{ en: 'All Categories', ar: 'كل الفئات' }} inline /></Link>} /></div>;
   return <CatalogPage key={category.slug} fixedCategory={category.slug} />;

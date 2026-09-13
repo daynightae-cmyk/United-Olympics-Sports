@@ -1,8 +1,6 @@
 import assert from 'node:assert/strict';
 import {
-  ADMIN_PRODUCTION_CAPABILITIES,
   getAdminCapability,
-  isCapabilityEnabled,
   type AdminCapabilityKey,
 } from '../src/admin/data/productionCapabilities.ts';
 import { productionAdminGateway, AdminGatewayError } from '../src/admin/data/productionAdminGateway.ts';

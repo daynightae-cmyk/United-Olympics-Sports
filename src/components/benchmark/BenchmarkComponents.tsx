@@ -6,7 +6,6 @@ import {
   ChevronUp,
   Info,
   Inbox,
-  Loader2,
   Search,
   SlidersHorizontal,
   TrendingDown,
@@ -15,13 +14,10 @@ import {
 } from 'lucide-react';
 import {
   type ButtonHTMLAttributes,
-  type InputHTMLAttributes,
   type ReactNode,
-  type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
   useEffect,
   useRef,
-  useState,
 } from 'react';
 import { BilingualText, bi } from '../bilingual/BilingualText';
 import type { BilingualText as BiValue } from '../../domain/contracts';
@@ -1162,6 +1158,7 @@ export function BmPageHeader({
     <div className="bm-hero">
       {eyebrow && (
         <div className="bm-hero-eyebrow">
+          {icon && <span className="bm-hero-eyebrow-icon" aria-hidden="true">{icon}</span>}
           <BilingualText value={eyebrow} />
         </div>
       )}

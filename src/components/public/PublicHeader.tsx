@@ -1,6 +1,4 @@
 import {
-  type CSSProperties,
-  type ReactNode,
   useEffect,
   useRef,
   useState,
@@ -21,7 +19,7 @@ import {
 } from 'lucide-react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { PORTAL_LINKS } from '../../data/public/publicContent';
-import type { LocalizedText, PublicLocale } from '../../data/public/publicMedia';
+import type { PublicLocale } from '../../data/public/publicMedia';
 
 export interface PublicHeaderProps {
   locale: PublicLocale;

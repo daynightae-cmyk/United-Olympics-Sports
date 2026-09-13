@@ -3,8 +3,6 @@ import {
   evaluateSystemReadiness,
   checkDatabaseReadiness,
   checkPaymentsReadiness,
-  checkPaymentWebhookReadiness,
-  checkSmsReadiness,
   checkAuthVerificationReadiness,
 } from '../src/server/readiness.ts';
 
@@ -59,6 +57,7 @@ try {
   const authEvidence = await checkAuthVerificationReadiness(slowFetch);
   assert(authEvidence.stage === 'operational' || authEvidence.stage === 'verified');
   assert.equal(typeof authEvidence.latencyMs, 'number');
+  assert.equal(probeCalled, true, 'Auth readiness probe must actually invoke the fetch boundary');
 
   // Test 7: Database unconfigured stage
   delete process.env.DATABASE_URL;

@@ -1,7 +1,8 @@
-import { ArrowLeft, ArrowRight, ClipboardCheck, UserRound, Calendar, ShieldCheck, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ClipboardCheck, ShieldCheck } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { PageHeader, StatusBadge } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
+import { useAdminData } from '../../admin/data/AdminDataProvider';
 import { useRegistration, useUpdateRegistration } from '../../admin/data/adminHooks';
 import { demoPlayers } from '../../data/demo/players';
 import { demoPrograms } from '../../data/demo/programs';
@@ -9,7 +10,9 @@ import { demoTrainingGroups } from '../../data/demo/trainingGroups';
 
 export function AdminRegistrationsDetailPage() {
   const { registrationId } = useParams();
-  const { item: registration, loading, error, refetch } = useRegistration(registrationId);
+  const { mode } = useAdminData();
+  const isPreview = mode === 'preview';
+  const { item: registration, loading, error } = useRegistration(registrationId);
   const { update, loading: updateLoading } = useUpdateRegistration();
 
   if (loading) return <div className="admin-page"><PageHeader icon={ClipboardCheck} eyebrow={bi('Training Operations', 'عمليات التدريب')} title={bi('Registration Detail', 'تفاصيل التسجيل')} description={bi('Loading...', 'جاري التحميل...')} /></div>;
@@ -42,9 +45,9 @@ export function AdminRegistrationsDetailPage() {
     <section className="admin-panel">
       <div className="panel-heading"><BilingualText value={bi('Actions', 'الإجراءات')} /><ShieldCheck /></div>
       <div className="preview-form-grid">
-        <label><BilingualText value={bi('Status', 'الحالة')} /><select defaultValue={registration.status} onChange={(e) => update(registration.id!, { status: e.target.value as any })}><option value="pending">Pending | قيد الانتظار</option><option value="confirmed">Confirmed | مؤكد</option><option value="cancelled">Cancelled | ملغي</option><option value="waitlisted">Waitlisted | في قائمة الانتظار</option></select></label>
+        <label><BilingualText value={bi('Status', 'الحالة')} /><select defaultValue={registration.status} disabled={!isPreview || updateLoading} onChange={(e) => update(registration.id!, { status: e.target.value as any })}><option value="pending">Pending | قيد الانتظار</option><option value="confirmed">Confirmed | مؤكد</option><option value="cancelled">Cancelled | ملغي</option><option value="waitlisted">Waitlisted | في قائمة الانتظار</option></select></label>
       </div>
-      <p className="preview-warning"><BilingualText value={bi('Changes are saved in preview session only.', 'التغييرات محفوظة في جلسة المعاينة فقط.')} /></p>
+      {isPreview ? <p className="preview-warning"><BilingualText value={bi('Changes are saved in preview session only.', 'التغييرات محفوظة في جلسة المعاينة فقط.')} /></p> : <p className="enterprise-result"><BilingualText value={bi('Registration resolution is handled through the enquiry workflow and is read-only in production.', 'تسوية التسجيلات تتم عبر سير عمل الاستفسارات وهي للقراءة فقط في الإنتاج.')} /></p>}
     </section>
   </div>;
 }

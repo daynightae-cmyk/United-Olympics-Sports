@@ -5,31 +5,25 @@ import {
   type ReactNode,
   useContext,
   useEffect,
-  useRef,
   useState,
 } from 'react';
 import {
   ArrowRight,
   Check,
-  ChevronDown,
   CircleDot,
   Compass,
   Eye,
   Focus,
-  Languages,
   Mail,
-  Menu,
   Route as RouteIcon,
   Send,
   ShieldCheck,
   Target,
   TrendingUp,
   UsersRound,
-  X,
 } from 'lucide-react';
-import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import { Link, Route, Routes, useLocation } from 'react-router-dom';
 import {
-  PORTAL_LINKS,
   PUBLIC_BRANCHES,
   PUBLIC_COACHES,
   PUBLIC_PROGRAMS,

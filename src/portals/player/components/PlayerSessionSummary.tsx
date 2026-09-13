@@ -1,11 +1,11 @@
 import React from 'react';
-import { Calendar, Clock, User, ChevronRight, AlertCircle } from 'lucide-react';
+import { Clock, User, ChevronRight, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { usePlayerSession } from '../PlayerSessionContext';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
 
 export function PlayerSessionSummary({ sessionId, onClick }: { sessionId: string, onClick?: () => void }) {
-  const { player, sessions, coach, sport, group } = usePlayerSession();
+  const { sessions, coach, sport, group } = usePlayerSession();
 
   const session = sessions.find((s) => s.id === sessionId);
 

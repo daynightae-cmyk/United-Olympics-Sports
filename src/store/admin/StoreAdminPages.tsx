@@ -10,12 +10,10 @@ import {
   FolderKanban,
   Image,
   Package,
-  PackageSearch,
   Plus,
   Search,
   Settings2,
   ShoppingBag,
-  Tags,
   Truck,
   UsersRound,
 } from 'lucide-react';

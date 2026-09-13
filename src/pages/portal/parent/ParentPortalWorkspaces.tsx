@@ -1,11 +1,11 @@
-import { CalendarDays, CheckCircle2, CreditCard, Download, FileText, HeartHandshake, MessageCircle, Send, ShieldCheck, TrendingUp, UserRound, UsersRound, WalletCards } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { CalendarDays, CheckCircle2, CreditCard, Download, FileText, HeartHandshake, MessageCircle, Send, ShieldCheck, TrendingUp, UserRound } from 'lucide-react';
+import { useState } from 'react';
 import { PageHeader } from '../../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
 import { EnterpriseProgress, EnterpriseStatus, EnterpriseTable, PreviewNotice } from '../../../components/enterprise/EnterpriseUI';
 import { PortalMetric, PortalPreviewCard, PortalSection, PortalStatus, PortalTrend } from '../../../components/portal/PortalUI';
 import { getLatestPlayerMetrics, getPlayerOverall, getSport } from '../../../data/demo/selectors';
-import { activeParent, portalChildren, portalPrograms, portalSessions, previewDocuments, previewPayments, previewSubscriptions } from '../portalData';
+import { activeParent, portalChildren, portalSessions, previewDocuments, previewPayments, previewSubscriptions } from '../portalData';
 import { UosSelectField, UosTextField } from '../../../components/fields/UosFields';
 import { UiButton } from '../../../components/ui/UiPrimitives';
 

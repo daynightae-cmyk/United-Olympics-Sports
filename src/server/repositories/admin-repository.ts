@@ -23,20 +23,15 @@ import type {
   CoachViewModel,
   ParentViewModel,
   SessionViewModel,
-  SubscriptionViewModel,
-  PaymentViewModel,
-  UserViewModel,
   RegistrationViewModel,
   AchievementViewModel,
   EventViewModel,
   AnnouncementViewModel,
-  MessageViewModel,
   AuditActivityViewModel,
   ListResult,
   ListQueryParams,
   CreateResult,
   UpdateResult,
-  DeleteResult,
 } from '../../admin/data/viewModels.ts';
 
 export class AdminDomainRepository {

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { ShieldCheck, ArrowLeft, KeyRound, AlertCircle, Sparkles } from 'lucide-react';
+import { ArrowLeft, KeyRound, AlertCircle, Sparkles } from 'lucide-react';
 import { usePlayerSession } from '../PlayerSessionContext';
 import { productionAuthGateway } from './PlayerAuthGateway';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';

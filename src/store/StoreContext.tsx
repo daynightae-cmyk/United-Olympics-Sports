@@ -1,5 +1,5 @@
 import { cartLineKey, hasSelectedVariants } from './storeUtils';
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useUiSettings } from '../ui/theme/useUiSettings';
 import { useStoreData } from './data/StoreDataProvider';
 import type { StoreCartLine, StoreCategory, StoreDataState, StoreProduct } from './storeTypes';
@@ -29,14 +29,52 @@ type StoreContextValue = {
 
 const StoreContext = createContext<StoreContextValue | undefined>(undefined);
 
+const STORE_PERSIST_KEY = 'uos:store:client-state:v1';
+const STORE_PERSIST_VERSION = 1;
+
+type PersistedStoreState = {
+  version: number;
+  cart: StoreCartLine[];
+  wishlist: string[];
+  recentlyViewed: string[];
+};
+
+function readPersistedStoreState(): Partial<PersistedStoreState> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = window.localStorage.getItem(STORE_PERSIST_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Partial<PersistedStoreState>;
+    if (parsed.version !== STORE_PERSIST_VERSION) return {};
+    return {
+      cart: Array.isArray(parsed.cart) ? parsed.cart : [],
+      wishlist: Array.isArray(parsed.wishlist) ? parsed.wishlist : [],
+      recentlyViewed: Array.isArray(parsed.recentlyViewed) ? parsed.recentlyViewed : [],
+    };
+  } catch {
+    return {};
+  }
+}
+
 export function StoreProvider({ children }: { children: ReactNode }) {
   const { bilingualOrder, setSetting } = useUiSettings();
   const { mode, state, products, categories } = useStoreData();
   const isPreview = mode === 'preview';
-  const [cart, setCart] = useState<StoreCartLine[]>([]);
-  const [recentlyViewed, setRecentlyViewed] = useState<string[]>([]);
-  const [wishlist, setWishlist] = useState<string[]>([]);
+  const [persisted] = useState(readPersistedStoreState);
+  const [cart, setCart] = useState<StoreCartLine[]>(persisted.cart ?? []);
+  const [recentlyViewed, setRecentlyViewed] = useState<string[]>(persisted.recentlyViewed ?? []);
+  const [wishlist, setWishlist] = useState<string[]>(persisted.wishlist ?? []);
   const [miniCartOpen, setMiniCartOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const payload: PersistedStoreState = { version: STORE_PERSIST_VERSION, cart, wishlist, recentlyViewed };
+      window.localStorage.setItem(STORE_PERSIST_KEY, JSON.stringify(payload));
+    } catch {
+      // Storage quota or privacy mode — cart remains in-memory only.
+    }
+  }, [cart, wishlist, recentlyViewed]);
   const locale = bilingualOrder === 'ar-first' ? 'ar' : 'en';
   const recordView = useCallback((id: string) => setRecentlyViewed((current) => current[0] === id ? current : [id, ...current.filter((item) => item !== id)].slice(0, 8)), []);
 

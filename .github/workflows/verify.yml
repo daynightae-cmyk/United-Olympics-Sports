@@ -29,7 +29,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: TypeScript
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: ESLint
         run: npm run lint
 
       - name: Ordinary production build
@@ -78,6 +81,31 @@ jobs:
             --exclude='BenchmarkShowcasePage.tsx' \
             -- 'demoPlayers[0]' src public; then
             echo "Forbidden product-truth pattern found outside preview/benchmark surfaces: demoPlayers[0]"
+            failed=1
+          fi
+
+          # Portal demo isolation: production portal/admin data paths must not
+          # silently consume demo fixtures. Explicit preview surfaces are
+          # allowlisted; everything else fails closed.
+          if grep -RInE \
+            --exclude-dir=node_modules \
+            --exclude-dir=dist \
+            --include='*.ts' \
+            --include='*.tsx' \
+            --exclude='previewAdminGateway.ts' \
+            --exclude='previewStoreGateway.ts' \
+            --exclude='portalData.ts' \
+            --exclude='parentData.ts' \
+            --exclude='BenchmarkShowcasePage.tsx' \
+            --exclude='ProductPreviewPages.tsx' \
+            --exclude='AdminFutureModulePage.tsx' \
+            --exclude='AdminOperationalWorkspaces.tsx' \
+            --exclude='AdminSportDetailPage.tsx' \
+            --exclude='AdminAchievementsDetailPage.tsx' \
+            --exclude='AdminRegistrationsDetailPage.tsx' \
+            --exclude='ParentPortalWorkspaces.tsx' \
+            -- "from ['\"][^'\"]*data/demo/" src/portals src/pages/portal src/pages/admin src/admin; then
+            echo "Portal demo isolation violation: production portal/admin module imports demo fixtures outside the explicit preview allowlist"
             failed=1
           fi
 

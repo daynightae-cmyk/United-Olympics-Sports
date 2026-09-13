@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { adminAuth } from '../lib/firebase-admin.ts';
 import { databaseConfigured, getPool } from '../db/index.ts';
 import { assertPlayerRelationship, requireAnyRole, requireIdentity } from './auth.ts';
-import { authAdministrativeActionsConfigured, getRuntimeReadiness } from './runtime.ts';
+import { authAdministrativeActionsConfigured } from './runtime.ts';
 import { evaluateSystemReadiness } from './readiness.ts';
 
 import {

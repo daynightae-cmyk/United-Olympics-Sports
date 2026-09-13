@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Check, Dumbbell, ShieldCheck, Sparkles, Trophy, Users } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Sparkles, Trophy } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
