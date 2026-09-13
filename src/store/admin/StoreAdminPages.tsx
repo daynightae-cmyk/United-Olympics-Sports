@@ -35,7 +35,10 @@ function AdminHeading({ eyebrow, title, description, action }: { eyebrow: { en: 
 }
 
 function TruthBanner() {
-  return <div className="store-admin-truth"><AlertTriangle /><BilingualText value={bi('Commerce backend not connected · live orders, revenue, customers and inventory are intentionally unavailable.', 'لم يتم ربط خادم التجارة · الطلبات والإيرادات والعملاء والمخزون الفعلي غير متاحين عمدًا.')} /></div>;
+  const { mode } = useStoreData();
+  return <div className="store-admin-truth"><AlertTriangle /><BilingualText value={mode === 'preview'
+    ? bi('Commerce backend not connected · live orders, revenue, customers and inventory are intentionally unavailable.', 'لم يتم ربط خادم التجارة · الطلبات والإيرادات والعملاء والمخزون الفعلي غير متاحين عمدًا.')
+    : bi('Live catalog connected · orders, revenue and payments remain unavailable until checkout and payment activation.', 'كتالوج حي متصل · تظل الطلبات والإيرادات والمدفوعات غير متاحة حتى تفعيل الدفع وإتمام الطلب.')} /></div>;
 }
 
 function EmptyAdmin({ title, description }: { title: { en: string; ar: string }; description: { en: string; ar: string } }) {
@@ -47,7 +50,7 @@ export function StoreAdminDashboard() {
   const cards = [
     { icon: ClipboardList, label: bi('Total Orders', 'إجمالي الطلبات'), value: '—', note: bi('Source unavailable', 'المصدر غير متاح') },
     { icon: CircleDollarSign, label: bi('Revenue', 'الإيرادات'), value: '—', note: bi('No fabricated totals', 'لا توجد إجماليات مختلقة') },
-    { icon: Package, label: bi('Products', 'المنتجات'), value: isPreview ? String(products.length) : '—', note: isPreview ? bi('Development fixtures', 'بيانات تطوير تجريبية') : bi('Source unavailable', 'المصدر غير متاح') },
+    { icon: Package, label: bi('Products', 'المنتجات'), value: String(products.length), note: isPreview ? bi('Development fixtures', 'بيانات تطوير تجريبية') : bi('Live catalog', 'كتالوج حي') },
     { icon: FolderKanban, label: bi('Collections', 'المجموعات'), value: '—', note: bi('Source unavailable', 'المصدر غير متاح') },
     { icon: UsersRound, label: bi('Customers', 'العملاء'), value: '—', note: bi('Auth source unavailable', 'مصدر المصادقة غير متاح') },
   ];
@@ -63,10 +66,10 @@ function AdminTable({ children, headers }: { children: ReactNode; headers: Array
 }
 
 export function StoreAdminProducts() {
-  const { products } = useCatalog();
+  const { products, isPreview } = useCatalog();
   const [query, setQuery] = useState('');
   const filtered = products.filter((product) => `${product.name.en} ${product.name.ar} ${product.sku} ${product.category}`.toLowerCase().includes(query.toLowerCase()));
-  return <div className="store-admin-page"><AdminHeading eyebrow={bi('Catalog', 'الكتالوج')} title={bi('Products', 'المنتجات')} description={bi('Manage product identity, media, pricing, variants and publishing state.', 'إدارة هوية المنتج والوسائط والأسعار والمتغيرات وحالة النشر.')} /><TruthBanner /><ResourceToolbar query={query} onQuery={setQuery} createTo="/admin/store/products/new" createLabel={bi('Create Product', 'إنشاء منتج')} />{filtered.length ? <AdminTable headers={[bi('Product', 'المنتج'), bi('Category', 'الفئة'), bi('SKU', 'رمز SKU'), bi('Price', 'السعر'), bi('Stock', 'المخزون'), bi('Status', 'الحالة'), bi('Updated', 'التحديث'), bi('Actions', 'الإجراءات')]}>{filtered.map((product) => <tr key={product.id}><td><span className="store-admin-product-cell"><i><Package /></i><span><strong><BilingualText value={product.name} /></strong><small><BilingualText value={bi('Development fixture', 'بيانات تطوير تجريبية')} /></small></span></span></td><td>{product.category}</td><td><code>{product.sku}</code></td><td>{new Intl.NumberFormat('en-AE', { style: 'currency', currency: product.currency }).format(product.price)}</td><td>—</td><td><UiStatusBadge tone="preview" label={bi('Preview', 'معاينة')} /></td><td>—</td><td><Link to={`/admin/store/products/${product.id}`} aria-label={`Edit ${product.name.en} | تعديل ${product.name.ar}`}><Edit3 /></Link></td></tr>)}</AdminTable> : <EmptyAdmin title={bi('No matching verified products', 'لا توجد منتجات موثقة مطابقة')} description={bi('Adjust the search or connect a production product source.', 'عدّل البحث أو اربط مصدر منتجات إنتاجي.')} />}</div>;
+  return <div className="store-admin-page"><AdminHeading eyebrow={bi('Catalog', 'الكتالوج')} title={bi('Products', 'المنتجات')} description={bi('Manage product identity, media, pricing, variants and publishing state.', 'إدارة هوية المنتج والوسائط والأسعار والمتغيرات وحالة النشر.')} /><TruthBanner /><ResourceToolbar query={query} onQuery={setQuery} createTo="/admin/store/products/new" createLabel={bi('Create Product', 'إنشاء منتج')} />{filtered.length ? <AdminTable headers={[bi('Product', 'المنتج'), bi('Category', 'الفئة'), bi('SKU', 'رمز SKU'), bi('Price', 'السعر'), bi('Stock', 'المخزون'), bi('Status', 'الحالة'), bi('Updated', 'التحديث'), bi('Actions', 'الإجراءات')]}>{filtered.map((product) => <tr key={product.id}><td><span className="store-admin-product-cell"><i><Package /></i><span><strong><BilingualText value={product.name} /></strong><small><BilingualText value={isPreview ? bi('Development fixture', 'بيانات تطوير تجريبية') : bi('Live catalog record', 'سجل كتالوج حي')} /></small></span></span></td><td>{product.category}</td><td><code>{product.sku}</code></td><td>{new Intl.NumberFormat('en-AE', { style: 'currency', currency: product.currency }).format(product.price)}</td><td>—</td><td><UiStatusBadge tone={isPreview ? 'preview' : 'success'} label={isPreview ? bi('Preview', 'معاينة') : bi('Live', 'حي')} /></td><td>—</td><td><Link to={`/admin/store/products/${product.id}`} aria-label={`Edit ${product.name.en} | تعديل ${product.name.ar}`}><Edit3 /></Link></td></tr>)}</AdminTable> : <EmptyAdmin title={bi('No matching verified products', 'لا توجد منتجات موثقة مطابقة')} description={bi('Adjust the search or connect a production product source.', 'عدّل البحث أو اربط مصدر منتجات إنتاجي.')} />}</div>;
 }
 
 export function StoreAdminCategories() {

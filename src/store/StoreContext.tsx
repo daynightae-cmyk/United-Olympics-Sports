@@ -24,6 +24,7 @@ type StoreContextValue = {
   addToCart: (product: StoreProduct, options?: AddOptions) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   removeFromCart: (productId: string) => void;
+  clearCart: () => void;
   toggleWishlist: (productId: string) => void;
 };
 
@@ -106,6 +107,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     },
     updateQuantity: (productId, quantity) => setCart((current) => current.map((line) => cartLineKey(line) === productId ? { ...line, quantity: Number.isFinite(quantity) ? Math.max(1, Math.floor(quantity)) : line.quantity } : line)),
     removeFromCart: (productId) => setCart((current) => current.filter((line) => cartLineKey(line) !== productId)),
+    clearCart: () => setCart([]),
     toggleWishlist: (productId) => setWishlist((current) => current.includes(productId) ? current.filter((id) => id !== productId) : [...current, productId]),
   }), [cart, categories, isPreview, locale, miniCartOpen, products, recentlyViewed, recordView, setSetting, state, wishlist]);
 
