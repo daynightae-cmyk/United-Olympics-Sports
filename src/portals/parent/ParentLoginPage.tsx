@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useParents } from '../../admin/data/adminHooks';
 import { PortalAuthPage, type PortalAuthNotice, type PortalAuthProvider } from '../../components/auth/PortalAuthPage';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
-import { beginSupabaseGoogleOAuth } from '../../lib/auth-client';
-import { startParentPreview } from './parentData';
+import { beginSupabaseGoogleOAuth, fetchPortalIdentity, getAccessToken, signOutEverywhere } from '../../lib/auth-client';
+import { clearParentSession, readParentSession, startParentPreview, startParentProduction } from './parentData';
 
 const previewRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true';
 
@@ -73,6 +73,38 @@ function ParentPreviewAccess() {
 }
 
 export function ParentLoginPage() {
+  const navigate = useNavigate();
+
+  // Revalidate any persisted production session on mount: a stale or forged
+  // local session must never be trusted without a live portal binding lookup.
+  // Valid bindings are refreshed (scope + authorized players) before redirect;
+  // stale, wrong-portal, or unbound sessions are cleared fail-closed.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const persisted = readParentSession();
+      if (!persisted || persisted.provider !== 'production') return;
+      try {
+        const token = await getAccessToken();
+        if (!token) throw new Error('AUTH_REQUIRED');
+        const portal = await fetchPortalIdentity(token);
+        if (!active) return;
+        if (portal.bindings.guardianIds.length === 1 && portal.bindings.guardianIds[0] === persisted.parentId) {
+          startParentProduction(portal.bindings.guardianIds[0], portal.bindings.guardianPlayerIds);
+          navigate('/parent', { replace: true });
+          return;
+        }
+        clearParentSession();
+        void signOutEverywhere().catch(() => undefined);
+      } catch {
+        if (active) clearParentSession();
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [navigate]);
+
   const handleProvider = async (provider: PortalAuthProvider): Promise<PortalAuthNotice | null> => {
     if (provider !== 'google') {
       return {

@@ -3,10 +3,29 @@ import { useNavigate } from 'react-router-dom';
 import { Sparkles, UserRound } from 'lucide-react';
 import { PortalAuthPage, type PortalAuthNotice, type PortalAuthProvider } from '../../components/auth/PortalAuthPage';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
-import { beginSupabaseGoogleOAuth } from '../../lib/auth-client';
+import { beginSupabaseGoogleOAuth, fetchPortalIdentity, getAccessToken, signOutEverywhere } from '../../lib/auth-client';
 import { CoachSessionProvider, useCoachSession } from './CoachSessionContext';
 
 const previewRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true';
+
+const COACH_PRODUCTION_SESSION_KEY = 'uos:coach-portal:session:v1';
+
+function readCoachProductionSession(): { coachId: string } | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(COACH_PRODUCTION_SESSION_KEY);
+    if (!raw) return null;
+    const session = JSON.parse(raw) as { provider?: string; coachId?: string };
+    if (session.provider !== 'production' || typeof session.coachId !== 'string' || !session.coachId) return null;
+    return { coachId: session.coachId };
+  } catch {
+    return null;
+  }
+}
+
+function clearCoachProductionSession() {
+  try { window.localStorage.removeItem(COACH_PRODUCTION_SESSION_KEY); } catch { /* storage may be unavailable */ }
+}
 
 function CoachPreviewAccess() {
   const { allCoaches, login, loading, error } = useCoachSession();
@@ -66,6 +85,37 @@ function CoachPreviewAccess() {
 }
 
 export function CoachLoginPage() {
+  const navigate = useNavigate();
+
+  // Revalidate any persisted production session on mount: a stale or forged
+  // local session must never be trusted without a live portal binding lookup.
+  // Valid bindings redirect only after verified coach scope; stale, wrong-portal,
+  // or unbound sessions are cleared fail-closed.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const persisted = readCoachProductionSession();
+      if (!persisted) return;
+      try {
+        const token = await getAccessToken();
+        if (!token) throw new Error('AUTH_REQUIRED');
+        const portal = await fetchPortalIdentity(token);
+        if (!active) return;
+        if (portal.bindings.coachIds.length === 1 && portal.bindings.coachIds[0] === persisted.coachId) {
+          navigate('/coach/home', { replace: true });
+          return;
+        }
+        clearCoachProductionSession();
+        void signOutEverywhere().catch(() => undefined);
+      } catch {
+        if (active) clearCoachProductionSession();
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [navigate]);
+
   const handleProvider = async (provider: PortalAuthProvider): Promise<PortalAuthNotice | null> => {
     if (provider !== 'google') {
       return {

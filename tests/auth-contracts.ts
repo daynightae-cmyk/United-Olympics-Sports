@@ -77,6 +77,7 @@ const parentLoginSource = await readFile(new URL('../src/portals/parent/ParentLo
 const parentRouterSource = await readFile(new URL('../src/portals/ParentPortalRouter.tsx', import.meta.url), 'utf8');
 const coachLoginSource = await readFile(new URL('../src/portals/coach/CoachLoginPage.tsx', import.meta.url), 'utf8');
 const coachProtectedSource = await readFile(new URL('../src/portals/coach/CoachProtectedRoute.tsx', import.meta.url), 'utf8');
+const playerLoginSource = await readFile(new URL('../src/portals/player/auth/PlayerLoginPage.tsx', import.meta.url), 'utf8');
 
 assert.match(routerSource, /path="\/auth\/callback"/);
 assert.match(callbackSource, /exchangeSupabaseAuthCode/);
@@ -91,6 +92,23 @@ assert.equal(/where[\s\S]{0,120}email\s*=\s*\$1/i.test(portalBindingsSource), fa
 assert.match(playerGatewaySource, /fetchPortalIdentity/);
 assert.match(parentLoginSource, /fetchPortalIdentity/);
 assert.match(coachLoginSource, /fetchPortalIdentity/);
+// Mount-time revalidation: a stale persisted production session landing directly
+// on a login route must be server-reverified (never trusted from storage alone),
+// preserved only on verified binding match, cleared fail-closed otherwise.
+for (const [name, source] of [
+  ['parent login', parentLoginSource],
+  ['coach login', coachLoginSource],
+  ['player login', playerLoginSource],
+] as const) {
+  assert.match(source, /useEffect/, `${name} must revalidate persisted production sessions on mount`);
+  assert.match(source, /getAccessToken/, `${name} must verify a live provider session before trusting storage`);
+  assert.match(source, /fetchPortalIdentity/, `${name} must verify portal binding server-side on mount`);
+}
+assert.match(parentLoginSource, /readParentSession/, 'parent login must read the persisted production session');
+assert.match(parentLoginSource, /clearParentSession/, 'parent login must clear stale or mismatched bindings');
+assert.match(parentLoginSource, /startParentProduction/, 'parent login must refresh scope before redirecting a valid session');
+assert.match(coachLoginSource, /uos:coach-portal:session:v1/, 'coach login must revalidate the persisted production session key');
+assert.match(playerLoginSource, /uos:player-portal:session/, 'player login must revalidate the persisted production session key');
 for (const [name, source] of [
   ['player protected route', playerProtectedSource],
   ['parent protected route', parentRouterSource],

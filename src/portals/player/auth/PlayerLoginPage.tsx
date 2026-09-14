@@ -3,11 +3,37 @@ import { useNavigate } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { PortalAuthPage, type PortalAuthNotice, type PortalAuthProvider } from '../../../components/auth/PortalAuthPage';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
-import { beginSupabaseGoogleOAuth } from '../../../lib/auth-client';
+import { beginSupabaseGoogleOAuth, fetchPortalIdentity, getAccessToken, signOutEverywhere } from '../../../lib/auth-client';
 import { PlayerSessionProvider, usePlayerSession } from '../PlayerSessionContext';
 import { previewAuthGateway, productionAuthGateway } from './PlayerAuthGateway';
 
 const previewRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true';
+
+const PLAYER_SESSION_KEY = 'uos:player-portal:session';
+const PLAYER_ACTIVE_ID_KEY = 'uos:player-portal:active-id';
+const PLAYER_AUTH_KEY = 'uos:player-portal:auth';
+
+function readPlayerProductionSession(): { playerId: string } | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(PLAYER_SESSION_KEY);
+    const activeId = window.localStorage.getItem(PLAYER_ACTIVE_ID_KEY);
+    if (!raw || !activeId) return null;
+    const provider = (JSON.parse(raw) as { provider?: string }).provider;
+    if (provider !== 'production') return null;
+    return { playerId: activeId };
+  } catch {
+    return null;
+  }
+}
+
+function clearPlayerProductionSession() {
+  try {
+    window.localStorage.removeItem(PLAYER_SESSION_KEY);
+    window.localStorage.removeItem(PLAYER_ACTIVE_ID_KEY);
+    window.localStorage.setItem(PLAYER_AUTH_KEY, 'false');
+  } catch { /* storage may be unavailable */ }
+}
 
 function PlayerPreviewAccess() {
   const { allPlayers, login, loading } = usePlayerSession();
@@ -67,6 +93,35 @@ function PlayerPreviewAccess() {
 
 export function PlayerLoginPage() {
   const navigate = useNavigate();
+
+  // Revalidate any persisted production session on mount: a stale or forged
+  // local session must never be trusted without a live portal binding lookup.
+  // Valid bindings redirect only after verified player scope; stale, wrong-portal,
+  // or unbound sessions are cleared fail-closed.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const persisted = readPlayerProductionSession();
+      if (!persisted) return;
+      try {
+        const token = await getAccessToken();
+        if (!token) throw new Error('AUTH_REQUIRED');
+        const portal = await fetchPortalIdentity(token);
+        if (!active) return;
+        if (portal.bindings.playerIds.length === 1 && portal.bindings.playerIds[0] === persisted.playerId) {
+          navigate('/player/home', { replace: true });
+          return;
+        }
+        clearPlayerProductionSession();
+        void signOutEverywhere().catch(() => undefined);
+      } catch {
+        if (active) clearPlayerProductionSession();
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [navigate]);
 
   const handleProvider = async (provider: PortalAuthProvider): Promise<PortalAuthNotice | null> => {
     if (provider === 'google') {
