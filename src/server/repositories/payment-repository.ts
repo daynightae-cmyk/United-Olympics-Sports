@@ -65,6 +65,69 @@ export class PaymentDomainRepository {
     throw new ApiError(503, 'DATA_SERVICE_NOT_CONFIGURED', 'Database service is not configured.');
   }
 
+  // --- AUTHORITATIVE PAYABLE RECORDS ---
+  //
+  // The browser is never authoritative for a payable amount. When an orderId
+  // (or subscriptionId) is supplied, the amount and currency are loaded from
+  // the server-side record and any client override is rejected by the caller.
+  async getOrderForPayment(orderId: string): Promise<{
+    id: string;
+    customerUid: string;
+    status: string;
+    totalMinor: number;
+    currency: string;
+  }> {
+    const id = normalizeString(orderId, 64);
+    if (!id) throw new ApiError(400, 'VALIDATION_ERROR', 'orderId is required.');
+    const res = await this.db.query<{
+      id: string;
+      customer_uid: string;
+      status: string;
+      total_minor: number;
+      currency: string;
+    }>('select id, customer_uid, status, total_minor, currency from orders where id = $1 limit 1', [id]);
+    if (res.rows.length === 0) {
+      throw new ApiError(404, 'ORDER_NOT_FOUND', 'Order was not found.');
+    }
+    const row = res.rows[0];
+    return {
+      id: row.id,
+      customerUid: row.customer_uid,
+      status: row.status,
+      totalMinor: row.total_minor,
+      currency: row.currency || 'AED',
+    };
+  }
+
+  async getSubscriptionForPayment(subscriptionId: string): Promise<{
+    id: string;
+    playerId: string | null;
+    status: string;
+    amountMinor: number | null;
+    currency: string;
+  }> {
+    const id = normalizeString(subscriptionId, 64);
+    if (!id) throw new ApiError(400, 'VALIDATION_ERROR', 'subscriptionId is required.');
+    const res = await this.db.query<{
+      id: string;
+      player_id: string | null;
+      status: string;
+      amount_minor: number | null;
+      currency: string | null;
+    }>('select id, player_id::text as player_id, status, amount_minor, currency from subscriptions where id = $1 limit 1', [id]);
+    if (res.rows.length === 0) {
+      throw new ApiError(404, 'SUBSCRIPTION_NOT_FOUND', 'Subscription was not found.');
+    }
+    const row = res.rows[0];
+    return {
+      id: row.id,
+      playerId: row.player_id,
+      status: row.status,
+      amountMinor: row.amount_minor,
+      currency: row.currency || 'AED',
+    };
+  }
+
   // --- CREATE PAYMENT INTENT (IDEMPOTENT) ---
   async createPaymentIntent(
     ctx: AuthorizationContext,

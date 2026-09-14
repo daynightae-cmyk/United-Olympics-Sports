@@ -25,12 +25,14 @@ assert(Number.isInteger(amountMinor) && amountMinor > 0 && amountMinor <= 500, '
 
 const authHeaders = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 const idempotencyKey = `live-proof-${Date.now()}`;
+// Generic ledger path (no orderId): payable amounts for real orders are always
+// loaded server-side from the pending order, so a live wiring proof must not
+// invent an order id. Real order charges link orderId after prepareOrder.
 const payload = {
   idempotencyKey,
   amountMinor,
   currency: 'AED',
   charge: true,
-  orderId: `live-proof-${Date.now()}`,
 };
 
 const first = await fetch(`${apiBase}/api/v1/payments/intent`, {
