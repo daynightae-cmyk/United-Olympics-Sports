@@ -172,17 +172,33 @@ export class ProductionPlayerAuthGateway implements PlayerAuthGateway {
       if (!session?.access_token) {
         return otpFailure('OTP_INVALID', 'Verification did not return a session.', 'لم يُرجع التحقق جلسة صالحة.');
       }
-      const { error: sessionError } = await withRuntimeTimeout(
-        'supabase-player-session-activate',
-        supabase.auth.setSession({
-          access_token: session.access_token,
-          refresh_token: session.refresh_token ?? '',
-        }),
-        PLAYER_AUTH_TIMEOUT_MS,
-      );
-      if (sessionError) {
-        return otpFailure('AUTH_SESSION_FAILED', sessionError.message, 'تعذر إنشاء الجلسة.');
+
+      const activationPromise = supabase.auth.setSession({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token ?? '',
+      });
+      let activationResult: Awaited<typeof activationPromise>;
+      try {
+        activationResult = await withRuntimeTimeout(
+          'supabase-player-session-activate',
+          activationPromise,
+          PLAYER_AUTH_TIMEOUT_MS,
+        );
+      } catch {
+        const cleanupAfterActivation = () => {
+          void signOutEverywhere().catch(() => undefined);
+        };
+        void activationPromise.then(cleanupAfterActivation, cleanupAfterActivation);
+        clearProductionSession();
+        return otpFailure('AUTH_SESSION_FAILED', 'Authentication session activation timed out.', 'انتهت مهلة إنشاء جلسة المصادقة.');
       }
+
+      if (activationResult.error) {
+        await signOutEverywhere().catch(() => undefined);
+        clearProductionSession();
+        return otpFailure('AUTH_SESSION_FAILED', activationResult.error.message, 'تعذر إنشاء الجلسة.');
+      }
+
       const portal = await fetchPortalIdentity(session.access_token);
       if (portal.bindings.playerIds.length !== 1) {
         await signOutEverywhere().catch(() => undefined);
