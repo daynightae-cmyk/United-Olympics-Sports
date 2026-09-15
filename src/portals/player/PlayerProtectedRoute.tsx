@@ -51,7 +51,12 @@ export function PlayerProtectedRoute({ children }: PlayerProtectedRouteProps) {
   }, [activePlayerId, error, isAuthenticated, isPreviewSession, loading, logout, previewRuntime, revision]);
 
   if (error || validationError) {
-    return <PortalRuntimeError portal="player" onRetry={() => setRevision((value) => value + 1)} />;
+    return (
+      <PortalRuntimeError
+        portal="player"
+        onRetry={error ? () => window.location.reload() : () => setRevision((value) => value + 1)}
+      />
+    );
   }
   if (loading || (isAuthenticated && productionValidated === null)) return <PortalRouteLoader portal="player" />;
 
