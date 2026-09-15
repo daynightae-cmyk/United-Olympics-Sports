@@ -17,7 +17,9 @@ async function waitForServer() {
   let lastError;
   for (let attempt = 0; attempt < 60; attempt += 1) {
     try {
-      const response = await fetch(`${baseURL}/api/v1/health`);
+      const response = await fetch(`${baseURL}/api/v1/health`, {
+        signal: AbortSignal.timeout(5_000),
+      });
       if (response.ok) return;
     } catch (error) {
       lastError = error;
