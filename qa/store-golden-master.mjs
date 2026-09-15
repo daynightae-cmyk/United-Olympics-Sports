@@ -17,10 +17,8 @@ const routes = [
   '/store/search?q=swim',
   '/store/cart',
   '/store/checkout',
-  '/store/wishlist',
-  '/store/account',
-  '/store/orders',
 ];
+const protectedAccountRoutes = ['/store/wishlist', '/store/account', '/store/orders'];
 const forbidden = /Academy|الأكاديمية|FIFA Quality Pro|Official Federation Approved|100% Olympic Grade|Guaranteed Next-Day|30-Day Guaranteed Returns|100% Refund|Olympic Grade SSL|UNITED10|OLYMPIC2026/iu;
 
 if (evidence) await mkdir(evidence, { recursive: true });
@@ -102,6 +100,25 @@ async function visit(page, errors, route) {
   if (width <= 820) assert(state.search?.width >= width - 32, `${route}: search is not full width (${state.search?.width})`);
   if (!preview) assert.equal(state.cardCount, 0, `${route}: production fixture leak`);
   return state;
+}
+
+async function assertProtectedAccountBoundary(browser, name) {
+  const { context, page, errors } = await checkedContext(browser, 390, 'light', false);
+  try {
+    for (const route of protectedAccountRoutes) {
+      const response = await page.goto(base + route, { waitUntil: 'domcontentloaded' });
+      assert(response && response.status() < 400, `${route}: HTTP ${response?.status() ?? 'no response'}`);
+      await page.waitForURL('**/store/login', { timeout: 12_000 });
+      await page.locator('.portal-auth[data-portal="store"]').waitFor({ state: 'visible', timeout: 12_000 });
+      await page.locator('[data-route-loading="true"]').waitFor({ state: 'hidden', timeout: 12_000 }).catch(() => undefined);
+      assert.equal(new URL(page.url()).pathname, '/store/login', `${route}: unauthenticated account route did not settle on /store/login`);
+      assert.equal(await page.locator('[data-route-loading="true"]').count(), 0, `${route}: route loader remained after login redirect`);
+    }
+    assert.deepEqual(errors, [], `${name} protected account boundary runtime errors`);
+    console.log(`[${name}] protected account routes redirect to authenticated store login`);
+  } finally {
+    await context.close();
+  }
 }
 
 async function screenshot(page, name) {
@@ -351,6 +368,7 @@ async function matrix(type, name) {
   try {
     await interactions(browser, name, false);
     await interactions(browser, name, true);
+    await assertProtectedAccountBoundary(browser, name);
     let count = 0;
 
     for (const width of widths) {
@@ -377,11 +395,11 @@ async function matrix(type, name) {
           } finally {
             await context.close();
           }
-          console.log(`[${name}] ${width} ${theme} ${rtl ? 'RTL' : 'LTR'}: ${routes.length} routes passed`);
+          console.log(`[${name}] ${width} ${theme} ${rtl ? 'RTL' : 'LTR'}: ${routes.length} public routes passed`);
         }
       }
     }
-    console.log(`[${name}] PASS: ${count} responsive route/theme/locale cases`);
+    console.log(`[${name}] PASS: ${count} responsive public route/theme/locale cases + ${protectedAccountRoutes.length} protected account redirects`);
   } finally {
     await browser.close();
   }
