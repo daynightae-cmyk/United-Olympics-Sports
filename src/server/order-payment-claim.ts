@@ -3,10 +3,17 @@ import { databaseConfigured, getPool } from '../db/index';
 import type { AuthorizationContext } from './authorization-context';
 import { recordAudit } from './audit';
 import { ApiError, normalizeString } from './http';
+import {
+  cancelStripeIntent,
+  getPaymentProviderConfig,
+  type PaymentProviderConfig,
+  type RemoteIntentResult,
+} from './payment-provider';
 import type { DbQueryClient } from './vertical-slice';
 
 const ADMIN_ROLES = ['super_admin', 'admin', 'owner', 'administrator'];
 const TERMINAL_CLAIM_STATUSES = ['failed', 'cancelled'];
+export const DEFAULT_PAYMENT_CLAIM_TTL_MINUTES = 30;
 
 type TransactionDb = DbQueryClient & {
   connect?: () => Promise<{
@@ -15,6 +22,11 @@ type TransactionDb = DbQueryClient & {
   }>;
 };
 
+type CancelProviderIntent = (
+  config: PaymentProviderConfig,
+  providerIntentId: string,
+) => Promise<RemoteIntentResult>;
+
 export interface OrderPaymentClaim {
   paymentIntentId: string;
   idempotencyKey: string;
@@ -22,6 +34,19 @@ export interface OrderPaymentClaim {
   amountMinor: number;
   currency: string;
   provider: string;
+}
+
+export interface OrderPaymentClaimExpiryResult {
+  expired: boolean;
+  orderCancelled: boolean;
+  paymentIntentId?: string;
+}
+
+export interface OrderPaymentClaimExpiryOptions {
+  nowMs?: number;
+  ttlMinutes?: number;
+  providerConfig?: PaymentProviderConfig | null;
+  cancelIntent?: CancelProviderIntent;
 }
 
 function resolveDb(override?: TransactionDb): TransactionDb {
@@ -46,6 +71,21 @@ async function inTransaction<T>(db: TransactionDb, work: (client: DbQueryClient)
   }
 }
 
+export function getPaymentClaimTtlMinutes(): number {
+  const configured = Number.parseInt(process.env.PAYMENT_CLAIM_TTL_MINUTES || '', 10);
+  if (!Number.isFinite(configured) || configured < 5 || configured > 1440) {
+    return DEFAULT_PAYMENT_CLAIM_TTL_MINUTES;
+  }
+  return configured;
+}
+
+export function getPaymentClaimExpiryCutoff(
+  nowMs = Date.now(),
+  ttlMinutes = getPaymentClaimTtlMinutes(),
+): Date {
+  return new Date(nowMs - ttlMinutes * 60_000);
+}
+
 export async function assertOrderPaymentNotClaimed(db: DbQueryClient, orderId: string): Promise<void> {
   const active = await db.query<{ id: string }>(
     `select id from payment_intents
@@ -57,6 +97,206 @@ export async function assertOrderPaymentNotClaimed(db: DbQueryClient, orderId: s
   if (active.rows.length > 0) {
     throw new ApiError(409, 'ORDER_PAYMENT_IN_PROGRESS', 'This order has an active payment attempt and cannot be cancelled.');
   }
+}
+
+/**
+ * Safely expires a stale order-bound Stripe claim.
+ *
+ * The remote provider intent is cancelled before any local inventory is
+ * released. A short-lived local `cancelling` state prevents a retry from
+ * reusing the same claim while the provider cancellation is in flight.
+ * Only after Stripe confirms cancellation do we atomically mark the claim
+ * cancelled, release reserved inventory, and cancel the still-pending order.
+ */
+export async function expireAbandonedOrderPaymentClaim(
+  ctx: AuthorizationContext,
+  orderIdInput: unknown,
+  override?: TransactionDb,
+  options: OrderPaymentClaimExpiryOptions = {},
+): Promise<OrderPaymentClaimExpiryResult> {
+  const orderId = normalizeString(orderIdInput, 64);
+  if (!orderId) throw new ApiError(400, 'VALIDATION_ERROR', 'orderId is required.');
+
+  const db = resolveDb(override);
+  const cutoff = getPaymentClaimExpiryCutoff(options.nowMs, options.ttlMinutes ?? getPaymentClaimTtlMinutes());
+  const candidateRes = await db.query<{
+    id: string;
+    provider: string;
+    provider_intent_id: string | null;
+  }>(
+    `select id, provider, provider_intent_id
+       from payment_intents
+      where metadata->>'orderId' = $1
+        and status = 'requires_payment_method'
+        and provider_intent_id is not null
+        and updated_at <= $2
+      order by updated_at asc
+      limit 1`,
+    [orderId, cutoff],
+  );
+  if (candidateRes.rows.length === 0) return { expired: false, orderCancelled: false };
+
+  const candidate = candidateRes.rows[0];
+  if (candidate.provider !== 'stripe' || !candidate.provider_intent_id) {
+    return { expired: false, orderCancelled: false };
+  }
+
+  const marked = await inTransaction(db, async (tx) => {
+    const orderRes = await tx.query<{ id: string; status: string }>(
+      'select id, status from orders where id = $1 for update',
+      [orderId],
+    );
+    if (orderRes.rows.length === 0 || orderRes.rows[0].status !== 'pending') return false;
+
+    const claimRes = await tx.query<{
+      id: string;
+      status: string;
+      provider_intent_id: string | null;
+      metadata: { orderId?: unknown } | null;
+      updated_at: string | Date;
+    }>(
+      'select id, status, provider_intent_id, metadata, updated_at from payment_intents where id = $1 for update',
+      [candidate.id],
+    );
+    if (claimRes.rows.length === 0) return false;
+    const claimRow = claimRes.rows[0];
+    const linkedOrderId = typeof claimRow.metadata?.orderId === 'string' ? claimRow.metadata.orderId : null;
+    if (
+      linkedOrderId !== orderId
+      || claimRow.status !== 'requires_payment_method'
+      || claimRow.provider_intent_id !== candidate.provider_intent_id
+      || new Date(claimRow.updated_at).getTime() > cutoff.getTime()
+    ) {
+      return false;
+    }
+
+    const update = await tx.query(
+      `update payment_intents
+          set status = 'cancelling'
+        where id = $1
+          and status = 'requires_payment_method'
+          and provider_intent_id = $2`,
+      [candidate.id, candidate.provider_intent_id],
+    );
+    return (update.rowCount ?? 0) > 0;
+  });
+  if (!marked) return { expired: false, orderCancelled: false };
+
+  const providerConfig = options.providerConfig !== undefined
+    ? options.providerConfig
+    : getPaymentProviderConfig();
+  if (!providerConfig || providerConfig.provider !== 'stripe') {
+    await db.query(
+      `update payment_intents set status = 'requires_payment_method'
+        where id = $1 and status = 'cancelling' and provider_intent_id = $2`,
+      [candidate.id, candidate.provider_intent_id],
+    );
+    return { expired: false, orderCancelled: false };
+  }
+
+  const cancelIntent = options.cancelIntent ?? cancelStripeIntent;
+  try {
+    const remote = await cancelIntent(providerConfig, candidate.provider_intent_id);
+    if (remote.status !== 'cancelled') {
+      throw new ApiError(502, 'PAYMENT_PROVIDER_ERROR', 'Payment provider did not confirm timed-out intent cancellation.');
+    }
+  } catch (providerError) {
+    try {
+      await db.query(
+        `update payment_intents set status = 'requires_payment_method'
+          where id = $1 and status = 'cancelling' and provider_intent_id = $2`,
+        [candidate.id, candidate.provider_intent_id],
+      );
+    } catch (restoreError) {
+      console.error('[PAYMENT] Failed to restore stale claim after provider cancellation error:', restoreError);
+    }
+    throw providerError;
+  }
+
+  return inTransaction(db, async (tx) => {
+    const claimRes = await tx.query<{
+      id: string;
+      status: string;
+      provider_intent_id: string | null;
+      metadata: { orderId?: unknown } | null;
+    }>(
+      'select id, status, provider_intent_id, metadata from payment_intents where id = $1 for update',
+      [candidate.id],
+    );
+    if (claimRes.rows.length === 0) {
+      throw new ApiError(409, 'PAYMENT_CLAIM_LOST', 'The timed-out payment claim is no longer available.');
+    }
+    const claimRow = claimRes.rows[0];
+    const linkedOrderId = typeof claimRow.metadata?.orderId === 'string' ? claimRow.metadata.orderId : null;
+    if (linkedOrderId !== orderId || claimRow.provider_intent_id !== candidate.provider_intent_id) {
+      throw new ApiError(409, 'PAYMENT_CLAIM_LOST', 'The timed-out payment claim changed during provider cancellation.');
+    }
+    if (claimRow.status === 'succeeded') {
+      throw new ApiError(409, 'ORDER_ALREADY_PAID', 'The order payment completed while expiry was being reconciled.');
+    }
+
+    const orderRes = await tx.query<{
+      id: string;
+      status: string;
+      items: Array<{ productId: string; quantity: number }>;
+    }>(
+      'select id, status, items from orders where id = $1 for update',
+      [orderId],
+    );
+
+    await tx.query(
+      `update payment_intents
+          set status = 'cancelled', updated_at = now()
+        where id = $1 and status <> 'succeeded'`,
+      [candidate.id],
+    );
+
+    if (orderRes.rows.length === 0 || orderRes.rows[0].status !== 'pending') {
+      await recordAudit(ctx, {
+        action: 'payment.order.claim.expire',
+        entityType: 'payment_intent',
+        entityId: candidate.id,
+        metadata: { orderId, providerIntentId: candidate.provider_intent_id, orderCancelled: false },
+      }, tx);
+      return { expired: true, orderCancelled: false, paymentIntentId: candidate.id };
+    }
+
+    const lines = Array.isArray(orderRes.rows[0].items) ? orderRes.rows[0].items : [];
+    const releaseLines = lines
+      .filter((line): line is { productId: string; quantity: number } =>
+        Boolean(line && typeof line.productId === 'string' && Number.isInteger(line.quantity) && line.quantity > 0)
+      )
+      .sort((a, b) => a.productId.localeCompare(b.productId));
+
+    for (const line of releaseLines) {
+      await tx.query(
+        'update inventory set available_quantity = available_quantity + $1, updated_at = now() where product_id = $2',
+        [line.quantity, line.productId],
+      );
+    }
+
+    const orderUpdated = await tx.query(
+      `update orders set status = 'cancelled', updated_at = now() where id = $1 and status = 'pending'`,
+      [orderId],
+    );
+    if ((orderUpdated.rowCount ?? 0) === 0) {
+      throw new ApiError(409, 'ORDER_NOT_CANCELLABLE', 'Timed-out payment order changed before inventory release completed.');
+    }
+
+    await recordAudit(ctx, {
+      action: 'payment.order.claim.expire',
+      entityType: 'payment_intent',
+      entityId: candidate.id,
+      metadata: {
+        orderId,
+        providerIntentId: candidate.provider_intent_id,
+        releasedLines: releaseLines.length,
+        orderCancelled: true,
+      },
+    }, tx);
+
+    return { expired: true, orderCancelled: true, paymentIntentId: candidate.id };
+  });
 }
 
 export async function claimOrderPayment(
@@ -123,6 +363,9 @@ export async function claimOrderPayment(
       const linkedOrderId = typeof row.metadata?.orderId === 'string' ? row.metadata.orderId : null;
       if (linkedOrderId !== orderId || row.amount_minor !== order.total_minor || row.currency !== currency) {
         throw new ApiError(409, 'IDEMPOTENCY_CONFLICT', 'This idempotency key is already bound to different payment data.');
+      }
+      if (row.status === 'cancelling') {
+        throw new ApiError(409, 'ORDER_PAYMENT_IN_PROGRESS', 'This payment attempt is being expired and cannot be reused yet.');
       }
       paymentIntentId = row.id;
       if (TERMINAL_CLAIM_STATUSES.includes(row.status)) {
