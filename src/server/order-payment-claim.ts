@@ -220,7 +220,7 @@ export async function expireAbandonedOrderPaymentClaim(
 
   const cancelIntent = options.cancelIntent ?? cancelStripeIntent;
   const retrieveIntent = options.retrieveIntent ?? retrieveStripeIntent;
-  let providerConfirmedCancelled = false;
+  let providerConfirmedCancelled: boolean;
   try {
     const remote = await cancelIntent(providerConfig, candidate.provider_intent_id);
     if (remote.status !== 'cancelled') {
