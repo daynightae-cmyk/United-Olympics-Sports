@@ -4,7 +4,6 @@ import { StoreProvider } from './StoreContext';
 import { StoreDataProvider } from './data/StoreDataProvider';
 import type { StoreDataGateway } from './data/StoreDataGateway';
 import {
-  AddressesPage,
   CartPage,
   CatalogPage,
   CategoryPage,
