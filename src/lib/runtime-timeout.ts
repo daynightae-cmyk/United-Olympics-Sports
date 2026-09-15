@@ -31,57 +31,77 @@ function operationName(input: RequestInfo | URL): string {
   return typeof input === 'string' ? input : input instanceof URL ? input.toString() : 'fetch';
 }
 
+const BODY_METHODS = new Set<PropertyKey>(['arrayBuffer', 'blob', 'formData', 'json', 'text']);
+
+/**
+ * Fetches with a deadline that remains active through body consumption.
+ * Returning headers is not treated as completion: json/text/blob/etc. retain
+ * the same AbortController until the body is fully consumed. This prevents a
+ * response that stalls after headers from leaving portal/account loaders alive.
+ */
 export async function fetchWithRuntimeTimeout(
   input: RequestInfo | URL,
   init: RequestInit = {},
   timeoutMs = 10_000,
 ): Promise<Response> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const name = operationName(input);
+  let timer: ReturnType<typeof setTimeout> | undefined = setTimeout(() => controller.abort(), timeoutMs);
+  const clearDeadline = () => {
+    if (timer) {
+      clearTimeout(timer);
+      timer = undefined;
+    }
+  };
+
   try {
-    return await fetch(input, { ...init, signal: controller.signal });
+    const response = await fetch(input, { ...init, signal: controller.signal });
+    return new Proxy(response, {
+      get(target, property) {
+        if (BODY_METHODS.has(property)) {
+          const method = Reflect.get(target, property, target);
+          return async (...args: unknown[]) => {
+            try {
+              return await method.apply(target, args);
+            } catch (error) {
+              if (controller.signal.aborted || isAbortError(error)) {
+                throw new RuntimeTimeoutError(name, timeoutMs);
+              }
+              throw error;
+            } finally {
+              clearDeadline();
+            }
+          };
+        }
+        const value = Reflect.get(target, property, target);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
   } catch (error) {
+    clearDeadline();
     if (controller.signal.aborted || isAbortError(error)) {
-      throw new RuntimeTimeoutError(operationName(input), timeoutMs);
+      throw new RuntimeTimeoutError(name, timeoutMs);
     }
     throw error;
-  } finally {
-    clearTimeout(timer);
   }
 }
 
 /**
- * Fetches and consumes a JSON response under one AbortController deadline.
- * The controller remains active until response.json() finishes, so a server
- * that sends headers and then stalls the body cannot leave portal/account
- * runtime state loading indefinitely.
+ * Convenience wrapper that performs fetch + JSON body consumption under one
+ * explicit deadline and returns both the HTTP response metadata and payload.
  */
 export async function fetchJsonWithRuntimeTimeout<T>(
   input: RequestInfo | URL,
   init: RequestInit = {},
   timeoutMs = 10_000,
 ): Promise<{ response: Response; payload: T | null }> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const response = await fetchWithRuntimeTimeout(input, init, timeoutMs);
+  let payload: T | null = null;
   try {
-    const response = await fetch(input, { ...init, signal: controller.signal });
-    let payload: T | null = null;
-    try {
-      payload = await response.json() as T;
-    } catch (error) {
-      if (controller.signal.aborted || isAbortError(error)) {
-        throw new RuntimeTimeoutError(operationName(input), timeoutMs);
-      }
-      payload = null;
-    }
-    return { response, payload };
+    payload = await response.json() as T;
   } catch (error) {
     if (error instanceof RuntimeTimeoutError) throw error;
-    if (controller.signal.aborted || isAbortError(error)) {
-      throw new RuntimeTimeoutError(operationName(input), timeoutMs);
-    }
-    throw error;
-  } finally {
-    clearTimeout(timer);
+    payload = null;
   }
+  return { response, payload };
 }
