@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { PortalRouteLoader } from '../../components/portal/PortalRouteState';
+import { PortalRouteLoader, PortalRuntimeError } from '../../components/portal/PortalRouteState';
 import { fetchPortalIdentity } from '../../lib/auth-client';
 import { usePlayerSession } from './PlayerSessionContext';
 
@@ -9,13 +9,16 @@ interface PlayerProtectedRouteProps {
 }
 
 export function PlayerProtectedRoute({ children }: PlayerProtectedRouteProps) {
-  const { isAuthenticated, isPreviewSession, activePlayerId, loading, logout } = usePlayerSession();
+  const { isAuthenticated, isPreviewSession, activePlayerId, loading, error, logout } = usePlayerSession();
   const location = useLocation();
   const previewRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true';
   const [productionValidated, setProductionValidated] = useState<boolean | null>(null);
+  const [validationError, setValidationError] = useState(false);
+  const [revision, setRevision] = useState(0);
 
   useEffect(() => {
-    if (loading || !isAuthenticated || !activePlayerId) {
+    setValidationError(false);
+    if (loading || error || !isAuthenticated || !activePlayerId) {
       setProductionValidated(null);
       return;
     }
@@ -41,12 +44,15 @@ export function PlayerProtectedRoute({ children }: PlayerProtectedRouteProps) {
       })
       .catch(() => {
         if (!active) return;
-        setProductionValidated(false);
-        logout();
+        setProductionValidated(null);
+        setValidationError(true);
       });
     return () => { active = false; };
-  }, [activePlayerId, isAuthenticated, isPreviewSession, loading, logout, previewRuntime]);
+  }, [activePlayerId, error, isAuthenticated, isPreviewSession, loading, logout, previewRuntime, revision]);
 
+  if (error || validationError) {
+    return <PortalRuntimeError portal="player" onRetry={() => setRevision((value) => value + 1)} />;
+  }
   if (loading || (isAuthenticated && productionValidated === null)) return <PortalRouteLoader portal="player" />;
 
   if (!isAuthenticated || productionValidated === false) {
