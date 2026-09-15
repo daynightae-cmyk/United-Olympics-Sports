@@ -96,12 +96,10 @@ export async function fetchJsonWithRuntimeTimeout<T>(
   timeoutMs = 10_000,
 ): Promise<{ response: Response; payload: T | null }> {
   const response = await fetchWithRuntimeTimeout(input, init, timeoutMs);
-  let payload: T | null = null;
   try {
-    payload = await response.json() as T;
+    return { response, payload: await response.json() as T };
   } catch (error) {
     if (error instanceof RuntimeTimeoutError) throw error;
-    payload = null;
+    return { response, payload: null };
   }
-  return { response, payload };
 }
