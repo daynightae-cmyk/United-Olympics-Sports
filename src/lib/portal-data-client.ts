@@ -28,6 +28,23 @@ export type CoachPortalScopeSnapshot = {
   assignedBranches: string[];
   assignedGroups: string[];
   assignedPlayerIds: string[];
+  groups: Array<{ id: string; branchId: string; programId: string; sportId: string; name: string; status: string }>;
+  players: Array<{
+    id: string;
+    fullName: string;
+    branchId: string | null;
+    groupId: string | null;
+    programId: string | null;
+    sportId: string | null;
+    attendanceRate: number;
+    performanceScore: number | null;
+  }>;
+  sessions: Array<{ id: string; groupId: string; sportId: string; startsAt: string; status: string }>;
+  programs: Array<{ id: string; sportId: string; name: string; nameAr: string | null; status: string }>;
+  sports: Array<{ id: string; name: string; nameAr: string | null; status: string }>;
+  parents: Array<{ id: string; fullName: string; playerIds: string[] }>;
+  messages: Array<{ id: string; fromId: string; toIds: string[]; content: string; sentAt: string; readAt: string | null }>;
+  branches: Array<{ id: string; countryId: string; organizationId: string; name: string; nameAr: string | null; status: string }>;
 };
 
 async function portalGet<T>(route: string): Promise<T> {
@@ -80,5 +97,13 @@ export async function fetchCoachPortalScope(): Promise<CoachPortalScopeSnapshot>
     assignedBranches: Array.isArray(payload.assignedBranches) ? payload.assignedBranches : [],
     assignedGroups: Array.isArray(payload.assignedGroups) ? payload.assignedGroups : [],
     assignedPlayerIds: Array.isArray(payload.assignedPlayerIds) ? payload.assignedPlayerIds : [],
+    groups: Array.isArray(payload.groups) ? payload.groups : [],
+    players: Array.isArray(payload.players) ? payload.players : [],
+    sessions: Array.isArray(payload.sessions) ? payload.sessions : [],
+    programs: Array.isArray(payload.programs) ? payload.programs : [],
+    sports: Array.isArray(payload.sports) ? payload.sports : [],
+    parents: Array.isArray(payload.parents) ? payload.parents : [],
+    messages: Array.isArray(payload.messages) ? payload.messages : [],
+    branches: Array.isArray(payload.branches) ? payload.branches : [],
   };
 }
