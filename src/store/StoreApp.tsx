@@ -4,23 +4,27 @@ import { StoreProvider } from './StoreContext';
 import { StoreDataProvider } from './data/StoreDataProvider';
 import type { StoreDataGateway } from './data/StoreDataGateway';
 import {
-  AccountPage,
   AddressesPage,
   CartPage,
   CatalogPage,
   CategoryPage,
   CheckoutPage,
-  NotificationsPage,
   OrderDetailPage,
   OrderSuccessPage,
-  OrdersPage,
   PaymentMethodsPage,
   ProductDetailPage,
   SearchResultsPage,
   StoreHomePage,
   StoreSettingsPage,
-  WishlistPage,
 } from './StorePages';
+import {
+  ConnectedAccountPage,
+  ConnectedAddressesPage,
+  ConnectedNotificationsPage,
+  ConnectedOrdersPage,
+  ConnectedWishlistPage,
+  StoreAccountBoundary,
+} from './account/StoreAccountRuntime';
 import '../styles/store-commerce.css';
 import '../styles/store-factory6-enhancements.css';
 
@@ -36,15 +40,19 @@ export function StoreApp({ dataGateway }: { dataGateway?: StoreDataGateway }) {
     <Route path="cart" element={<CartPage />} />
     <Route path="checkout" element={<CheckoutPage />} />
     <Route path="order-success" element={<OrderSuccessPage />} />
-    <Route path="wishlist" element={<WishlistPage />} />
-    <Route path="account" element={<AccountPage />} />
-    <Route path="profile" element={<Navigate to="/store/account" replace />} />
-    <Route path="orders" element={<OrdersPage />} />
-    <Route path="order/:id" element={<OrderDetailPage />} />
-    <Route path="addresses" element={<AddressesPage />} />
-    <Route path="payment-methods" element={<PaymentMethodsPage />} />
-    <Route path="notifications" element={<NotificationsPage />} />
-    <Route path="settings" element={<StoreSettingsPage />} />
+
+    <Route element={<StoreAccountBoundary />}>
+      <Route path="account" element={<ConnectedAccountPage />} />
+      <Route path="profile" element={<Navigate to="/store/account" replace />} />
+      <Route path="orders" element={<ConnectedOrdersPage />} />
+      <Route path="order/:id" element={<OrderDetailPage />} />
+      <Route path="wishlist" element={<ConnectedWishlistPage />} />
+      <Route path="addresses" element={<ConnectedAddressesPage />} />
+      <Route path="payment-methods" element={<PaymentMethodsPage />} />
+      <Route path="notifications" element={<ConnectedNotificationsPage />} />
+      <Route path="settings" element={<StoreSettingsPage />} />
+    </Route>
+
     <Route path="*" element={<Navigate to="/store" replace />} />
   </Routes></StoreLayout></StoreProvider></StoreDataProvider>;
 }
