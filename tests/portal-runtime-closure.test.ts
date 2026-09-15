@@ -46,9 +46,17 @@ for (const [name, source, forbidden] of [
 
 assert(playerContext.includes('fetchPlayerPortalSnapshot'));
 assert.equal(playerContext.includes("from '../../admin/data/adminHooks'"), false);
+for (const marker of ['production?.payments', 'production?.documents', 'production?.messages', 'production?.relations.sport', 'production?.relations.group', 'production?.relations.coaches']) {
+  assert(playerContext.includes(marker), `Player production context missing scoped record mapping: ${marker}`);
+}
+
 assert(parentData.includes('fetchParentPortalSnapshot'));
 assert(parentData.includes('fetchPlayerPortalSnapshot'));
 assert.equal(parentData.includes("from '../../admin/data/adminHooks'"), false);
+for (const marker of ['scopedPayments(snapshots)', 'family.messages.map', 'scopedRelations(snapshots)', 'snapshot.relations.sport', 'snapshot.relations.group']) {
+  assert(parentData.includes(marker), `Parent production context missing scoped mapping: ${marker}`);
+}
+
 assert(coachContext.includes('fetchCoachPortalScope'));
 assert(coachContext.includes('productionWorkspace'));
 assert.equal(coachContext.includes('useCoaches('), false);
@@ -59,6 +67,18 @@ assert(coachData.includes('productionWorkspace'), 'Coach workspace must consume 
 for (const marker of ['assignedGroups', 'assignedPlayerIds', 'where p.id = any($1)', 'where s.group_id = any($1)', 'where sender_uid = $1 or recipient_uid = $1']) {
   assert(portalRepo.includes(marker), `Coach portal repository missing scoped marker: ${marker}`);
 }
+for (const marker of [
+  'where player_id = $1',
+  "where owner_type = 'player' and owner_id = $1",
+  'where recipient_uid = $1',
+  'const isPlayerSelf =',
+  'playerRow.user_uid === ctx.uid',
+  'ctx.bindings.playerIds.includes(playerId)',
+]) {
+  assert(portalRepo.includes(marker), `Player production repository missing privacy/scope marker: ${marker}`);
+}
+assert(portalRepo.includes("where sender_uid = $1 or recipient_uid = $1"), 'Portal messages must be identity scoped');
+assert(portalRepo.includes('user_uid = $2'), 'Parent/Coach portal records must verify the authenticated uid');
 
 for (const marker of ['StoreAccountBoundary', 'ConnectedAccountPage', 'ConnectedOrdersPage', 'ConnectedAddressesPage', 'ConnectedNotificationsPage', 'ConnectedWishlistPage']) {
   assert(storeApp.includes(marker), `Store account closure missing ${marker}`);
