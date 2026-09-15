@@ -6,6 +6,12 @@ import {
   verifyStripeSignature,
 } from './payment-provider';
 import {
+  claimOrderPayment,
+  completeOrderPaymentClaim,
+  failOrderPaymentClaim,
+  type OrderPaymentClaim,
+} from './order-payment-claim';
+import {
   ApiError,
   assertMethod,
   getHeader,
@@ -115,49 +121,84 @@ export const paymentIntentHandler = async (req: ApiRequest, res: ApiResponse): P
   applyRateLimitHeaders(res, userLimit);
   const body = await readJsonBody(req);
 
-  // Server-authoritative payable amount: the browser must never set the
-  // chargeable total for an order or a priced subscription. Client-supplied
-  // amounts are accepted only for the generic ledger path (no order or
-  // priced subscription attached) and are still validated as positive ints.
-  const payable = await resolvePayableAmount(ctx, body as PayableBody);
-  const { amountMinor, currency } = payable;
-  const orderId = payable.orderId;
-  const subscriptionId = payable.subscriptionId;
-
-  // Charge path: requires a contracted provider; otherwise fail closed.
   const charge = body.charge === true;
-  let remote: { providerIntentId?: string; clientSecret?: string; status?: string } = {};
+  const requestedOrderId = normalizeString(body.orderId, 64);
+  const idempotencyKey = normalizeString(body.idempotencyKey, 128);
+  let providerConfig = getPaymentProviderConfig();
   if (charge) {
-    const config = getPaymentProviderConfig();
-    if (!config) {
+    if (!providerConfig) {
       throw new ApiError(
         503,
         'EXTERNAL_PROVIDER_REQUIRED',
         'Charging requires a contracted payment provider. No amount was charged.',
       );
     }
-    const idempotencyKey = normalizeString(body.idempotencyKey, 128);
     if (!idempotencyKey) throw new ApiError(400, 'VALIDATION_ERROR', 'Idempotency key is required.');
-    remote = await createStripeIntent(config, {
-      amountMinor,
-      currency,
-      idempotencyKey,
-      ...(orderId ? { metadata: { orderId } } : {}),
-    });
+  } else {
+    providerConfig = null;
   }
 
-  const intent = await paymentRepo.createPaymentIntent(ctx, {
-    idempotencyKey: (body.idempotencyKey as string) || '',
-    amountMinor,
-    currency,
-    playerId: body.playerId as string | undefined,
-    ...(subscriptionId ? { subscriptionId } : {}),
-    provider: body.provider as string | undefined,
-    ...(orderId ? { orderId } : {}),
-    ...(remote.providerIntentId ? { providerIntentId: remote.providerIntentId } : {}),
-    ...(remote.clientSecret ? { clientSecret: remote.clientSecret } : {}),
-    ...(remote.status ? { remoteStatus: remote.status } : {}),
-  });
+  // For a real provider charge tied to an order, acquire the database claim
+  // before any remote provider call. claimOrderPayment locks the order row,
+  // validates owner/amount/currency, and creates the active local claim.
+  let orderClaim: OrderPaymentClaim | undefined;
+  let payable: ResolvedPayable;
+  if (charge && requestedOrderId && idempotencyKey) {
+    orderClaim = await claimOrderPayment(ctx, {
+      orderId: requestedOrderId,
+      idempotencyKey,
+      amountMinor: body.amountMinor,
+      currency: body.currency,
+      provider: 'stripe',
+    });
+    payable = {
+      amountMinor: orderClaim.amountMinor,
+      currency: orderClaim.currency,
+      orderId: orderClaim.orderId,
+    };
+  } else {
+    payable = await resolvePayableAmount(ctx, body as PayableBody);
+  }
+
+  const { amountMinor, currency } = payable;
+  const orderId = payable.orderId;
+  const subscriptionId = payable.subscriptionId;
+
+  let remote: Awaited<ReturnType<typeof createStripeIntent>> | null = null;
+  if (charge && providerConfig && idempotencyKey) {
+    try {
+      remote = await createStripeIntent(providerConfig, {
+        amountMinor,
+        currency,
+        idempotencyKey,
+        ...(orderId ? { metadata: { orderId } } : {}),
+      });
+    } catch (error) {
+      if (orderClaim) await failOrderPaymentClaim(orderClaim);
+      throw error;
+    }
+  }
+
+  const intent = orderClaim && remote
+    ? await completeOrderPaymentClaim(ctx, {
+        claim: orderClaim,
+        providerIntentId: remote.providerIntentId,
+        remoteStatus: remote.status,
+        ...(remote.clientSecret ? { clientSecret: remote.clientSecret } : {}),
+      })
+    : await paymentRepo.createPaymentIntent(ctx, {
+        idempotencyKey: idempotencyKey || '',
+        amountMinor,
+        currency,
+        playerId: body.playerId as string | undefined,
+        ...(subscriptionId ? { subscriptionId } : {}),
+        provider: body.provider as string | undefined,
+        ...(orderId ? { orderId } : {}),
+        ...(remote?.providerIntentId ? { providerIntentId: remote.providerIntentId } : {}),
+        ...(remote?.clientSecret ? { clientSecret: remote.clientSecret } : {}),
+        ...(remote?.status ? { remoteStatus: remote.status } : {}),
+      });
+
   sendJson(res, 201, { ok: true, intent });
 };
 
@@ -165,7 +206,6 @@ export const paymentWebhookHandler = async (req: ApiRequest, res: ApiResponse): 
   assertMethod(req, ['POST']);
   const config = getPaymentProviderConfig();
 
-  // Without a webhook secret, unsigned webhooks must never mutate state.
   if (!config?.webhookSecret) {
     throw new ApiError(
       503,
