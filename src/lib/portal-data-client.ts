@@ -18,8 +18,13 @@ export type PlayerPortalSnapshot = {
 };
 
 export type ParentChildSummary = { id: string; fullName: string; branchId: string | null };
+export type ParentPortalSnapshot = {
+  parent: { id: string; fullName: string; playerIds: string[] };
+  children: ParentChildSummary[];
+};
 
 export type CoachPortalScopeSnapshot = {
+  coach: { id: string; fullName: string; branchId: string | null };
   assignedBranches: string[];
   assignedGroups: string[];
   assignedPlayerIds: string[];
@@ -56,14 +61,22 @@ export async function fetchPlayerPortalSnapshot(playerId?: string): Promise<Play
   return payload;
 }
 
+export async function fetchParentPortalSnapshot(): Promise<ParentPortalSnapshot> {
+  const payload = await portalGet<ParentPortalSnapshot>('portal-parent-children');
+  return {
+    parent: payload.parent,
+    children: Array.isArray(payload.children) ? payload.children : [],
+  };
+}
+
 export async function fetchParentChildren(): Promise<ParentChildSummary[]> {
-  const payload = await portalGet<{ children: ParentChildSummary[] }>('portal-parent-children');
-  return Array.isArray(payload.children) ? payload.children : [];
+  return (await fetchParentPortalSnapshot()).children;
 }
 
 export async function fetchCoachPortalScope(): Promise<CoachPortalScopeSnapshot> {
   const payload = await portalGet<CoachPortalScopeSnapshot>('portal-coach-scope');
   return {
+    coach: payload.coach,
     assignedBranches: Array.isArray(payload.assignedBranches) ? payload.assignedBranches : [],
     assignedGroups: Array.isArray(payload.assignedGroups) ? payload.assignedGroups : [],
     assignedPlayerIds: Array.isArray(payload.assignedPlayerIds) ? payload.assignedPlayerIds : [],
