@@ -23,6 +23,24 @@ export function computeChecksum(content: string): string {
   return crypto.createHash('sha256').update(content.trim()).digest('hex');
 }
 
+export function splitConcurrentIndexStatements(content: string): {
+  transactionalSql: string;
+  concurrentStatements: string[];
+} {
+  const concurrentStatements: string[] = [];
+  const concurrentIndexPattern = /^\s*create\s+(?:unique\s+)?index\s+concurrently\s+if\s+not\s+exists[\s\S]*?;/gim;
+  const transactionalSql = content.replace(concurrentIndexPattern, (statement) => {
+    concurrentStatements.push(statement.trim());
+    return '';
+  });
+
+  if (/^\s*create\s+(?:unique\s+)?index\s+concurrently\b/im.test(transactionalSql)) {
+    throw new Error('Concurrent index migration contains an unsupported CREATE INDEX CONCURRENTLY statement.');
+  }
+
+  return { transactionalSql, concurrentStatements };
+}
+
 export async function runMigrations(): Promise<MigrationSummary> {
   const migrationsDir = path.resolve(import.meta.dirname, 'migrations');
   const files = fs
@@ -56,7 +74,6 @@ export async function runMigrations(): Promise<MigrationSummary> {
   const client = await pool.connect();
 
   try {
-    // 1. Ensure tracking table exists
     await client.query(`
       create table if not exists schema_migrations (
         id serial primary key,
@@ -66,7 +83,6 @@ export async function runMigrations(): Promise<MigrationSummary> {
       );
     `);
 
-    // 2. Fetch applied migrations
     const appliedRes = await client.query<{ version: string; checksum: string; applied_at: Date }>(
       'select version, checksum, applied_at from schema_migrations order by id asc;',
     );
@@ -75,7 +91,6 @@ export async function runMigrations(): Promise<MigrationSummary> {
       appliedMap.set(row.version, { checksum: row.checksum, applied_at: row.applied_at });
     }
 
-    // 3. Process each migration file
     for (const file of files) {
       const filePath = path.join(migrationsDir, file);
       const sqlContent = fs.readFileSync(filePath, 'utf8');
@@ -103,18 +118,39 @@ export async function runMigrations(): Promise<MigrationSummary> {
         continue;
       }
 
-      // Apply migration in an isolated transaction unless it contains
-      // CREATE INDEX CONCURRENTLY, which PostgreSQL forbids inside a transaction.
-      const usesConcurrently = /\bconcurrently\b/i.test(sqlContent);
-      console.log(`[DB-MIGRATE] Applying migration '${file}'${usesConcurrently ? ' (concurrently, non-transactional)' : ''}...`);
+      const { transactionalSql, concurrentStatements } = splitConcurrentIndexStatements(sqlContent);
+      const usesConcurrently = concurrentStatements.length > 0;
+      console.log(`[DB-MIGRATE] Applying migration '${file}'${usesConcurrently ? ' (split concurrent indexes)' : ''}...`);
+      let transactionOpen = false;
       try {
-        if (!usesConcurrently) await client.query('BEGIN');
-        await client.query(sqlContent);
-        await client.query(
-          'insert into schema_migrations (version, checksum, applied_at) values ($1, $2, now());',
-          [file, currentChecksum],
-        );
-        if (!usesConcurrently) await client.query('COMMIT');
+        if (usesConcurrently) {
+          if (transactionalSql.trim()) {
+            await client.query('BEGIN');
+            transactionOpen = true;
+            await client.query(transactionalSql);
+            await client.query('COMMIT');
+            transactionOpen = false;
+          }
+
+          for (const statement of concurrentStatements) {
+            await client.query(statement);
+          }
+
+          await client.query(
+            'insert into schema_migrations (version, checksum, applied_at) values ($1, $2, now());',
+            [file, currentChecksum],
+          );
+        } else {
+          await client.query('BEGIN');
+          transactionOpen = true;
+          await client.query(transactionalSql);
+          await client.query(
+            'insert into schema_migrations (version, checksum, applied_at) values ($1, $2, now());',
+            [file, currentChecksum],
+          );
+          await client.query('COMMIT');
+          transactionOpen = false;
+        }
 
         summary.appliedCount++;
         summary.results.push({
@@ -125,7 +161,7 @@ export async function runMigrations(): Promise<MigrationSummary> {
         });
         console.log(`[DB-MIGRATE] Successfully applied '${file}'.`);
       } catch (err: unknown) {
-        if (!usesConcurrently) {
+        if (transactionOpen) {
           try { await client.query('ROLLBACK'); } catch { /* best-effort */ }
         }
         const errMsg = err instanceof Error ? err.message : String(err);
@@ -146,7 +182,6 @@ export async function runMigrations(): Promise<MigrationSummary> {
   }
 }
 
-// CLI runner execution
 if (process.argv[1]?.endsWith('migrate.ts') || process.argv[1]?.endsWith('migrate.js')) {
   runMigrations()
     .then((res) => {
