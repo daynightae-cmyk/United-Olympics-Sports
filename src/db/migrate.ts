@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import type { PoolClient } from 'pg';
 import { databaseConfigured, getPool } from './index';
 
 export interface MigrationResult {
@@ -18,6 +19,11 @@ export interface MigrationSummary {
   skippedCount: number;
   results: MigrationResult[];
 }
+
+type ConcurrentIndexState = {
+  exists: boolean;
+  valid: boolean;
+};
 
 export function computeChecksum(content: string): string {
   return crypto.createHash('sha256').update(content.trim()).digest('hex');
@@ -39,6 +45,76 @@ export function splitConcurrentIndexStatements(content: string): {
   }
 
   return { transactionalSql, concurrentStatements };
+}
+
+export function getConcurrentIndexName(statement: string): string {
+  const match = statement.match(
+    /^\s*create\s+(?:unique\s+)?index\s+concurrently\s+if\s+not\s+exists\s+([a-zA-Z_][\w$]*(?:\.[a-zA-Z_][\w$]*)?)/i,
+  );
+  if (!match?.[1]) {
+    throw new Error('Concurrent index statement must use a supported unquoted index identifier.');
+  }
+  return match[1];
+}
+
+function quoteQualifiedIdentifier(identifier: string): string {
+  return identifier
+    .split('.')
+    .map((part) => `"${part.replace(/"/g, '""')}"`)
+    .join('.');
+}
+
+async function readConcurrentIndexState(client: PoolClient, indexName: string): Promise<ConcurrentIndexState> {
+  const state = await client.query<{ indisvalid: boolean; indisready: boolean }>(
+    `select i.indisvalid, i.indisready
+       from pg_class c
+       join pg_index i on i.indexrelid = c.oid
+      where c.oid = to_regclass($1)`,
+    [indexName],
+  );
+  if (state.rows.length === 0) return { exists: false, valid: false };
+  return {
+    exists: true,
+    valid: state.rows[0].indisvalid === true && state.rows[0].indisready === true,
+  };
+}
+
+async function dropConcurrentIndex(client: PoolClient, indexName: string): Promise<void> {
+  await client.query(`drop index concurrently if exists ${quoteQualifiedIdentifier(indexName)}`);
+}
+
+async function executeConcurrentIndexStatement(client: PoolClient, statement: string): Promise<string> {
+  const indexName = getConcurrentIndexName(statement);
+  const before = await readConcurrentIndexState(client, indexName);
+  if (before.exists && !before.valid) {
+    console.warn(`[DB-MIGRATE] Removing invalid concurrent index '${indexName}' before retry.`);
+    await dropConcurrentIndex(client, indexName);
+  }
+
+  try {
+    await client.query(statement);
+  } catch (error) {
+    const failedState = await readConcurrentIndexState(client, indexName);
+    if (!failedState.exists || failedState.valid) throw error;
+
+    console.warn(`[DB-MIGRATE] Concurrent index '${indexName}' was left invalid; rebuilding once.`);
+    await dropConcurrentIndex(client, indexName);
+    await client.query(statement);
+  }
+
+  let after = await readConcurrentIndexState(client, indexName);
+  if (after.exists && !after.valid) {
+    console.warn(`[DB-MIGRATE] Concurrent index '${indexName}' is invalid after creation; rebuilding once.`);
+    await dropConcurrentIndex(client, indexName);
+    await client.query(statement);
+    after = await readConcurrentIndexState(client, indexName);
+  }
+
+  if (!after.exists || !after.valid) {
+    throw new Error(`Concurrent index '${indexName}' is not valid after migration execution.`);
+  }
+
+  return indexName;
 }
 
 export async function runMigrations(): Promise<MigrationSummary> {
@@ -132,8 +208,19 @@ export async function runMigrations(): Promise<MigrationSummary> {
             transactionOpen = false;
           }
 
+          const concurrentIndexNames: string[] = [];
           for (const statement of concurrentStatements) {
-            await client.query(statement);
+            concurrentIndexNames.push(await executeConcurrentIndexStatement(client, statement));
+          }
+
+          // CREATE INDEX CONCURRENTLY can fail while leaving an invalid relation.
+          // Re-check every index immediately before recording the migration as
+          // applied so IF NOT EXISTS can never hide an invalid leftover index.
+          for (const indexName of concurrentIndexNames) {
+            const state = await readConcurrentIndexState(client, indexName);
+            if (!state.exists || !state.valid) {
+              throw new Error(`Concurrent index '${indexName}' failed final validity verification.`);
+            }
           }
 
           await client.query(
