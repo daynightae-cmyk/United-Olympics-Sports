@@ -8,6 +8,7 @@ import {
 import {
   claimOrderPayment,
   completeOrderPaymentClaim,
+  expireAbandonedOrderPaymentClaim,
   failOrderPaymentClaim,
   type OrderPaymentClaim,
 } from './order-payment-claim';
@@ -138,12 +139,21 @@ export const paymentIntentHandler = async (req: ApiRequest, res: ApiResponse): P
     providerConfig = null;
   }
 
-  // For a real provider charge tied to an order, acquire the database claim
-  // before any remote provider call. claimOrderPayment locks the order row,
-  // validates owner/amount/currency, and creates the active local claim.
+  // For a real provider charge tied to an order, safely expire any abandoned
+  // requires_payment_method claim first. Expiry cancels Stripe before local
+  // inventory/order release. A timed-out checkout must create a fresh order.
   let orderClaim: OrderPaymentClaim | undefined;
   let payable: ResolvedPayable;
   if (charge && requestedOrderId && idempotencyKey) {
+    const expired = await expireAbandonedOrderPaymentClaim(ctx, requestedOrderId);
+    if (expired.orderCancelled) {
+      throw new ApiError(
+        409,
+        'ORDER_PAYMENT_EXPIRED',
+        'The previous payment attempt expired and the order was cancelled. Create a new checkout order before retrying.',
+      );
+    }
+
     orderClaim = await claimOrderPayment(ctx, {
       orderId: requestedOrderId,
       idempotencyKey,
@@ -174,7 +184,13 @@ export const paymentIntentHandler = async (req: ApiRequest, res: ApiResponse): P
         ...(orderId ? { metadata: { orderId } } : {}),
       });
     } catch (error) {
-      if (orderClaim) await failOrderPaymentClaim(orderClaim);
+      if (orderClaim) {
+        try {
+          await failOrderPaymentClaim(orderClaim);
+        } catch (releaseError) {
+          console.error('[PAYMENT] Failed to release order payment claim after provider error:', releaseError);
+        }
+      }
       throw error;
     }
   }
