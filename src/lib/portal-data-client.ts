@@ -3,6 +3,8 @@ import { fetchWithRuntimeTimeout } from './runtime-timeout';
 
 const PORTAL_DATA_TIMEOUT_MS = 10_000;
 
+export type PortalMessageSnapshot = { id: string; fromId: string; toIds: string[]; content: string; sentAt: string; readAt: string | null };
+
 export type PlayerPortalSnapshot = {
   player: {
     id: string;
@@ -10,17 +12,38 @@ export type PlayerPortalSnapshot = {
     userUid: string | null;
     branchId: string | null;
   };
+  relations: {
+    branch: { id: string; name: string; nameAr: string | null } | null;
+    group: { id: string; name: string; status: string } | null;
+    program: { id: string; name: string; nameAr: string | null; status: string } | null;
+    sport: { id: string; name: string; nameAr: string | null; status: string } | null;
+    coaches: Array<{ id: string; fullName: string; branchId: string | null }>;
+  };
   schedule: Array<{ id: string; groupId: string; startsAt: string; status: string }>;
   attendance: Array<{ id: string; sessionId: string; status: string; date: string }>;
   performance: Array<{ id: string; metricKey: string; score: number | null; notes: string | null; date: string }>;
   subscriptions: Array<{ id: string; programId: string; status: string; currency: string | null; amountMinor: number | null }>;
+  payments: Array<{
+    id: string;
+    subscriptionId: string | null;
+    status: string;
+    currency: string | null;
+    amountMinor: number | null;
+    provider: string | null;
+    reference: string | null;
+    createdAt: string;
+  }>;
   achievements: Array<{ id: string; title: string; titleAr: string | null; badge: string | null; category: string; earnedAt: string }>;
+  documents: Array<{ id: string; mimeType: string | null; status: string; createdAt: string }>;
+  notifications: Array<{ id: string; title: string; titleAr: string | null; body: string; bodyAr: string | null; status: string; createdAt: string }>;
+  messages: PortalMessageSnapshot[];
 };
 
 export type ParentChildSummary = { id: string; fullName: string; branchId: string | null };
 export type ParentPortalSnapshot = {
   parent: { id: string; fullName: string; playerIds: string[] };
   children: ParentChildSummary[];
+  messages: PortalMessageSnapshot[];
 };
 
 export type CoachPortalScopeSnapshot = {
@@ -43,7 +66,7 @@ export type CoachPortalScopeSnapshot = {
   programs: Array<{ id: string; sportId: string; name: string; nameAr: string | null; status: string }>;
   sports: Array<{ id: string; name: string; nameAr: string | null; status: string }>;
   parents: Array<{ id: string; fullName: string; playerIds: string[] }>;
-  messages: Array<{ id: string; fromId: string; toIds: string[]; content: string; sentAt: string; readAt: string | null }>;
+  messages: PortalMessageSnapshot[];
   branches: Array<{ id: string; countryId: string; organizationId: string; name: string; nameAr: string | null; status: string }>;
 };
 
@@ -83,6 +106,7 @@ export async function fetchParentPortalSnapshot(): Promise<ParentPortalSnapshot>
   return {
     parent: payload.parent,
     children: Array.isArray(payload.children) ? payload.children : [],
+    messages: Array.isArray(payload.messages) ? payload.messages : [],
   };
 }
 
