@@ -1,5 +1,5 @@
 import { getAccessToken } from './auth-client';
-import { fetchWithRuntimeTimeout } from './runtime-timeout';
+import { fetchJsonWithRuntimeTimeout } from './runtime-timeout';
 
 const PORTAL_DATA_TIMEOUT_MS = 10_000;
 
@@ -70,14 +70,19 @@ export type CoachPortalScopeSnapshot = {
   branches: Array<{ id: string; countryId: string; organizationId: string; name: string; nameAr: string | null; status: string }>;
 };
 
+type PortalErrorPayload = { error?: { code?: string; message?: string } };
+
 async function portalGet<T>(route: string): Promise<T> {
   const token = await getAccessToken();
   if (!token) throw new Error('AUTH_REQUIRED');
-  const response = await fetchWithRuntimeTimeout(`/api?route=${encodeURIComponent(route)}`, {
-    method: 'GET',
-    headers: { Authorization: `Bearer ${token}` },
-  }, PORTAL_DATA_TIMEOUT_MS);
-  const payload = await response.json().catch(() => null) as (T & { ok?: boolean }) | { error?: { code?: string; message?: string } } | null;
+  const { response, payload } = await fetchJsonWithRuntimeTimeout<(T & { ok?: boolean }) | PortalErrorPayload>(
+    `/api?route=${encodeURIComponent(route)}`,
+    {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${token}` },
+    },
+    PORTAL_DATA_TIMEOUT_MS,
+  );
   if (!response.ok || !payload || ('error' in payload && payload.error)) {
     const code = payload && 'error' in payload ? payload.error?.code : undefined;
     throw new Error(code || `PORTAL_DATA_${response.status}`);
@@ -89,11 +94,16 @@ export async function fetchPlayerPortalSnapshot(playerId?: string): Promise<Play
   const token = await getAccessToken();
   if (!token) throw new Error('AUTH_REQUIRED');
   const suffix = playerId ? `&playerId=${encodeURIComponent(playerId)}` : '';
-  const response = await fetchWithRuntimeTimeout(`/api?route=portal-player-data${suffix}`, {
-    method: 'GET',
-    headers: { Authorization: `Bearer ${token}` },
-  }, PORTAL_DATA_TIMEOUT_MS);
-  const payload = await response.json().catch(() => null) as (PlayerPortalSnapshot & { ok?: boolean }) | { error?: { code?: string } } | null;
+  const { response, payload } = await fetchJsonWithRuntimeTimeout<
+    (PlayerPortalSnapshot & { ok?: boolean }) | { error?: { code?: string } }
+  >(
+    `/api?route=portal-player-data${suffix}`,
+    {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${token}` },
+    },
+    PORTAL_DATA_TIMEOUT_MS,
+  );
   if (!response.ok || !payload || !('player' in payload)) {
     const code = payload && 'error' in payload ? payload.error?.code : undefined;
     throw new Error(code || 'PLAYER_PORTAL_DATA_FAILED');
