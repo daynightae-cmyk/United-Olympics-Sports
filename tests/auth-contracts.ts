@@ -93,7 +93,7 @@ assert.equal(/where[\s\S]{0,120}email\s*=\s*\$1/i.test(portalBindingsSource), fa
 assert.match(playerGatewaySource, /fetchPortalIdentity/);
 assert.match(parentLoginSource, /fetchPortalIdentity/);
 assert.match(coachLoginSource, /fetchPortalIdentity/);
-assert.match(authClientSource, /fetchWithRuntimeTimeout/, 'production identity calls must have a bounded runtime');
+assert.match(authClientSource, /fetchJsonWithRuntimeTimeout/, 'production identity JSON calls must remain bounded through response-body consumption');
 
 function assertContiguousMountRevalidation(name: string, source: string, clearFn: string): void {
   const mountEffect = source.match(/useEffect\(\(\) => \{[\s\S]*?getAccessToken\(\)[\s\S]*?fetchPortalIdentity[\s\S]*?return \(\) => \{[\s\S]*?\}, \[navigate\]\)/);
