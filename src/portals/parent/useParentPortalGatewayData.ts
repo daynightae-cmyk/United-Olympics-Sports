@@ -33,9 +33,9 @@ function scopedPlayer(snapshot: PlayerPortalSnapshot): PlayerViewModel {
     id: snapshot.player.id,
     nameEn: snapshot.player.fullName,
     nameAr: snapshot.player.fullName,
-    sportId: '',
-    groupId: snapshot.schedule[0]?.groupId,
-    programId: snapshot.subscriptions[0]?.programId,
+    sportId: snapshot.relations.sport?.id ?? '',
+    groupId: snapshot.relations.group?.id,
+    programId: snapshot.relations.program?.id,
     level: bi('Not recorded', 'غير مسجل'),
     status: bi('Active', 'نشط'),
     attendanceRate: attendanceRate(snapshot),
@@ -50,7 +50,7 @@ function scopedSessions(snapshots: PlayerPortalSnapshot[]): SessionViewModel[] {
     for (const session of snapshot.schedule) {
       if (seen.has(session.id)) continue;
       seen.add(session.id);
-      rows.push({ id: session.id, sportId: '', groupId: session.groupId, startsAt: session.startsAt, status: bi(session.status), coachIds: [] });
+      rows.push({ id: session.id, sportId: snapshot.relations.sport?.id ?? '', groupId: session.groupId, startsAt: session.startsAt, status: bi(session.status), coachIds: snapshot.relations.coaches.map((coach) => coach.id) });
     }
   }
   return rows.sort((a, b) => a.startsAt.localeCompare(b.startsAt));
@@ -70,6 +70,66 @@ function scopedSubscriptions(snapshots: PlayerPortalSnapshot[]): SubscriptionVie
     amount: (subscription.amountMinor ?? 0) / 100,
     currency: subscription.currency ?? 'AED',
   })));
+}
+
+function paymentStatus(value: string): PaymentViewModel['status'] {
+  if (value === 'completed' || value === 'paid' || value === 'succeeded') return 'completed';
+  if (value === 'refunded') return 'refunded';
+  if (value === 'failed' || value === 'cancelled' || value === 'canceled') return 'failed';
+  return 'pending';
+}
+
+function scopedPayments(snapshots: PlayerPortalSnapshot[]): PaymentViewModel[] {
+  return snapshots.flatMap((snapshot) => snapshot.payments.map((payment) => ({
+    id: payment.id,
+    subscriptionId: payment.subscriptionId ?? '',
+    playerId: snapshot.player.id,
+    amount: (payment.amountMinor ?? 0) / 100,
+    currency: payment.currency ?? 'AED',
+    status: paymentStatus(payment.status),
+    paidAt: payment.createdAt,
+    method: bi(payment.provider || 'Recorded provider', payment.provider || 'موفر مسجل'),
+    reference: payment.reference ?? undefined,
+  })));
+}
+
+function scopedRelations(snapshots: PlayerPortalSnapshot[]) {
+  const sports = new Map<string, SportViewModel>();
+  const groups = new Map<string, TrainingGroupViewModel>();
+  const programs = new Map<string, ProgramViewModel>();
+  const branches = new Map<string, BranchViewModel>();
+
+  for (const snapshot of snapshots) {
+    const sport = snapshot.relations.sport;
+    const program = snapshot.relations.program;
+    const group = snapshot.relations.group;
+    const branch = snapshot.relations.branch;
+    if (sport && !sports.has(sport.id)) {
+      sports.set(sport.id, { id: sport.id, name: bi(sport.name, sport.nameAr || sport.name), description: bi('Recorded sport', 'رياضة مسجلة'), ageGroups: [], programIds: [], icon: '', status: sport.status === 'active' ? 'active' : 'inactive' });
+    }
+    if (program && !programs.has(program.id)) {
+      programs.set(program.id, { id: program.id, name: bi(program.name, program.nameAr || program.name), sportId: sport?.id ?? '', description: bi('Program record', 'سجل البرنامج'), ageGroups: [], level: bi('Not recorded', 'غير مسجل'), status: program.status === 'active' ? 'active' : 'inactive' });
+    }
+    if (sport && program) {
+      const sportVm = sports.get(sport.id);
+      if (sportVm && !sportVm.programIds.includes(program.id)) sportVm.programIds.push(program.id);
+    }
+    if (group && !groups.has(group.id)) {
+      groups.set(group.id, { id: group.id, sportId: sport?.id ?? '', name: bi(group.name), ageGroup: bi('Not recorded', 'غير مسجل'), level: bi('Not recorded', 'غير مسجل'), playerCount: snapshots.filter((item) => item.relations.group?.id === group.id).length, coachCount: snapshot.relations.coaches.length, programIds: program ? [program.id] : [], status: group.status === 'active' ? 'active' : 'inactive' });
+    }
+    if (branch && !branches.has(branch.id)) {
+      const branchSnapshots = snapshots.filter((item) => item.player.branchId === branch.id);
+      branches.set(branch.id, { id: branch.id, name: bi(branch.name, branch.nameAr || branch.name), countryId: '', organizationId: '', sportIds: [...new Set(branchSnapshots.map((item) => item.relations.sport?.id).filter((id): id is string => Boolean(id)))], programIds: [...new Set(branchSnapshots.map((item) => item.relations.program?.id).filter((id): id is string => Boolean(id)))], groupIds: [...new Set(branchSnapshots.map((item) => item.relations.group?.id).filter((id): id is string => Boolean(id)))], coachIds: [...new Set(branchSnapshots.flatMap((item) => item.relations.coaches.map((coach) => coach.id)))], playerIds: branchSnapshots.map((item) => item.player.id), sportCount: 0, programCount: 0, groupCount: 0, coachCount: 0, playerCount: branchSnapshots.length, status: 'active' });
+    }
+  }
+
+  for (const branch of branches.values()) {
+    branch.sportCount = branch.sportIds.length;
+    branch.programCount = branch.programIds.length;
+    branch.groupCount = branch.groupIds.length;
+    branch.coachCount = branch.coachIds.length;
+  }
+  return { sports: [...sports.values()], groups: [...groups.values()], programs: [...programs.values()], branches: [...branches.values()] };
 }
 
 type ParentDataState = {
@@ -125,8 +185,8 @@ export function useParentPortalGatewayData() {
           const childIds = family.children.map((child) => child.id).filter((id) => allowed.has(id));
           const snapshots = await Promise.all(childIds.map((id) => fetchPlayerPortalSnapshot(id)));
           if (!active) return;
+          const relations = scopedRelations(snapshots);
           setData({
-            ...EMPTY,
             parent: {
               id: family.parent.id,
               nameEn: family.parent.fullName,
@@ -139,6 +199,9 @@ export function useParentPortalGatewayData() {
             children: snapshots.map(scopedPlayer),
             familySessions: scopedSessions(snapshots),
             familySubscriptions: scopedSubscriptions(snapshots),
+            familyPayments: scopedPayments(snapshots),
+            familyMessages: family.messages.map((message) => ({ id: message.id, fromId: message.fromId, toIds: message.toIds, subject: bi('Family portal message', 'رسالة بوابة الأسرة'), body: bi(message.content), sentAt: message.sentAt, ...(message.readAt ? { readAt: message.readAt } : {}), status: message.readAt ? 'read' : 'delivered' })),
+            ...relations,
           });
         })
         .catch((caught) => {
