@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useAdminData } from '../../admin/data/AdminDataProvider';
 import type { CoachViewModel } from '../../admin/data/viewModels';
 import { signOutEverywhere } from '../../lib/auth-client';
@@ -105,6 +105,23 @@ export function CoachSessionProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(Boolean(initial.coachId));
   const [error, setError] = useState<Error | null>(null);
 
+  const logout = useCallback(() => {
+    const wasProduction = sessionProvider === 'production';
+    setActiveCoachIdState(undefined);
+    setSessionProvider(null);
+    setProductionScope({ groupIds: [], playerIds: [] });
+    setProductionWorkspace(null);
+    setAllCoaches([]);
+    setError(null);
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem(PREVIEW_SESSION_KEY);
+      window.localStorage.removeItem(PRODUCTION_SESSION_KEY);
+      window.localStorage.removeItem('uos:coach-portal:auth');
+      window.localStorage.removeItem('uos:coach-portal:active-id');
+    }
+    if (wasProduction) void signOutEverywhere().catch(() => undefined);
+  }, [sessionProvider]);
+
   useEffect(() => {
     let active = true;
     if (!activeCoachId || !sessionProvider) {
@@ -134,9 +151,14 @@ export function CoachSessionProvider({ children }: { children: ReactNode }) {
         })
         .catch((caught) => {
           if (!active) return;
+          const normalized = caught instanceof Error ? caught : new Error('COACH_PORTAL_DATA_FAILED');
           setAllCoaches([]);
           setProductionWorkspace(null);
-          setError(caught instanceof Error ? caught : new Error('COACH_PORTAL_DATA_FAILED'));
+          if (normalized.message === 'COACH_BINDING_MISMATCH') {
+            logout();
+            return;
+          }
+          setError(normalized);
         })
         .finally(() => { if (active) setLoading(false); });
       return () => { active = false; };
@@ -163,7 +185,7 @@ export function CoachSessionProvider({ children }: { children: ReactNode }) {
       .finally(() => { if (active) setLoading(false); });
 
     return () => { active = false; };
-  }, [activeCoachId, gateway, mode, sessionProvider]);
+  }, [activeCoachId, gateway, logout, mode, sessionProvider]);
 
   const coach = useMemo(
     () => activeCoachId ? allCoaches.find((item) => item.id === activeCoachId) : undefined,
@@ -220,23 +242,6 @@ export function CoachSessionProvider({ children }: { children: ReactNode }) {
   const refreshProductionScope = (scope: CoachAuthorizationScope) => {
     if (sessionProvider !== 'production' || !activeCoachId) return;
     writeProductionSession(activeCoachId, scope);
-  };
-
-  const logout = () => {
-    const wasProduction = sessionProvider === 'production';
-    setActiveCoachIdState(undefined);
-    setSessionProvider(null);
-    setProductionScope({ groupIds: [], playerIds: [] });
-    setProductionWorkspace(null);
-    setAllCoaches([]);
-    setError(null);
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.removeItem(PREVIEW_SESSION_KEY);
-      window.localStorage.removeItem(PRODUCTION_SESSION_KEY);
-      window.localStorage.removeItem('uos:coach-portal:auth');
-      window.localStorage.removeItem('uos:coach-portal:active-id');
-    }
-    if (wasProduction) void signOutEverywhere().catch(() => undefined);
   };
 
   return (
