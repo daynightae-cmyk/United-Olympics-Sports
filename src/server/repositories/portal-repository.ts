@@ -18,6 +18,37 @@ export interface PlayerPortalData {
   achievements: Array<{ id: string; title: string; titleAr: string | null; badge: string | null; category: string; earnedAt: string }>;
 }
 
+export interface CoachPortalWorkspaceData {
+  coach: { id: string; fullName: string; branchId: string | null };
+  assignedBranches: string[];
+  assignedGroups: string[];
+  assignedPlayerIds: string[];
+  groups: Array<{
+    id: string;
+    branchId: string;
+    programId: string;
+    sportId: string;
+    name: string;
+    status: string;
+  }>;
+  players: Array<{
+    id: string;
+    fullName: string;
+    branchId: string | null;
+    groupId: string | null;
+    programId: string | null;
+    sportId: string | null;
+    attendanceRate: number;
+    performanceScore: number | null;
+  }>;
+  sessions: Array<{ id: string; groupId: string; sportId: string; startsAt: string; status: string }>;
+  programs: Array<{ id: string; sportId: string; name: string; nameAr: string | null; status: string }>;
+  sports: Array<{ id: string; name: string; nameAr: string | null; status: string }>;
+  parents: Array<{ id: string; fullName: string; playerIds: string[] }>;
+  messages: Array<{ id: string; fromId: string; toIds: string[]; content: string; sentAt: string; readAt: string | null }>;
+  branches: Array<{ id: string; countryId: string; organizationId: string; name: string; nameAr: string | null; status: string }>;
+}
+
 export class PortalDomainRepository {
   constructor(private readonly clientOverride?: DbQueryClient) {}
 
@@ -127,12 +158,7 @@ export class PortalDomainRepository {
     return (await this.getParentPortalData(ctx)).children;
   }
 
-  async getCoachScopeData(ctx: AuthorizationContext): Promise<{
-    coach: { id: string; fullName: string; branchId: string | null };
-    assignedBranches: string[];
-    assignedGroups: string[];
-    assignedPlayerIds: string[];
-  }> {
+  async getCoachScopeData(ctx: AuthorizationContext): Promise<CoachPortalWorkspaceData> {
     const coachId = ctx.bindings.coachIds[0];
     if (!coachId || ctx.bindings.coachIds.length !== 1) {
       throw new ApiError(403, 'COACH_BINDING_REQUIRED', 'A single active coach binding is required.');
@@ -142,11 +168,141 @@ export class PortalDomainRepository {
       [coachId, ctx.uid],
     );
     if (!coachRes.rows.length) throw new ApiError(404, 'COACH_NOT_FOUND', 'Coach record not found.');
+
+    const assignedGroups = [...new Set(ctx.bindings.coachGroupIds)];
+    const assignedPlayerIds = [...new Set(ctx.bindings.coachPlayerIds)];
+    const assignedBranches = [...new Set([
+      ...ctx.tenant.branchIds,
+      ...(coachRes.rows[0].branch_id ? [coachRes.rows[0].branch_id] : []),
+    ])];
+
+    const groupRes = assignedGroups.length
+      ? await this.db.query<{ id: string; branch_id: string; program_id: string; sport_id: string; name: string; status: string }>(
+        `select g.id, g.branch_id, g.program_id, p.sport_id, g.name, g.status
+           from groups g
+           join programs p on p.id = g.program_id
+          where g.id = any($1)
+          order by g.name asc`,
+        [assignedGroups],
+      )
+      : { rows: [] as Array<{ id: string; branch_id: string; program_id: string; sport_id: string; name: string; status: string }> };
+
+    const playerRes = assignedPlayerIds.length
+      ? await this.db.query<{
+        id: string;
+        full_name: string;
+        branch_id: string | null;
+        group_id: string | null;
+        program_id: string | null;
+        sport_id: string | null;
+        attendance_rate: number;
+        performance_score: number | null;
+      }>(
+        `select p.id, p.full_name, p.branch_id, p.group_id,
+                g.program_id, pr.sport_id,
+                coalesce(round((count(distinct case when a.status in ('present', 'late') then a.id end)::numeric / nullif(count(distinct a.id), 0)) * 100), 0)::int as attendance_rate,
+                round(avg(pe.score))::int as performance_score
+           from players p
+           left join groups g on g.id = p.group_id
+           left join programs pr on pr.id = g.program_id
+           left join attendance a on a.player_id = p.id
+           left join performance_evaluations pe on pe.player_id = p.id
+          where p.id = any($1) and p.archived_at is null
+          group by p.id, p.full_name, p.branch_id, p.group_id, g.program_id, pr.sport_id
+          order by p.full_name asc`,
+        [assignedPlayerIds],
+      )
+      : { rows: [] as Array<{ id: string; full_name: string; branch_id: string | null; group_id: string | null; program_id: string | null; sport_id: string | null; attendance_rate: number; performance_score: number | null }> };
+
+    const sessionRes = assignedGroups.length
+      ? await this.db.query<{ id: string; group_id: string; sport_id: string; starts_at: string | Date; status: string }>(
+        `select s.id, s.group_id, pr.sport_id, s.starts_at, s.status
+           from sessions s
+           join groups g on g.id = s.group_id
+           join programs pr on pr.id = g.program_id
+          where s.group_id = any($1)
+          order by s.starts_at asc
+          limit 500`,
+        [assignedGroups],
+      )
+      : { rows: [] as Array<{ id: string; group_id: string; sport_id: string; starts_at: string | Date; status: string }> };
+
+    const programIds = [...new Set(groupRes.rows.map((row) => row.program_id))];
+    const programRes = programIds.length
+      ? await this.db.query<{ id: string; sport_id: string; name: string; name_ar: string | null; status: string }>(
+        'select id, sport_id, name, name_ar, status from programs where id = any($1) order by name asc',
+        [programIds],
+      )
+      : { rows: [] as Array<{ id: string; sport_id: string; name: string; name_ar: string | null; status: string }> };
+
+    const sportIds = [...new Set(programRes.rows.map((row) => row.sport_id))];
+    const sportRes = sportIds.length
+      ? await this.db.query<{ id: string; name: string; name_ar: string | null; status: string }>(
+        'select id, name, name_ar, status from sports where id = any($1) order by name asc',
+        [sportIds],
+      )
+      : { rows: [] as Array<{ id: string; name: string; name_ar: string | null; status: string }> };
+
+    const parentRes = assignedPlayerIds.length
+      ? await this.db.query<{ id: string; full_name: string; player_id: string }>(
+        `select g.id, g.full_name, pg.player_id
+           from guardians g
+           join player_guardians pg on pg.guardian_id = g.id
+          where pg.player_id = any($1) and pg.active = true
+          order by g.full_name asc`,
+        [assignedPlayerIds],
+      )
+      : { rows: [] as Array<{ id: string; full_name: string; player_id: string }> };
+
+    const messageRes = await this.db.query<{ id: string; sender_uid: string; recipient_uid: string; content: string; created_at: string | Date; read_at: string | Date | null }>(
+      `select id, sender_uid, recipient_uid, content, created_at, read_at
+         from messages
+        where sender_uid = $1 or recipient_uid = $1
+        order by created_at desc
+        limit 200`,
+      [ctx.uid],
+    );
+
+    const branchRes = assignedBranches.length
+      ? await this.db.query<{ id: string; country_id: string; organization_id: string; name: string; name_ar: string | null; status: string }>(
+        `select b.id, b.country_id, c.organization_id, b.name, b.name_ar, b.status
+           from branches b
+           join countries c on c.id = b.country_id
+          where b.id = any($1)
+          order by b.name asc`,
+        [assignedBranches],
+      )
+      : { rows: [] as Array<{ id: string; country_id: string; organization_id: string; name: string; name_ar: string | null; status: string }> };
+
+    const parentMap = new Map<string, { id: string; fullName: string; playerIds: string[] }>();
+    for (const row of parentRes.rows) {
+      const existing = parentMap.get(row.id) ?? { id: row.id, fullName: row.full_name, playerIds: [] };
+      if (!existing.playerIds.includes(row.player_id)) existing.playerIds.push(row.player_id);
+      parentMap.set(row.id, existing);
+    }
+
     return {
       coach: { id: coachRes.rows[0].id, fullName: coachRes.rows[0].full_name, branchId: coachRes.rows[0].branch_id },
-      assignedBranches: ctx.tenant.branchIds,
-      assignedGroups: ctx.bindings.coachGroupIds,
-      assignedPlayerIds: ctx.bindings.coachPlayerIds,
+      assignedBranches,
+      assignedGroups,
+      assignedPlayerIds,
+      groups: groupRes.rows.map((row) => ({ id: row.id, branchId: row.branch_id, programId: row.program_id, sportId: row.sport_id, name: row.name, status: row.status })),
+      players: playerRes.rows.map((row) => ({
+        id: row.id,
+        fullName: row.full_name,
+        branchId: row.branch_id,
+        groupId: row.group_id,
+        programId: row.program_id,
+        sportId: row.sport_id,
+        attendanceRate: Number.isFinite(row.attendance_rate) ? row.attendance_rate : 0,
+        performanceScore: typeof row.performance_score === 'number' && Number.isFinite(row.performance_score) ? row.performance_score : null,
+      })),
+      sessions: sessionRes.rows.map((row) => ({ id: row.id, groupId: row.group_id, sportId: row.sport_id, startsAt: new Date(row.starts_at).toISOString(), status: row.status })),
+      programs: programRes.rows.map((row) => ({ id: row.id, sportId: row.sport_id, name: row.name, nameAr: row.name_ar, status: row.status })),
+      sports: sportRes.rows.map((row) => ({ id: row.id, name: row.name, nameAr: row.name_ar, status: row.status })),
+      parents: [...parentMap.values()],
+      messages: messageRes.rows.map((row) => ({ id: row.id, fromId: row.sender_uid, toIds: [row.recipient_uid], content: row.content, sentAt: new Date(row.created_at).toISOString(), readAt: row.read_at ? new Date(row.read_at).toISOString() : null })),
+      branches: branchRes.rows.map((row) => ({ id: row.id, countryId: row.country_id, organizationId: row.organization_id, name: row.name, nameAr: row.name_ar, status: row.status })),
     };
   }
 }
