@@ -4,7 +4,7 @@ import path from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
 
-console.log('--- RUNNING FRESH DATABASE BOOTSTRAP TEST (0001 -> 0008) ---');
+console.log('--- RUNNING FRESH DATABASE BOOTSTRAP TEST (0001 -> 0009) ---');
 
 const db = new PGlite({
   extensions: { pgcrypto }
@@ -40,7 +40,8 @@ const migrationFiles = [
   '0005_production_schema_parity_and_rls_hardening.sql',
   '0006_live_rls_policy_closure.sql',
   '0007_covering_fk_indexes.sql',
-  '0008_store_catalog_richness.sql'
+  '0008_store_catalog_richness.sql',
+  '0009_inventory_anon_scope.sql'
 ];
 
 for (const file of migrationFiles) {
@@ -185,4 +186,24 @@ for (const indexName of ['idx_events_sport_id', 'idx_payment_intents_subscriptio
   assert.equal(idxRes.rows.length, 1, `Covering index ${indexName} must exist`);
 }
 
-console.log('PASS: Fresh empty database bootstrap across migrations 0001 -> 0008 verified with 33 RLS-hardened tables and uuid auth.uid().');
+// 6. Assert inventory anonymous reads are scoped to active catalog products (0009)
+const inventoryPolicyRes = await db.query<{ qual: string }>(`
+  select qual::text as qual
+    from pg_policies
+   where schemaname = 'public'
+     and tablename = 'inventory'
+     and policyname = 'inventory_anon_read';
+`);
+assert.equal(inventoryPolicyRes.rows.length, 1, 'inventory_anon_read policy must exist');
+assert.match(
+  inventoryPolicyRes.rows[0].qual,
+  /status\s*=\s*'active'/,
+  'inventory_anon_read must be scoped to active catalog products',
+);
+assert.equal(
+  /using\s*\(\s*true\s*\)/i.test(inventoryPolicyRes.rows[0].qual),
+  false,
+  'inventory_anon_read must not expose all inventory rows anonymously',
+);
+
+console.log('PASS: Fresh empty database bootstrap across migrations 0001 -> 0009 verified with 33 RLS-hardened tables and uuid auth.uid().');
