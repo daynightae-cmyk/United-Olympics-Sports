@@ -6,6 +6,7 @@ import { ApiError, normalizeString } from './http';
 import {
   cancelStripeIntent,
   getPaymentProviderConfig,
+  retrieveStripeIntent,
   type PaymentProviderConfig,
   type RemoteIntentResult,
 } from './payment-provider';
@@ -23,6 +24,11 @@ type TransactionDb = DbQueryClient & {
 };
 
 type CancelProviderIntent = (
+  config: PaymentProviderConfig,
+  providerIntentId: string,
+) => Promise<RemoteIntentResult>;
+
+type RetrieveProviderIntent = (
   config: PaymentProviderConfig,
   providerIntentId: string,
 ) => Promise<RemoteIntentResult>;
@@ -47,6 +53,7 @@ export interface OrderPaymentClaimExpiryOptions {
   ttlMinutes?: number;
   providerConfig?: PaymentProviderConfig | null;
   cancelIntent?: CancelProviderIntent;
+  retrieveIntent?: RetrieveProviderIntent;
 }
 
 function resolveDb(override?: TransactionDb): TransactionDb {
@@ -69,6 +76,18 @@ async function inTransaction<T>(db: TransactionDb, work: (client: DbQueryClient)
   } finally {
     client.release();
   }
+}
+
+async function restoreCancellingClaim(
+  db: DbQueryClient,
+  paymentIntentId: string,
+  providerIntentId: string,
+): Promise<void> {
+  await db.query(
+    `update payment_intents set status = 'requires_payment_method'
+      where id = $1 and status = 'cancelling' and provider_intent_id = $2`,
+    [paymentIntentId, providerIntentId],
+  );
 }
 
 export function getPaymentClaimTtlMinutes(): number {
@@ -102,11 +121,12 @@ export async function assertOrderPaymentNotClaimed(db: DbQueryClient, orderId: s
 /**
  * Safely expires a stale order-bound Stripe claim.
  *
- * The remote provider intent is cancelled before any local inventory is
- * released. A short-lived local `cancelling` state prevents a retry from
- * reusing the same claim while the provider cancellation is in flight.
- * Only after Stripe confirms cancellation do we atomically mark the claim
- * cancelled, release reserved inventory, and cancel the still-pending order.
+ * The caller is authorized against the locked order before the claim is
+ * touched. The remote provider intent is cancelled before any local inventory
+ * is released. If Stripe rejects cancellation because the intent is already
+ * terminal, provider truth is retrieved: canceled continues local release,
+ * while succeeded is reconciled to a paid order. Only resumable/non-terminal
+ * provider states are restored to requires_payment_method.
  */
 export async function expireAbandonedOrderPaymentClaim(
   ctx: AuthorizationContext,
@@ -142,11 +162,19 @@ export async function expireAbandonedOrderPaymentClaim(
   }
 
   const marked = await inTransaction(db, async (tx) => {
-    const orderRes = await tx.query<{ id: string; status: string }>(
-      'select id, status from orders where id = $1 for update',
+    const orderRes = await tx.query<{ id: string; status: string; customer_uid: string }>(
+      'select id, status, customer_uid from orders where id = $1 for update',
       [orderId],
     );
-    if (orderRes.rows.length === 0 || orderRes.rows[0].status !== 'pending') return false;
+    if (orderRes.rows.length === 0) return false;
+
+    const order = orderRes.rows[0];
+    const isOwner = order.customer_uid === ctx.uid;
+    const isAdmin = ctx.roles.some((role) => ADMIN_ROLES.includes(role));
+    if (!isOwner && !isAdmin) {
+      throw new ApiError(403, 'ORDER_ACCESS_DENIED', 'This order belongs to another customer.');
+    }
+    if (order.status !== 'pending') return false;
 
     const claimRes = await tx.query<{
       id: string;
@@ -186,31 +214,57 @@ export async function expireAbandonedOrderPaymentClaim(
     ? options.providerConfig
     : getPaymentProviderConfig();
   if (!providerConfig || providerConfig.provider !== 'stripe') {
-    await db.query(
-      `update payment_intents set status = 'requires_payment_method'
-        where id = $1 and status = 'cancelling' and provider_intent_id = $2`,
-      [candidate.id, candidate.provider_intent_id],
-    );
+    await restoreCancellingClaim(db, candidate.id, candidate.provider_intent_id);
     return { expired: false, orderCancelled: false };
   }
 
   const cancelIntent = options.cancelIntent ?? cancelStripeIntent;
+  const retrieveIntent = options.retrieveIntent ?? retrieveStripeIntent;
+  let providerConfirmedCancelled = false;
   try {
     const remote = await cancelIntent(providerConfig, candidate.provider_intent_id);
     if (remote.status !== 'cancelled') {
       throw new ApiError(502, 'PAYMENT_PROVIDER_ERROR', 'Payment provider did not confirm timed-out intent cancellation.');
     }
+    providerConfirmedCancelled = true;
   } catch (providerError) {
+    let inspected: RemoteIntentResult;
     try {
-      await db.query(
-        `update payment_intents set status = 'requires_payment_method'
-          where id = $1 and status = 'cancelling' and provider_intent_id = $2`,
-        [candidate.id, candidate.provider_intent_id],
-      );
-    } catch (restoreError) {
-      console.error('[PAYMENT] Failed to restore stale claim after provider cancellation error:', restoreError);
+      inspected = await retrieveIntent(providerConfig, candidate.provider_intent_id);
+    } catch (inspectionError) {
+      console.error('[PAYMENT] Failed to inspect provider intent after cancellation rejection:', inspectionError);
+      try {
+        await restoreCancellingClaim(db, candidate.id, candidate.provider_intent_id);
+      } catch (restoreError) {
+        console.error('[PAYMENT] Failed to restore stale claim after provider cancellation error:', restoreError);
+      }
+      throw providerError;
     }
-    throw providerError;
+
+    if (inspected.status === 'cancelled') {
+      providerConfirmedCancelled = true;
+    } else if (inspected.status === 'succeeded') {
+      const { PaymentDomainRepository } = await import('./repositories/payment-repository');
+      const paymentRepo = new PaymentDomainRepository(db);
+      await paymentRepo.reconcileProviderEvent({
+        provider: 'stripe',
+        providerIntentId: candidate.provider_intent_id,
+        eventType: 'payment_intent.succeeded',
+        orderId,
+      });
+      return { expired: false, orderCancelled: false, paymentIntentId: candidate.id };
+    } else {
+      try {
+        await restoreCancellingClaim(db, candidate.id, candidate.provider_intent_id);
+      } catch (restoreError) {
+        console.error('[PAYMENT] Failed to restore stale claim after provider cancellation error:', restoreError);
+      }
+      throw providerError;
+    }
+  }
+
+  if (!providerConfirmedCancelled) {
+    throw new ApiError(502, 'PAYMENT_PROVIDER_ERROR', 'Payment provider cancellation state could not be established.');
   }
 
   return inTransaction(db, async (tx) => {
