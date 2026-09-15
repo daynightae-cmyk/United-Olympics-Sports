@@ -1,17 +1,15 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { PortalAuthPage, type PortalAuthNotice, type PortalAuthProvider } from '../../../components/auth/PortalAuthPage';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
 import { beginSupabaseGoogleOAuth, fetchPortalIdentity, getAccessToken, signOutEverywhere } from '../../../lib/auth-client';
-import { PlayerSessionProvider, usePlayerSession } from '../PlayerSessionContext';
-import { previewAuthGateway, productionAuthGateway } from './PlayerAuthGateway';
-
-const previewRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true';
+import { productionAuthGateway } from './PlayerAuthGateway';
 
 const PLAYER_SESSION_KEY = 'uos:player-portal:session';
 const PLAYER_ACTIVE_ID_KEY = 'uos:player-portal:active-id';
 const PLAYER_AUTH_KEY = 'uos:player-portal:auth';
+const demoRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_PORTAL_DEMO === 'true';
 
 function readPlayerProductionSession(): { playerId: string } | null {
   if (typeof window === 'undefined') return null;
@@ -35,58 +33,19 @@ function clearPlayerProductionSession() {
   } catch { /* storage may be unavailable */ }
 }
 
-function PlayerPreviewAccess() {
-  const { allPlayers, login, loading } = usePlayerSession();
-  const navigate = useNavigate();
-  const [selectedAthleteId, setSelectedAthleteId] = useState('');
-  const [previewLoading, setPreviewLoading] = useState(false);
-
-  useEffect(() => {
-    if (!allPlayers.length) {
-      setSelectedAthleteId('');
-      return;
-    }
-    setSelectedAthleteId((current) => allPlayers.some((player) => player.id === current) ? current : allPlayers[0].id);
-  }, [allPlayers]);
-
-  const enterPreview = async () => {
-    if (!selectedAthleteId || !allPlayers.some((player) => player.id === selectedAthleteId)) return;
-    setPreviewLoading(true);
-    const result = await previewAuthGateway.enterPreviewMode(selectedAthleteId);
-    setPreviewLoading(false);
-    if (result.success && result.data?.playerId) {
-      login(result.data.playerId);
-      navigate('/player/home');
-    }
-  };
-
+function SafeDemoLink() {
+  if (!demoRuntime) return null;
   return (
-    <div className="portal-auth-preview">
+    <div className="portal-auth-preview" data-safe-demo-link="player">
       <div className="portal-auth-preview-header">
-        <span><Sparkles aria-hidden="true" /><BilingualText value={bi('Development preview', 'معاينة التطوير')} /></span>
-        <span className="portal-auth-preview-badge">Preview</span>
+        <span><Sparkles aria-hidden="true" /><BilingualText value={bi('Safe product demo', 'عرض تجريبي آمن')} /></span>
+        <span className="portal-auth-preview-badge">Demo</span>
       </div>
-      {loading ? (
-        <p><BilingualText value={bi('Loading available athlete records…', 'جارٍ تحميل سجلات اللاعبين المتاحة…')} /></p>
-      ) : allPlayers.length ? (
-        <>
-          <label htmlFor="player-preview-identity">
-            <BilingualText value={bi('Select an athlete record exposed by the preview provider', 'اختر سجل لاعب متاحًا من مزود المعاينة')} />
-          </label>
-          <select id="player-preview-identity" value={selectedAthleteId} onChange={(event) => setSelectedAthleteId(event.target.value)}>
-            {allPlayers.map((player) => (
-              <option key={player.id} value={player.id}>{player.nameEn} — {player.nameAr}</option>
-            ))}
-          </select>
-          <button type="button" onClick={() => void enterPreview()} disabled={previewLoading || !selectedAthleteId}>
-            {previewLoading
-              ? <BilingualText value={bi('Opening preview…', 'جارٍ فتح المعاينة…')} />
-              : <BilingualText value={bi('Enter Preview Athlete Mode', 'الدخول إلى وضع معاينة اللاعب')} />}
-          </button>
-        </>
-      ) : (
-        <p><BilingualText value={bi('No athlete records are available from the preview provider.', 'لا توجد سجلات لاعبين متاحة من مزود المعاينة.')} /></p>
-      )}
+      <p><BilingualText value={bi(
+        'Opens a synthetic player showcase. It does not read production or admin records.',
+        'يفتح عرض لاعب ببيانات صناعية فقط ولا يقرأ سجلات الإنتاج أو الإدارة.',
+      )} /></p>
+      <Link className="button secondary" to="/demo/player"><BilingualText value={bi('Open player demo', 'فتح عرض اللاعب')} /></Link>
     </div>
   );
 }
@@ -94,10 +53,6 @@ function PlayerPreviewAccess() {
 export function PlayerLoginPage() {
   const navigate = useNavigate();
 
-  // Revalidate any persisted production session on mount: a stale or forged
-  // local session must never be trusted without a live portal binding lookup.
-  // Valid bindings redirect only after verified player scope; stale, wrong-portal,
-  // or unbound sessions are cleared fail-closed.
   useEffect(() => {
     let active = true;
     (async () => {
@@ -118,9 +73,7 @@ export function PlayerLoginPage() {
         if (active) clearPlayerProductionSession();
       }
     })();
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [navigate]);
 
   const handleProvider = async (provider: PortalAuthProvider): Promise<PortalAuthNotice | null> => {
@@ -157,15 +110,5 @@ export function PlayerLoginPage() {
     };
   };
 
-  return (
-    <PortalAuthPage
-      portal="player"
-      extraContent={previewRuntime ? (
-        <PlayerSessionProvider>
-          <PlayerPreviewAccess />
-        </PlayerSessionProvider>
-      ) : undefined}
-      onProvider={handleProvider}
-    />
-  );
+  return <PortalAuthPage portal="player" extraContent={<SafeDemoLink />} onProvider={handleProvider} />;
 }
