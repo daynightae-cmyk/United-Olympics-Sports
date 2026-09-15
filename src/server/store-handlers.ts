@@ -1,4 +1,5 @@
 import { StoreDomainRepository } from './repositories/store-repository';
+import { StoreAccountRepository } from './repositories/store-account-repository';
 import { requireAuthorizationContext } from './auth';
 import { ApiError, assertMethod, normalizeString, readJsonBody, sendJson, type ApiRequest, type ApiResponse } from './http';
 import { expireAbandonedOrderPaymentClaim } from './order-payment-claim';
@@ -24,6 +25,7 @@ async function enforceCommerceRateLimit(req: ApiRequest, res: ApiResponse, scope
 }
 
 const storeRepo = new StoreDomainRepository();
+const storeAccountRepo = new StoreAccountRepository();
 
 export const storeProductsHandler = async (req: ApiRequest, res: ApiResponse): Promise<void> => {
   assertMethod(req, ['GET']);
@@ -31,15 +33,20 @@ export const storeProductsHandler = async (req: ApiRequest, res: ApiResponse): P
     const products = await storeRepo.listActiveProducts();
     sendJson(res, 200, { ok: true, items: products });
   } catch (err) {
-    // Public catalog without a configured database is truthfully empty, not
-    // a crash: operators see the degraded health signal, shoppers see an
-    // honest unavailable state, and no console-error noise is produced.
     if (err instanceof ApiError && err.code === 'DATA_SERVICE_NOT_CONFIGURED') {
       sendJson(res, 200, { ok: true, items: [] });
       return;
     }
     throw err;
   }
+};
+
+export const storeAccountHandler = async (req: ApiRequest, res: ApiResponse): Promise<void> => {
+  assertMethod(req, ['GET']);
+  const ctx = await requireAuthorizationContext(req);
+  await enforceCommerceRateLimit(req, res, 'account', ctx.uid);
+  const account = await storeAccountRepo.getAccount(ctx);
+  sendJson(res, 200, { ok: true, account });
 };
 
 export const storeCheckoutHandler = async (req: ApiRequest, res: ApiResponse): Promise<void> => {
@@ -64,9 +71,6 @@ export const storeOrderCancelHandler = async (req: ApiRequest, res: ApiResponse)
   const orderId = normalizeString(body.orderId, 64);
   if (!orderId) throw new ApiError(400, 'VALIDATION_ERROR', 'orderId is required.');
 
-  // If a requires_payment_method claim has exceeded its TTL, cancel the
-  // provider intent first and atomically release the local order inventory.
-  // Non-expired claims remain protected by cancelOrder's transaction guard.
   const expired = await expireAbandonedOrderPaymentClaim(ctx, orderId);
   if (expired.orderCancelled) {
     sendJson(res, 200, {
