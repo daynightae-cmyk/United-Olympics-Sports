@@ -28,6 +28,8 @@ const ctx: AuthorizationContext = {
   },
 };
 
+const strangerCtx: AuthorizationContext = { ...ctx, uid: 'customer-2' };
+
 type OrderRow = {
   id: string;
   customer_uid: string;
@@ -115,6 +117,13 @@ class ClaimRaceDb implements DbQueryClient {
       return { rows: (found ? [found] : []) as unknown as T[], rowCount: found ? 1 : 0 };
     }
 
+    if (normalized.includes('select metadata from payment_intents where provider_intent_id = $1')) {
+      const providerIntentId = String(params[0] ?? '');
+      const found = [...this.intents.values()].find((intent) => intent.provider_intent_id === providerIntentId);
+      const rows = found ? [{ metadata: found.metadata }] : [];
+      return { rows: rows as unknown as T[], rowCount: rows.length };
+    }
+
     if (normalized.startsWith('insert into payment_intents')) {
       const [id, key, amountMinor, currency, provider, metadataJson] = params;
       const now = new Date().toISOString();
@@ -169,6 +178,16 @@ class ClaimRaceDb implements DbQueryClient {
       return { rows: [], rowCount: 1 };
     }
 
+    if (normalized.startsWith('update payment_intents set status = $1')) {
+      const status = String(params[0] ?? '');
+      const providerIntentId = String(params[1] ?? '');
+      const found = [...this.intents.values()].find((intent) => intent.provider_intent_id === providerIntentId);
+      if (!found || found.status === status) return { rows: [], rowCount: 0 };
+      found.status = status;
+      found.updated_at = new Date().toISOString();
+      return { rows: [], rowCount: 1 };
+    }
+
     if (normalized.startsWith("update payment_intents set status = 'failed'")) {
       const id = String(params[0] ?? '');
       const orderId = String(params[1] ?? '');
@@ -193,12 +212,35 @@ class ClaimRaceDb implements DbQueryClient {
       return { rows: [], rowCount: 1 };
     }
 
+    if (normalized.startsWith("update orders set status = 'paid'")) {
+      const id = String(params[0] ?? '');
+      if (id !== this.order.id || this.order.status !== 'pending') return { rows: [], rowCount: 0 };
+      this.order.status = 'paid';
+      return { rows: [], rowCount: 1 };
+    }
+
     if (normalized.startsWith('insert into audit_logs')) {
       return { rows: [], rowCount: 1 };
     }
 
     return { rows: [], rowCount: 0 };
   }
+}
+
+function seedStaleClaim(db: ClaimRaceDb, key: string, providerIntentId: string): void {
+  const staleAt = new Date(Date.now() - 60 * 60_000).toISOString();
+  db.intents.set(key, {
+    id: `intent-${key}`,
+    idempotency_key: key,
+    amount_minor: 24000,
+    currency: 'AED',
+    status: 'requires_payment_method',
+    provider: 'stripe',
+    provider_intent_id: providerIntentId,
+    metadata: { orderId: 'order-1', paymentClaim: true },
+    created_at: staleAt,
+    updated_at: staleAt,
+  });
 }
 
 async function run(): Promise<void> {
@@ -226,8 +268,10 @@ async function run(): Promise<void> {
       && migrateSource.includes('drop index concurrently if exists'),
     'runner must validate concurrent indexes and recover invalid leftovers before tracking the migration',
   );
+  const validityMarker = migrateSource.indexOf('failed final validity verification');
+  const migrationInsertMarker = migrateSource.indexOf('insert into schema_migrations');
   assert.ok(
-    migrateSource.indexOf('failed final validity verification') < migrateSource.indexOf('insert into schema_migrations'),
+    validityMarker >= 0 && migrationInsertMarker >= 0 && validityMarker < migrationInsertMarker,
     'concurrent index validity must be checked before schema_migrations is written',
   );
 
@@ -263,19 +307,7 @@ async function run(): Promise<void> {
   assert.equal(normalizeStripeIntentStatus('canceled'), 'cancelled', 'Stripe canceled must normalize to local cancelled');
 
   const expiryDb = new ClaimRaceDb();
-  const staleAt = new Date(Date.now() - 60 * 60_000).toISOString();
-  expiryDb.intents.set('stale-attempt', {
-    id: 'intent-stale-1',
-    idempotency_key: 'stale-attempt',
-    amount_minor: 24000,
-    currency: 'AED',
-    status: 'requires_payment_method',
-    provider: 'stripe',
-    provider_intent_id: 'pi_stale_1',
-    metadata: { orderId: 'order-1', paymentClaim: true },
-    created_at: staleAt,
-    updated_at: staleAt,
-  });
+  seedStaleClaim(expiryDb, 'stale-attempt', 'pi_stale_1');
   const expired = await expireAbandonedOrderPaymentClaim(
     ctx,
     'order-1',
@@ -284,10 +316,7 @@ async function run(): Promise<void> {
       nowMs: Date.now(),
       ttlMinutes: 30,
       providerConfig: { provider: 'stripe', secretKey: 'sk_test_not_used' },
-      cancelIntent: async (_config, providerIntentId) => ({
-        providerIntentId,
-        status: 'cancelled',
-      }),
+      cancelIntent: async (_config, providerIntentId) => ({ providerIntentId, status: 'cancelled' }),
     },
   );
   assert.equal(expired.expired, true);
@@ -296,13 +325,72 @@ async function run(): Promise<void> {
   assert.equal(expiryDb.order.status, 'cancelled', 'expired provider claim must cancel the pending local order');
   assert.equal(expiryDb.inventory.get('product-1'), 1, 'expired claim must release reserved inventory exactly once');
 
+  const idorDb = new ClaimRaceDb();
+  seedStaleClaim(idorDb, 'foreign-stale-attempt', 'pi_foreign_stale');
+  let foreignProviderCalls = 0;
+  await assert.rejects(
+    () => expireAbandonedOrderPaymentClaim(strangerCtx, 'order-1', idorDb, {
+      nowMs: Date.now(),
+      ttlMinutes: 30,
+      providerConfig: { provider: 'stripe', secretKey: 'sk_test_not_used' },
+      cancelIntent: async (_config, providerIntentId) => {
+        foreignProviderCalls++;
+        return { providerIntentId, status: 'cancelled' };
+      },
+    }),
+    (error: unknown) => {
+      assert.ok(error instanceof ApiError);
+      assert.equal(error.status, 403);
+      assert.equal(error.code, 'ORDER_ACCESS_DENIED');
+      return true;
+    },
+  );
+  assert.equal(foreignProviderCalls, 0, 'unauthorized callers must never reach the payment provider');
+  assert.equal(idorDb.order.status, 'pending');
+  assert.equal(idorDb.intents.get('foreign-stale-attempt')?.status, 'requires_payment_method');
+  assert.equal(idorDb.inventory.get('product-1'), 0);
+
+  const alreadyCancelledDb = new ClaimRaceDb();
+  seedStaleClaim(alreadyCancelledDb, 'already-cancelled', 'pi_already_cancelled');
+  const alreadyCancelled = await expireAbandonedOrderPaymentClaim(ctx, 'order-1', alreadyCancelledDb, {
+    nowMs: Date.now(),
+    ttlMinutes: 30,
+    providerConfig: { provider: 'stripe', secretKey: 'sk_test_not_used' },
+    cancelIntent: async () => { throw new ApiError(502, 'PAYMENT_PROVIDER_ERROR', 'already canceled'); },
+    retrieveIntent: async (_config, providerIntentId) => ({ providerIntentId, status: 'cancelled' }),
+  });
+  assert.equal(alreadyCancelled.expired, true);
+  assert.equal(alreadyCancelled.orderCancelled, true);
+  assert.equal(alreadyCancelledDb.intents.get('already-cancelled')?.status, 'cancelled');
+  assert.equal(alreadyCancelledDb.order.status, 'cancelled');
+  assert.equal(alreadyCancelledDb.inventory.get('product-1'), 1);
+
+  const alreadySucceededDb = new ClaimRaceDb();
+  seedStaleClaim(alreadySucceededDb, 'already-succeeded', 'pi_already_succeeded');
+  const alreadySucceeded = await expireAbandonedOrderPaymentClaim(ctx, 'order-1', alreadySucceededDb, {
+    nowMs: Date.now(),
+    ttlMinutes: 30,
+    providerConfig: { provider: 'stripe', secretKey: 'sk_test_not_used' },
+    cancelIntent: async () => { throw new ApiError(502, 'PAYMENT_PROVIDER_ERROR', 'already succeeded'); },
+    retrieveIntent: async (_config, providerIntentId) => ({ providerIntentId, status: 'succeeded' }),
+  });
+  assert.equal(alreadySucceeded.expired, false);
+  assert.equal(alreadySucceeded.orderCancelled, false);
+  assert.equal(alreadySucceededDb.intents.get('already-succeeded')?.status, 'succeeded');
+  assert.equal(alreadySucceededDb.order.status, 'paid', 'terminal succeeded provider state must reconcile the order to paid');
+  assert.equal(alreadySucceededDb.inventory.get('product-1'), 0, 'succeeded payment must keep the reserved inventory consumed');
+
   const paymentHandlerSource = await readFile(new URL('../src/server/payment-handlers.ts', import.meta.url), 'utf8');
   const claimCall = paymentHandlerSource.indexOf('orderClaim = await claimOrderPayment');
   const providerCall = paymentHandlerSource.indexOf('remote = await createStripeIntent');
   assert.ok(claimCall >= 0 && providerCall > claimCall, 'order claim must happen before remote provider intent creation');
+  const claimReleaseMarker = paymentHandlerSource.indexOf('failOrderPaymentClaim(orderClaim)');
+  const providerRethrowMarker = paymentHandlerSource.indexOf('throw error;', claimReleaseMarker);
   assert.ok(
     paymentHandlerSource.includes("console.error('[PAYMENT] Failed to release order payment claim after provider error:'")
-      && paymentHandlerSource.indexOf('throw error;') > paymentHandlerSource.indexOf('failOrderPaymentClaim(orderClaim)'),
+      && claimReleaseMarker >= 0
+      && providerRethrowMarker >= 0
+      && providerRethrowMarker > claimReleaseMarker,
     'provider errors must remain the primary error even if local claim release also fails',
   );
 
@@ -320,6 +408,15 @@ async function run(): Promise<void> {
   assert.ok(
     paymentRepoSource.includes('expireAbandonedOrderPaymentClaim(RECONCILIATION_CONTEXT'),
     'reconciliation must run bounded abandoned-claim expiry',
+  );
+
+  const claimSource = await readFile(new URL('../src/server/order-payment-claim.ts', import.meta.url), 'utf8');
+  assert.ok(
+    claimSource.includes('select id, status, customer_uid from orders where id = $1 for update')
+      && claimSource.includes("throw new ApiError(403, 'ORDER_ACCESS_DENIED'")
+      && claimSource.includes('retrieveStripeIntent')
+      && claimSource.includes("eventType: 'payment_intent.succeeded'"),
+    'expiry must authorize the locked order and reconcile terminal provider truth after cancellation rejection',
   );
 
   console.log('PR #26 closure regression tests: PASS');
