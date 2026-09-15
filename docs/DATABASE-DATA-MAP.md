@@ -25,7 +25,7 @@ Runner: `npm run db:migrate` (`src/db/migrate.ts`: sha256 checksums, drift detec
 
 - Anon: `catalog_products` SELECT where `status='active'`; `inventory` SELECT only for active products (0009); `public_enquiries` INSERT-only; scoped public reads for achievements/events/announcements.
 - Anon revoked on: payment_webhooks, payment_intents, orders, messages, notifications (+ payments/subscriptions effectively server-only).
-- App tables: recipient/participant/owner-scoped SELECT (`auth.uid()::text`); `payment_webhooks` has zero client policies (server-only). All writes go through service-role server handlers.
+- App tables: recipient/participant/owner-scoped SELECT (`auth.uid()::text`); `payment_webhooks` has zero client policies (server-only). All writes go through service-role server handlers, **except** `public_enquiries`, which has two intentional write paths: the primary public contact form submits to the `/public/enquiries` application route (validated, rate-limited server handler), and the `public_enquiries_anon_insert` policy additionally permits anonymous direct `INSERT` for direct clients. No other table permits anonymous writes.
 
 ## Integrity
 

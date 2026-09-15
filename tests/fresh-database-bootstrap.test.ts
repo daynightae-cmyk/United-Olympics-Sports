@@ -201,9 +201,9 @@ assert.match(
   'inventory_anon_read must be scoped to active catalog products',
 );
 assert.equal(
-  /using\s*\(\s*true\s*\)/i.test(inventoryPolicyRes.rows[0].qual),
+  /\btrue\b/i.test(inventoryPolicyRes.rows[0].qual),
   false,
-  'inventory_anon_read must not expose all inventory rows anonymously',
+  'inventory_anon_read must not contain an unconditional true bypass (pg_policies.qual holds the bare predicate)',
 );
 
 console.log('PASS: Fresh empty database bootstrap across migrations 0001 -> 0009 verified with 33 RLS-hardened tables and uuid auth.uid().');

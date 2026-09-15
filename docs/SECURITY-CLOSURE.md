@@ -26,4 +26,4 @@
 1. **Single-instance rate limiting** when Redis is unconfigured (per-instance memory limiter; comment-admitted). Mitigation: configure `REDIS_URL`/`UPSTASH_REDIS_REST_URL` before multi-instance scale-out.
 2. **No idle/max-age session timeout** — lifetime follows IdP tokens; request-level aborts (5/10/15s) and 30-min payment-claim TTL bound operations. Re-auth policy can be tightened without code changes via IdP settings.
 3. **Supabase publishable defaults baked into server bundle** as fallback — public values by design (not secrets); set explicit env to pin the project.
-4. **Main JS chunk ~893 kB** (route-level lazy loading in place; login pages fetch no workspace data). Budget: keep public-route initial JS under 1 MB gzip-measured 250 kB; revisit manual chunks when adding the next large dependency.
+4. **Main JS chunk 892.79 kB raw / 245.66 kB gzip** (route-level lazy loading in place; login pages fetch no workspace data). Budgets for public-route initial JS: raw ≤ 1 MB and gzip ≤ 300 kB — current build passes both. Revisit manual chunks when adding the next large dependency.

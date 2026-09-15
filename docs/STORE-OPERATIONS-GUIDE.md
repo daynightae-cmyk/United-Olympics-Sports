@@ -21,7 +21,7 @@
 ## Payments lifecycle
 
 - Charging is a separate server `payment-intent` call (idempotency key required, 30-min claim TTL).
-- States: `pending → paid`, `canceled`/`cancelled` normalized, abandoned claims expire and release inventory, webhook retries are idempotent, provider errors are preserved (never rendered as fake “paid”).
+- States: `pending → paid`, canonical local `cancelled` (Stripe sends the `canceled` spelling; the server normalizes it to `cancelled` on ingest), abandoned claims expire and release inventory, webhook retries are idempotent, provider errors are preserved (never rendered as fake “paid”). Operators must query/filter using the local `cancelled` spelling.
 - Webhooks require `PAYMENTS_WEBHOOK_SECRET`; without it they fail closed (503, no mutation). No real charge is made by automated QA — test-mode proof only.
 
 ## Store admin (`/admin/store/*`)

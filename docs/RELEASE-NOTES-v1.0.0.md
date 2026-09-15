@@ -12,7 +12,7 @@
 
 - `typecheck`, `lint` (0 errors), `qa:media-provenance`, full `test:production` (31 suites incl. new isolation test), `vite+server build` — all green.
 - CI extended gate: required checks + production readiness + Chromium/Firefox/WebKit golden masters + emblem QA + review threads resolved.
-- Vercel deployment SHA-parity + Supabase integration confirmed post-merge (see QA-EVIDENCE.md).
+- Vercel deployment SHA-parity + Supabase integration are **required post-merge** (pending at release-notes time) — see QA-EVIDENCE.md; the `v1.0.0` tag is created only after they are green.
 
 ## Known limitations (truthful)
 
@@ -22,4 +22,4 @@
 
 ## Upgrade / rollback
 
-- Deploy: merge to `main`, verify Vercel SHA parity. Roll back by reverting the merge commit (migrations are additive; claims self-expire in 30 min).
+- Deploy: merge to `main`, verify Vercel SHA parity. Roll back in two steps: promote the previous known-good Vercel deployment first (verify its SHA), then revert the merge commit (migrations are additive — reverting code does **not** undo migration 0009; a forward compensating migration is required if the old anon-read behavior must return).

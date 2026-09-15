@@ -29,10 +29,11 @@ Browser/runtime QA runs in CI (`verify.yml`: browser-qa + store golden masters o
 - `CREATE INDEX CONCURRENTLY` statements execute outside transactions with invalid-index recovery.
 - Without credentials the runner performs a validating dry-run and reports `DRY_RUN` per file.
 
-## Rollback decision
+## Rollback decision (two steps — revert alone does not re-serve old code)
 
-- Code: revert the merge commit on `main` (never reset history); Vercel redeploys the previous Ready deployment — verify SHA parity again.
-- Data: migrations are additive; no destructive DDL to undo. If a migration fails, `schema_migrations` records nothing for it — fix forward with a new migration.
+1. **Restore traffic first:** in Vercel, promote the previous known-good immutable deployment and verify it serves its known-good SHA. A revert commit alone only queues a *new* deployment; it never re-serves the old one.
+2. **Fix history second:** revert the offending merge commit on `main` (never reset history); when the revert deploys, verify the new deployment SHA equals the revert commit SHA.
+- Data: migrations are additive and forward-only — reverting code does **not** undo applied migrations (e.g. 0009 stays applied). If the previous DB behavior is required, ship a forward compensating migration and re-verify the affected policy (see BACKUP-RECOVERY-RUNBOOK.md).
 - Payments: stuck `pending` claims expire after 30 min and release inventory; failed webhooks are retried idempotently by the provider.
 
 ## Hotfix process
