@@ -8,19 +8,19 @@ import {
   CatalogPage,
   CategoryPage,
   CheckoutPage,
-  OrderDetailPage,
   OrderSuccessPage,
-  PaymentMethodsPage,
   ProductDetailPage,
   SearchResultsPage,
   StoreHomePage,
-  StoreSettingsPage,
 } from './StorePages';
 import {
   ConnectedAccountPage,
   ConnectedAddressesPage,
   ConnectedNotificationsPage,
+  ConnectedOrderDetailPage,
   ConnectedOrdersPage,
+  ConnectedPaymentMethodsPage,
+  ConnectedSettingsPage,
   ConnectedWishlistPage,
   StoreAccountBoundary,
 } from './account/StoreAccountRuntime';
@@ -44,12 +44,12 @@ export function StoreApp({ dataGateway }: { dataGateway?: StoreDataGateway }) {
       <Route path="account" element={<ConnectedAccountPage />} />
       <Route path="profile" element={<Navigate to="/store/account" replace />} />
       <Route path="orders" element={<ConnectedOrdersPage />} />
-      <Route path="order/:id" element={<OrderDetailPage />} />
+      <Route path="order/:id" element={<ConnectedOrderDetailPage />} />
       <Route path="wishlist" element={<ConnectedWishlistPage />} />
       <Route path="addresses" element={<ConnectedAddressesPage />} />
-      <Route path="payment-methods" element={<PaymentMethodsPage />} />
+      <Route path="payment-methods" element={<ConnectedPaymentMethodsPage />} />
       <Route path="notifications" element={<ConnectedNotificationsPage />} />
-      <Route path="settings" element={<StoreSettingsPage />} />
+      <Route path="settings" element={<ConnectedSettingsPage />} />
     </Route>
 
     <Route path="*" element={<Navigate to="/store" replace />} />
