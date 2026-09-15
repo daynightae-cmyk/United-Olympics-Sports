@@ -1,5 +1,9 @@
+import { onAuthStateChanged } from 'firebase/auth';
 import { cartLineKey, hasSelectedVariants } from './storeUtils';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { fetchServerSession } from '../lib/auth-client';
+import { auth } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
 import { useUiSettings } from '../ui/theme/useUiSettings';
 import { useStoreData } from './data/StoreDataProvider';
 import type { StoreCartLine, StoreCategory, StoreDataState, StoreProduct } from './storeTypes';
@@ -14,6 +18,7 @@ type StoreContextValue = {
   categories: StoreCategory[];
   cart: StoreCartLine[];
   wishlist: string[];
+  wishlistOwnerUid: string | null;
   recentlyViewed: string[];
   recordView: (id: string) => void;
   miniCartOpen: boolean;
@@ -21,6 +26,7 @@ type StoreContextValue = {
   subtotal: number;
   setLocale: (locale: 'en' | 'ar') => void;
   setMiniCartOpen: (open: boolean) => void;
+  setWishlistOwnerUid: (uid: string | null) => void;
   addToCart: (product: StoreProduct, options?: AddOptions) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   removeFromCart: (productId: string) => void;
@@ -31,6 +37,7 @@ type StoreContextValue = {
 const StoreContext = createContext<StoreContextValue | undefined>(undefined);
 
 const STORE_PERSIST_KEY = 'uos:store:client-state:v1';
+const STORE_WISHLIST_KEY_PREFIX = 'uos:store:wishlist:v1:';
 const STORE_PERSIST_VERSION = 1;
 
 type PersistedStoreState = {
@@ -57,6 +64,24 @@ function readPersistedStoreState(): Partial<PersistedStoreState> {
   }
 }
 
+function wishlistStorageKey(uid: string | null): string {
+  return `${STORE_WISHLIST_KEY_PREFIX}${encodeURIComponent(uid || 'anonymous')}`;
+}
+
+function readScopedWishlist(uid: string | null, fallback: string[] = []): string[] {
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const raw = window.localStorage.getItem(wishlistStorageKey(uid));
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed)
+      ? [...new Set(parsed.filter((value): value is string => typeof value === 'string' && Boolean(value.trim())))]
+      : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export function StoreProvider({ children }: { children: ReactNode }) {
   const { bilingualOrder, setSetting } = useUiSettings();
   const { mode, state, products, categories } = useStoreData();
@@ -64,18 +89,62 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [persisted] = useState(readPersistedStoreState);
   const [cart, setCart] = useState<StoreCartLine[]>(persisted.cart ?? []);
   const [recentlyViewed, setRecentlyViewed] = useState<string[]>(persisted.recentlyViewed ?? []);
-  const [wishlist, setWishlist] = useState<string[]>(persisted.wishlist ?? []);
+  const [wishlistOwnerUid, setWishlistOwnerUidState] = useState<string | null>(null);
+  const wishlistOwnerRef = useRef<string | null>(null);
+  const [wishlist, setWishlist] = useState<string[]>(() => readScopedWishlist(null, persisted.wishlist ?? []));
   const [miniCartOpen, setMiniCartOpen] = useState(false);
+
+  const setWishlistOwnerUid = useCallback((uid: string | null) => {
+    const normalized = typeof uid === 'string' && uid.trim() ? uid.trim() : null;
+    if (wishlistOwnerRef.current === normalized) return;
+    wishlistOwnerRef.current = normalized;
+    setWishlistOwnerUidState(normalized);
+    setWishlist(readScopedWishlist(normalized));
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      const payload: PersistedStoreState = { version: STORE_PERSIST_VERSION, cart, wishlist, recentlyViewed };
+      const payload: PersistedStoreState = { version: STORE_PERSIST_VERSION, cart, wishlist: [], recentlyViewed };
       window.localStorage.setItem(STORE_PERSIST_KEY, JSON.stringify(payload));
     } catch {
-      // Storage quota or privacy mode — cart remains in-memory only.
+      // Storage quota or privacy mode — cart/history remain in-memory only.
     }
-  }, [cart, wishlist, recentlyViewed]);
+  }, [cart, recentlyViewed]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(wishlistStorageKey(wishlistOwnerUid), JSON.stringify(wishlist));
+    } catch {
+      // Storage quota or privacy mode — wishlist remains in-memory only.
+    }
+  }, [wishlist, wishlistOwnerUid]);
+
+  useEffect(() => {
+    let active = true;
+    let revision = 0;
+    const syncOwner = async () => {
+      const currentRevision = ++revision;
+      try {
+        const session = await fetchServerSession();
+        if (active && currentRevision === revision) setWishlistOwnerUid(session.uid);
+      } catch {
+        if (active && currentRevision === revision) setWishlistOwnerUid(null);
+      }
+    };
+
+    void syncOwner();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => { void syncOwner(); });
+    const unsubscribeFirebase = onAuthStateChanged(auth, () => { void syncOwner(); });
+    return () => {
+      active = false;
+      revision += 1;
+      subscription.unsubscribe();
+      unsubscribeFirebase();
+    };
+  }, [setWishlistOwnerUid]);
+
   const locale = bilingualOrder === 'ar-first' ? 'ar' : 'en';
   const recordView = useCallback((id: string) => setRecentlyViewed((current) => current[0] === id ? current : [id, ...current.filter((item) => item !== id)].slice(0, 8)), []);
 
@@ -88,6 +157,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     categories,
     cart,
     wishlist,
+    wishlistOwnerUid,
     recentlyViewed,
     recordView,
     miniCartOpen,
@@ -95,6 +165,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     subtotal: cart.reduce((sum, line) => sum + line.product.price * line.quantity, 0),
     setLocale: (nextLocale) => setSetting('bilingualOrder', nextLocale === 'ar' ? 'ar-first' : 'en-first'),
     setMiniCartOpen,
+    setWishlistOwnerUid,
     addToCart: (product, options = {}) => {
       if (!products.some((item) => item === product) || !hasSelectedVariants(product, options.size, options.color) || product.availability === 'unavailable') return;
       const quantity = Number.isFinite(options.quantity) ? Math.max(1, Math.floor(options.quantity!)) : 1;
@@ -109,7 +180,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     removeFromCart: (productId) => setCart((current) => current.filter((line) => cartLineKey(line) !== productId)),
     clearCart: () => setCart([]),
     toggleWishlist: (productId) => setWishlist((current) => current.includes(productId) ? current.filter((id) => id !== productId) : [...current, productId]),
-  }), [cart, categories, isPreview, locale, miniCartOpen, products, recentlyViewed, recordView, setSetting, state, wishlist]);
+  }), [cart, categories, isPreview, locale, miniCartOpen, products, recentlyViewed, recordView, setSetting, setWishlistOwnerUid, state, wishlist, wishlistOwnerUid]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
