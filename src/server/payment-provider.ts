@@ -126,6 +126,38 @@ export async function createStripeIntent(
 }
 
 /**
+ * Reads a Stripe PaymentIntent after an ambiguous cancellation response.
+ * This is used to distinguish terminal provider truth (canceled/succeeded)
+ * from a resumable intent before restoring a local claim.
+ */
+export async function retrieveStripeIntent(
+  config: PaymentProviderConfig,
+  providerIntentId: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<RemoteIntentResult> {
+  const id = normalizeString(providerIntentId, 255);
+  if (!id) throw new ApiError(400, 'VALIDATION_ERROR', 'Provider payment intent ID is required.');
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetchImpl(`https://api.stripe.com/v1/payment_intents/${encodeURIComponent(id)}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${config.secretKey}:`).toString('base64')}`,
+      },
+      signal: controller.signal,
+    });
+    return await readStripeIntentResponse(response);
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(502, 'PAYMENT_PROVIDER_ERROR', 'Payment provider status lookup failed.');
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/**
  * Cancels a Stripe PaymentIntent before a timed-out local payment claim is
  * released. Local order/inventory state must only be released after this call
  * returns Stripe's terminal canceled state, otherwise a resumable provider
