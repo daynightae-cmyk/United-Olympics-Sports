@@ -10,7 +10,7 @@
 
 ## Implemented (this mission)
 
-- **Security:** production builds ignore preview/demo flags on all 10 client gates (`fix(security)` + `tests/production-preview-isolation.test.ts` in suite).
+- **Security:** preview/demo flags are blocked on canonical production hosts across all 10 client gates (`src/lib/preview-guard.ts`; dev + explicit preview-QA builds unaffected) (`fix(security)` + `tests/production-preview-isolation.test.ts` in suite).
 - **Store:** account-scoped order detail / payment-methods / settings behind `StoreAccountBoundary`; truthful checkout header; dead static shell removed.
 - **DB:** migration 0009 (anon inventory → active products only); bootstrap 0001→0009.
 - **Auth:** dead Firebase-only middleware removed; dual-provider verifier is canonical.

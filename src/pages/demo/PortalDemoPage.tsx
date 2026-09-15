@@ -2,6 +2,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { CalendarDays, ChevronRight, ShieldCheck, Sparkles, Target, Trophy, UsersRound } from 'lucide-react';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { PortalEmblem } from '../../components/brand/PortalEmblem';
+import { previewModeAllowed } from '../../lib/preview-guard';
 
 type DemoPortal = 'player' | 'parent' | 'coach';
 
@@ -42,9 +43,10 @@ const demos: Record<DemoPortal, { heading: ReturnType<typeof bi>; subheading: Re
   },
 };
 
-// Defense in depth: the /demo/* route is unmounted in production builds
-// (see AppRouter). This guard keeps the page inert even if mounted directly.
-const demoEnabled = !import.meta.env.PROD && (import.meta.env.DEV || import.meta.env.VITE_UOS_PORTAL_DEMO === 'true');
+// Defense in depth: the /demo/* route is unmounted on canonical production
+// hosts (see AppRouter + preview-guard). This guard keeps the page inert
+// even if mounted directly.
+const demoEnabled = previewModeAllowed(import.meta.env.VITE_UOS_PORTAL_DEMO === 'true');
 
 export function PortalDemoPage() {
   const { portal } = useParams();

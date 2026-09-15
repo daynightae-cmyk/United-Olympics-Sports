@@ -5,13 +5,14 @@ import { PortalAuthPage, type PortalAuthNotice, type PortalAuthProvider } from '
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
 import { beginSupabaseGoogleOAuth, fetchPortalIdentity, getAccessToken, signOutEverywhere } from '../../../lib/auth-client';
 import { productionAuthGateway } from './PlayerAuthGateway';
+import { previewModeAllowed } from '../../../lib/preview-guard';
 
 const PLAYER_SESSION_KEY = 'uos:player-portal:session';
 const PLAYER_ACTIVE_ID_KEY = 'uos:player-portal:active-id';
 const PLAYER_AUTH_KEY = 'uos:player-portal:auth';
-// Safe demo links are dev-only. Production builds never render them,
-// even if the demo flag is misconfigured in the deployment environment.
-const demoRuntime = !import.meta.env.PROD && (import.meta.env.DEV || import.meta.env.VITE_UOS_PORTAL_DEMO === 'true');
+// Safe demo links are blocked on canonical production hosts even when the
+// flag is set (see preview-guard); elsewhere they enable local/preview QA.
+const demoRuntime = previewModeAllowed(import.meta.env.VITE_UOS_PORTAL_DEMO === 'true');
 
 function readPlayerProductionSession(): { playerId: string } | null {
   if (typeof window === 'undefined') return null;

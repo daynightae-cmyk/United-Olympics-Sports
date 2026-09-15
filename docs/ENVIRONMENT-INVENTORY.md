@@ -19,6 +19,6 @@ Values are never recorded here. Presence below reflects repository contract (`.e
 | `SMS_PROVIDER` | Supabase SMS/OTP enablement marker | Server | Prod (for OTP) | Requires Supabase-project SMS enablement by owner |
 | `GEMINI_API_KEY` | Deferred assistant provider | — | — | Deferred (assistant is local/static) |
 | `SUPPORT_EMAIL` | Public support contact | Client | All | Pre-filled |
-| `VITE_UOS_ADMIN_PREVIEW` / `VITE_UOS_STORE_PREVIEW` / `VITE_UOS_PORTAL_DEMO` | QA-only preview/demo switches | Build-time | CI QA only | **Must be unset/false in Vercel production**; production builds ignore them regardless (defense in depth) |
+| `VITE_UOS_ADMIN_PREVIEW` / `VITE_UOS_STORE_PREVIEW` / `VITE_UOS_PORTAL_DEMO` | QA-only preview/demo switches | Build-time | CI QA only | **Must be unset/false in Vercel production**; blocked on canonical production hosts regardless (`src/lib/preview-guard.ts`) |
 
 Secret hygiene: service-role keys, DB passwords, Stripe secrets, and Firebase private keys never enter `VITE_*`, the client bundle, logs, screenshots, or reports (`tests/service-role-leak-gate.test.ts` scans 308 files on every run).

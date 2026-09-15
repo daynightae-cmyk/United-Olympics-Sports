@@ -1,12 +1,13 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { getAccessToken } from '../../lib/auth-client';
+import { previewModeAllowed } from '../../lib/preview-guard';
 
 export function AdminAccessGate({ children }: { children: ReactNode }) {
   const location = useLocation();
-  // Production builds never honor preview access, even if a preview flag is
-  // misconfigured in the deployment environment. Preview bypass is dev-only.
-  const previewAccess = !import.meta.env.PROD && (import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true');
+  // Preview access is blocked on canonical production hosts even when the
+  // flag is set (see preview-guard); elsewhere it enables local/preview QA.
+  const previewAccess = previewModeAllowed(import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true');
   const [status, setStatus] = useState<'checking' | 'allowed' | 'denied'>(previewAccess ? 'allowed' : 'checking');
 
   useEffect(() => {
