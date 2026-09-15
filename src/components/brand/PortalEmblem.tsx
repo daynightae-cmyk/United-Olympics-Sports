@@ -16,6 +16,8 @@ type PortalEmblemProps = {
   role?: PortalEmblemRole;
 };
 
+const SELECTOR_EMBLEM_SRC = '/brand/united-olympics-sports-logo.png';
+
 export function PortalEmblem({
   portal,
   size = 'header',
@@ -30,13 +32,14 @@ export function PortalEmblem({
   const src = definition[resolvedTheme];
   const alternate = definition[resolvedTheme === 'dark' ? 'light' : 'dark'];
   const resolvedRole: PortalEmblemRole = role ?? (decorative ? 'decorative' : 'primary');
+  const renderedSrc = resolvedRole === 'selector' ? SELECTOR_EMBLEM_SRC : src;
 
   useEffect(() => {
-    if (!preloadAlternate || typeof window === 'undefined') return;
+    if (resolvedRole === 'selector' || !preloadAlternate || typeof window === 'undefined') return;
     const image = new Image();
     image.decoding = 'async';
     image.src = alternate;
-  }, [alternate, preloadAlternate]);
+  }, [alternate, preloadAlternate, resolvedRole]);
 
   const alt = decorative ? '' : `${definition.altEn} emblem | ${definition.altAr}`;
 
@@ -48,7 +51,7 @@ export function PortalEmblem({
       data-portal-emblem-role={resolvedRole}
     >
       <img
-        src={src}
+        src={renderedSrc}
         alt={alt}
         aria-hidden={decorative ? true : undefined}
         loading={priority ? 'eager' : 'lazy'}
