@@ -1,6 +1,6 @@
 import { auth, googleSignIn, logout as firebaseLogout } from './firebase';
 import { supabase } from './supabase';
-import { fetchWithRuntimeTimeout, withRuntimeTimeout } from './runtime-timeout';
+import { fetchJsonWithRuntimeTimeout, withRuntimeTimeout } from './runtime-timeout';
 
 const RETURN_TO_KEY = 'uos:auth:return-to';
 const AUTH_RUNTIME_TIMEOUT_MS = 10_000;
@@ -100,11 +100,14 @@ export async function fetchServerSession(token?: string): Promise<ServerAuthSess
   const accessToken = token ?? await getAccessToken();
   if (!accessToken) throw new Error('AUTH_REQUIRED');
 
-  const response = await fetchWithRuntimeTimeout('/api?route=auth-session', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${accessToken}` },
-  }, AUTH_RUNTIME_TIMEOUT_MS);
-  const payload = await response.json().catch(() => null) as { session?: ServerAuthSession; error?: { code?: string } } | null;
+  const { response, payload } = await fetchJsonWithRuntimeTimeout<{ session?: ServerAuthSession; error?: { code?: string } }>(
+    '/api?route=auth-session',
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+    AUTH_RUNTIME_TIMEOUT_MS,
+  );
   if (!response.ok || !payload?.session) {
     throw new Error(payload?.error?.code || 'AUTH_SESSION_FAILED');
   }
@@ -115,11 +118,16 @@ export async function fetchPortalIdentity(token?: string): Promise<PortalIdentit
   const accessToken = token ?? await getAccessToken();
   if (!accessToken) throw new Error('AUTH_REQUIRED');
 
-  const response = await fetchWithRuntimeTimeout('/api?route=portal-whoami', {
-    method: 'GET',
-    headers: { Authorization: `Bearer ${accessToken}` },
-  }, AUTH_RUNTIME_TIMEOUT_MS);
-  const payload = await response.json().catch(() => null) as (PortalIdentity & { ok?: boolean }) | { error?: { code?: string } } | null;
+  const { response, payload } = await fetchJsonWithRuntimeTimeout<
+    (PortalIdentity & { ok?: boolean }) | { error?: { code?: string } }
+  >(
+    '/api?route=portal-whoami',
+    {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+    AUTH_RUNTIME_TIMEOUT_MS,
+  );
   if (!response.ok || !payload || !('bindings' in payload)) {
     const code = payload && 'error' in payload ? payload.error?.code : undefined;
     throw new Error(code || 'PORTAL_BINDING_FAILED');
