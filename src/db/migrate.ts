@@ -103,16 +103,18 @@ export async function runMigrations(): Promise<MigrationSummary> {
         continue;
       }
 
-      // Apply migration in an isolated transaction
-      console.log(`[DB-MIGRATE] Applying migration '${file}'...`);
+      // Apply migration in an isolated transaction unless it contains
+      // CREATE INDEX CONCURRENTLY, which PostgreSQL forbids inside a transaction.
+      const usesConcurrently = /\bconcurrently\b/i.test(sqlContent);
+      console.log(`[DB-MIGRATE] Applying migration '${file}'${usesConcurrently ? ' (concurrently, non-transactional)' : ''}...`);
       try {
-        await client.query('BEGIN');
+        if (!usesConcurrently) await client.query('BEGIN');
         await client.query(sqlContent);
         await client.query(
           'insert into schema_migrations (version, checksum, applied_at) values ($1, $2, now());',
           [file, currentChecksum],
         );
-        await client.query('COMMIT');
+        if (!usesConcurrently) await client.query('COMMIT');
 
         summary.appliedCount++;
         summary.results.push({
@@ -123,7 +125,9 @@ export async function runMigrations(): Promise<MigrationSummary> {
         });
         console.log(`[DB-MIGRATE] Successfully applied '${file}'.`);
       } catch (err: unknown) {
-        await client.query('ROLLBACK');
+        if (!usesConcurrently) {
+          try { await client.query('ROLLBACK'); } catch { /* best-effort */ }
+        }
         const errMsg = err instanceof Error ? err.message : String(err);
         console.error(`[DB-MIGRATE] Migration '${file}' failed:`, errMsg);
         summary.results.push({

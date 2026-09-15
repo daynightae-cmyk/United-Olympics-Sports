@@ -95,15 +95,26 @@ assert.match(coachLoginSource, /fetchPortalIdentity/);
 // Mount-time revalidation: a stale persisted production session landing directly
 // on a login route must be server-reverified (never trusted from storage alone),
 // preserved only on verified binding match, cleared fail-closed otherwise.
-for (const [name, source] of [
-  ['parent login', parentLoginSource],
-  ['coach login', coachLoginSource],
-  ['player login', playerLoginSource],
-] as const) {
-  assert.match(source, /useEffect/, `${name} must revalidate persisted production sessions on mount`);
-  assert.match(source, /getAccessToken/, `${name} must verify a live provider session before trusting storage`);
-  assert.match(source, /fetchPortalIdentity/, `${name} must verify portal binding server-side on mount`);
+// Frozen contract now proves the SAME mount effect contains the ordered
+// getAccessToken → fetchPortalIdentity → fail-closed cleanup in one control flow,
+// not just file-wide string presence.
+function assertContiguousMountRevalidation(name: string, source: string, clearFn: string): void {
+  // Extract the single mount-time production-session useEffect that owns the
+  // getAccessToken → fetchPortalIdentity → clear fail-closed sequence.
+  const mountEffect = source.match(/useEffect\(\(\) => \{[\s\S]*?getAccessToken\(\)[\s\S]*?fetchPortalIdentity[\s\S]*?return \(\) => \{[\s\S]*?\}, \[navigate\]\)/);
+  assert.ok(mountEffect, `${name} must contain a single mount effect that orders getAccessToken → fetchPortalIdentity → fail-closed cleanup`);
+  const block = mountEffect[0];
+  const tokenIdx = block.indexOf('getAccessToken');
+  const identityIdx = block.indexOf('fetchPortalIdentity');
+  const clearIdx = block.indexOf(clearFn);
+  assert.ok(tokenIdx !== -1 && identityIdx !== -1 && clearIdx !== -1, `${name} mount effect must contain getAccessToken, fetchPortalIdentity, and ${clearFn}`);
+  assert.ok(tokenIdx < identityIdx && identityIdx < clearIdx, `${name} mount effect must order getAccessToken → fetchPortalIdentity → ${clearFn} in the same control flow`);
+  // Also prove the effect is mount-time (empty deps except navigate) and fail-closed
+  assert.ok(/}, \[navigate\]\)/.test(block), `${name} mount revalidation must be a mount effect with [navigate] deps`);
 }
+assertContiguousMountRevalidation('parent login', parentLoginSource, 'clearParentSession');
+assertContiguousMountRevalidation('coach login', coachLoginSource, 'clearCoachProductionSession');
+assertContiguousMountRevalidation('player login', playerLoginSource, 'clearPlayerProductionSession');
 assert.match(parentLoginSource, /readParentSession/, 'parent login must read the persisted production session');
 assert.match(parentLoginSource, /clearParentSession/, 'parent login must clear stale or mismatched bindings');
 assert.match(parentLoginSource, /startParentProduction/, 'parent login must refresh scope before redirecting a valid session');

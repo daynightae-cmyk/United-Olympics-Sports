@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { StoreDomainRepository } from '../src/server/repositories/store-repository.ts';
 import { storeProductsHandler } from '../src/server/store-handlers.ts';
 import { resolveRouteKey } from '../src/server/routes.ts';
@@ -206,6 +207,160 @@ async function runStoreProductionTests() {
       return true;
     },
   );
+
+  // 3b. Deterministic inventory lock order: product_ids are sorted before FOR UPDATE
+  // Prevents deadlock when two concurrent checkouts contain the same products in opposite order.
+  class LockOrderCapturingDb extends MockStoreDb {
+    public lastLockProductIds: string[] | null = null;
+    public lastLockSql: string | null = null;
+    public updateOrder: string[] = [];
+    async query<T = any>(sql: string, params?: unknown[]): Promise<{ rows: T[]; rowCount?: number }> {
+      const s = sql.toLowerCase();
+      if (s.includes('from inventory where product_id = any($1)') && s.includes('for update')) {
+        this.lastLockProductIds = [...(params?.[0] as string[])];
+        this.lastLockSql = sql;
+        // Verify ORDER BY product_id is present (global lock order)
+        assert.ok(s.includes('order by product_id'), 'lock query must use ORDER BY product_id');
+      }
+      if (s.includes('update inventory') && s.includes('available_quantity - $1')) {
+        this.updateOrder.push(params?.[1] as string);
+      }
+      return super.query(sql, params);
+    }
+  }
+  const lockDb = new LockOrderCapturingDb();
+  lockDb.products.push({ id: 'p-3', sku: 'UOS-TENNIS-BALL', name: 'Tennis Ball', name_ar: null, price_minor: 1000, currency: 'AED', available_quantity: 10, status: 'active' } as never);
+  lockDb.inventory.set('p-3', 10);
+  const lockRepo = new StoreDomainRepository(lockDb);
+  // Submit in reverse order; lock must still be sorted
+  await lockRepo.prepareOrder(userCtx, [{ productId: 'p-3', quantity: 1 }, { productId: 'p-1', quantity: 1 }]);
+  assert.deepEqual(lockDb.lastLockProductIds, ['p-1', 'p-3'], 'lock product_ids must be sorted deterministically');
+  assert.deepEqual(lockDb.updateOrder, ['p-1', 'p-3'], 'inventory decrements must be in deterministic product_id order');
+
+  // 3c. Cancellation deterministic order: release lines sorted by productId
+  class CancelOrderCapturingDb extends MockStoreDb {
+    public releaseOrder: string[] = [];
+    async query<T = any>(sql: string, params?: unknown[]): Promise<{ rows: T[]; rowCount?: number }> {
+      const s = sql.toLowerCase();
+      if (s.includes('update inventory') && s.includes('available_quantity + $1')) {
+        this.releaseOrder.push(params?.[1] as string);
+      }
+      return super.query(sql, params);
+    }
+  }
+  const cancelDb = new CancelOrderCapturingDb();
+  cancelDb.products.push({ id: 'p-3', sku: 'UOS-TENNIS-BALL', name: 'Tennis Ball', name_ar: null, price_minor: 1000, currency: 'AED', available_quantity: 10, status: 'active' } as never);
+  cancelDb.inventory.set('p-3', 10);
+  cancelDb.products.push({ id: 'p-1', sku: 'UOS-SWIM-GOGGLE', name: 'Olympic Swim Goggles', name_ar: 'نظارات سباحة أولمبية', price_minor: 12000, currency: 'AED', available_quantity: 15, status: 'active' } as never);
+  // Create order with opposite item order in JSON; cancellation must release in sorted order
+  const txOrder = await (new StoreDomainRepository(cancelDb)).prepareOrder(userCtx, [{ productId: 'p-3', quantity: 1 }, { productId: 'p-1', quantity: 1 }]);
+  // Manually reorder items in stored order to opposite to test sorting on release (simulates JSON unordered)
+  const stored = cancelDb.orders.find((o) => o.id === txOrder.orderId);
+  if (stored) stored.items = [...stored.items].reverse();
+  cancelDb.releaseOrder = [];
+  await (new StoreDomainRepository(cancelDb)).cancelOrder(userCtx, txOrder.orderId);
+  assert.deepEqual(cancelDb.releaseOrder, ['p-1', 'p-3'], 'cancellation inventory release must be in deterministic product_id order');
+
+  // 3d. Transactional audit atomicity: audit insert uses same transaction client and rolls back with business mutation
+  // Use a transactional mock that snapshots on BEGIN and reverts on ROLLBACK
+  class TxAuditMockDb implements DbQueryClient {
+    public products = [
+      { id: 'p-1', sku: 'UOS-SWIM-GOGGLE', name: 'Olympic Swim Goggles', name_ar: 'نظارات سباحة أولمبية', price_minor: 12000, currency: 'AED', available_quantity: 15, status: 'active' },
+    ];
+    public inventory = new Map<string, number>([['p-1', 15]]);
+    public orders: any[] = [];
+    public auditInserts: string[] = [];
+    public shouldFailAudit = false;
+    private txSnapshot: { inventory: Map<string, number>; ordersLength: number } | null = null;
+    async query<T = any>(sql: string, params?: unknown[]): Promise<{ rows: T[]; rowCount?: number }> {
+      const s = sql.toLowerCase().trim();
+      if (s === 'begin') {
+        this.txSnapshot = { inventory: new Map(this.inventory), ordersLength: this.orders.length };
+        return { rows: [] as unknown as T[], rowCount: 0 };
+      }
+      if (s === 'commit') {
+        this.txSnapshot = null;
+        return { rows: [] as unknown as T[], rowCount: 0 };
+      }
+      if (s === 'rollback') {
+        if (this.txSnapshot) {
+          this.inventory = this.txSnapshot.inventory;
+          this.orders.length = this.txSnapshot.ordersLength;
+          this.txSnapshot = null;
+        }
+        return { rows: [] as unknown as T[], rowCount: 0 };
+      }
+      if (s.includes('from catalog_products') && s.includes('left join inventory')) {
+        const ids = params?.[0] as string[];
+        const filtered = this.products.filter((p) => ids.includes(p.id)).map((p) => ({ ...p, available_quantity: this.inventory.get(p.id) ?? 0 }));
+        return { rows: filtered as unknown as T[], rowCount: filtered.length };
+      }
+      if (s.includes('from inventory where product_id = any($1)')) {
+        return { rows: [] as unknown as T[], rowCount: 0 };
+      }
+      if (s.includes('update inventory') && s.includes('available_quantity - $1')) {
+        const [qty, productId] = params as [number, string];
+        const avail = this.inventory.get(productId) ?? 0;
+        if (avail >= qty) {
+          this.inventory.set(productId, avail - qty);
+          return { rows: [], rowCount: 1 };
+        }
+        return { rows: [], rowCount: 0 };
+      }
+      if (s.includes('insert into orders')) {
+        const [id, orderNumber] = params as any[];
+        this.orders.push({ id, order_number: orderNumber, customer_uid: userCtx.uid, status: 'pending', items: JSON.parse((params as any[])[5]) });
+        return { rows: [] as unknown as T[], rowCount: 1 };
+      }
+      if (s.includes('insert into audit_logs')) {
+        if (this.shouldFailAudit) throw new Error('AUDIT_PERSISTENCE_FAILURE');
+        this.auditInserts.push(params?.[0] as string);
+        return { rows: [] as unknown as T[], rowCount: 1 };
+      }
+      return { rows: [] as unknown as T[], rowCount: 0 };
+    }
+    async connect() {
+      // Provide a client with query/release that shares this instance's state (simulates Pool.connect)
+      return { query: this.query.bind(this), release: () => {} };
+    }
+  }
+  const txDb = new TxAuditMockDb();
+  // Make audit use the transaction client by wiring Database via getPool override? Instead verify via source:
+  const repoSource = await readFile(new URL('../src/server/repositories/store-repository.ts', import.meta.url), 'utf8');
+  assert.ok(repoSource.includes('await recordAudit(ctx, {') && repoSource.includes('}, db)'), 'prepareOrder/cancelOrder audit must use transaction db client');
+  const auditSource = await readFile(new URL('../src/server/audit.ts', import.meta.url), 'utf8');
+  assert.ok(auditSource.includes('dbOverride'), 'audit must accept transaction client override');
+  assert.ok(auditSource.includes('if (auditingInTransaction) throw err'), 'transactional audit failure must propagate to rollback');
+  // Runtime proof: when audit fails, inventory and order must roll back
+  const txRepo = new StoreDomainRepository(txDb as unknown as DbQueryClient);
+  txDb.shouldFailAudit = true;
+  await assert.rejects(
+    () => txRepo.prepareOrder(userCtx, [{ productId: 'p-1', quantity: 1 }]),
+    (err: unknown) => {
+      assert.ok(err instanceof Error);
+      assert.match((err as Error).message, /AUDIT_PERSISTENCE_FAILURE/);
+      return true;
+    },
+  );
+  assert.equal(txDb.orders.length, 0, 'order must be rolled back when audit fails');
+  assert.equal(txDb.inventory.get('p-1'), 15, 'inventory reservation must roll back when audit fails');
+  txDb.shouldFailAudit = false;
+  await txRepo.prepareOrder(userCtx, [{ productId: 'p-1', quantity: 1 }]);
+  assert.equal(txDb.orders.length, 1);
+  assert.equal(txDb.auditInserts.length, 1);
+
+  // 3e. Migration 0008 index safety: must use CONCURRENTLY and runner must handle non-transactional
+  const migrationSource = await readFile(new URL('../src/db/migrations/0008_store_catalog_richness.sql', import.meta.url), 'utf8');
+  assert.ok(migrationSource.includes('create unique index concurrently if not exists uq_catalog_products_slug'), 'migration must use CONCURRENTLY for uq_catalog_products_slug');
+  assert.ok(migrationSource.includes('create index concurrently if not exists idx_catalog_products_category'), 'migration must use CONCURRENTLY for category index');
+  assert.ok(migrationSource.includes('create index concurrently if not exists idx_catalog_products_sport'), 'migration must use CONCURRENTLY for sport index');
+  const migrateSource = await readFile(new URL('../src/db/migrate.ts', import.meta.url), 'utf8');
+  assert.ok(migrateSource.includes('CONCURRENTLY') && migrateSource.includes('usesConcurrently'), 'migrate runner must detect CONCURRENTLY and skip transaction wrapper');
+
+  // 3f. Package manager pin must be exact x.y.z
+  const pkgSource = await readFile(new URL('../package.json', import.meta.url), 'utf8');
+  const pkg = JSON.parse(pkgSource);
+  assert.match(pkg.packageManager, /^npm@\d+\.\d+\.\d+$/, 'packageManager must be pinned to exact npm x.y.z');
 
   // 4. Public catalog without a configured database is truthfully empty (200),
   // never a crash: operators read the degraded health signal instead.

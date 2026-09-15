@@ -99,18 +99,20 @@ export const paymentIntentHandler = async (req: ApiRequest, res: ApiResponse): P
   const ctx = await requireAuthorizationContext(req);
   const clientIp = getClientIp(req);
   const userLimit = await defaultRateLimiter.consume(`payment-intent:${ctx.uid}`, 10, 10 * 60_000);
-  applyRateLimitHeaders(res, userLimit);
   if (!userLimit.allowed) {
+    applyRateLimitHeaders(res, userLimit);
     throw new ApiError(429, 'RATE_LIMIT_EXCEEDED', 'Too many payment attempts. Please retry later.', {
       retryAfter: userLimit.retryAfterSeconds,
     });
   }
   const ipLimit = await defaultRateLimiter.consume(`payment-intent-ip:${clientIp}`, 30, 10 * 60_000);
   if (!ipLimit.allowed) {
+    applyRateLimitHeaders(res, ipLimit);
     throw new ApiError(429, 'RATE_LIMIT_EXCEEDED', 'Too many payment attempts from your network. Please retry later.', {
       retryAfter: ipLimit.retryAfterSeconds,
     });
   }
+  applyRateLimitHeaders(res, userLimit);
   const body = await readJsonBody(req);
 
   // Server-authoritative payable amount: the browser must never set the
@@ -120,7 +122,7 @@ export const paymentIntentHandler = async (req: ApiRequest, res: ApiResponse): P
   const payable = await resolvePayableAmount(ctx, body as PayableBody);
   const { amountMinor, currency } = payable;
   const orderId = payable.orderId;
-  const subscriptionId = payable.subscriptionId ?? (normalizeString((body as PayableBody).subscriptionId, 64) || undefined);
+  const subscriptionId = payable.subscriptionId;
 
   // Charge path: requires a contracted provider; otherwise fail closed.
   const charge = body.charge === true;
@@ -149,7 +151,7 @@ export const paymentIntentHandler = async (req: ApiRequest, res: ApiResponse): P
     amountMinor,
     currency,
     playerId: body.playerId as string | undefined,
-    subscriptionId: subscriptionId || (body.subscriptionId as string | undefined),
+    ...(subscriptionId ? { subscriptionId } : {}),
     provider: body.provider as string | undefined,
     ...(orderId ? { orderId } : {}),
     ...(remote.providerIntentId ? { providerIntentId: remote.providerIntentId } : {}),

@@ -10,6 +10,11 @@
 --
 -- Safety: DO blocks with information_schema guards so re-runs and
 -- partially-migrated databases converge without errors.
+-- Index safety (review closure 2026-09-15): catalog_products is a known-small
+-- store table (tens to low hundreds of rows). The three indexes below use
+-- CREATE INDEX CONCURRENTLY so they do not block writes on a provisioned
+-- production primary, and the migration runner executes this file outside an
+-- explicit transaction when CONCURRENTLY is present (see src/db/migrate.ts).
 
 do $$
 begin
@@ -59,11 +64,11 @@ begin
   end if;
 end $$;
 
-create unique index if not exists uq_catalog_products_slug
+create unique index concurrently if not exists uq_catalog_products_slug
   on public.catalog_products(slug) where slug is not null;
 
-create index if not exists idx_catalog_products_category
+create index concurrently if not exists idx_catalog_products_category
   on public.catalog_products(category) where status = 'active';
 
-create index if not exists idx_catalog_products_sport
+create index concurrently if not exists idx_catalog_products_sport
   on public.catalog_products(sport) where status = 'active';

@@ -66,7 +66,13 @@ for (const file of migrationFiles) {
     `Migration ${file} must not create platform role service_role`
   );
 
-  await db.exec(sql);
+  // PGlite's exec wraps the file in a transaction, which conflicts with
+  // CREATE INDEX CONCURRENTLY (forbidden inside a transaction). Production
+  // runner handles this via non-transactional execution; for the in-memory
+  // bootstrap we normalize the statement to a blocking index — the migration
+  // file itself is still verified to contain CONCURRENTLY via store-production tests.
+  const sqlForPGlite = /\bconcurrently\b/i.test(sql) ? sql.replace(/\bconcurrently\b/gi, '') : sql;
+  await db.exec(sqlForPGlite);
 }
 
 // 1. Assert exactly 33 public base tables

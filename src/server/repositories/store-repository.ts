@@ -209,7 +209,9 @@ export class StoreDomainRepository {
 
     return this.runInTransaction(async (db) => {
       // Fetch products from database to ensure server-side authoritative pricing and inventory
-      const productIds = [...consolidated.keys()];
+      // Deterministic ordering prevents deadlock when two checkouts overlap on the same
+      // product set in opposite order.
+      const orderedProductIds = [...consolidated.keys()].sort();
       const prodRes = await db.query<{
         id: string;
         sku: string;
@@ -225,14 +227,15 @@ export class StoreDomainRepository {
            from catalog_products p
            left join inventory i on i.product_id = p.id
           where p.id = any($1) and p.status = 'active'`,
-        [productIds],
+        [orderedProductIds],
       );
 
       // Lock the inventory rows for these products so concurrent checkouts
       // serialize here instead of racing the availability check below.
+      // ORDER BY product_id is the global lock order for every inventory mutation.
       await db.query(
-        'select product_id from inventory where product_id = any($1) for update',
-        [productIds],
+        'select product_id from inventory where product_id = any($1) order by product_id for update',
+        [orderedProductIds],
       );
 
       const productMap = new Map(prodRes.rows.map((p) => [p.id, p]));
@@ -287,7 +290,9 @@ export class StoreDomainRepository {
       // Reserve stock atomically per row. With the FOR UPDATE locks above,
       // the guard below only trips on out-of-band writes; a zero rowCount
       // then fails the whole transaction instead of overselling silently.
-      for (const line of orderItems) {
+      // Deterministic product_id order matches the global inventory lock order.
+      const orderedReserveLines = [...orderItems].sort((a, b) => a.productId.localeCompare(b.productId));
+      for (const line of orderedReserveLines) {
         const decremented = await db.query(
           `update inventory
               set available_quantity = available_quantity - $1, updated_at = now()
@@ -304,7 +309,7 @@ export class StoreDomainRepository {
         entityType: 'order',
         entityId: orderId,
         metadata: { orderNumber, totalMinor, currency: resolvedCurrency, itemCount: orderItems.length },
-      });
+      }, db);
 
       return {
         orderId,
@@ -350,8 +355,14 @@ export class StoreDomainRepository {
       }
 
       const lines = Array.isArray(order.items) ? order.items : [];
-      for (const line of lines) {
-        if (!line || typeof line.productId !== 'string' || !Number.isInteger(line.quantity) || line.quantity <= 0) continue;
+      const releaseLines = lines
+        .filter((line): line is { productId: string; quantity: number } =>
+          Boolean(line && typeof (line as { productId?: unknown }).productId === 'string'
+            && Number.isInteger((line as { quantity?: unknown }).quantity)
+            && (line as { quantity: number }).quantity > 0)
+        )
+        .sort((a, b) => a.productId.localeCompare(b.productId));
+      for (const line of releaseLines) {
         await db.query(
           'update inventory set available_quantity = available_quantity + $1, updated_at = now() where product_id = $2',
           [line.quantity, line.productId],
@@ -370,8 +381,8 @@ export class StoreDomainRepository {
         action: 'store.order.cancel',
         entityType: 'order',
         entityId: id,
-        metadata: { releasedLines: lines.length },
-      });
+        metadata: { releasedLines: releaseLines.length },
+      }, db);
 
       return { orderId: id, status: 'cancelled' };
     });

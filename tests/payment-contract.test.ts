@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { PaymentDomainRepository } from '../src/server/repositories/payment-repository.ts';
 import { resolvePayableAmount } from '../src/server/payment-handlers.ts';
 import type { AuthorizationContext } from '../src/server/authorization-context.ts';
@@ -228,6 +229,52 @@ async function runPaymentContractTests() {
       return true;
     },
   );
+
+  // 5h. Order payment cannot be bound to another family's subscription (regression for raw fallback)
+  // Even if the browser smuggles a subscriptionId alongside an orderId, the resolved
+  // payable must be order-only and the handler must never persist that subscription.
+  const orderWithSmuggledSub = await resolvePayableAmount(ownerCtx, { orderId: 'order-pending-1', subscriptionId: 'sub-priced-1', amountMinor: 24000 }, repo);
+  assert.equal(orderWithSmuggledSub.orderId, 'order-pending-1');
+  assert.equal(orderWithSmuggledSub.subscriptionId, undefined, 'order payable must not carry a smuggled subscriptionId');
+  // A stranger's subscription alongside a valid order must still resolve as order-only,
+  // not leak the stranger's subscription.
+  // (guardian-2 cannot pay order-pending-1 anyway, but the resolver must ignore subscriptionId when orderId is present)
+  const orderPayableNoSub = await resolvePayableAmount(ownerCtx, { orderId: 'order-pending-1', subscriptionId: 'sub-priced-1' }, repo);
+  assert.equal(orderPayableNoSub.subscriptionId, undefined);
+
+  // 5i. Malformed/unvalidated subscription values are never persisted
+  // Numbers, objects, or empty strings in body.subscriptionId must not be treated as a
+  // validated subscription and must not be returned as payable.subscriptionId.
+  for (const malformed of [12345, { id: 'sub-priced-1' }, '', '   ', null, undefined] as unknown[]) {
+    const malformedPayable = await resolvePayableAmount(ownerCtx, { subscriptionId: malformed as unknown as string, amountMinor: 7000, currency: 'AED' }, repo);
+    assert.equal(malformedPayable.subscriptionId, undefined, `malformed subscription ${String(malformed)} must not be persisted`);
+    assert.equal(malformedPayable.amountMinor, 7000);
+  }
+  // Unknown subscription IDs must be rejected, not silently persisted via generic path.
+  await assert.rejects(
+    () => resolvePayableAmount(guardianCtx, { subscriptionId: 'sub-ghost', amountMinor: 15000 }, repo),
+    (err: unknown) => {
+      assert.ok(err instanceof ApiError);
+      assert.equal(err.status, 404);
+      return true;
+    },
+  );
+
+  // 6. Payment handler source must not contain raw body.subscriptionId fallback
+  const paymentHandlerSource = await readFile(new URL('../src/server/payment-handlers.ts', import.meta.url), 'utf8');
+  assert.equal(paymentHandlerSource.includes('body.subscriptionId as string'), false, 'payment handler must not fallback to raw body.subscriptionId');
+  assert.equal(/payable\.subscriptionId \?\? \(normalizeString/.test(paymentHandlerSource), false, 'payable subscription fallback must be removed');
+  assert.ok(paymentHandlerSource.includes('const subscriptionId = payable.subscriptionId;'), 'handler must use only validated payable.subscriptionId');
+  // Must persist only validated subscription via spread, not raw fallback
+  assert.ok(paymentHandlerSource.includes('...(subscriptionId ? { subscriptionId } : {})'), 'handler must persist only validated subscriptionId');
+
+  // 7. Rate-limit header correctness: IP rejection must emit ipLimit Retry-After
+  const rateSource = paymentHandlerSource;
+  // Verify the IP-limit branch applies ipLimit headers, not stale userLimit
+  assert.ok(/const ipLimit = await defaultRateLimiter\.consume/.test(rateSource), 'payment handler must have ipLimit');
+  assert.ok(/if \(!ipLimit\.allowed\) \{\s*applyRateLimitHeaders\(res, ipLimit\)/.test(rateSource), 'IP rejection must apply ipLimit headers');
+  const paymentStoreLimiterSource = await readFile(new URL('../src/server/store-handlers.ts', import.meta.url), 'utf8');
+  assert.ok(/if \(!ipLimit\.allowed\) \{\s*applyRateLimitHeaders\(res, ipLimit\)/.test(paymentStoreLimiterSource), 'store handler IP rejection must apply ipLimit headers');
 
   console.log('Payment architecture contract tests: PASS');
 }

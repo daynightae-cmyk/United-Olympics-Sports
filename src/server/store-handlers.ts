@@ -6,18 +6,20 @@ import { applyRateLimitHeaders, defaultRateLimiter, getClientIp } from './rate-l
 async function enforceCommerceRateLimit(req: ApiRequest, res: ApiResponse, scope: string, uid: string): Promise<void> {
   const clientIp = getClientIp(req);
   const userLimit = await defaultRateLimiter.consume(`store-${scope}:${uid}`, 10, 10 * 60_000);
-  applyRateLimitHeaders(res, userLimit);
   if (!userLimit.allowed) {
+    applyRateLimitHeaders(res, userLimit);
     throw new ApiError(429, 'RATE_LIMIT_EXCEEDED', 'Too many requests. Please retry later.', {
       retryAfter: userLimit.retryAfterSeconds,
     });
   }
   const ipLimit = await defaultRateLimiter.consume(`store-${scope}-ip:${clientIp}`, 30, 10 * 60_000);
   if (!ipLimit.allowed) {
+    applyRateLimitHeaders(res, ipLimit);
     throw new ApiError(429, 'RATE_LIMIT_EXCEEDED', 'Too many requests from your network. Please retry later.', {
       retryAfter: ipLimit.retryAfterSeconds,
     });
   }
+  applyRateLimitHeaders(res, userLimit);
 }
 
 const storeRepo = new StoreDomainRepository();

@@ -54,6 +54,7 @@ export async function recordAudit(
     correlationId?: string;
     metadata?: Record<string, unknown>;
   },
+  dbOverride?: { query: <R = unknown>(text: string, params?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }> },
 ): Promise<AuditLogEntry> {
   const id = randomUUID();
   const correlationId = entry.correlationId || randomUUID();
@@ -75,10 +76,11 @@ export async function recordAudit(
     createdAt,
   };
 
-  if (databaseConfigured()) {
+  const dbClient = dbOverride ?? (databaseConfigured() ? getPool() : null);
+  if (dbClient) {
+    const auditingInTransaction = Boolean(dbOverride);
     try {
-      const pool = getPool();
-      await pool.query(
+      await dbClient.query(
         `insert into audit_logs (id, actor_uid, action, entity_type, entity_id, metadata, created_at)
          values ($1, $2, $3, $4, $5, $6, $7)`,
         [
@@ -99,6 +101,7 @@ export async function recordAudit(
         ],
       );
     } catch (err) {
+      if (auditingInTransaction) throw err;
       console.error('[AUDIT] Failed to persist audit log to database:', err);
     }
   }
