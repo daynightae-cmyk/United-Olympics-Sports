@@ -2,6 +2,8 @@ import { getAccessToken } from './auth-client';
 import { fetchJsonWithRuntimeTimeout } from './runtime-timeout';
 
 const PORTAL_DATA_TIMEOUT_MS = 10_000;
+const COACH_PRODUCTION_SESSION_KEY = 'uos:coach-portal:session:v1';
+const COACH_PREVIEW_SESSION_KEY = 'uos:coach-portal:preview-session:v1';
 
 export type PortalMessageSnapshot = { id: string; fromId: string; toIds: string[]; content: string; sentAt: string; readAt: string | null };
 
@@ -90,6 +92,25 @@ async function portalGet<T>(route: string): Promise<T> {
   return payload as T;
 }
 
+function assertCoachSessionMatchesServer(coachId: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const raw = window.localStorage.getItem(COACH_PRODUCTION_SESSION_KEY);
+    if (!raw) return;
+    const stored = JSON.parse(raw) as { coachId?: unknown; provider?: unknown };
+    if (stored.provider !== 'production' || typeof stored.coachId !== 'string' || !stored.coachId) return;
+    if (stored.coachId === coachId) return;
+    window.localStorage.removeItem(COACH_PRODUCTION_SESSION_KEY);
+    window.localStorage.removeItem('uos:coach-portal:auth');
+    window.localStorage.removeItem('uos:coach-portal:active-id');
+    window.sessionStorage.removeItem(COACH_PREVIEW_SESSION_KEY);
+    throw new Error('COACH_BINDING_MISMATCH');
+  } catch (error) {
+    if (error instanceof Error && error.message === 'COACH_BINDING_MISMATCH') throw error;
+    window.localStorage.removeItem(COACH_PRODUCTION_SESSION_KEY);
+  }
+}
+
 export async function fetchPlayerPortalSnapshot(playerId?: string): Promise<PlayerPortalSnapshot> {
   const token = await getAccessToken();
   if (!token) throw new Error('AUTH_REQUIRED');
@@ -126,6 +147,7 @@ export async function fetchParentChildren(): Promise<ParentChildSummary[]> {
 
 export async function fetchCoachPortalScope(): Promise<CoachPortalScopeSnapshot> {
   const payload = await portalGet<CoachPortalScopeSnapshot>('portal-coach-scope');
+  assertCoachSessionMatchesServer(payload.coach.id);
   return {
     coach: payload.coach,
     assignedBranches: Array.isArray(payload.assignedBranches) ? payload.assignedBranches : [],
