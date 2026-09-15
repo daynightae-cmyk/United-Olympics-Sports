@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { splitConcurrentIndexStatements } from '../src/db/migrate.ts';
-import { claimOrderPayment, failOrderPaymentClaim } from '../src/server/order-payment-claim.ts';
+import { getConcurrentIndexName, splitConcurrentIndexStatements } from '../src/db/migrate.ts';
+import {
+  claimOrderPayment,
+  expireAbandonedOrderPaymentClaim,
+  failOrderPaymentClaim,
+} from '../src/server/order-payment-claim.ts';
+import { normalizeStripeIntentStatus } from '../src/server/payment-provider.ts';
 import { StoreDomainRepository } from '../src/server/repositories/store-repository.ts';
 import type { AuthorizationContext } from '../src/server/authorization-context.ts';
 import { ApiError } from '../src/server/http.ts';
@@ -42,6 +47,7 @@ type IntentRow = {
   provider_intent_id: string | null;
   metadata: { orderId?: string; paymentClaim?: boolean };
   created_at: string;
+  updated_at: string;
 };
 
 class ClaimRaceDb implements DbQueryClient {
@@ -65,6 +71,32 @@ class ClaimRaceDb implements DbQueryClient {
       return { rows: rows as unknown as T[], rowCount: rows.length };
     }
 
+    if (
+      normalized.includes('from payment_intents')
+      && normalized.includes("status = 'requires_payment_method'")
+      && normalized.includes('provider_intent_id is not null')
+      && normalized.includes("metadata->>'orderid' = $1")
+    ) {
+      const orderId = String(params[0] ?? '');
+      const cutoff = new Date(params[1] as string | number | Date).getTime();
+      const found = [...this.intents.values()].find((intent) =>
+        intent.metadata.orderId === orderId
+        && intent.status === 'requires_payment_method'
+        && intent.provider_intent_id !== null
+        && new Date(intent.updated_at).getTime() <= cutoff
+      );
+      const rows = found
+        ? [{ id: found.id, provider: found.provider, provider_intent_id: found.provider_intent_id }]
+        : [];
+      return { rows: rows as unknown as T[], rowCount: rows.length };
+    }
+
+    if (normalized.includes('from payment_intents where id = $1 for update')) {
+      const id = String(params[0] ?? '');
+      const found = [...this.intents.values()].find((intent) => intent.id === id);
+      return { rows: (found ? [found] : []) as unknown as T[], rowCount: found ? 1 : 0 };
+    }
+
     if (normalized.includes("from payment_intents") && normalized.includes("metadata->>'orderid' = $1")) {
       const orderId = String(params[0] ?? '');
       const excludedKey = normalized.includes('idempotency_key <> $2') ? String(params[1] ?? '') : null;
@@ -85,6 +117,7 @@ class ClaimRaceDb implements DbQueryClient {
 
     if (normalized.startsWith('insert into payment_intents')) {
       const [id, key, amountMinor, currency, provider, metadataJson] = params;
+      const now = new Date().toISOString();
       const row: IntentRow = {
         id: String(id),
         idempotency_key: String(key),
@@ -94,10 +127,46 @@ class ClaimRaceDb implements DbQueryClient {
         provider: String(provider),
         provider_intent_id: null,
         metadata: JSON.parse(String(metadataJson)) as IntentRow['metadata'],
-        created_at: new Date().toISOString(),
+        created_at: now,
+        updated_at: now,
       };
       this.intents.set(row.idempotency_key, row);
       return { rows: [row] as unknown as T[], rowCount: 1 };
+    }
+
+    if (normalized.startsWith("update payment_intents set status = 'cancelling'")) {
+      const id = String(params[0] ?? '');
+      const providerIntentId = String(params[1] ?? '');
+      const found = [...this.intents.values()].find((intent) =>
+        intent.id === id
+        && intent.status === 'requires_payment_method'
+        && intent.provider_intent_id === providerIntentId
+      );
+      if (!found) return { rows: [], rowCount: 0 };
+      found.status = 'cancelling';
+      return { rows: [], rowCount: 1 };
+    }
+
+    if (normalized.startsWith("update payment_intents set status = 'requires_payment_method'")) {
+      const id = String(params[0] ?? '');
+      const providerIntentId = String(params[1] ?? '');
+      const found = [...this.intents.values()].find((intent) =>
+        intent.id === id
+        && intent.status === 'cancelling'
+        && intent.provider_intent_id === providerIntentId
+      );
+      if (!found) return { rows: [], rowCount: 0 };
+      found.status = 'requires_payment_method';
+      return { rows: [], rowCount: 1 };
+    }
+
+    if (normalized.startsWith("update payment_intents set status = 'cancelled'")) {
+      const id = String(params[0] ?? '');
+      const found = [...this.intents.values()].find((intent) => intent.id === id && intent.status !== 'succeeded');
+      if (!found) return { rows: [], rowCount: 0 };
+      found.status = 'cancelled';
+      found.updated_at = new Date().toISOString();
+      return { rows: [], rowCount: 1 };
     }
 
     if (normalized.startsWith("update payment_intents set status = 'failed'")) {
@@ -106,6 +175,7 @@ class ClaimRaceDb implements DbQueryClient {
       const found = [...this.intents.values()].find((intent) => intent.id === id && intent.metadata.orderId === orderId && intent.provider_intent_id === null);
       if (!found) return { rows: [], rowCount: 0 };
       found.status = 'failed';
+      found.updated_at = new Date().toISOString();
       return { rows: [], rowCount: 1 };
     }
 
@@ -140,6 +210,7 @@ async function run(): Promise<void> {
   for (const statement of split.concurrentStatements) {
     assert.match(statement, /^create\s+(?:unique\s+)?index\s+concurrently\s+if\s+not\s+exists/i);
     assert.equal((statement.match(/;/g) ?? []).length, 1, 'each concurrent index must execute as one standalone query');
+    assert.match(getConcurrentIndexName(statement), /^[a-zA-Z_][\w$]*(?:\.[a-zA-Z_][\w$]*)?$/);
   }
   assert.equal(
     /^\s*create\s+(?:unique\s+)?index\s+concurrently\b/im.test(split.transactionalSql),
@@ -149,8 +220,15 @@ async function run(): Promise<void> {
 
   const migrateSource = await readFile(new URL('../src/db/migrate.ts', import.meta.url), 'utf8');
   assert.ok(
-    migrateSource.includes('for (const statement of concurrentStatements)') && migrateSource.includes('await client.query(statement)'),
-    'runner must execute each concurrent index statement separately',
+    migrateSource.includes('executeConcurrentIndexStatement(client, statement)')
+      && migrateSource.includes('i.indisvalid')
+      && migrateSource.includes('i.indisready')
+      && migrateSource.includes('drop index concurrently if exists'),
+    'runner must validate concurrent indexes and recover invalid leftovers before tracking the migration',
+  );
+  assert.ok(
+    migrateSource.indexOf('failed final validity verification') < migrateSource.indexOf('insert into schema_migrations'),
+    'concurrent index validity must be checked before schema_migrations is written',
   );
 
   const db = new ClaimRaceDb();
@@ -182,15 +260,67 @@ async function run(): Promise<void> {
   assert.equal(cancelled.status, 'cancelled');
   assert.equal(db.inventory.get('product-1'), 1, 'failed claim release allows cancellation to restore inventory exactly once');
 
+  assert.equal(normalizeStripeIntentStatus('canceled'), 'cancelled', 'Stripe canceled must normalize to local cancelled');
+
+  const expiryDb = new ClaimRaceDb();
+  const staleAt = new Date(Date.now() - 60 * 60_000).toISOString();
+  expiryDb.intents.set('stale-attempt', {
+    id: 'intent-stale-1',
+    idempotency_key: 'stale-attempt',
+    amount_minor: 24000,
+    currency: 'AED',
+    status: 'requires_payment_method',
+    provider: 'stripe',
+    provider_intent_id: 'pi_stale_1',
+    metadata: { orderId: 'order-1', paymentClaim: true },
+    created_at: staleAt,
+    updated_at: staleAt,
+  });
+  const expired = await expireAbandonedOrderPaymentClaim(
+    ctx,
+    'order-1',
+    expiryDb,
+    {
+      nowMs: Date.now(),
+      ttlMinutes: 30,
+      providerConfig: { provider: 'stripe', secretKey: 'sk_test_not_used' },
+      cancelIntent: async (_config, providerIntentId) => ({
+        providerIntentId,
+        status: 'cancelled',
+      }),
+    },
+  );
+  assert.equal(expired.expired, true);
+  assert.equal(expired.orderCancelled, true);
+  assert.equal(expiryDb.intents.get('stale-attempt')?.status, 'cancelled');
+  assert.equal(expiryDb.order.status, 'cancelled', 'expired provider claim must cancel the pending local order');
+  assert.equal(expiryDb.inventory.get('product-1'), 1, 'expired claim must release reserved inventory exactly once');
+
   const paymentHandlerSource = await readFile(new URL('../src/server/payment-handlers.ts', import.meta.url), 'utf8');
   const claimCall = paymentHandlerSource.indexOf('orderClaim = await claimOrderPayment');
   const providerCall = paymentHandlerSource.indexOf('remote = await createStripeIntent');
   assert.ok(claimCall >= 0 && providerCall > claimCall, 'order claim must happen before remote provider intent creation');
+  assert.ok(
+    paymentHandlerSource.includes("console.error('[PAYMENT] Failed to release order payment claim after provider error:'")
+      && paymentHandlerSource.indexOf('throw error;') > paymentHandlerSource.indexOf('failOrderPaymentClaim(orderClaim)'),
+    'provider errors must remain the primary error even if local claim release also fails',
+  );
 
   const storeSource = await readFile(new URL('../src/server/repositories/store-repository.ts', import.meta.url), 'utf8');
   const orderLock = storeSource.indexOf("select id, customer_uid, status, items from orders where id = $1 for update");
   const claimGuard = storeSource.indexOf('await assertOrderPaymentNotClaimed(db, id)');
   assert.ok(orderLock >= 0 && claimGuard > orderLock, 'cancelOrder must lock the order before checking active payment claims');
+
+  const paymentRepoSource = await readFile(new URL('../src/server/repositories/payment-repository.ts', import.meta.url), 'utf8');
+  assert.ok(
+    paymentRepoSource.includes("input.eventType === 'payment_intent.canceled'")
+      && paymentRepoSource.includes("? 'cancelled'"),
+    'canceled webhook events must normalize to cancelled rather than failed',
+  );
+  assert.ok(
+    paymentRepoSource.includes('expireAbandonedOrderPaymentClaim(RECONCILIATION_CONTEXT'),
+    'reconciliation must run bounded abandoned-claim expiry',
+  );
 
   console.log('PR #26 closure regression tests: PASS');
 }
