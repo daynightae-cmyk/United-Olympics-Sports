@@ -1,6 +1,7 @@
 import { StoreDomainRepository } from './repositories/store-repository';
 import { requireAuthorizationContext } from './auth';
 import { ApiError, assertMethod, normalizeString, readJsonBody, sendJson, type ApiRequest, type ApiResponse } from './http';
+import { expireAbandonedOrderPaymentClaim } from './order-payment-claim';
 import { applyRateLimitHeaders, defaultRateLimiter, getClientIp } from './rate-limiter';
 
 async function enforceCommerceRateLimit(req: ApiRequest, res: ApiResponse, scope: string, uid: string): Promise<void> {
@@ -62,6 +63,18 @@ export const storeOrderCancelHandler = async (req: ApiRequest, res: ApiResponse)
   const body = await readJsonBody(req);
   const orderId = normalizeString(body.orderId, 64);
   if (!orderId) throw new ApiError(400, 'VALIDATION_ERROR', 'orderId is required.');
+
+  // If a requires_payment_method claim has exceeded its TTL, cancel the
+  // provider intent first and atomically release the local order inventory.
+  // Non-expired claims remain protected by cancelOrder's transaction guard.
+  const expired = await expireAbandonedOrderPaymentClaim(ctx, orderId);
+  if (expired.orderCancelled) {
+    sendJson(res, 200, {
+      ok: true,
+      order: { orderId, status: 'cancelled', expiredPaymentClaim: true },
+    });
+    return;
+  }
 
   const result = await storeRepo.cancelOrder(ctx, orderId);
   sendJson(res, 200, { ok: true, order: result });
