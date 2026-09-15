@@ -3,6 +3,7 @@ import { databaseConfigured, getPool } from '../../db/index';
 import type { AuthorizationContext } from '../authorization-context';
 import { recordAudit } from '../audit';
 import { ApiError } from '../http';
+import { assertOrderPaymentNotClaimed } from '../order-payment-claim';
 import type { DbQueryClient } from '../vertical-slice';
 
 export interface StoreProductItem {
@@ -184,8 +185,6 @@ export class StoreDomainRepository {
       throw new ApiError(400, 'VALIDATION_ERROR', `Checkout supports at most ${MAX_ORDER_LINES} order lines.`);
     }
 
-    // Consolidate duplicate product lines so repeated lines can neither
-    // double-count totals nor evade per-line inventory validation.
     const consolidated = new Map<string, number>();
     for (const item of items) {
       const productId = typeof item?.productId === 'string' ? item.productId.trim() : '';
@@ -208,9 +207,6 @@ export class StoreDomainRepository {
     }
 
     return this.runInTransaction(async (db) => {
-      // Fetch products from database to ensure server-side authoritative pricing and inventory
-      // Deterministic ordering prevents deadlock when two checkouts overlap on the same
-      // product set in opposite order.
       const orderedProductIds = [...consolidated.keys()].sort();
       const prodRes = await db.query<{
         id: string;
@@ -230,9 +226,6 @@ export class StoreDomainRepository {
         [orderedProductIds],
       );
 
-      // Lock the inventory rows for these products so concurrent checkouts
-      // serialize here instead of racing the availability check below.
-      // ORDER BY product_id is the global lock order for every inventory mutation.
       await db.query(
         'select product_id from inventory where product_id = any($1) order by product_id for update',
         [orderedProductIds],
@@ -252,10 +245,8 @@ export class StoreDomainRepository {
           throw new ApiError(409, 'INSUFFICIENT_INVENTORY', `Insufficient inventory for product ${product.name}. Available: ${product.available_quantity}`);
         }
         currencies.add(product.currency);
-
         const unitPrice = product.price_minor;
         totalMinor += unitPrice * quantity;
-
         orderItems.push({
           productId: product.id,
           sku: product.sku,
@@ -287,10 +278,6 @@ export class StoreDomainRepository {
         ],
       );
 
-      // Reserve stock atomically per row. With the FOR UPDATE locks above,
-      // the guard below only trips on out-of-band writes; a zero rowCount
-      // then fails the whole transaction instead of overselling silently.
-      // Deterministic product_id order matches the global inventory lock order.
       const orderedReserveLines = [...orderItems].sort((a, b) => a.productId.localeCompare(b.productId));
       for (const line of orderedReserveLines) {
         const decremented = await db.query(
@@ -324,8 +311,9 @@ export class StoreDomainRepository {
 
   /**
    * Cancels a pending order and releases its reserved stock. Only the owning
-   * customer or an administrator may cancel; only pending orders are
-   * cancellable, so paid/completed history is never rewritten.
+   * customer or an administrator may cancel. An active provider-payment claim
+   * blocks cancellation so inventory can never be released while a remote
+   * payment intent is being created or can still succeed.
    */
   async cancelOrder(ctx: AuthorizationContext, orderId: string): Promise<{ orderId: string; status: string }> {
     const id = typeof orderId === 'string' ? orderId.trim() : '';
@@ -353,6 +341,11 @@ export class StoreDomainRepository {
       if (order.status !== 'pending') {
         throw new ApiError(409, 'ORDER_NOT_CANCELLABLE', 'Only pending orders can be cancelled.');
       }
+
+      // claimOrderPayment acquires this same order-row lock before inserting a
+      // provider claim. Whichever transaction locks first therefore wins, and
+      // cancellation never releases inventory under an active payment attempt.
+      await assertOrderPaymentNotClaimed(db, id);
 
       const lines = Array.isArray(order.items) ? order.items : [];
       const releaseLines = lines
