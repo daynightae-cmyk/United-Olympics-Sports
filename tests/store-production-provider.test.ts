@@ -90,6 +90,33 @@ async function runStoreProductionTests() {
   assert.equal(catalog.length, 2);
   assert.equal(catalog[0].sku, 'UOS-SWIM-GOGGLE');
   assert.ok(catalog[0].priceMinor > 0);
+  // 1b. Richness columns default to honest nulls when the row carries no
+  // catalog metadata (never invented by the repository).
+  assert.equal(catalog[0].description, null);
+  assert.equal(catalog[0].category, null);
+  assert.equal(catalog[0].slug, null);
+
+  // 1c. Rich catalog rows round-trip real metadata end to end.
+  const richDb = new MockStoreDb();
+  richDb.products.push({
+    id: 'p-rich', sku: 'UOS-SWIM-PARKA', name: 'Team Parka', name_ar: 'باركا الفريق',
+    price_minor: 35000, currency: 'AED', available_quantity: 4, status: 'active',
+    description: 'Water-resistant team parka', description_ar: 'باركا مقاومة للماء',
+    category: 'apparel', sport: 'swimming', product_type: 'Team apparel',
+    product_type_ar: 'ملابس الفريق', media_url: '/media/store/parka.jpg', slug: 'team-parka',
+  } as never);
+  richDb.inventory.set('p-rich', 4);
+  const richRepo = new StoreDomainRepository(richDb);
+  const richCatalog = await richRepo.listActiveProducts();
+  const rich = richCatalog.find((p) => p.id === 'p-rich');
+  assert.ok(rich);
+  assert.equal(rich.description, 'Water-resistant team parka');
+  assert.equal(rich.descriptionAr, 'باركا مقاومة للماء');
+  assert.equal(rich.category, 'apparel');
+  assert.equal(rich.sport, 'swimming');
+  assert.equal(rich.productType, 'Team apparel');
+  assert.equal(rich.mediaUrl, '/media/store/parka.jpg');
+  assert.equal(rich.slug, 'team-parka');
 
   // 2. Server-authoritative checkout order
   const order = await repo.prepareOrder(userCtx, [{ productId: 'p-1', quantity: 2 }]);

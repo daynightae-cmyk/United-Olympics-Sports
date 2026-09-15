@@ -14,6 +14,14 @@ export interface StoreProductItem {
   currency: string;
   availableQuantity: number;
   status: string;
+  description: string | null;
+  descriptionAr: string | null;
+  category: string | null;
+  sport: string | null;
+  productType: string | null;
+  productTypeAr: string | null;
+  mediaUrl: string | null;
+  slug: string | null;
 }
 
 export interface CheckoutOrderItem {
@@ -80,7 +88,27 @@ export class StoreDomainRepository {
   }
 
   // --- CATALOG & INVENTORY ---
+  // Richness columns from migration 0008 are selected tolerantly: databases
+  // that have not applied 0008 yet fall back to the legacy column set instead
+  // of failing the public catalog.
   async listActiveProducts(): Promise<StoreProductItem[]> {
+    const rich = await this.queryCatalog(true).catch((err) => {
+      if (err instanceof Error && /undefined_column|column .* does not exist/i.test(err.message)) {
+        return this.queryCatalog(false);
+      }
+      throw err;
+    });
+    return rich;
+  }
+
+  private async queryCatalog(rich: boolean): Promise<StoreProductItem[]> {
+    const richness = rich
+      ? `, p.description, p.description_ar,
+               p.category, p.sport, p.product_type, p.product_type_ar,
+               p.media_url, p.slug`
+      : `, null::text as description, null::text as description_ar,
+               null::text as category, null::text as sport, null::text as product_type,
+               null::text as product_type_ar, null::text as media_url, null::text as slug`;
     const res = await this.db.query<{
       id: string;
       sku: string;
@@ -90,12 +118,20 @@ export class StoreDomainRepository {
       currency: string | null;
       available_quantity: number;
       status: string;
+      description: string | null;
+      description_ar: string | null;
+      category: string | null;
+      sport: string | null;
+      product_type: string | null;
+      product_type_ar: string | null;
+      media_url: string | null;
+      slug: string | null;
     }>(
       `select p.id, p.sku, p.name, p.name_ar,
               coalesce(p.price_minor, 0) as price_minor,
               coalesce(p.currency, 'AED') as currency,
               coalesce(i.available_quantity, 0)::int as available_quantity,
-              p.status
+              p.status${richness}
          from catalog_products p
          left join inventory i on i.product_id = p.id
         where p.status = 'active'
@@ -112,6 +148,14 @@ export class StoreDomainRepository {
       currency: r.currency,
       availableQuantity: r.available_quantity,
       status: r.status,
+      description: r.description ?? null,
+      descriptionAr: r.description_ar ?? null,
+      category: r.category ?? null,
+      sport: r.sport ?? null,
+      productType: r.product_type ?? null,
+      productTypeAr: r.product_type_ar ?? null,
+      mediaUrl: r.media_url ?? null,
+      slug: r.slug ?? null,
     }));
   }
 

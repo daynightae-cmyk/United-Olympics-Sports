@@ -4,7 +4,7 @@ import path from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
 
-console.log('--- RUNNING FRESH DATABASE BOOTSTRAP TEST (0001 -> 0007) ---');
+console.log('--- RUNNING FRESH DATABASE BOOTSTRAP TEST (0001 -> 0008) ---');
 
 const db = new PGlite({
   extensions: { pgcrypto }
@@ -39,7 +39,8 @@ const migrationFiles = [
   '0004_portal_assignment_parity.sql',
   '0005_production_schema_parity_and_rls_hardening.sql',
   '0006_live_rls_policy_closure.sql',
-  '0007_covering_fk_indexes.sql'
+  '0007_covering_fk_indexes.sql',
+  '0008_store_catalog_richness.sql'
 ];
 
 for (const file of migrationFiles) {
@@ -124,7 +125,15 @@ const colChecks = [
   { table: 'coach_groups', col: 'group_id' },
   { table: 'achievements', col: 'is_public' },
   { table: 'app_user_profiles', col: 'user_id' },
-  { table: 'app_user_profiles', col: 'email' }
+  { table: 'app_user_profiles', col: 'email' },
+  { table: 'catalog_products', col: 'description' },
+  { table: 'catalog_products', col: 'description_ar' },
+  { table: 'catalog_products', col: 'category' },
+  { table: 'catalog_products', col: 'sport' },
+  { table: 'catalog_products', col: 'product_type' },
+  { table: 'catalog_products', col: 'product_type_ar' },
+  { table: 'catalog_products', col: 'media_url' },
+  { table: 'catalog_products', col: 'slug' },
 ];
 
 for (const { table, col } of colChecks) {
@@ -170,4 +179,4 @@ for (const indexName of ['idx_events_sport_id', 'idx_payment_intents_subscriptio
   assert.equal(idxRes.rows.length, 1, `Covering index ${indexName} must exist`);
 }
 
-console.log('PASS: Fresh empty database bootstrap across migrations 0001 -> 0007 verified with 33 RLS-hardened tables and uuid auth.uid().');
+console.log('PASS: Fresh empty database bootstrap across migrations 0001 -> 0008 verified with 33 RLS-hardened tables and uuid auth.uid().');
