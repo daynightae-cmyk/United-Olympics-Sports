@@ -11,13 +11,29 @@ const files = await Promise.all([
   read('src/portals/parent/useParentPortalGatewayData.ts'),
   read('src/portals/coach/CoachSessionContext.tsx'),
   read('src/portals/coach/CoachProtectedRoute.tsx'),
+  read('src/portals/coach/useCoachPortalGatewayData.ts'),
+  read('src/server/repositories/portal-repository.ts'),
   read('src/store/StoreApp.tsx'),
   read('src/server/repositories/store-account-repository.ts'),
   read('.github/workflows/verify.yml'),
   read('qa/production-runtime-smoke.mjs'),
 ]);
 
-const [playerLogin, parentLogin, coachLogin, playerContext, parentData, coachContext, coachGuard, storeApp, storeAccountRepo, workflow, smoke] = files;
+const [
+  playerLogin,
+  parentLogin,
+  coachLogin,
+  playerContext,
+  parentData,
+  coachContext,
+  coachGuard,
+  coachData,
+  portalRepo,
+  storeApp,
+  storeAccountRepo,
+  workflow,
+  smoke,
+] = files;
 
 for (const [name, source, forbidden] of [
   ['player login', playerLogin, ['PlayerSessionProvider', 'usePlayerSession', 'adminHooks']],
@@ -34,9 +50,15 @@ assert(parentData.includes('fetchParentPortalSnapshot'));
 assert(parentData.includes('fetchPlayerPortalSnapshot'));
 assert.equal(parentData.includes("from '../../admin/data/adminHooks'"), false);
 assert(coachContext.includes('fetchCoachPortalScope'));
+assert(coachContext.includes('productionWorkspace'));
 assert.equal(coachContext.includes('useCoaches('), false);
 assert.equal(coachGuard.includes('usePlayers('), false);
 assert(coachGuard.includes('authorizedPlayerIds'));
+assert.equal(coachData.includes("from '../../admin/data/adminHooks'"), false, 'Coach workspace must not use admin hooks in production');
+assert(coachData.includes('productionWorkspace'), 'Coach workspace must consume the server-scoped production snapshot');
+for (const marker of ['assignedGroups', 'assignedPlayerIds', 'where p.id = any($1)', 'where s.group_id = any($1)', 'where sender_uid = $1 or recipient_uid = $1']) {
+  assert(portalRepo.includes(marker), `Coach portal repository missing scoped marker: ${marker}`);
+}
 
 for (const marker of ['StoreAccountBoundary', 'ConnectedAccountPage', 'ConnectedOrdersPage', 'ConnectedAddressesPage', 'ConnectedNotificationsPage', 'ConnectedWishlistPage']) {
   assert(storeApp.includes(marker), `Store account closure missing ${marker}`);
