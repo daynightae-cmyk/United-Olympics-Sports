@@ -1,73 +1,26 @@
-import { Sparkles, UsersRound } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useParents } from '../../admin/data/adminHooks';
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Sparkles } from 'lucide-react';
 import { PortalAuthPage, type PortalAuthNotice, type PortalAuthProvider } from '../../components/auth/PortalAuthPage';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { beginSupabaseGoogleOAuth, fetchPortalIdentity, getAccessToken, signOutEverywhere } from '../../lib/auth-client';
-import { clearParentSession, readParentSession, startParentPreview, startParentProduction } from './parentData';
+import { clearParentSession, readParentSession, startParentProduction } from './parentData';
 
-const previewRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true';
+const demoRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_PORTAL_DEMO === 'true';
 
-function ParentPreviewAccess() {
-  const navigate = useNavigate();
-  const { data, loading, error } = useParents({ page: 1, pageSize: 500 });
-  const parents = data.items.filter((parent) => parent.status === 'active');
-  const [parentId, setParentId] = useState('');
-
-  useEffect(() => {
-    if (!parents.length) {
-      setParentId('');
-      return;
-    }
-    if (!parents.some((parent) => parent.id === parentId)) setParentId(parents[0].id);
-  }, [parentId, parents]);
-
-  const selected = parents.find((item) => item.id === parentId) ?? null;
-
-  const enterPreview = () => {
-    if (!selected) return;
-    startParentPreview(selected.id);
-    navigate('/parent', { replace: true });
-  };
-
+function SafeDemoLink() {
+  if (!demoRuntime) return null;
   return (
-    <div className="portal-auth-preview">
+    <div className="portal-auth-preview" data-safe-demo-link="parent">
       <div className="portal-auth-preview-header">
-        <span><Sparkles aria-hidden="true" /><BilingualText value={bi('Development preview', 'معاينة التطوير')} /></span>
-        <span className="portal-auth-preview-badge">Preview</span>
+        <span><Sparkles aria-hidden="true" /><BilingualText value={bi('Safe product demo', 'عرض تجريبي آمن')} /></span>
+        <span className="portal-auth-preview-badge">Demo</span>
       </div>
-      {loading ? (
-        <div className="ui-skeleton" role="status" aria-live="polite">
-          <BilingualText value={bi('Loading available family records…', 'جارٍ تحميل سجلات الأسر المتاحة…')} />
-        </div>
-      ) : error ? (
-        <div className="enterprise-empty" role="status">
-          <UsersRound size={22} />
-          <h3><BilingualText value={bi('Family data is unavailable', 'بيانات الأسر غير متاحة')} /></h3>
-          <p><BilingualText value={bi('The preview data service is unavailable in this session.', 'خدمة بيانات المعاينة غير متاحة في هذه الجلسة.')} /></p>
-        </div>
-      ) : parents.length ? (
-        <>
-          <label htmlFor="parent-preview-identity">
-            <BilingualText value={bi('Select an active preview family', 'اختر أسرة معاينة نشطة')} />
-          </label>
-          <select id="parent-preview-identity" value={parentId} onChange={(event) => setParentId(event.target.value)}>
-            {parents.map((parent) => (
-              <option key={parent.id} value={parent.id}>{parent.nameEn} — {parent.nameAr}</option>
-            ))}
-          </select>
-          <button type="button" onClick={enterPreview} disabled={!selected}>
-            <BilingualText value={bi('Enter Family Preview', 'دخول معاينة الأسرة')} />
-          </button>
-        </>
-      ) : (
-        <div className="enterprise-empty" role="status">
-          <UsersRound size={22} />
-          <h3><BilingualText value={bi('No active family profiles available', 'لا توجد ملفات أسر نشطة متاحة')} /></h3>
-          <p><BilingualText value={bi('Active parent records will appear here when the preview provider supplies them.', 'ستظهر سجلات أولياء الأمور النشطة هنا عندما يوفرها مزود المعاينة.')} /></p>
-        </div>
-      )}
+      <p><BilingualText value={bi(
+        'Uses synthetic family data only. It never lists real guardian or player records.',
+        'يستخدم بيانات أسرية صناعية فقط ولا يعرض سجلات حقيقية لأولياء الأمور أو اللاعبين.',
+      )} /></p>
+      <Link className="button secondary" to="/demo/parent"><BilingualText value={bi('Open family demo', 'فتح عرض الأسرة')} /></Link>
     </div>
   );
 }
@@ -75,10 +28,6 @@ function ParentPreviewAccess() {
 export function ParentLoginPage() {
   const navigate = useNavigate();
 
-  // Revalidate any persisted production session on mount: a stale or forged
-  // local session must never be trusted without a live portal binding lookup.
-  // Valid bindings are refreshed (scope + authorized players) before redirect;
-  // stale, wrong-portal, or unbound sessions are cleared fail-closed.
   useEffect(() => {
     let active = true;
     (async () => {
@@ -100,9 +49,7 @@ export function ParentLoginPage() {
         if (active) clearParentSession();
       }
     })();
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [navigate]);
 
   const handleProvider = async (provider: PortalAuthProvider): Promise<PortalAuthNotice | null> => {
@@ -124,11 +71,5 @@ export function ParentLoginPage() {
     }
   };
 
-  return (
-    <PortalAuthPage
-      portal="parent"
-      extraContent={previewRuntime ? <ParentPreviewAccess /> : undefined}
-      onProvider={handleProvider}
-    />
-  );
+  return <PortalAuthPage portal="parent" extraContent={<SafeDemoLink />} onProvider={handleProvider} />;
 }
