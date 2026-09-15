@@ -1,25 +1,15 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import {
-  useAchievements,
-  useCoaches,
-  useGroups,
-  useMessages,
-  useParents,
-  usePayments,
-  usePlayers,
-  useSessions,
-  useSports,
-  useSubscriptions,
-  useUpdatePlayer,
-} from '../../admin/data/adminHooks';
 import { useAdminData } from '../../admin/data/AdminDataProvider';
 import type {
   AchievementViewModel,
   CoachViewModel,
   MessageViewModel,
   ParentViewModel,
+  PaymentViewModel,
   PlayerViewModel,
+  SessionViewModel,
   SportViewModel,
+  SubscriptionViewModel,
   TrainingGroupViewModel,
 } from '../../admin/data/viewModels';
 import type {
@@ -35,6 +25,7 @@ import type {
   Subscription,
   TrainingGroup,
 } from '../../domain/contracts';
+import { fetchPlayerPortalSnapshot, type PlayerPortalSnapshot } from '../../lib/portal-data-client';
 import { previewAuthGateway, productionAuthGateway } from './auth/PlayerAuthGateway';
 
 const AUTH_KEY = 'uos:player-portal:auth';
@@ -44,7 +35,7 @@ const SESSION_KEY = 'uos:player-portal:session';
 export interface PlayerDocumentItem {
   id: string;
   title: BilingualText;
-  category: 'identity' | 'consent' | 'medical' | 'certificate' | 'evaluation';
+  category: 'identity' | 'consent' | 'medical' | 'certificate' | 'evaluation' | 'record';
   issueDate: string;
   expiryDate?: string;
   status: 'verified' | 'pending' | 'expired';
@@ -108,15 +99,7 @@ interface PlayerSessionContextType {
   parent?: Parent;
   sessions: Session[];
   attendanceRecords: Player['attendanceRecords'];
-  attendanceStats: {
-    present: number;
-    late: number;
-    absent: number;
-    excused: number;
-    total: number;
-    rate: number | null;
-    streak: number;
-  };
+  attendanceStats: { present: number; late: number; absent: number; excused: number; total: number; rate: number | null; streak: number };
   metrics: PerformanceRecord[];
   overallScore: number | null;
   feedback: CoachFeedback[];
@@ -142,7 +125,9 @@ interface PlayerSessionContextType {
 }
 
 const PlayerSessionContext = createContext<PlayerSessionContextType | null>(null);
-const EMPTY_DOCUMENTS: PlayerDocumentItem[] = [];
+const EMPTY_FEEDBACK: CoachFeedback[] = [];
+
+function bi(en: string, ar = en): BilingualText { return { en, ar }; }
 
 function readActivePlayerId(): string | null {
   if (typeof window === 'undefined') return null;
@@ -166,63 +151,25 @@ function readSessionProvider(): PlayerSessionProviderKind {
   }
 }
 
-function toSport(item: SportViewModel): Sport {
-  return { ...item };
-}
-
+function toSport(item: SportViewModel): Sport { return { ...item }; }
 function toParent(item: ParentViewModel): Parent {
-  return {
-    id: item.id,
-    nameEn: item.nameEn,
-    nameAr: item.nameAr,
-    playerIds: item.playerIds,
-    preferredLanguage: item.preferredLanguage,
-    status: item.status,
-    phone: item.phone,
-    email: item.email,
-  };
+  return { id: item.id, nameEn: item.nameEn, nameAr: item.nameAr, playerIds: item.playerIds, preferredLanguage: item.preferredLanguage, status: item.status, phone: item.phone, email: item.email };
 }
-
 function coachPlayerIds(coach: CoachViewModel, players: PlayerViewModel[]): string[] {
   const groups = new Set(coach.groupIds);
   return players.filter((player) => Boolean(player.groupId && groups.has(player.groupId))).map((player) => player.id);
 }
-
 function toCoach(item: CoachViewModel, players: PlayerViewModel[]): Coach {
-  return {
-    id: item.id,
-    nameEn: item.nameEn,
-    nameAr: item.nameAr,
-    sportIds: item.sportIds,
-    branchIds: item.branchIds,
-    groupIds: item.groupIds,
-    playerIds: coachPlayerIds(item, players),
-    specializations: item.specializations,
-    certifications: item.certifications,
-    status: item.status,
-  };
+  return { id: item.id, nameEn: item.nameEn, nameAr: item.nameAr, sportIds: item.sportIds, branchIds: item.branchIds, groupIds: item.groupIds, playerIds: coachPlayerIds(item, players), specializations: item.specializations, certifications: item.certifications, status: item.status };
 }
-
 function toGroup(item: TrainingGroupViewModel, players: PlayerViewModel[], coaches: CoachViewModel[]): TrainingGroup {
-  return {
-    id: item.id,
-    sportId: item.sportId,
-    name: item.name,
-    ageGroup: item.ageGroup,
-    level: item.level,
-    playerIds: players.filter((player) => player.groupId === item.id).map((player) => player.id),
-    coachIds: coaches.filter((coach) => coach.groupIds.includes(item.id)).map((coach) => coach.id),
-    programIds: item.programIds,
-    status: item.status,
-  };
+  return { id: item.id, sportId: item.sportId, name: item.name, ageGroup: item.ageGroup, level: item.level, playerIds: players.filter((player) => player.groupId === item.id).map((player) => player.id), coachIds: coaches.filter((coach) => coach.groupIds.includes(item.id)).map((coach) => coach.id), programIds: item.programIds, status: item.status };
 }
-
 function playerCoachIds(player: PlayerViewModel, coaches: CoachViewModel[]): string[] {
   if (!player.groupId) return [];
   return coaches.filter((coach) => coach.groupIds.includes(player.groupId!)).map((coach) => coach.id);
 }
-
-function toPlayer(item: PlayerViewModel, coaches: CoachViewModel[], achievements: AchievementViewModel[]): Player {
+function toPreviewPlayer(item: PlayerViewModel, coaches: CoachViewModel[], achievements: AchievementViewModel[]): Player {
   return {
     id: item.id,
     photo: item.photo,
@@ -237,80 +184,96 @@ function toPlayer(item: PlayerViewModel, coaches: CoachViewModel[], achievements
     status: item.status,
     performanceHistory: [],
     coachFeedback: [],
-    achievements: achievements
-      .filter((achievement) => achievement.playerId === item.id && achievement.status === 'awarded')
-      .map((achievement) => achievement.title),
+    achievements: achievements.filter((achievement) => achievement.playerId === item.id && achievement.status === 'awarded').map((achievement) => achievement.title),
     attendanceRecords: [],
   };
 }
 
-function resolveParticipantName(
-  participantId: string,
-  player: Player,
-  coaches: CoachViewModel[],
-  parents: ParentViewModel[],
-): { name: BilingualText; role: BilingualText; category: PlayerChatThread['category']; senderRole: PlayerChatMessage['senderRole'] } {
-  if (participantId === player.id) {
-    return {
-      name: { en: player.nameEn, ar: player.nameAr },
-      role: { en: 'Player', ar: 'اللاعب' },
-      category: 'support',
-      senderRole: 'player',
-    };
-  }
-  const coach = coaches.find((item) => item.id === participantId);
-  if (coach) {
-    return {
-      name: { en: coach.nameEn, ar: coach.nameAr },
-      role: { en: 'Coach', ar: 'المدرب' },
-      category: 'coach',
-      senderRole: 'coach',
-    };
-  }
-  const parent = parents.find((item) => item.id === participantId);
-  if (parent) {
-    return {
-      name: { en: parent.nameEn, ar: parent.nameAr },
-      role: { en: 'Parent / guardian record', ar: 'سجل ولي الأمر' },
-      category: 'support',
-      senderRole: 'system',
-    };
-  }
+function normalizeAttendanceStatus(value: string): Player['attendanceRecords'][number]['status'] {
+  return value === 'present' || value === 'absent' || value === 'late' || value === 'excused' ? value : 'absent';
+}
+function normalizeSubscriptionStatus(value: string): Subscription['status'] {
+  return value === 'active' || value === 'pending' || value === 'expired' || value === 'cancelled' ? value : 'pending';
+}
+function normalizePaymentStatus(value: string): Payment['status'] {
+  if (value === 'completed' || value === 'paid' || value === 'succeeded') return 'completed';
+  if (value === 'refunded') return 'refunded';
+  if (value === 'failed' || value === 'cancelled' || value === 'canceled') return 'failed';
+  return 'pending';
+}
+
+function productionPlayer(snapshot: PlayerPortalSnapshot): Player {
   return {
-    name: { en: participantId, ar: participantId },
-    role: { en: 'Recorded system participant', ar: 'طرف مسجل في النظام' },
-    category: 'admin',
-    senderRole: 'admin',
+    id: snapshot.player.id,
+    nameEn: snapshot.player.fullName,
+    nameAr: snapshot.player.fullName,
+    sportId: snapshot.relations.sport?.id ?? '',
+    groupId: snapshot.relations.group?.id,
+    programId: snapshot.relations.program?.id,
+    coachIds: snapshot.relations.coaches.map((item) => item.id),
+    level: bi('Not recorded', 'غير مسجل'),
+    status: bi('Active', 'نشط'),
+    performanceHistory: snapshot.performance
+      .filter((item) => typeof item.score === 'number')
+      .map((item) => ({ id: item.id, playerId: snapshot.player.id, metricId: item.metricKey, value: item.score ?? 0, recordedAt: item.date })),
+    coachFeedback: [],
+    achievements: snapshot.achievements.map((item) => bi(item.title, item.titleAr || item.title)),
+    attendanceRecords: snapshot.attendance.map((item) => ({ id: item.id, date: item.date, status: normalizeAttendanceStatus(item.status) })),
   };
 }
 
-function toPlayerThread(
-  message: MessageViewModel,
-  player: Player,
-  coaches: CoachViewModel[],
-  parents: ParentViewModel[],
-): PlayerChatThread {
+type PreviewBundle = {
+  players: PlayerViewModel[];
+  sports: SportViewModel[];
+  groups: TrainingGroupViewModel[];
+  coaches: CoachViewModel[];
+  parents: ParentViewModel[];
+  sessions: SessionViewModel[];
+  subscriptions: SubscriptionViewModel[];
+  payments: PaymentViewModel[];
+  achievements: AchievementViewModel[];
+  messages: MessageViewModel[];
+};
+
+const EMPTY_PREVIEW: PreviewBundle = { players: [], sports: [], groups: [], coaches: [], parents: [], sessions: [], subscriptions: [], payments: [], achievements: [], messages: [] };
+
+function resolveParticipantName(participantId: string, player: Player, coaches: CoachViewModel[], parents: ParentViewModel[]) {
+  if (participantId === player.id) return { name: bi(player.nameEn, player.nameAr), role: bi('Player', 'اللاعب'), category: 'support' as const, senderRole: 'player' as const };
+  const coach = coaches.find((item) => item.id === participantId);
+  if (coach) return { name: bi(coach.nameEn, coach.nameAr), role: bi('Coach', 'المدرب'), category: 'coach' as const, senderRole: 'coach' as const };
+  const parent = parents.find((item) => item.id === participantId);
+  if (parent) return { name: bi(parent.nameEn, parent.nameAr), role: bi('Parent / guardian record', 'سجل ولي الأمر'), category: 'support' as const, senderRole: 'system' as const };
+  return { name: bi(participantId), role: bi('Recorded system participant', 'طرف مسجل في النظام'), category: 'admin' as const, senderRole: 'admin' as const };
+}
+
+function toPlayerThread(message: MessageViewModel, player: Player, coaches: CoachViewModel[], parents: ParentViewModel[]): PlayerChatThread {
   const isOutgoing = message.fromId === player.id;
-  const participantId = isOutgoing
-    ? (message.toIds.find((id) => id !== player.id) ?? message.toIds[0] ?? message.fromId)
-    : message.fromId;
+  const participantId = isOutgoing ? (message.toIds.find((id) => id !== player.id) ?? message.toIds[0] ?? message.fromId) : message.fromId;
   const participant = resolveParticipantName(participantId, player, coaches, parents);
   const sender = resolveParticipantName(message.fromId, player, coaches, parents);
   const content = [message.body.en, message.body.ar].filter(Boolean).join(' · ');
+  return { id: `thread-${message.id}`, participantName: participant.name, participantRole: participant.role, category: participant.category, lastMessage: content, lastMessageTime: message.sentAt, unreadCount: !isOutgoing && !message.readAt ? 1 : 0, messages: [{ id: message.id, senderId: message.fromId, senderName: sender.name, senderRole: sender.senderRole, content, timestamp: message.sentAt, isSelf: isOutgoing }] };
+}
+
+function toProductionThread(message: PlayerPortalSnapshot['messages'][number], snapshot: PlayerPortalSnapshot): PlayerChatThread {
+  const selfUid = snapshot.player.userUid;
+  const isOutgoing = Boolean(selfUid && message.fromId === selfUid);
+  const participantId = isOutgoing ? (message.toIds[0] ?? message.fromId) : message.fromId;
+  const participant = bi(participantId === selfUid ? snapshot.player.fullName : 'Portal contact', participantId === selfUid ? snapshot.player.fullName : 'جهة اتصال البوابة');
   return {
     id: `thread-${message.id}`,
-    participantName: participant.name,
-    participantRole: participant.role,
-    category: participant.category,
-    lastMessage: content,
+    participantName: participant,
+    participantRole: bi('Recorded participant', 'طرف مسجل'),
+    category: 'support',
+    lastMessage: message.content,
     lastMessageTime: message.sentAt,
     unreadCount: !isOutgoing && !message.readAt ? 1 : 0,
     messages: [{
       id: message.id,
       senderId: message.fromId,
-      senderName: sender.name,
-      senderRole: sender.senderRole,
-      content,
+      senderName: isOutgoing ? bi(snapshot.player.fullName) : participant,
+      senderRole: isOutgoing ? 'player' : 'system',
+      content: message.content,
       timestamp: message.sentAt,
       isSelf: isOutgoing,
     }],
@@ -318,240 +281,219 @@ function toPlayerThread(
 }
 
 export function PlayerSessionProvider({ children }: { children: React.ReactNode }) {
-  const { mode: dataMode } = useAdminData();
-  const playersQuery = usePlayers({ page: 1, pageSize: 2000 });
-  const sportsQuery = useSports({ page: 1, pageSize: 500 });
-  const groupsQuery = useGroups({ page: 1, pageSize: 2000 });
-  const coachesQuery = useCoaches({ page: 1, pageSize: 1000 });
-  const parentsQuery = useParents({ page: 1, pageSize: 2000 });
-  const sessionsQuery = useSessions({ page: 1, pageSize: 4000 });
-  const subscriptionsQuery = useSubscriptions({ page: 1, pageSize: 4000 });
-  const paymentsQuery = usePayments({ page: 1, pageSize: 4000 });
-  const achievementsQuery = useAchievements({ page: 1, pageSize: 4000 });
-  const messagesQuery = useMessages({ page: 1, pageSize: 4000 });
-  const updatePlayerMutation = useUpdatePlayer();
-
+  const { gateway, mode: dataMode } = useAdminData();
   const [activePlayerId, setActivePlayerIdState] = useState<string | null>(readActivePlayerId);
   const [authRequested, setAuthRequested] = useState<boolean>(readAuthFlag);
   const [sessionProvider, setSessionProvider] = useState<PlayerSessionProviderKind>(readSessionProvider);
+  const [preview, setPreview] = useState<PreviewBundle>(EMPTY_PREVIEW);
+  const [production, setProduction] = useState<PlayerPortalSnapshot | null>(null);
+  const [loading, setLoading] = useState(() => Boolean(readAuthFlag() && readActivePlayerId()));
+  const [error, setError] = useState<Error | null>(null);
 
-  const playerViews = playersQuery.data.items;
-  const coachViews = coachesQuery.data.items;
-  const parentViews = parentsQuery.data.items;
-  const achievementViews = achievementsQuery.data.items;
+  useEffect(() => {
+    let active = true;
+    const provider = sessionProvider;
+    const playerId = activePlayerId;
+    if (!authRequested || !provider || !playerId) {
+      setLoading(false);
+      setError(null);
+      setProduction(null);
+      if (provider !== 'preview') setPreview(EMPTY_PREVIEW);
+      return () => { active = false; };
+    }
 
-  const playerView = useMemo(
-    () => activePlayerId ? playerViews.find((item) => item.id === activePlayerId) : undefined,
-    [activePlayerId, playerViews],
-  );
+    setLoading(true);
+    setError(null);
+    if (provider === 'production') {
+      setPreview(EMPTY_PREVIEW);
+      void fetchPlayerPortalSnapshot(playerId)
+        .then((snapshot) => { if (active) setProduction(snapshot); })
+        .catch((caught) => { if (active) { setProduction(null); setError(caught instanceof Error ? caught : new Error('PLAYER_PORTAL_DATA_FAILED')); } })
+        .finally(() => { if (active) setLoading(false); });
+      return () => { active = false; };
+    }
 
-  const player = useMemo(
-    () => playerView ? toPlayer(playerView, coachViews, achievementViews) : null,
-    [achievementViews, coachViews, playerView],
-  );
+    if (dataMode !== 'preview') {
+      setLoading(false);
+      setError(new Error('PREVIEW_PROVIDER_DISABLED'));
+      return () => { active = false; };
+    }
 
-  const mappedPlayers = useMemo(
-    () => playerViews.map((item) => toPlayer(item, coachViews, achievementViews)),
-    [achievementViews, coachViews, playerViews],
-  );
+    setProduction(null);
+    void Promise.all([
+      gateway.listPlayers({ page: 1, pageSize: 2000 }),
+      gateway.listSports({ page: 1, pageSize: 500 }),
+      gateway.listGroups({ page: 1, pageSize: 2000 }),
+      gateway.listCoaches({ page: 1, pageSize: 1000 }),
+      gateway.listParents({ page: 1, pageSize: 2000 }),
+      gateway.listSessions({ page: 1, pageSize: 4000 }),
+      gateway.listSubscriptions({ page: 1, pageSize: 4000 }),
+      gateway.listPayments({ page: 1, pageSize: 4000 }),
+      gateway.listAchievements({ page: 1, pageSize: 4000 }),
+      gateway.listMessages({ page: 1, pageSize: 4000 }),
+    ])
+      .then(([players, sports, groups, coaches, parents, sessions, subscriptions, payments, achievements, messages]) => {
+        if (!active) return;
+        setPreview({ players: players.items, sports: sports.items, groups: groups.items, coaches: coaches.items, parents: parents.items, sessions: sessions.items, subscriptions: subscriptions.items, payments: payments.items, achievements: achievements.items, messages: messages.items });
+      })
+      .catch((caught) => { if (active) { setPreview(EMPTY_PREVIEW); setError(caught instanceof Error ? caught : new Error('PLAYER_PREVIEW_DATA_FAILED')); } })
+      .finally(() => { if (active) setLoading(false); });
+
+    return () => { active = false; };
+  }, [activePlayerId, authRequested, dataMode, gateway, sessionProvider]);
+
+  const previewPlayerView = useMemo(() => activePlayerId ? preview.players.find((item) => item.id === activePlayerId) : undefined, [activePlayerId, preview.players]);
+  const player = useMemo<Player | null>(() => {
+    if (sessionProvider === 'production') return production ? productionPlayer(production) : null;
+    return previewPlayerView ? toPreviewPlayer(previewPlayerView, preview.coaches, preview.achievements) : null;
+  }, [preview.achievements, preview.coaches, previewPlayerView, production, sessionProvider]);
 
   const allPlayers = useMemo(() => {
-    if (dataMode === 'preview') return mappedPlayers;
-    return player ? [player] : [];
-  }, [dataMode, mappedPlayers, player]);
+    if (sessionProvider === 'production') return player ? [player] : [];
+    return preview.players.map((item) => toPreviewPlayer(item, preview.coaches, preview.achievements));
+  }, [player, preview.achievements, preview.coaches, preview.players, sessionProvider]);
 
-  const sport = useMemo(
-    () => player ? sportsQuery.data.items.find((item) => item.id === player.sportId) : undefined,
-    [player, sportsQuery.data.items],
-  );
+  const sport = useMemo<Sport | undefined>(() => {
+    if (sessionProvider === 'production') {
+      const item = production?.relations.sport;
+      return item ? { id: item.id, name: bi(item.name, item.nameAr || item.name), description: bi('Recorded sport', 'رياضة مسجلة'), ageGroups: [], programIds: production?.relations.program ? [production.relations.program.id] : [], icon: '', status: item.status === 'active' ? 'active' : 'inactive' } : undefined;
+    }
+    const item = player ? preview.sports.find((candidate) => candidate.id === player.sportId) : undefined;
+    return item ? toSport(item) : undefined;
+  }, [player, preview.sports, production, sessionProvider]);
 
-  const groupView = useMemo(
-    () => player?.groupId ? groupsQuery.data.items.find((item) => item.id === player.groupId) : undefined,
-    [groupsQuery.data.items, player?.groupId],
-  );
+  const group = useMemo<TrainingGroup | undefined>(() => {
+    if (!player) return undefined;
+    if (sessionProvider === 'production') {
+      const item = production?.relations.group;
+      if (!item) return undefined;
+      return { id: item.id, sportId: production?.relations.sport?.id ?? '', name: bi(item.name), ageGroup: bi('Not recorded', 'غير مسجل'), level: bi('Not recorded', 'غير مسجل'), playerIds: [player.id], coachIds: production?.relations.coaches.map((coachItem) => coachItem.id) ?? [], programIds: production?.relations.program ? [production.relations.program.id] : [], status: item.status === 'active' ? 'active' : 'inactive' };
+    }
+    const groupView = player.groupId ? preview.groups.find((item) => item.id === player.groupId) : undefined;
+    return groupView ? toGroup(groupView, preview.players, preview.coaches) : undefined;
+  }, [player, preview.coaches, preview.groups, preview.players, production, sessionProvider]);
 
-  const group = useMemo(
-    () => groupView ? toGroup(groupView, playerViews, coachViews) : undefined,
-    [coachViews, groupView, playerViews],
-  );
-
-  const assignedCoachViews = useMemo(() => {
+  const allCoaches = useMemo<Coach[]>(() => {
     if (!player) return [];
+    if (sessionProvider === 'production') return (production?.relations.coaches ?? []).map((item) => ({ id: item.id, nameEn: item.fullName, nameAr: item.fullName, sportIds: production?.relations.sport ? [production.relations.sport.id] : [], branchIds: item.branchId ? [item.branchId] : [], groupIds: production?.relations.group ? [production.relations.group.id] : [], playerIds: [player.id], specializations: [], certifications: [], status: 'active' }));
     const ids = new Set(player.coachIds);
-    return coachViews.filter((item) => ids.has(item.id));
-  }, [coachViews, player]);
-
-  const allCoaches = useMemo(
-    () => assignedCoachViews.map((item) => toCoach(item, playerViews)),
-    [assignedCoachViews, playerViews],
-  );
+    return preview.coaches.filter((item) => ids.has(item.id)).map((item) => toCoach(item, preview.players));
+  }, [player, preview.coaches, preview.players, production, sessionProvider]);
   const coach = allCoaches[0];
 
-  const parentView = useMemo(
-    () => player ? parentViews.find((item) => item.playerIds.includes(player.id)) : undefined,
-    [parentViews, player],
-  );
+  const parentView = useMemo(() => sessionProvider === 'preview' && player ? preview.parents.find((item) => item.playerIds.includes(player.id)) : undefined, [player, preview.parents, sessionProvider]);
   const parent = parentView ? toParent(parentView) : undefined;
 
   const sessions = useMemo<Session[]>(() => {
-    if (!player?.groupId) return [];
-    return sessionsQuery.data.items
-      .filter((item) => item.groupId === player.groupId)
-      .map((item) => ({ id: item.id, sportId: item.sportId, groupId: item.groupId, startsAt: item.startsAt, status: item.status }));
-  }, [player?.groupId, sessionsQuery.data.items]);
+    if (!player) return [];
+    if (sessionProvider === 'production') return (production?.schedule ?? []).map((item) => ({ id: item.id, sportId: production?.relations.sport?.id ?? '', groupId: item.groupId, startsAt: item.startsAt, status: bi(item.status) }));
+    if (!player.groupId) return [];
+    return preview.sessions.filter((item) => item.groupId === player.groupId).map((item) => ({ id: item.id, sportId: item.sportId, groupId: item.groupId, startsAt: item.startsAt, status: item.status }));
+  }, [player, preview.sessions, production, sessionProvider]);
 
   const attendanceRecords = player?.attendanceRecords ?? [];
-  const attendanceStats = useMemo(() => ({
-    present: 0,
-    late: 0,
-    absent: 0,
-    excused: 0,
-    total: 0,
-    rate: typeof playerView?.attendanceRate === 'number' && Number.isFinite(playerView.attendanceRate)
-      ? playerView.attendanceRate
-      : null,
-    streak: 0,
-  }), [playerView?.attendanceRate]);
+  const attendanceStats = useMemo(() => {
+    if (sessionProvider === 'production') {
+      const records = production?.attendance ?? [];
+      const counts = { present: 0, late: 0, absent: 0, excused: 0 };
+      records.forEach((item) => { counts[normalizeAttendanceStatus(item.status)] += 1; });
+      const total = records.length;
+      const rate = total ? Math.round(((counts.present + counts.late) / total) * 100) : null;
+      return { ...counts, total, rate, streak: 0 };
+    }
+    const rate = typeof previewPlayerView?.attendanceRate === 'number' && Number.isFinite(previewPlayerView.attendanceRate) ? previewPlayerView.attendanceRate : null;
+    return { present: 0, late: 0, absent: 0, excused: 0, total: 0, rate, streak: 0 };
+  }, [previewPlayerView?.attendanceRate, production?.attendance, sessionProvider]);
 
-  const metrics = player?.performanceHistory ?? [];
-  const overallScore = typeof playerView?.performanceScore === 'number' && Number.isFinite(playerView.performanceScore)
-    ? playerView.performanceScore
-    : null;
-
-  const feedback = useMemo<CoachFeedback[]>(() => [], []);
+  const metrics = useMemo<PerformanceRecord[]>(() => player?.performanceHistory ?? [], [player]);
+  const overallScore = useMemo(() => {
+    if (sessionProvider === 'production') {
+      const values = (production?.performance ?? []).map((item) => item.score).filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
+      return values.length ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length) : null;
+    }
+    return typeof previewPlayerView?.performanceScore === 'number' && Number.isFinite(previewPlayerView.performanceScore) ? previewPlayerView.performanceScore : null;
+  }, [previewPlayerView?.performanceScore, production?.performance, sessionProvider]);
 
   const subscriptions = useMemo<Subscription[]>(() => {
     if (!player) return [];
-    return subscriptionsQuery.data.items.filter((item) => item.playerId === player.id).map((item) => ({ ...item }));
-  }, [player, subscriptionsQuery.data.items]);
+    if (sessionProvider === 'production') return (production?.subscriptions ?? []).map((item) => ({ id: item.id, playerId: player.id, programId: item.programId, branchId: production?.player.branchId ?? '', plan: bi('Recorded subscription', 'اشتراك مسجل'), status: normalizeSubscriptionStatus(item.status), startDate: '', amount: (item.amountMinor ?? 0) / 100, currency: item.currency ?? 'AED' }));
+    return preview.subscriptions.filter((item) => item.playerId === player.id).map((item) => ({ ...item }));
+  }, [player, preview.subscriptions, production, sessionProvider]);
 
   const payments = useMemo<Payment[]>(() => {
     if (!player) return [];
-    return paymentsQuery.data.items.filter((item) => item.playerId === player.id).map((item) => ({ ...item }));
-  }, [paymentsQuery.data.items, player]);
+    if (sessionProvider === 'production') return (production?.payments ?? []).map((item) => ({ id: item.id, subscriptionId: item.subscriptionId ?? '', playerId: player.id, amount: (item.amountMinor ?? 0) / 100, currency: item.currency ?? 'AED', status: normalizePaymentStatus(item.status), paidAt: item.createdAt, method: bi(item.provider || 'Recorded provider', item.provider || 'موفر مسجل'), reference: item.reference ?? undefined }));
+    return preview.payments.filter((item) => item.playerId === player.id).map((item) => ({ ...item, status: normalizePaymentStatus(item.status) }));
+  }, [player, preview.payments, production?.payments, sessionProvider]);
+
+  const documents = useMemo<PlayerDocumentItem[]>(() => {
+    if (sessionProvider !== 'production') return [];
+    return (production?.documents ?? []).map((item) => ({ id: item.id, title: bi('Recorded document', 'وثيقة مسجلة'), category: 'record', issueDate: item.createdAt, status: item.status === 'active' || item.status === 'verified' ? 'verified' : item.status === 'expired' ? 'expired' : 'pending', fileSize: 'Not recorded', verifiedBy: bi('Not recorded', 'غير مسجل') }));
+  }, [production?.documents, sessionProvider]);
 
   const achievements = useMemo<PlayerAchievementItem[]>(() => {
     if (!player) return [];
-    return achievementViews
-      .filter((item) => item.playerId === player.id && item.status === 'awarded')
-      .map((item) => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        tier: 'recorded' as const,
-        category: item.category,
-        awardedAt: item.awardedAt,
-        isLocked: false,
-      }));
-  }, [achievementViews, player]);
+    if (sessionProvider === 'production') return (production?.achievements ?? []).map((item) => ({ id: item.id, title: bi(item.title, item.titleAr || item.title), description: bi(item.badge || item.category), tier: 'recorded', category: bi(item.category), awardedAt: item.earnedAt, isLocked: false }));
+    return preview.achievements.filter((item) => item.playerId === player.id && item.status === 'awarded').map((item) => ({ id: item.id, title: item.title, description: item.description, tier: 'recorded', category: item.category, awardedAt: item.awardedAt, isLocked: false }));
+  }, [player, preview.achievements, production?.achievements, sessionProvider]);
 
   const threads = useMemo<PlayerChatThread[]>(() => {
     if (!player) return [];
-    return messagesQuery.data.items
-      .filter((item) => item.fromId === player.id || item.toIds.includes(player.id))
-      .sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime())
-      .map((item) => toPlayerThread(item, player, coachViews, parentViews));
-  }, [coachViews, messagesQuery.data.items, parentViews, player]);
+    if (sessionProvider === 'production') return (production?.messages ?? []).map((item) => toProductionThread(item, production!));
+    return preview.messages.filter((item) => item.fromId === player.id || item.toIds.includes(player.id)).sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime()).map((item) => toPlayerThread(item, player, preview.coaches, preview.parents));
+  }, [player, preview.coaches, preview.messages, preview.parents, production, sessionProvider]);
 
   const derivedNotifications = useMemo<PlayerNotificationItem[]>(() => {
     if (!player) return [];
     const items: PlayerNotificationItem[] = [];
-    const now = Date.now();
-    const nextSession = [...sessions]
-      .filter((session) => new Date(session.startsAt).getTime() >= now)
-      .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())[0];
-    if (nextSession) {
-      items.push({
-        id: `notif-session-${nextSession.id}`,
-        title: { en: 'Upcoming Training Session', ar: 'حصة تدريبية قادمة' },
-        description: {
-          en: `A recorded session is scheduled for ${new Date(nextSession.startsAt).toLocaleString()}.`,
-          ar: `توجد حصة مسجلة مجدولة في ${new Date(nextSession.startsAt).toLocaleString('ar')}.`,
-        },
-        category: 'schedule',
-        timestamp: nextSession.startsAt,
-        isRead: false,
-        actionUrl: `/player/schedule/${nextSession.id}`,
-      });
+    if (sessionProvider === 'production') {
+      for (const item of production?.notifications ?? []) {
+        items.push({ id: `provider-${item.id}`, title: bi(item.title, item.titleAr || item.title), description: bi(item.body, item.bodyAr || item.body), category: 'membership', timestamp: item.createdAt, isRead: false });
+      }
     }
-    const latestAchievement = [...achievements]
-      .filter((item) => item.awardedAt)
-      .sort((a, b) => new Date(b.awardedAt!).getTime() - new Date(a.awardedAt!).getTime())[0];
-    if (latestAchievement?.awardedAt) {
-      items.push({
-        id: `notif-achievement-${latestAchievement.id}`,
-        title: { en: 'Achievement on Athlete Record', ar: 'إنجاز في سجل اللاعب' },
-        description: latestAchievement.title,
-        category: 'achievement',
-        timestamp: latestAchievement.awardedAt,
-        isRead: false,
-        actionUrl: '/player/achievements',
-      });
-    }
-    return items;
-  }, [achievements, player, sessions]);
+    const nextSession = [...sessions].filter((session) => new Date(session.startsAt).getTime() >= Date.now()).sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())[0];
+    if (nextSession) items.push({ id: `notif-session-${nextSession.id}`, title: bi('Upcoming Training Session', 'حصة تدريبية قادمة'), description: bi(`A recorded session is scheduled for ${new Date(nextSession.startsAt).toLocaleString()}.`, `توجد حصة مسجلة مجدولة في ${new Date(nextSession.startsAt).toLocaleString('ar')}.`), category: 'schedule', timestamp: nextSession.startsAt, isRead: false, actionUrl: `/player/schedule/${nextSession.id}` });
+    const latestAchievement = [...achievements].filter((item) => item.awardedAt).sort((a, b) => new Date(b.awardedAt!).getTime() - new Date(a.awardedAt!).getTime())[0];
+    if (latestAchievement?.awardedAt) items.push({ id: `notif-achievement-${latestAchievement.id}`, title: bi('Achievement on Athlete Record', 'إنجاز في سجل اللاعب'), description: latestAchievement.title, category: 'achievement', timestamp: latestAchievement.awardedAt, isRead: false, actionUrl: '/player/achievements' });
+    return items.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+  }, [achievements, player, production?.notifications, sessionProvider, sessions]);
 
   const [notifications, setNotifications] = useState<PlayerNotificationItem[]>([]);
   useEffect(() => setNotifications(derivedNotifications), [derivedNotifications]);
 
-  const loading = playersQuery.loading
-    || sportsQuery.loading
-    || groupsQuery.loading
-    || coachesQuery.loading
-    || parentsQuery.loading
-    || sessionsQuery.loading
-    || subscriptionsQuery.loading
-    || paymentsQuery.loading
-    || achievementsQuery.loading
-    || messagesQuery.loading;
-
-  const error = playersQuery.error
-    ?? sportsQuery.error
-    ?? groupsQuery.error
-    ?? coachesQuery.error
-    ?? parentsQuery.error
-    ?? sessionsQuery.error
-    ?? subscriptionsQuery.error
-    ?? paymentsQuery.error
-    ?? achievementsQuery.error
-    ?? messagesQuery.error;
-
-  const isPlayerNotFound = Boolean(activePlayerId && !playersQuery.loading && !playerView);
-  const isAuthenticated = Boolean(authRequested && playerView);
+  const isPlayerNotFound = Boolean(activePlayerId && !loading && !player && !error);
+  const isAuthenticated = Boolean(authRequested && player && !error);
   const isPreviewSession = sessionProvider === 'preview';
 
   useEffect(() => {
-    if (playersQuery.loading || !activePlayerId) return;
-    if (!playerView) {
-      setAuthRequested(false);
-      setActivePlayerIdState(null);
-      setSessionProvider(null);
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(AUTH_KEY, 'false');
-        window.localStorage.removeItem(ACTIVE_PLAYER_KEY);
-        window.localStorage.removeItem(SESSION_KEY);
-      }
+    if (loading || error || !activePlayerId || player) return;
+    setAuthRequested(false);
+    setActivePlayerIdState(null);
+    setSessionProvider(null);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(AUTH_KEY, 'false');
+      window.localStorage.removeItem(ACTIVE_PLAYER_KEY);
+      window.localStorage.removeItem(SESSION_KEY);
     }
-  }, [activePlayerId, playerView, playersQuery.loading]);
+  }, [activePlayerId, error, loading, player]);
 
   const setActivePlayerId = (id: string) => {
-    if (!playerViews.some((item) => item.id === id)) return;
-    if (dataMode !== 'preview' && activePlayerId && id !== activePlayerId) return;
+    if (!allPlayers.some((item) => item.id === id)) return;
+    if (sessionProvider === 'production' && activePlayerId && id !== activePlayerId) return;
     setActivePlayerIdState(id);
     if (typeof window !== 'undefined') window.localStorage.setItem(ACTIVE_PLAYER_KEY, id);
   };
 
   const login = (athleteId?: string) => {
     const idToUse = athleteId ?? activePlayerId;
-    if (!idToUse || !playerViews.some((item) => item.id === idToUse)) {
-      setAuthRequested(false);
-      if (typeof window !== 'undefined') window.localStorage.setItem(AUTH_KEY, 'false');
-      return;
-    }
+    if (!idToUse) return;
     setSessionProvider(readSessionProvider());
-    setActivePlayerId(idToUse);
+    setActivePlayerIdState(idToUse);
     setAuthRequested(true);
-    if (typeof window !== 'undefined') window.localStorage.setItem(AUTH_KEY, 'true');
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(ACTIVE_PLAYER_KEY, idToUse);
+      window.localStorage.setItem(AUTH_KEY, 'true');
+    }
   };
 
   const logout = () => {
@@ -560,6 +502,8 @@ export function PlayerSessionProvider({ children }: { children: React.ReactNode 
     setAuthRequested(false);
     setSessionProvider(null);
     setActivePlayerIdState(null);
+    setProduction(null);
+    setPreview(EMPTY_PREVIEW);
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(AUTH_KEY, 'false');
       window.localStorage.removeItem(ACTIVE_PLAYER_KEY);
@@ -569,7 +513,7 @@ export function PlayerSessionProvider({ children }: { children: React.ReactNode 
   };
 
   const updateProfile = (patch: Partial<Player>) => {
-    if (!playerView) return;
+    if (sessionProvider !== 'preview' || !previewPlayerView) return;
     const supportedPatch: Partial<PlayerViewModel> = {};
     if (patch.photo !== undefined) supportedPatch.photo = patch.photo;
     if (patch.nameEn !== undefined) supportedPatch.nameEn = patch.nameEn;
@@ -581,60 +525,51 @@ export function PlayerSessionProvider({ children }: { children: React.ReactNode 
     if (patch.level !== undefined) supportedPatch.level = patch.level;
     if (patch.status !== undefined) supportedPatch.status = patch.status;
     if (!Object.keys(supportedPatch).length) return;
-    void updatePlayerMutation.update(playerView.id, supportedPatch).catch(() => undefined);
+    void gateway.updatePlayer(previewPlayerView.id, supportedPatch).then((result) => {
+      setPreview((current) => ({ ...current, players: current.players.map((item) => item.id === result.item.id ? result.item : item) }));
+    }).catch(() => undefined);
   };
 
-  const markNotificationRead = (id: string) => {
-    setNotifications((current) => current.map((item) => item.id === id ? { ...item, isRead: true } : item));
-  };
-
-  const markAllNotificationsRead = () => {
-    setNotifications((current) => current.map((item) => ({ ...item, isRead: true })));
-  };
-
-  const unreadNotificationCount = useMemo(
-    () => notifications.filter((item) => !item.isRead).length,
-    [notifications],
-  );
+  const markNotificationRead = (id: string) => setNotifications((current) => current.map((item) => item.id === id ? { ...item, isRead: true } : item));
+  const markAllNotificationsRead = () => setNotifications((current) => current.map((item) => ({ ...item, isRead: true })));
+  const unreadNotificationCount = useMemo(() => notifications.filter((item) => !item.isRead).length, [notifications]);
 
   return (
-    <PlayerSessionContext.Provider
-      value={{
-        player,
-        isPlayerNotFound,
-        allPlayers,
-        sport: sport ? toSport(sport) : undefined,
-        group,
-        coach,
-        allCoaches,
-        parent,
-        sessions,
-        attendanceRecords,
-        attendanceStats,
-        metrics,
-        overallScore,
-        feedback,
-        subscriptions,
-        payments,
-        documents: EMPTY_DOCUMENTS,
-        notifications,
-        unreadNotificationCount,
-        messages: threads,
-        achievements,
-        isAuthenticated,
-        isPreviewSession,
-        activePlayerId,
-        loading,
-        error,
-        setActivePlayerId,
-        switchPlayer: setActivePlayerId,
-        login,
-        logout,
-        updateProfile,
-        markNotificationRead,
-        markAllNotificationsRead,
-      }}
-    >
+    <PlayerSessionContext.Provider value={{
+      player,
+      isPlayerNotFound,
+      allPlayers,
+      sport,
+      group,
+      coach,
+      allCoaches,
+      parent,
+      sessions,
+      attendanceRecords,
+      attendanceStats,
+      metrics,
+      overallScore,
+      feedback: EMPTY_FEEDBACK,
+      subscriptions,
+      payments,
+      documents,
+      notifications,
+      unreadNotificationCount,
+      messages: threads,
+      achievements,
+      isAuthenticated,
+      isPreviewSession,
+      activePlayerId,
+      loading,
+      error,
+      setActivePlayerId,
+      switchPlayer: setActivePlayerId,
+      login,
+      logout,
+      updateProfile,
+      markNotificationRead,
+      markAllNotificationsRead,
+    }}>
       {children}
     </PlayerSessionContext.Provider>
   );

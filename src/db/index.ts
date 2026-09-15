@@ -7,6 +7,11 @@ declare global {
   var _uosPostgresPool: Pool | undefined;
 }
 
+function positiveInteger(value: string | undefined, fallback: number): number {
+  const parsed = value ? Number(value) : fallback;
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
+}
+
 export function databaseConfigured(): boolean {
   return runtimeDatabaseConfigured();
 }
@@ -26,13 +31,16 @@ export function getPool(): Pool {
     const ssl = sslEnabled
       ? { rejectUnauthorized: process.env.SQL_SSL_REJECT_UNAUTHORIZED !== 'false' }
       : undefined;
+    const statementTimeout = positiveInteger(process.env.SQL_STATEMENT_TIMEOUT_MS, 12_000);
+    const poolMax = positiveInteger(process.env.SQL_POOL_MAX, 10);
 
     global._uosPostgresPool = new Pool(
       connectionString
         ? {
             connectionString,
-            max: Number(process.env.SQL_POOL_MAX || 10),
+            max: poolMax,
             connectionTimeoutMillis: 15000,
+            statement_timeout: statementTimeout,
             ssl,
           }
         : {
@@ -41,8 +49,9 @@ export function getPool(): Pool {
             user,
             password,
             database: process.env.SQL_DB_NAME,
-            max: Number(process.env.SQL_POOL_MAX || 10),
+            max: poolMax,
             connectionTimeoutMillis: 15000,
+            statement_timeout: statementTimeout,
             ssl,
           },
     );

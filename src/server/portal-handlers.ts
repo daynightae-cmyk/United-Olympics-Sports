@@ -18,8 +18,8 @@ export const portalPlayerDataHandler = async (req: ApiRequest, res: ApiResponse)
 export const portalParentChildrenHandler = async (req: ApiRequest, res: ApiResponse): Promise<void> => {
   assertMethod(req, ['GET']);
   const ctx = await requireAuthorizationContext(req);
-  const children = await portalRepo.getParentChildren(ctx);
-  sendJson(res, 200, { ok: true, children });
+  const data = await portalRepo.getParentPortalData(ctx);
+  sendJson(res, 200, { ok: true, ...data });
 };
 
 export const portalCoachScopeHandler = async (req: ApiRequest, res: ApiResponse): Promise<void> => {

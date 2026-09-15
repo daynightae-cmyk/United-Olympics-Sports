@@ -34,7 +34,7 @@ import {
   portalParentChildrenHandler,
   portalPlayerDataHandler,
 } from './portal-handlers';
-import { storeCheckoutHandler, storeOrderCancelHandler, storeProductsHandler } from './store-handlers';
+import { storeAccountHandler, storeCheckoutHandler, storeOrderCancelHandler, storeProductsHandler } from './store-handlers';
 import { paymentIntentHandler, paymentWebhookHandler } from './payment-handlers';
 import { documentDownloadUrlHandler, documentRegisterHandler } from './document-handlers';
 import { portalWhoAmIHandler } from './portal-bindings';
@@ -73,6 +73,7 @@ export type RouteKey =
   | 'portal-parent-children'
   | 'portal-coach-scope'
   | 'store-products'
+  | 'store-account'
   | 'store-checkout'
   | 'store-order-cancel'
   | 'payment-intent'
@@ -113,6 +114,7 @@ const handlers: Record<RouteKey, RouteHandler> = {
   'portal-parent-children': portalParentChildrenHandler,
   'portal-coach-scope': portalCoachScopeHandler,
   'store-products': storeProductsHandler,
+  'store-account': storeAccountHandler,
   'store-checkout': storeCheckoutHandler,
   'store-order-cancel': storeOrderCancelHandler,
   'payment-intent': paymentIntentHandler,
@@ -163,6 +165,7 @@ export function resolveRouteKey(req: ApiRequest): RouteKey | null {
   if (pathname === '/api/v1/portal/parent/children') return 'portal-parent-children';
   if (pathname === '/api/v1/portal/coach/scope') return 'portal-coach-scope';
   if (pathname === '/api/v1/store/products') return 'store-products';
+  if (pathname === '/api/v1/store/account') return 'store-account';
   if (pathname === '/api/v1/store/checkout') return 'store-checkout';
   if (pathname === '/api/v1/store/orders/cancel') return 'store-order-cancel';
   if (pathname === '/api/v1/payments/intent') return 'payment-intent';

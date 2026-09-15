@@ -1,14 +1,12 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Sparkles, UserRound } from 'lucide-react';
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Sparkles } from 'lucide-react';
 import { PortalAuthPage, type PortalAuthNotice, type PortalAuthProvider } from '../../components/auth/PortalAuthPage';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { beginSupabaseGoogleOAuth, fetchPortalIdentity, getAccessToken, signOutEverywhere } from '../../lib/auth-client';
-import { CoachSessionProvider, useCoachSession } from './CoachSessionContext';
-
-const previewRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true';
 
 const COACH_PRODUCTION_SESSION_KEY = 'uos:coach-portal:session:v1';
+const demoRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_PORTAL_DEMO === 'true';
 
 function readCoachProductionSession(): { coachId: string } | null {
   if (typeof window === 'undefined') return null;
@@ -27,59 +25,19 @@ function clearCoachProductionSession() {
   try { window.localStorage.removeItem(COACH_PRODUCTION_SESSION_KEY); } catch { /* storage may be unavailable */ }
 }
 
-function CoachPreviewAccess() {
-  const { allCoaches, login, loading, error } = useCoachSession();
-  const navigate = useNavigate();
-  const [selectedCoachId, setSelectedCoachId] = useState('');
-
-  useEffect(() => {
-    if (!selectedCoachId && allCoaches[0]) setSelectedCoachId(allCoaches[0].id);
-    if (selectedCoachId && !allCoaches.some((coach) => coach.id === selectedCoachId)) {
-      setSelectedCoachId(allCoaches[0]?.id ?? '');
-    }
-  }, [allCoaches, selectedCoachId]);
-
-  const enterPreview = () => {
-    if (!selectedCoachId) return;
-    login(selectedCoachId, 'preview');
-    navigate('/coach/home');
-  };
-
+function SafeDemoLink() {
+  if (!demoRuntime) return null;
   return (
-    <div className="portal-auth-preview">
+    <div className="portal-auth-preview" data-safe-demo-link="coach">
       <div className="portal-auth-preview-header">
-        <span><Sparkles aria-hidden="true" /><BilingualText value={bi('Development preview', 'معاينة التطوير')} /></span>
-        <span className="portal-auth-preview-badge">Preview</span>
+        <span><Sparkles aria-hidden="true" /><BilingualText value={bi('Safe product demo', 'عرض تجريبي آمن')} /></span>
+        <span className="portal-auth-preview-badge">Demo</span>
       </div>
-      {loading ? (
-        <div className="ui-skeleton" role="status" aria-live="polite"><BilingualText value={bi('Loading available coaches…', 'جارٍ تحميل المدربين المتاحين…')} /></div>
-      ) : error ? (
-        <div className="enterprise-empty" role="status">
-          <UserRound size={22} />
-          <h3><BilingualText value={bi('Coach data is unavailable', 'بيانات المدربين غير متاحة')} /></h3>
-          <p><BilingualText value={bi('The preview data service is unavailable in this session.', 'خدمة بيانات المعاينة غير متاحة في هذه الجلسة.')} /></p>
-        </div>
-      ) : allCoaches.length ? (
-        <>
-          <label htmlFor="coach-preview-identity">
-            <BilingualText value={bi('Select an active preview coach', 'اختر مدرب معاينة نشطًا')} />
-          </label>
-          <select id="coach-preview-identity" value={selectedCoachId} onChange={(event) => setSelectedCoachId(event.target.value)}>
-            {allCoaches.map((coach) => (
-              <option key={coach.id} value={coach.id}>{coach.nameEn} — {coach.nameAr}</option>
-            ))}
-          </select>
-          <button type="button" onClick={enterPreview} disabled={!selectedCoachId}>
-            <BilingualText value={bi('Enter Preview Coach Mode', 'الدخول إلى وضع معاينة المدرب')} />
-          </button>
-        </>
-      ) : (
-        <div className="enterprise-empty" role="status">
-          <UserRound size={22} />
-          <h3><BilingualText value={bi('No active coaches available', 'لا يوجد مدربون نشطون متاحون')} /></h3>
-          <p><BilingualText value={bi('Active coach records will appear here when the preview provider supplies them.', 'ستظهر سجلات المدربين النشطين هنا عندما يوفرها مزود المعاينة.')} /></p>
-        </div>
-      )}
+      <p><BilingualText value={bi(
+        'Uses synthetic coaching data only. No production roster or admin query is executed.',
+        'يستخدم بيانات تدريب صناعية فقط ولا ينفذ استعلامات قوائم الإنتاج أو الإدارة.',
+      )} /></p>
+      <Link className="button secondary" to="/demo/coach"><BilingualText value={bi('Open coach demo', 'فتح عرض المدرب')} /></Link>
     </div>
   );
 }
@@ -87,10 +45,6 @@ function CoachPreviewAccess() {
 export function CoachLoginPage() {
   const navigate = useNavigate();
 
-  // Revalidate any persisted production session on mount: a stale or forged
-  // local session must never be trusted without a live portal binding lookup.
-  // Valid bindings redirect only after verified coach scope; stale, wrong-portal,
-  // or unbound sessions are cleared fail-closed.
   useEffect(() => {
     let active = true;
     (async () => {
@@ -111,9 +65,7 @@ export function CoachLoginPage() {
         if (active) clearCoachProductionSession();
       }
     })();
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [navigate]);
 
   const handleProvider = async (provider: PortalAuthProvider): Promise<PortalAuthNotice | null> => {
@@ -135,15 +87,5 @@ export function CoachLoginPage() {
     }
   };
 
-  return (
-    <PortalAuthPage
-      portal="coach"
-      extraContent={previewRuntime ? (
-        <CoachSessionProvider>
-          <CoachPreviewAccess />
-        </CoachSessionProvider>
-      ) : undefined}
-      onProvider={handleProvider}
-    />
-  );
+  return <PortalAuthPage portal="coach" extraContent={<SafeDemoLink />} onProvider={handleProvider} />;
 }

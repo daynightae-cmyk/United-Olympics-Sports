@@ -26,15 +26,25 @@ const guardianCtx: AuthorizationContext = {
 
 class MockGuardianDb implements DbQueryClient {
   async query<T = any>(sql: string, params?: unknown[]): Promise<{ rows: T[]; rowCount?: number }> {
-    const s = sql.toLowerCase();
+    const s = sql.toLowerCase().replace(/\s+/g, ' ');
+
+    if (s.includes('from guardians') && s.includes('where id = $1 and user_uid = $2')) {
+      const [guardianId, uid] = params ?? [];
+      const rows = guardianId === 'guard-1' && uid === 'u-guardian-1'
+        ? [{ id: 'guard-1', full_name: 'Verified Guardian' }]
+        : [];
+      return { rows: rows as unknown as T[], rowCount: rows.length };
+    }
+
     if (s.includes('from players') && s.includes('where id = any($1)')) {
-      const ids = params?.[0] as string[];
+      const ids = (params?.[0] as string[] | undefined) ?? [];
       const allowed = [
         { id: CHILD_1, full_name: 'Child One', branch_id: 'br-1' },
         { id: CHILD_2, full_name: 'Child Two', branch_id: 'br-1' },
-      ].filter((c) => ids.includes(c.id));
+      ].filter((child) => ids.includes(child.id));
       return { rows: allowed as unknown as T[], rowCount: allowed.length };
     }
+
     if (s.includes('from players where id = $1')) {
       const id = params?.[0];
       if (id === CHILD_1 || id === CHILD_2) {
@@ -45,6 +55,7 @@ class MockGuardianDb implements DbQueryClient {
       }
       return { rows: [], rowCount: 0 };
     }
+
     return { rows: [], rowCount: 0 };
   }
 }
@@ -54,22 +65,38 @@ async function runGuardianIsolationTests() {
   const db = new MockGuardianDb();
   const repo = new PortalDomainRepository(db);
 
-  // 1. Guardian retrieves ONLY their linked children
+  // 1. Guardian identity is verified before any child records are exposed.
+  const parentData = await repo.getParentPortalData(guardianCtx);
+  assert.equal(parentData.parent.id, 'guard-1');
+  assert.equal(parentData.parent.fullName, 'Verified Guardian');
+  assert.deepEqual(parentData.parent.playerIds.sort(), [CHILD_1, CHILD_2].sort());
+
+  // 2. Guardian retrieves ONLY their linked children.
   const children = await repo.getParentChildren(guardianCtx);
   assert.equal(children.length, 2);
-  assert.ok(children.some((c) => c.id === CHILD_1));
-  assert.ok(children.some((c) => c.id === CHILD_2));
-  assert.ok(!children.some((c) => c.id === STRANGER_CHILD));
+  assert.ok(children.some((child) => child.id === CHILD_1));
+  assert.ok(children.some((child) => child.id === CHILD_2));
+  assert.ok(!children.some((child) => child.id === STRANGER_CHILD));
 
-  // 2. Guardian access to linked child PASS
+  // 3. A forged context with the right guardian id but the wrong verified uid
+  // must not receive family data.
+  await assert.rejects(
+    () => repo.getParentPortalData({ ...guardianCtx, uid: 'u-attacker' }),
+    (err: unknown) => {
+      assert.ok(err instanceof ApiError);
+      assert.equal(err.status, 404);
+      assert.equal(err.code, 'GUARDIAN_NOT_FOUND');
+      return true;
+    },
+  );
+
+  // 4. Guardian access to a linked child passes.
   const child1Data = await repo.getPlayerData(guardianCtx, CHILD_1);
   assert.equal(child1Data.player.id, CHILD_1);
 
-  // 3. Guardian access to unlinked stranger child MUST FAIL (403)
+  // 5. Guardian access to an unlinked stranger child must fail with 403.
   await assert.rejects(
-    async () => {
-      await repo.getPlayerData(guardianCtx, STRANGER_CHILD);
-    },
+    () => repo.getPlayerData(guardianCtx, STRANGER_CHILD),
     (err: unknown) => {
       assert.ok(err instanceof ApiError);
       assert.equal(err.status, 403);

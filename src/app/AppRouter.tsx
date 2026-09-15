@@ -14,6 +14,7 @@ const CoachPortalRouter = lazy(() => import('../portals/CoachPortalRouter').then
 const AdminAccessGate = lazy(() => import('../portals/admin/AdminAccessGate').then((module) => ({ default: module.AdminAccessGate })));
 const PublicExperience = lazy(() => import('../pages/public/PublicExperience').then((module) => ({ default: module.PublicExperience })));
 const BenchmarkShowcasePage = lazy(() => import('../pages/benchmark/BenchmarkShowcasePage').then((module) => ({ default: module.BenchmarkShowcasePage })));
+const PortalDemoPage = lazy(() => import('../pages/demo/PortalDemoPage').then((module) => ({ default: module.PortalDemoPage })));
 const StoreApp = lazy(() => import('../store/StoreApp').then((module) => ({ default: module.StoreApp })));
 
 function RouteFallback() {
@@ -34,6 +35,7 @@ function InternalProductUtilities() {
 }
 
 const isBenchmarkEnabled = import.meta.env.DEV === true;
+const isSafeDemoEnabled = import.meta.env.DEV || import.meta.env.VITE_UOS_PORTAL_DEMO === 'true';
 
 export function AppRouter() {
   return (
@@ -43,6 +45,7 @@ export function AppRouter() {
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           {isBenchmarkEnabled && <Route path="/benchmark" element={<BenchmarkShowcasePage />} />}
+          {isSafeDemoEnabled && <Route path="/demo/:portal" element={<PortalDemoPage />} />}
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/admin/login" element={<PortalLoginRoute portal="admin" />} />
           <Route path="/store/login" element={<PortalLoginRoute portal="store" />} />

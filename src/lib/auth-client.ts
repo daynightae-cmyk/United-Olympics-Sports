@@ -1,7 +1,9 @@
 import { auth, googleSignIn, logout as firebaseLogout } from './firebase';
 import { supabase } from './supabase';
+import { fetchJsonWithRuntimeTimeout, withRuntimeTimeout } from './runtime-timeout';
 
 const RETURN_TO_KEY = 'uos:auth:return-to';
+const AUTH_RUNTIME_TIMEOUT_MS = 10_000;
 
 export type ClientAuthProvider = 'supabase' | 'firebase';
 
@@ -42,13 +44,17 @@ export async function beginSupabaseGoogleOAuth(returnTo = '/'): Promise<void> {
   const safeDestination = safeReturnTo(returnTo);
   sessionStorage.setItem(RETURN_TO_KEY, safeDestination);
   const redirectTo = `${window.location.origin}/auth/callback`;
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo,
-      skipBrowserRedirect: true,
-    },
-  });
+  const { data, error } = await withRuntimeTimeout(
+    'supabase-google-oauth-start',
+    supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo,
+        skipBrowserRedirect: true,
+      },
+    }),
+    AUTH_RUNTIME_TIMEOUT_MS,
+  );
   if (error || !data.url) {
     throw error ?? new Error('Supabase did not return an OAuth redirect URL.');
   }
@@ -67,7 +73,11 @@ export function consumeAuthReturnTo(fallback = '/'): string {
 }
 
 export async function exchangeSupabaseAuthCode(code: string): Promise<string> {
-  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data, error } = await withRuntimeTimeout(
+    'supabase-auth-code-exchange',
+    supabase.auth.exchangeCodeForSession(code),
+    AUTH_RUNTIME_TIMEOUT_MS,
+  );
   if (error || !data.session?.access_token) {
     throw error ?? new Error('Supabase OAuth code exchange did not create a session.');
   }
@@ -75,14 +85,14 @@ export async function exchangeSupabaseAuthCode(code: string): Promise<string> {
 }
 
 export async function firebaseGoogleFallbackToken(): Promise<string> {
-  const credential = await googleSignIn();
-  return credential.user.getIdToken();
+  const credential = await withRuntimeTimeout('firebase-google-sign-in', googleSignIn(), AUTH_RUNTIME_TIMEOUT_MS);
+  return withRuntimeTimeout('firebase-id-token', credential.user.getIdToken(), AUTH_RUNTIME_TIMEOUT_MS);
 }
 
 export async function getAccessToken(): Promise<string | null> {
-  const { data } = await supabase.auth.getSession();
+  const { data } = await withRuntimeTimeout('supabase-session-read', supabase.auth.getSession(), AUTH_RUNTIME_TIMEOUT_MS);
   if (data.session?.access_token) return data.session.access_token;
-  if (auth.currentUser) return auth.currentUser.getIdToken();
+  if (auth.currentUser) return withRuntimeTimeout('firebase-id-token', auth.currentUser.getIdToken(), AUTH_RUNTIME_TIMEOUT_MS);
   return null;
 }
 
@@ -90,11 +100,14 @@ export async function fetchServerSession(token?: string): Promise<ServerAuthSess
   const accessToken = token ?? await getAccessToken();
   if (!accessToken) throw new Error('AUTH_REQUIRED');
 
-  const response = await fetch('/api?route=auth-session', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  const payload = await response.json().catch(() => null) as { session?: ServerAuthSession; error?: { code?: string } } | null;
+  const { response, payload } = await fetchJsonWithRuntimeTimeout<{ session?: ServerAuthSession; error?: { code?: string } }>(
+    '/api?route=auth-session',
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+    AUTH_RUNTIME_TIMEOUT_MS,
+  );
   if (!response.ok || !payload?.session) {
     throw new Error(payload?.error?.code || 'AUTH_SESSION_FAILED');
   }
@@ -105,11 +118,16 @@ export async function fetchPortalIdentity(token?: string): Promise<PortalIdentit
   const accessToken = token ?? await getAccessToken();
   if (!accessToken) throw new Error('AUTH_REQUIRED');
 
-  const response = await fetch('/api?route=portal-whoami', {
-    method: 'GET',
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  const payload = await response.json().catch(() => null) as (PortalIdentity & { ok?: boolean }) | { error?: { code?: string } } | null;
+  const { response, payload } = await fetchJsonWithRuntimeTimeout<
+    (PortalIdentity & { ok?: boolean }) | { error?: { code?: string } }
+  >(
+    '/api?route=portal-whoami',
+    {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+    AUTH_RUNTIME_TIMEOUT_MS,
+  );
   if (!response.ok || !payload || !('bindings' in payload)) {
     const code = payload && 'error' in payload ? payload.error?.code : undefined;
     throw new Error(code || 'PORTAL_BINDING_FAILED');
@@ -119,7 +137,7 @@ export async function fetchPortalIdentity(token?: string): Promise<PortalIdentit
 
 export async function signOutEverywhere(): Promise<void> {
   await Promise.allSettled([
-    supabase.auth.signOut(),
-    firebaseLogout(),
+    withRuntimeTimeout('supabase-sign-out', supabase.auth.signOut(), AUTH_RUNTIME_TIMEOUT_MS),
+    withRuntimeTimeout('firebase-sign-out', firebaseLogout(), AUTH_RUNTIME_TIMEOUT_MS),
   ]);
 }

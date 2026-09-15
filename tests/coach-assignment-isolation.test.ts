@@ -30,7 +30,16 @@ const coachCtx: AuthorizationContext = {
 
 class MockCoachDb implements DbQueryClient {
   async query<T = any>(sql: string, params?: unknown[]): Promise<{ rows: T[]; rowCount?: number }> {
-    const s = sql.toLowerCase();
+    const s = sql.toLowerCase().replace(/\s+/g, ' ');
+
+    if (s.includes('from coaches') && s.includes('where id = $1 and user_uid = $2')) {
+      const [coachId, uid] = params ?? [];
+      const rows = coachId === 'coach-entity-1' && uid === 'u-coach-1'
+        ? [{ id: 'coach-entity-1', full_name: 'Verified Coach', branch_id: COACH_BRANCH }]
+        : [];
+      return { rows: rows as unknown as T[], rowCount: rows.length };
+    }
+
     if (s.includes('from players where id = $1')) {
       const id = params?.[0];
       if (id === COACH_PLAYER) {
@@ -41,9 +50,11 @@ class MockCoachDb implements DbQueryClient {
       }
       return { rows: [], rowCount: 0 };
     }
+
     if (s.includes('insert into performance_evaluations')) {
       return { rows: [{ id: 'pe-1' } as unknown as T], rowCount: 1 };
     }
+
     return { rows: [], rowCount: 0 };
   }
 }
@@ -54,13 +65,26 @@ async function runCoachIsolationTests() {
   const portalRepo = new PortalDomainRepository(db);
   const adminRepo = new AdminDomainRepository(db);
 
-  // 1. Coach scope retrieval
+  // 1. Coach identity is verified before assignment scope is exposed.
   const scope = await portalRepo.getCoachScopeData(coachCtx);
+  assert.equal(scope.coach.id, 'coach-entity-1');
+  assert.equal(scope.coach.fullName, 'Verified Coach');
   assert.deepEqual(scope.assignedBranches, [COACH_BRANCH]);
   assert.deepEqual(scope.assignedGroups, [COACH_GROUP]);
   assert.deepEqual(scope.assignedPlayerIds, [COACH_PLAYER]);
 
-  // 2. Performance record for assigned player PASS
+  // 2. A forged uid with the correct persisted coach id must not obtain scope.
+  await assert.rejects(
+    () => portalRepo.getCoachScopeData({ ...coachCtx, uid: 'u-attacker' }),
+    (err: unknown) => {
+      assert.ok(err instanceof ApiError);
+      assert.equal(err.status, 404);
+      assert.equal(err.code, 'COACH_NOT_FOUND');
+      return true;
+    },
+  );
+
+  // 3. Performance record for assigned player passes.
   const passEval = await adminRepo.recordPerformance(coachCtx, {
     playerId: COACH_PLAYER,
     metricKey: 'agility',
@@ -68,15 +92,13 @@ async function runCoachIsolationTests() {
   });
   assert.equal(passEval.success, true);
 
-  // 3. Performance record for unassigned player from another branch FAIL (403)
+  // 4. Performance record for unassigned player from another branch fails.
   await assert.rejects(
-    async () => {
-      await adminRepo.recordPerformance(coachCtx, {
-        playerId: OTHER_PLAYER,
-        metricKey: 'agility',
-        score: 75,
-      });
-    },
+    () => adminRepo.recordPerformance(coachCtx, {
+      playerId: OTHER_PLAYER,
+      metricKey: 'agility',
+      score: 75,
+    }),
     (err: unknown) => {
       assert.ok(err instanceof ApiError);
       assert.equal(err.status, 403);
@@ -85,7 +107,7 @@ async function runCoachIsolationTests() {
     },
   );
 
-  // 4. Unassigned group is outside the coach scope
+  // 5. Unassigned group remains outside the coach scope.
   assert.ok(!scope.assignedGroups.includes(OTHER_GROUP), 'Coach scope must not contain unassigned groups');
 
   console.log('Coach assignment isolation tests: PASS');

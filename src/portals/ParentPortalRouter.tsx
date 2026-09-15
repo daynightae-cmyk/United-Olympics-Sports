@@ -2,7 +2,7 @@ import '../styles/parent-portal-final.css';
 import { lazy, Suspense, useEffect, useState, type ComponentType } from 'react';
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { PortalLayout } from '../layouts/PortalLayout';
-import { PortalErrorBoundary, PortalNotFoundPage, PortalRouteLoader } from '../components/portal/PortalRouteState';
+import { PortalErrorBoundary, PortalNotFoundPage, PortalRouteLoader, PortalRuntimeError } from '../components/portal/PortalRouteState';
 import { fetchPortalIdentity, signOutEverywhere } from '../lib/auth-client';
 import { clearParentSession, readParentSession, startParentProduction } from './parent/parentData';
 
@@ -29,8 +29,11 @@ function ParentProtectedRoute({ children }: { children: React.ReactNode }) {
   const session = readParentSession();
   const previewRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true';
   const [validated, setValidated] = useState<boolean | null>(null);
+  const [validationError, setValidationError] = useState(false);
+  const [revision, setRevision] = useState(0);
 
   useEffect(() => {
+    setValidationError(false);
     if (!session) {
       setValidated(false);
       return;
@@ -58,13 +61,13 @@ function ParentProtectedRoute({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {
         if (!active) return;
-        setValidated(false);
-        clearParentSession();
-        void signOutEverywhere().catch(() => undefined);
+        setValidated(null);
+        setValidationError(true);
       });
     return () => { active = false; };
-  }, [previewRuntime, session?.parentId, session?.provider]);
+  }, [previewRuntime, revision, session?.parentId, session?.provider]);
 
+  if (validationError) return <PortalRuntimeError portal="parent" onRetry={() => setRevision((value) => value + 1)} />;
   if (session && validated === null) return <PortalRouteLoader portal="parent" />;
   return session && validated ? children : <Navigate to="/parent/login" replace />;
 }
