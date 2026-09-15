@@ -81,9 +81,6 @@ jobs:
             failed=1
           fi
 
-          # Portal demo isolation: production portal/admin data paths must not
-          # silently consume demo fixtures. Explicit preview surfaces are
-          # allowlisted; everything else fails closed.
           if grep -RInE \
             --exclude-dir=node_modules \
             --exclude-dir=dist \
@@ -177,8 +174,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Playwright uses its bundled browsers; the preinstalled Google Chrome
-          # apt source is not required and can briefly publish inconsistent metadata.
           for source in /etc/apt/sources.list.d/*; do
             if [ -f "$source" ] && grep -q 'dl.google.com/linux/chrome-stable' "$source"; then
               sudo mv "$source" "${source}.disabled"
@@ -189,8 +184,6 @@ jobs:
       - name: Start ordinary production preview
         shell: bash
         run: |
-          # Serve the real production server (static dist + API function), so the
-          # ordinary-build boundary QA exercises the same shape as Vercel.
           NODE_ENV=production PORT=4173 node dist/server.cjs > /tmp/uos-production-preview.log 2>&1 &
           echo $! > /tmp/uos-production-preview.pid
           ready=0
@@ -212,6 +205,11 @@ jobs:
           UOS_BASE_URL: http://127.0.0.1:4173
         run: node qa/production-provider-boundary.mjs
 
+      - name: Real production portal runtime smoke
+        env:
+          UOS_BASE_URL: http://127.0.0.1:4173
+        run: node qa/production-runtime-smoke.mjs
+
       - name: Stop ordinary production preview
         if: always()
         shell: bash
@@ -228,6 +226,7 @@ jobs:
         env:
           VITE_UOS_ADMIN_PREVIEW: 'true'
           VITE_UOS_STORE_PREVIEW: 'true'
+          VITE_UOS_PORTAL_DEMO: 'true'
         run: npm run build
 
       - name: Start QA production preview
@@ -236,7 +235,7 @@ jobs:
           ./node_modules/.bin/vite preview --host 127.0.0.1 --port 4173 > /tmp/uos-vite-preview.log 2>&1 &
           echo $! > /tmp/uos-vite-preview.pid
 
-      - name: Browser route and responsive smoke matrix
+      - name: Preview route and responsive smoke matrix
         env:
           UOS_BASE_URL: http://127.0.0.1:4173
         run: node qa/interface-smoke.mjs
