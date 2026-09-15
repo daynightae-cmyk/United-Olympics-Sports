@@ -42,7 +42,9 @@ const demos: Record<DemoPortal, { heading: ReturnType<typeof bi>; subheading: Re
   },
 };
 
-const demoEnabled = import.meta.env.DEV || import.meta.env.VITE_UOS_PORTAL_DEMO === 'true';
+// Defense in depth: the /demo/* route is unmounted in production builds
+// (see AppRouter). This guard keeps the page inert even if mounted directly.
+const demoEnabled = !import.meta.env.PROD && (import.meta.env.DEV || import.meta.env.VITE_UOS_PORTAL_DEMO === 'true');
 
 export function PortalDemoPage() {
   const { portal } = useParams();

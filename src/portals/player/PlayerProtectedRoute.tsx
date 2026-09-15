@@ -11,7 +11,9 @@ interface PlayerProtectedRouteProps {
 export function PlayerProtectedRoute({ children }: PlayerProtectedRouteProps) {
   const { isAuthenticated, isPreviewSession, activePlayerId, loading, error, logout } = usePlayerSession();
   const location = useLocation();
-  const previewRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true';
+  // Preview sessions are dev-only. Production builds always require a
+  // server-validated production binding, even if a preview flag leaks into env.
+  const previewRuntime = !import.meta.env.PROD && (import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true');
   const [productionValidated, setProductionValidated] = useState<boolean | null>(null);
   const [validationError, setValidationError] = useState(false);
   const [revision, setRevision] = useState(0);

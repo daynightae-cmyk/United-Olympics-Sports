@@ -27,7 +27,9 @@ const ParentPortalSettingsPage = load(() => import('../pages/portal/parent/Paren
 
 function ParentProtectedRoute({ children }: { children: React.ReactNode }) {
   const session = readParentSession();
-  const previewRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true';
+  // Preview sessions are dev-only. Production builds always require a
+  // server-validated production binding, even if a preview flag leaks into env.
+  const previewRuntime = !import.meta.env.PROD && (import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true');
   const [validated, setValidated] = useState<boolean | null>(null);
   const [validationError, setValidationError] = useState(false);
   const [revision, setRevision] = useState(0);

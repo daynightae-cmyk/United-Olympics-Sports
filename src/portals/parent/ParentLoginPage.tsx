@@ -6,7 +6,9 @@ import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { beginSupabaseGoogleOAuth, fetchPortalIdentity, getAccessToken, signOutEverywhere } from '../../lib/auth-client';
 import { clearParentSession, readParentSession, startParentProduction } from './parentData';
 
-const demoRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_PORTAL_DEMO === 'true';
+// Safe demo links are dev-only. Production builds never render them,
+// even if the demo flag is misconfigured in the deployment environment.
+const demoRuntime = !import.meta.env.PROD && (import.meta.env.DEV || import.meta.env.VITE_UOS_PORTAL_DEMO === 'true');
 
 function SafeDemoLink() {
   if (!demoRuntime) return null;

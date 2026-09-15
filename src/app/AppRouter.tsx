@@ -35,7 +35,9 @@ function InternalProductUtilities() {
 }
 
 const isBenchmarkEnabled = import.meta.env.DEV === true;
-const isSafeDemoEnabled = import.meta.env.DEV || import.meta.env.VITE_UOS_PORTAL_DEMO === 'true';
+// Demo routes are dev-only. Production builds never mount them, even if the
+// demo flag is misconfigured in the deployment environment.
+const isSafeDemoEnabled = !import.meta.env.PROD && (import.meta.env.DEV || import.meta.env.VITE_UOS_PORTAL_DEMO === 'true');
 
 export function AppRouter() {
   return (

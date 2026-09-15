@@ -4,7 +4,9 @@ import { getAccessToken } from '../../lib/auth-client';
 
 export function AdminAccessGate({ children }: { children: ReactNode }) {
   const location = useLocation();
-  const previewAccess = import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true';
+  // Production builds never honor preview access, even if a preview flag is
+  // misconfigured in the deployment environment. Preview bypass is dev-only.
+  const previewAccess = !import.meta.env.PROD && (import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true');
   const [status, setStatus] = useState<'checking' | 'allowed' | 'denied'>(previewAccess ? 'allowed' : 'checking');
 
   useEffect(() => {

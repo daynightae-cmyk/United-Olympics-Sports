@@ -9,7 +9,9 @@ import { productionAuthGateway } from './PlayerAuthGateway';
 const PLAYER_SESSION_KEY = 'uos:player-portal:session';
 const PLAYER_ACTIVE_ID_KEY = 'uos:player-portal:active-id';
 const PLAYER_AUTH_KEY = 'uos:player-portal:auth';
-const demoRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_PORTAL_DEMO === 'true';
+// Safe demo links are dev-only. Production builds never render them,
+// even if the demo flag is misconfigured in the deployment environment.
+const demoRuntime = !import.meta.env.PROD && (import.meta.env.DEV || import.meta.env.VITE_UOS_PORTAL_DEMO === 'true');
 
 function readPlayerProductionSession(): { playerId: string } | null {
   if (typeof window === 'undefined') return null;

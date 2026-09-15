@@ -6,7 +6,9 @@ import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { beginSupabaseGoogleOAuth, fetchPortalIdentity, getAccessToken, signOutEverywhere } from '../../lib/auth-client';
 
 const COACH_PRODUCTION_SESSION_KEY = 'uos:coach-portal:session:v1';
-const demoRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_PORTAL_DEMO === 'true';
+// Safe demo links are dev-only. Production builds never render them,
+// even if the demo flag is misconfigured in the deployment environment.
+const demoRuntime = !import.meta.env.PROD && (import.meta.env.DEV || import.meta.env.VITE_UOS_PORTAL_DEMO === 'true');
 
 function readCoachProductionSession(): { coachId: string } | null {
   if (typeof window === 'undefined') return null;

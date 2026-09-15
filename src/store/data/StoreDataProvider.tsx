@@ -18,7 +18,9 @@ type StoreDataContextValue = {
 const StoreDataContext = createContext<StoreDataContextValue | undefined>(undefined);
 
 function defaultGateway(): StoreDataGateway {
-  const previewEnabled = import.meta.env.DEV || import.meta.env.VITE_UOS_STORE_PREVIEW === 'true';
+  // Production builds always use the live server catalog, even if a preview
+  // flag is misconfigured in the deployment environment. Preview fixtures are dev-only.
+  const previewEnabled = !import.meta.env.PROD && (import.meta.env.DEV || import.meta.env.VITE_UOS_STORE_PREVIEW === 'true');
   if (previewEnabled) return previewStoreGateway;
   // Production default: live server catalog. The provider surfaces fetch
   // failures as an error state and never silently falls back to preview

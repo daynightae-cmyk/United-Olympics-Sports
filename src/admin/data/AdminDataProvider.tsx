@@ -13,7 +13,10 @@ interface AdminDataContextValue {
 const AdminDataContext = createContext<AdminDataContextValue | null>(null);
 
 function defaultAdminMode(): AdminDataMode {
-  return import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true' ? 'preview' : 'live';
+  // Production builds always use the live gateway, even if a preview flag is
+  // misconfigured in the deployment environment. Preview data is dev-only.
+  const previewEnabled = !import.meta.env.PROD && (import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true');
+  return previewEnabled ? 'preview' : 'live';
 }
 
 export function AdminDataProvider({ children, initialMode }: { children: ReactNode; initialMode?: AdminDataMode }) {
