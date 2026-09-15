@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState, type Re
 import { useAdminData } from '../../admin/data/AdminDataProvider';
 import type { CoachViewModel } from '../../admin/data/viewModels';
 import { signOutEverywhere } from '../../lib/auth-client';
-import { fetchCoachPortalScope } from '../../lib/portal-data-client';
+import { fetchCoachPortalScope, type CoachPortalScopeSnapshot } from '../../lib/portal-data-client';
 
 const PREVIEW_SESSION_KEY = 'uos:coach-portal:preview-session:v1';
 const PRODUCTION_SESSION_KEY = 'uos:coach-portal:session:v1';
@@ -25,6 +25,7 @@ type ProductionCoachSession = {
 interface CoachSessionContextValue {
   coach: CoachViewModel | undefined;
   allCoaches: CoachViewModel[];
+  productionWorkspace: CoachPortalScopeSnapshot | null;
   isAuthenticated: boolean;
   isPreviewSession: boolean;
   activeCoachId: string | undefined;
@@ -99,6 +100,7 @@ export function CoachSessionProvider({ children }: { children: ReactNode }) {
   const [activeCoachId, setActiveCoachIdState] = useState<string | undefined>(initial.coachId);
   const [sessionProvider, setSessionProvider] = useState<CoachSessionProviderKind>(initial.provider);
   const [productionScope, setProductionScope] = useState<CoachAuthorizationScope>(initial.scope);
+  const [productionWorkspace, setProductionWorkspace] = useState<CoachPortalScopeSnapshot | null>(null);
   const [allCoaches, setAllCoaches] = useState<CoachViewModel[]>([]);
   const [loading, setLoading] = useState(Boolean(initial.coachId));
   const [error, setError] = useState<Error | null>(null);
@@ -107,6 +109,7 @@ export function CoachSessionProvider({ children }: { children: ReactNode }) {
     let active = true;
     if (!activeCoachId || !sessionProvider) {
       setAllCoaches([]);
+      setProductionWorkspace(null);
       setLoading(false);
       setError(null);
       return () => { active = false; };
@@ -125,18 +128,21 @@ export function CoachSessionProvider({ children }: { children: ReactNode }) {
             playerIds: normalizeIds(snapshot.assignedPlayerIds),
           };
           setProductionScope(scope);
+          setProductionWorkspace(snapshot);
           setAllCoaches([scopedCoach(snapshot.coach.id, snapshot.coach.fullName, snapshot.coach.branchId, scope.groupIds, scope.playerIds)]);
           writeProductionSession(snapshot.coach.id, scope);
         })
         .catch((caught) => {
           if (!active) return;
           setAllCoaches([]);
+          setProductionWorkspace(null);
           setError(caught instanceof Error ? caught : new Error('COACH_PORTAL_DATA_FAILED'));
         })
         .finally(() => { if (active) setLoading(false); });
       return () => { active = false; };
     }
 
+    setProductionWorkspace(null);
     if (mode !== 'preview') {
       setAllCoaches([]);
       setLoading(false);
@@ -190,6 +196,7 @@ export function CoachSessionProvider({ children }: { children: ReactNode }) {
     if (provider === 'production') {
       writeProductionSession(id, scope ?? { groupIds: [], playerIds: [] });
     } else if (typeof window !== 'undefined') {
+      setProductionWorkspace(null);
       setProductionScope({ groupIds: [], playerIds: [] });
       window.sessionStorage.setItem(PREVIEW_SESSION_KEY, id);
       window.localStorage.removeItem(PRODUCTION_SESSION_KEY);
@@ -220,6 +227,7 @@ export function CoachSessionProvider({ children }: { children: ReactNode }) {
     setActiveCoachIdState(undefined);
     setSessionProvider(null);
     setProductionScope({ groupIds: [], playerIds: [] });
+    setProductionWorkspace(null);
     setAllCoaches([]);
     setError(null);
     if (typeof window !== 'undefined') {
@@ -235,6 +243,7 @@ export function CoachSessionProvider({ children }: { children: ReactNode }) {
     <CoachSessionContext.Provider value={{
       coach,
       allCoaches,
+      productionWorkspace,
       isAuthenticated: Boolean(coach && !error),
       isPreviewSession: sessionProvider === 'preview',
       activeCoachId,
