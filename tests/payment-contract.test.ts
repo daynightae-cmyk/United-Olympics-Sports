@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { PaymentDomainRepository } from '../src/server/repositories/payment-repository.ts';
+import { resolvePayableAmount } from '../src/server/payment-handlers.ts';
 import type { AuthorizationContext } from '../src/server/authorization-context.ts';
 import { ApiError } from '../src/server/http.ts';
 import type { DbQueryClient } from '../src/server/vertical-slice.ts';
@@ -16,6 +18,14 @@ const payerCtx: AuthorizationContext = {
 class MockPaymentDb implements DbQueryClient {
   public intents = new Map<string, any>();
   public webhooks = new Map<string, any>();
+  public orders = new Map<string, any>([
+    ['order-pending-1', { id: 'order-pending-1', customer_uid: 'u-payer-1', status: 'pending', total_minor: 24000, currency: 'AED' }],
+    ['order-paid-1', { id: 'order-paid-1', customer_uid: 'u-payer-1', status: 'paid', total_minor: 24000, currency: 'AED' }],
+    ['order-other-1', { id: 'order-other-1', customer_uid: 'u-stranger', status: 'pending', total_minor: 5000, currency: 'AED' }],
+  ]);
+  public subscriptions = new Map<string, any>([
+    ['sub-priced-1', { id: 'sub-priced-1', player_id: 'player-1', status: 'active', amount_minor: 15000, currency: 'AED' }],
+  ]);
 
   async query<T = any>(sql: string, params?: unknown[]): Promise<{ rows: T[]; rowCount?: number }> {
     const s = sql.toLowerCase();
@@ -55,6 +65,14 @@ class MockPaymentDb implements DbQueryClient {
     }
     if (s.includes('from payment_intents where status = $1')) {
       return { rows: [{ count: '5' } as unknown as T], rowCount: 1 };
+    }
+    if (s.includes('from orders where id = $1')) {
+      const found = this.orders.get(params?.[0] as string);
+      return { rows: (found ? [found] : []) as unknown as T[], rowCount: found ? 1 : 0 };
+    }
+    if (s.includes('from subscriptions where id = $1')) {
+      const found = this.subscriptions.get(params?.[0] as string);
+      return { rows: (found ? [found] : []) as unknown as T[], rowCount: found ? 1 : 0 };
     }
     return { rows: [], rowCount: 0 };
   }
@@ -119,6 +137,144 @@ async function runPaymentContractTests() {
   const recon = await repo.runReconciliation();
   assert.equal(recon.totalProcessed, 5);
   assert.equal(recon.mismatches, 0);
+
+  // 5. Server-authoritative payable amounts: the browser never sets the total
+  // for an order or a priced subscription.
+  const ownerCtx = { uid: 'u-payer-1', roles: ['player'], bindings: payerCtx.bindings };
+
+  // 5a. Order path uses the DB total; a matching client echo is accepted.
+  const orderPayable = await resolvePayableAmount(ownerCtx, { orderId: 'order-pending-1', amountMinor: 24000, currency: 'AED' }, repo);
+  assert.equal(orderPayable.amountMinor, 24000);
+  assert.equal(orderPayable.currency, 'AED');
+
+  // 5b. Client amount override for an order is rejected, never corrected.
+  await assert.rejects(
+    () => resolvePayableAmount(ownerCtx, { orderId: 'order-pending-1', amountMinor: 1, currency: 'AED' }, repo),
+    (err: unknown) => {
+      assert.ok(err instanceof ApiError);
+      assert.equal(err.status, 422);
+      assert.equal(err.code, 'AMOUNT_MISMATCH');
+      return true;
+    },
+  );
+
+  // 5c. Another customer's order is forbidden.
+  await assert.rejects(
+    () => resolvePayableAmount(ownerCtx, { orderId: 'order-other-1', amountMinor: 5000 }, repo),
+    (err: unknown) => {
+      assert.ok(err instanceof ApiError);
+      assert.equal(err.status, 403);
+      assert.equal(err.code, 'ORDER_ACCESS_DENIED');
+      return true;
+    },
+  );
+
+  // 5d. Non-pending orders cannot be paid.
+  await assert.rejects(
+    () => resolvePayableAmount(ownerCtx, { orderId: 'order-paid-1' }, repo),
+    (err: unknown) => {
+      assert.ok(err instanceof ApiError);
+      assert.equal(err.status, 409);
+      assert.equal(err.code, 'ORDER_NOT_PAYABLE');
+      return true;
+    },
+  );
+
+  // 5e. Unknown orders are 404 (no phantom charges).
+  await assert.rejects(
+    () => resolvePayableAmount(ownerCtx, { orderId: 'order-ghost', amountMinor: 100 }, repo),
+    (err: unknown) => {
+      assert.ok(err instanceof ApiError);
+      assert.equal(err.status, 404);
+      assert.equal(err.code, 'ORDER_NOT_FOUND');
+      return true;
+    },
+  );
+
+  // 5f. Priced subscriptions are authoritative and family-scoped.
+  const guardianCtx = {
+    uid: 'u-guardian-1',
+    roles: [],
+    bindings: { ...payerCtx.bindings, guardianPlayerIds: ['player-1'] },
+  };
+  const subPayable = await resolvePayableAmount(guardianCtx, { subscriptionId: 'sub-priced-1', amountMinor: 15000 }, repo);
+  assert.equal(subPayable.amountMinor, 15000);
+  await assert.rejects(
+    () => resolvePayableAmount(guardianCtx, { subscriptionId: 'sub-priced-1', amountMinor: 1 }, repo),
+    (err: unknown) => {
+      assert.ok(err instanceof ApiError);
+      assert.equal(err.status, 422);
+      return true;
+    },
+  );
+  await assert.rejects(
+    () => resolvePayableAmount(ownerCtx, { subscriptionId: 'sub-priced-1', amountMinor: 15000 }, repo),
+    (err: unknown) => {
+      assert.ok(err instanceof ApiError);
+      assert.equal(err.status, 403);
+      assert.equal(err.code, 'SUBSCRIPTION_ACCESS_DENIED');
+      return true;
+    },
+  );
+
+  // 5g. Generic ledger path still validates client amounts.
+  const generic = await resolvePayableAmount(ownerCtx, { amountMinor: 5000, currency: 'aed' }, repo);
+  assert.equal(generic.amountMinor, 5000);
+  assert.equal(generic.currency, 'AED');
+  await assert.rejects(
+    () => resolvePayableAmount(ownerCtx, { amountMinor: -5 }, repo),
+    (err: unknown) => {
+      assert.ok(err instanceof ApiError);
+      assert.equal(err.status, 400);
+      return true;
+    },
+  );
+
+  // 5h. Order payment cannot be bound to another family's subscription (regression for raw fallback)
+  // Even if the browser smuggles a subscriptionId alongside an orderId, the resolved
+  // payable must be order-only and the handler must never persist that subscription.
+  const orderWithSmuggledSub = await resolvePayableAmount(ownerCtx, { orderId: 'order-pending-1', subscriptionId: 'sub-priced-1', amountMinor: 24000 }, repo);
+  assert.equal(orderWithSmuggledSub.orderId, 'order-pending-1');
+  assert.equal(orderWithSmuggledSub.subscriptionId, undefined, 'order payable must not carry a smuggled subscriptionId');
+  // A stranger's subscription alongside a valid order must still resolve as order-only,
+  // not leak the stranger's subscription.
+  // (guardian-2 cannot pay order-pending-1 anyway, but the resolver must ignore subscriptionId when orderId is present)
+  const orderPayableNoSub = await resolvePayableAmount(ownerCtx, { orderId: 'order-pending-1', subscriptionId: 'sub-priced-1' }, repo);
+  assert.equal(orderPayableNoSub.subscriptionId, undefined);
+
+  // 5i. Malformed/unvalidated subscription values are never persisted
+  // Numbers, objects, or empty strings in body.subscriptionId must not be treated as a
+  // validated subscription and must not be returned as payable.subscriptionId.
+  for (const malformed of [12345, { id: 'sub-priced-1' }, '', '   ', null, undefined] as unknown[]) {
+    const malformedPayable = await resolvePayableAmount(ownerCtx, { subscriptionId: malformed as unknown as string, amountMinor: 7000, currency: 'AED' }, repo);
+    assert.equal(malformedPayable.subscriptionId, undefined, `malformed subscription ${String(malformed)} must not be persisted`);
+    assert.equal(malformedPayable.amountMinor, 7000);
+  }
+  // Unknown subscription IDs must be rejected, not silently persisted via generic path.
+  await assert.rejects(
+    () => resolvePayableAmount(guardianCtx, { subscriptionId: 'sub-ghost', amountMinor: 15000 }, repo),
+    (err: unknown) => {
+      assert.ok(err instanceof ApiError);
+      assert.equal(err.status, 404);
+      return true;
+    },
+  );
+
+  // 6. Payment handler source must not contain raw body.subscriptionId fallback
+  const paymentHandlerSource = await readFile(new URL('../src/server/payment-handlers.ts', import.meta.url), 'utf8');
+  assert.equal(paymentHandlerSource.includes('body.subscriptionId as string'), false, 'payment handler must not fallback to raw body.subscriptionId');
+  assert.equal(/payable\.subscriptionId \?\? \(normalizeString/.test(paymentHandlerSource), false, 'payable subscription fallback must be removed');
+  assert.ok(paymentHandlerSource.includes('const subscriptionId = payable.subscriptionId;'), 'handler must use only validated payable.subscriptionId');
+  // Must persist only validated subscription via spread, not raw fallback
+  assert.ok(paymentHandlerSource.includes('...(subscriptionId ? { subscriptionId } : {})'), 'handler must persist only validated subscriptionId');
+
+  // 7. Rate-limit header correctness: IP rejection must emit ipLimit Retry-After
+  const rateSource = paymentHandlerSource;
+  // Verify the IP-limit branch applies ipLimit headers, not stale userLimit
+  assert.ok(/const ipLimit = await defaultRateLimiter\.consume/.test(rateSource), 'payment handler must have ipLimit');
+  assert.ok(/if \(!ipLimit\.allowed\) \{\s*applyRateLimitHeaders\(res, ipLimit\)/.test(rateSource), 'IP rejection must apply ipLimit headers');
+  const paymentStoreLimiterSource = await readFile(new URL('../src/server/store-handlers.ts', import.meta.url), 'utf8');
+  assert.ok(/if \(!ipLimit\.allowed\) \{\s*applyRateLimitHeaders\(res, ipLimit\)/.test(paymentStoreLimiterSource), 'store handler IP rejection must apply ipLimit headers');
 
   console.log('Payment architecture contract tests: PASS');
 }

@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { ApiError } from './http';
+import { ApiError, normalizeString } from './http';
 
 export type PaymentProviderName = 'stripe';
 
@@ -50,7 +50,8 @@ export function requirePaymentProviderConfig(): PaymentProviderConfig {
   return config;
 }
 
-function mapStripeStatus(status: unknown): string {
+export function normalizeStripeIntentStatus(status: unknown): string {
+  if (status === 'canceled') return 'cancelled';
   const allowed = new Set([
     'requires_payment_method',
     'requires_confirmation',
@@ -60,6 +61,25 @@ function mapStripeStatus(status: unknown): string {
     'failed',
   ]);
   return typeof status === 'string' && allowed.has(status) ? status : 'processing';
+}
+
+async function readStripeIntentResponse(response: Response): Promise<RemoteIntentResult> {
+  const payload = (await response.json().catch(() => null)) as {
+    id?: unknown;
+    client_secret?: unknown;
+    status?: unknown;
+    error?: { message?: unknown };
+  } | null;
+  if (!response.ok || typeof payload?.id !== 'string') {
+    const message = typeof payload?.error?.message === 'string' ? payload.error.message : `Stripe responded ${response.status}`;
+    throw new ApiError(502, 'PAYMENT_PROVIDER_ERROR', message);
+  }
+  const result: RemoteIntentResult = {
+    providerIntentId: payload.id,
+    status: normalizeStripeIntentStatus(payload.status),
+  };
+  if (typeof payload.client_secret === 'string') result.clientSecret = payload.client_secret;
+  return result;
 }
 
 /**
@@ -96,25 +116,81 @@ export async function createStripeIntent(
       body: params.toString(),
       signal: controller.signal,
     });
-    const payload = (await response.json().catch(() => null)) as {
-      id?: unknown;
-      client_secret?: unknown;
-      status?: unknown;
-      error?: { message?: unknown };
-    } | null;
-    if (!response.ok || typeof payload?.id !== 'string') {
-      const message = typeof payload?.error?.message === 'string' ? payload.error.message : `Stripe responded ${response.status}`;
-      throw new ApiError(502, 'PAYMENT_PROVIDER_ERROR', message);
-    }
-    const result: RemoteIntentResult = {
-      providerIntentId: payload.id,
-      status: mapStripeStatus(payload.status),
-    };
-    if (typeof payload.client_secret === 'string') result.clientSecret = payload.client_secret;
-    return result;
+    return await readStripeIntentResponse(response);
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new ApiError(502, 'PAYMENT_PROVIDER_ERROR', 'Payment provider request failed.');
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/**
+ * Reads a Stripe PaymentIntent after an ambiguous cancellation response.
+ * This is used to distinguish terminal provider truth (canceled/succeeded)
+ * from a resumable intent before restoring a local claim.
+ */
+export async function retrieveStripeIntent(
+  config: PaymentProviderConfig,
+  providerIntentId: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<RemoteIntentResult> {
+  const id = normalizeString(providerIntentId, 255);
+  if (!id) throw new ApiError(400, 'VALIDATION_ERROR', 'Provider payment intent ID is required.');
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetchImpl(`https://api.stripe.com/v1/payment_intents/${encodeURIComponent(id)}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${config.secretKey}:`).toString('base64')}`,
+      },
+      signal: controller.signal,
+    });
+    return await readStripeIntentResponse(response);
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(502, 'PAYMENT_PROVIDER_ERROR', 'Payment provider status lookup failed.');
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/**
+ * Cancels a Stripe PaymentIntent before a timed-out local payment claim is
+ * released. Local order/inventory state must only be released after this call
+ * returns Stripe's terminal canceled state, otherwise a resumable provider
+ * intent could still charge a locally cancelled order.
+ */
+export async function cancelStripeIntent(
+  config: PaymentProviderConfig,
+  providerIntentId: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<RemoteIntentResult> {
+  const id = normalizeString(providerIntentId, 255);
+  if (!id) throw new ApiError(400, 'VALIDATION_ERROR', 'Provider payment intent ID is required.');
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetchImpl(`https://api.stripe.com/v1/payment_intents/${encodeURIComponent(id)}/cancel`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${config.secretKey}:`).toString('base64')}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: '',
+      signal: controller.signal,
+    });
+    const result = await readStripeIntentResponse(response);
+    if (result.status !== 'cancelled') {
+      throw new ApiError(502, 'PAYMENT_PROVIDER_ERROR', 'Payment provider did not confirm intent cancellation.');
+    }
+    return result;
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(502, 'PAYMENT_PROVIDER_ERROR', 'Payment provider cancellation failed.');
   } finally {
     clearTimeout(timeout);
   }

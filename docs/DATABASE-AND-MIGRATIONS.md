@@ -1,5 +1,5 @@
 # Database & Migrations — United Olympics Sports
-**Project:** Supabase `olmbezzzqavgjwydlfey.supabase.co` · **Migrations:** `src/db/migrations/0001–0007` · Runner: `npm run db:migrate` (checksum-tracked `schema_migrations`, idempotent, additive-only).
+**Project:** Supabase `olmbezzzqavgjwydlfey.supabase.co` · **Migrations:** `src/db/migrations/0001–0008` · Runner: `npm run db:migrate` (checksum-tracked `schema_migrations`, idempotent, additive-only).
 
 ## 1. Migration map
 | # | Content |
@@ -11,6 +11,7 @@
 | 0005 | Schema parity & RLS hardening |
 | 0006 | Live RLS policy closure (scoped policies, server-only webhooks, public content scoping) |
 | 0007 | Covering FK indexes (`events.sport_id`, `payment_intents.subscription_id/player_id`) |
+| 0008 | Store catalog richness (`catalog_products`: description/ar, category, sport, product_type/ar, media_url, slug + domain checks/indexes; additive, honest NULL fallback) |
 
 Fresh DB from migrations alone reaches the full schema (proven by `fresh-database-bootstrap.test.ts` on ephemeral PGlite).
 

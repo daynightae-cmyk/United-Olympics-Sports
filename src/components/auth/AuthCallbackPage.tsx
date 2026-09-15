@@ -6,7 +6,7 @@ import {
   exchangeSupabaseAuthCode,
   fetchPortalIdentity,
   fetchServerSession,
-  firebaseGoogleFallbackToken,
+  peekAuthReturnTo,
   signOutEverywhere,
   type PortalIdentity,
   type ServerAuthSession,
@@ -14,6 +14,23 @@ import {
 
 function hasAdminAccess(session: ServerAuthSession): boolean {
   return session.roles.some((role) => ['super_admin', 'admin', 'owner', 'administrator'].includes(role));
+}
+
+function portalFromDestination(destination: string): 'admin' | 'store' | 'player' | 'parent' | 'coach' {
+  if (destination.startsWith('/store')) return 'store';
+  if (destination.startsWith('/player')) return 'player';
+  if (destination.startsWith('/parent')) return 'parent';
+  if (destination.startsWith('/coach')) return 'coach';
+  return 'admin';
+}
+
+function loginRouteForDestination(destination: string): string {
+  if (destination.startsWith('/store')) return '/store/login';
+  if (destination.startsWith('/player')) return '/player/login';
+  if (destination.startsWith('/parent')) return '/parent/login';
+  if (destination.startsWith('/coach')) return '/coach/login';
+  if (destination.startsWith('/admin')) return '/admin/login';
+  return '/';
 }
 
 function persistSinglePortalBinding(destination: string, portal: PortalIdentity): boolean {
@@ -40,6 +57,7 @@ function persistSinglePortalBinding(destination: string, portal: PortalIdentity)
       parentId: portal.bindings.guardianIds[0],
       provider: 'production',
       createdAt: now,
+      authorizedPlayerIds: portal.bindings.guardianPlayerIds,
     }));
     return true;
   }
@@ -61,8 +79,11 @@ function persistSinglePortalBinding(destination: string, portal: PortalIdentity)
 export function AuthCallbackPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
+  const destinationHint = peekAuthReturnTo('/');
+  const portal = portalFromDestination(destinationHint);
+  const retryRoute = loginRouteForDestination(destinationHint);
   const [state, setState] = useState<'working' | 'denied' | 'error'>('working');
-  const [message, setMessage] = useState('Completing secure sign-in…');
+  const [message, setMessage] = useState('Completing secure sign-in… | جارٍ إكمال تسجيل الدخول الآمن…');
   const code = params.get('code');
   const providerError = params.get('error_description') || params.get('error');
 
@@ -74,7 +95,7 @@ export function AuthCallbackPage() {
       if (!hasAdminAccess(session)) {
         await signOutEverywhere().catch(() => undefined);
         setState('denied');
-        setMessage('Your identity is verified, but this account has no server-side Admin role.');
+        setMessage('Your account is verified, but it does not have access to this portal. | تم التحقق من حسابك، لكنه لا يملك صلاحية دخول هذه البوابة.');
         return;
       }
       navigate(destination, { replace: true });
@@ -82,11 +103,11 @@ export function AuthCallbackPage() {
     }
 
     if (/^\/(player|parent|coach)(\/|$)/.test(destination)) {
-      const portal = await fetchPortalIdentity(token);
-      if (!persistSinglePortalBinding(destination, portal)) {
+      const portalIdentity = await fetchPortalIdentity(token);
+      if (!persistSinglePortalBinding(destination, portalIdentity)) {
         await signOutEverywhere().catch(() => undefined);
         setState('denied');
-        setMessage('Your identity is verified, but it does not have exactly one server-side record binding for the requested portal.');
+        setMessage('Your account is verified, but it is not linked to exactly one valid record for this portal. | تم التحقق من حسابك، لكنه غير مرتبط بسجل واحد صالح لهذه البوابة.');
         return;
       }
     }
@@ -97,42 +118,30 @@ export function AuthCallbackPage() {
   useEffect(() => {
     if (providerError) {
       setState('error');
-      setMessage(providerError);
+      setMessage('Sign-in was not completed. Please try again. | لم يكتمل تسجيل الدخول. يرجى المحاولة مرة أخرى.');
       return;
     }
     if (!code) {
       setState('error');
-      setMessage('The OAuth callback did not include an authorization code.');
+      setMessage('The secure sign-in response is incomplete. Please try again. | استجابة تسجيل الدخول الآمن غير مكتملة. يرجى المحاولة مرة أخرى.');
       return;
     }
 
     let active = true;
     void exchangeSupabaseAuthCode(code)
       .then((token) => active ? finish(token) : undefined)
-      .catch((error: unknown) => {
+      .catch(() => {
         if (!active) return;
         setState('error');
-        setMessage(error instanceof Error ? error.message : 'Supabase OAuth callback failed.');
+        setMessage('We could not complete secure sign-in. Please try again. | تعذر إكمال تسجيل الدخول الآمن. يرجى المحاولة مرة أخرى.');
       });
     return () => { active = false; };
   }, [code, providerError]);
 
-  const useFirebaseFallback = async () => {
-    setState('working');
-    setMessage('Checking Firebase fallback identity…');
-    try {
-      const token = await firebaseGoogleFallbackToken();
-      await finish(token);
-    } catch (error: unknown) {
-      setState('error');
-      setMessage(error instanceof Error ? error.message : 'Firebase fallback sign-in failed.');
-    }
-  };
-
   if (params.get('next')?.startsWith('//')) return <Navigate to="/" replace />;
 
   return (
-    <main className="portal-auth" data-portal="admin">
+    <main className="portal-auth" data-portal={portal}>
       <section className="portal-auth-panel" style={{ margin: '10vh auto', maxWidth: 620 }}>
         <div className="portal-auth-card">
           <div className="portal-auth-identity">
@@ -143,12 +152,12 @@ export function AuthCallbackPage() {
           </div>
           {state === 'denied' ? (
             <div className="portal-auth-notice is-error" role="alert">
-              تم التحقق من الهوية، لكن لا يوجد ربط خادمي وحيد وصالح للسجل أو الدور المطلوب. نجاح Google وحده لا يمنح صلاحية أي بوابة.
+              Access is granted only when the verified account has the required server-side role or portal binding. | لا يتم منح الدخول إلا عندما يملك الحساب الموثق الدور أو الربط الخادمي المطلوب للبوابة.
             </div>
           ) : null}
           {state === 'error' ? (
-            <button className="portal-auth-submit" type="button" onClick={() => void useFirebaseFallback()}>
-              Try Firebase Google fallback | جرّب Google عبر Firebase الاحتياطي
+            <button className="portal-auth-submit" type="button" onClick={() => navigate(retryRoute, { replace: true })}>
+              Try sign-in again | إعادة محاولة تسجيل الدخول
             </button>
           ) : null}
           {state !== 'working' ? (

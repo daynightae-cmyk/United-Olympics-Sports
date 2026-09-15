@@ -1,12 +1,33 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, UserRound } from 'lucide-react';
 import { PortalAuthPage, type PortalAuthNotice, type PortalAuthProvider } from '../../components/auth/PortalAuthPage';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
-import { fetchPortalIdentity, firebaseGoogleFallbackToken, signOutEverywhere } from '../../lib/auth-client';
-import { useCoachSession } from './CoachSessionContext';
+import { beginSupabaseGoogleOAuth, fetchPortalIdentity, getAccessToken, signOutEverywhere } from '../../lib/auth-client';
+import { CoachSessionProvider, useCoachSession } from './CoachSessionContext';
 
-export function CoachLoginPage() {
+const previewRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true';
+
+const COACH_PRODUCTION_SESSION_KEY = 'uos:coach-portal:session:v1';
+
+function readCoachProductionSession(): { coachId: string } | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(COACH_PRODUCTION_SESSION_KEY);
+    if (!raw) return null;
+    const session = JSON.parse(raw) as { provider?: string; coachId?: string };
+    if (session.provider !== 'production' || typeof session.coachId !== 'string' || !session.coachId) return null;
+    return { coachId: session.coachId };
+  } catch {
+    return null;
+  }
+}
+
+function clearCoachProductionSession() {
+  try { window.localStorage.removeItem(COACH_PRODUCTION_SESSION_KEY); } catch { /* storage may be unavailable */ }
+}
+
+function CoachPreviewAccess() {
   const { allCoaches, login, loading, error } = useCoachSession();
   const navigate = useNavigate();
   const [selectedCoachId, setSelectedCoachId] = useState('');
@@ -18,58 +39,13 @@ export function CoachLoginPage() {
     }
   }, [allCoaches, selectedCoachId]);
 
-  const handleProvider = async (provider: PortalAuthProvider): Promise<PortalAuthNotice | null> => {
-    if (provider !== 'google') {
-      return {
-        tone: 'info',
-        message: bi('This sign-in method is not configured in the current environment.', 'طريقة تسجيل الدخول هذه غير مهيأة في البيئة الحالية.'),
-      };
-    }
-
-    try {
-      const token = await firebaseGoogleFallbackToken();
-      const portal = await fetchPortalIdentity(token);
-      if (portal.bindings.coachIds.length !== 1) {
-        await signOutEverywhere().catch(() => undefined);
-        return {
-          tone: 'error',
-          message: portal.bindings.coachIds.length === 0
-            ? bi('Google verified the account, but it is not linked to a Coach record.', 'تم التحقق من حساب Google، لكنه غير مرتبط بسجل مدرب.')
-            : bi('This identity is linked to multiple Coach records. An administrator must resolve the binding first.', 'هذه الهوية مرتبطة بعدة سجلات مدربين. يجب على المسؤول معالجة الربط أولًا.'),
-        };
-      }
-
-      const coachId = portal.bindings.coachIds[0];
-      if (!allCoaches.some((coach) => coach.id === coachId)) {
-        await signOutEverywhere().catch(() => undefined);
-        return {
-          tone: 'error',
-          message: bi('The bound Coach record is not available from the current production data provider.', 'سجل المدرب المرتبط غير متاح من مزود بيانات الإنتاج الحالي.'),
-        };
-      }
-
-      login(coachId, 'production');
-      navigate('/coach/home', { replace: true });
-      return null;
-    } catch (authError: unknown) {
-      await signOutEverywhere().catch(() => undefined);
-      return {
-        tone: 'error',
-        message: bi(
-          authError instanceof Error ? authError.message : 'Authentication or Coach binding failed.',
-          'فشلت المصادقة أو تعذر التحقق من ربط حساب المدرب.',
-        ),
-      };
-    }
-  };
-
   const enterPreview = () => {
     if (!selectedCoachId) return;
     login(selectedCoachId, 'preview');
     navigate('/coach/home');
   };
 
-  const previewContent = (
+  return (
     <div className="portal-auth-preview">
       <div className="portal-auth-preview-header">
         <span><Sparkles aria-hidden="true" /><BilingualText value={bi('Development preview', 'معاينة التطوير')} /></span>
@@ -81,7 +57,7 @@ export function CoachLoginPage() {
         <div className="enterprise-empty" role="status">
           <UserRound size={22} />
           <h3><BilingualText value={bi('Coach data is unavailable', 'بيانات المدربين غير متاحة')} /></h3>
-          <p><BilingualText value={bi('The production data service is not connected yet.', 'خدمة بيانات الإنتاج غير متصلة حتى الآن.')} /></p>
+          <p><BilingualText value={bi('The preview data service is unavailable in this session.', 'خدمة بيانات المعاينة غير متاحة في هذه الجلسة.')} /></p>
         </div>
       ) : allCoaches.length ? (
         <>
@@ -101,11 +77,73 @@ export function CoachLoginPage() {
         <div className="enterprise-empty" role="status">
           <UserRound size={22} />
           <h3><BilingualText value={bi('No active coaches available', 'لا يوجد مدربون نشطون متاحون')} /></h3>
-          <p><BilingualText value={bi('Active coach records will appear here when the data provider supplies them.', 'ستظهر سجلات المدربين النشطين هنا عندما يوفرها مصدر البيانات.')} /></p>
+          <p><BilingualText value={bi('Active coach records will appear here when the preview provider supplies them.', 'ستظهر سجلات المدربين النشطين هنا عندما يوفرها مزود المعاينة.')} /></p>
         </div>
       )}
     </div>
   );
+}
 
-  return <PortalAuthPage portal="coach" busy={loading} extraContent={previewContent} onProvider={handleProvider} />;
+export function CoachLoginPage() {
+  const navigate = useNavigate();
+
+  // Revalidate any persisted production session on mount: a stale or forged
+  // local session must never be trusted without a live portal binding lookup.
+  // Valid bindings redirect only after verified coach scope; stale, wrong-portal,
+  // or unbound sessions are cleared fail-closed.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const persisted = readCoachProductionSession();
+      if (!persisted) return;
+      try {
+        const token = await getAccessToken();
+        if (!token) throw new Error('AUTH_REQUIRED');
+        const portal = await fetchPortalIdentity(token);
+        if (!active) return;
+        if (portal.bindings.coachIds.length === 1 && portal.bindings.coachIds[0] === persisted.coachId) {
+          navigate('/coach/home', { replace: true });
+          return;
+        }
+        clearCoachProductionSession();
+        void signOutEverywhere().catch(() => undefined);
+      } catch {
+        if (active) clearCoachProductionSession();
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [navigate]);
+
+  const handleProvider = async (provider: PortalAuthProvider): Promise<PortalAuthNotice | null> => {
+    if (provider !== 'google') {
+      return {
+        tone: 'info',
+        message: bi('This sign-in method is not available yet.', 'طريقة تسجيل الدخول هذه غير متاحة بعد.'),
+      };
+    }
+
+    try {
+      await beginSupabaseGoogleOAuth('/coach/home');
+      return null;
+    } catch {
+      return {
+        tone: 'error',
+        message: bi('Google sign-in could not start. Please try again.', 'تعذر بدء تسجيل الدخول عبر Google. يرجى المحاولة مرة أخرى.'),
+      };
+    }
+  };
+
+  return (
+    <PortalAuthPage
+      portal="coach"
+      extraContent={previewRuntime ? (
+        <CoachSessionProvider>
+          <CoachPreviewAccess />
+        </CoachSessionProvider>
+      ) : undefined}
+      onProvider={handleProvider}
+    />
+  );
 }

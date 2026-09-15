@@ -3,12 +3,14 @@ import { databaseConfigured, getPool } from '../../db/index';
 import type { AuthorizationContext } from '../authorization-context';
 import { recordAudit } from '../audit';
 import { ApiError, normalizeString } from '../http';
+import { expireAbandonedOrderPaymentClaim, getPaymentClaimExpiryCutoff } from '../order-payment-claim';
 import type { DbQueryClient } from '../vertical-slice';
 
 export type PaymentIntentStatus =
   | 'requires_payment_method'
   | 'requires_confirmation'
   | 'processing'
+  | 'cancelling'
   | 'succeeded'
   | 'cancelled'
   | 'failed';
@@ -52,6 +54,22 @@ export interface ReconciliationResult {
   reconciledAt: string;
 }
 
+const RECONCILIATION_CONTEXT: AuthorizationContext = {
+  uid: 'system:payment-reconciliation',
+  provider: 'supabase',
+  roles: ['super_admin'],
+  scopes: ['payment:reconcile'],
+  tenant: { organizationIds: [], countryIds: [], branchIds: [] },
+  bindings: {
+    playerIds: [],
+    guardianIds: [],
+    guardianPlayerIds: [],
+    coachIds: [],
+    coachGroupIds: [],
+    coachPlayerIds: [],
+  },
+};
+
 export class PaymentDomainRepository {
   private clientOverride?: DbQueryClient;
 
@@ -63,6 +81,69 @@ export class PaymentDomainRepository {
     if (this.clientOverride) return this.clientOverride;
     if (databaseConfigured()) return getPool();
     throw new ApiError(503, 'DATA_SERVICE_NOT_CONFIGURED', 'Database service is not configured.');
+  }
+
+  // --- AUTHORITATIVE PAYABLE RECORDS ---
+  //
+  // The browser is never authoritative for a payable amount. When an orderId
+  // (or subscriptionId) is supplied, the amount and currency are loaded from
+  // the server-side record and any client override is rejected by the caller.
+  async getOrderForPayment(orderId: string): Promise<{
+    id: string;
+    customerUid: string;
+    status: string;
+    totalMinor: number;
+    currency: string;
+  }> {
+    const id = normalizeString(orderId, 64);
+    if (!id) throw new ApiError(400, 'VALIDATION_ERROR', 'orderId is required.');
+    const res = await this.db.query<{
+      id: string;
+      customer_uid: string;
+      status: string;
+      total_minor: number;
+      currency: string;
+    }>('select id, customer_uid, status, total_minor, currency from orders where id = $1 limit 1', [id]);
+    if (res.rows.length === 0) {
+      throw new ApiError(404, 'ORDER_NOT_FOUND', 'Order was not found.');
+    }
+    const row = res.rows[0];
+    return {
+      id: row.id,
+      customerUid: row.customer_uid,
+      status: row.status,
+      totalMinor: row.total_minor,
+      currency: row.currency || 'AED',
+    };
+  }
+
+  async getSubscriptionForPayment(subscriptionId: string): Promise<{
+    id: string;
+    playerId: string | null;
+    status: string;
+    amountMinor: number | null;
+    currency: string;
+  }> {
+    const id = normalizeString(subscriptionId, 64);
+    if (!id) throw new ApiError(400, 'VALIDATION_ERROR', 'subscriptionId is required.');
+    const res = await this.db.query<{
+      id: string;
+      player_id: string | null;
+      status: string;
+      amount_minor: number | null;
+      currency: string | null;
+    }>('select id, player_id::text as player_id, status, amount_minor, currency from subscriptions where id = $1 limit 1', [id]);
+    if (res.rows.length === 0) {
+      throw new ApiError(404, 'SUBSCRIPTION_NOT_FOUND', 'Subscription was not found.');
+    }
+    const row = res.rows[0];
+    return {
+      id: row.id,
+      playerId: row.player_id,
+      status: row.status,
+      amountMinor: row.amount_minor,
+      currency: row.currency || 'AED',
+    };
   }
 
   // --- CREATE PAYMENT INTENT (IDEMPOTENT) ---
@@ -191,9 +272,11 @@ export class PaymentDomainRepository {
     const terminalStatus =
       input.eventType === 'payment_intent.succeeded'
         ? 'succeeded'
-        : input.eventType === 'payment_intent.payment_failed' || input.eventType === 'payment_intent.canceled'
-          ? 'failed'
-          : null;
+        : input.eventType === 'payment_intent.canceled'
+          ? 'cancelled'
+          : input.eventType === 'payment_intent.payment_failed'
+            ? 'failed'
+            : null;
 
     if (input.providerIntentId && terminalStatus) {
       const updated = await this.db.query(
@@ -262,13 +345,36 @@ export class PaymentDomainRepository {
 
   // --- RECONCILIATION ---
   async runReconciliation(): Promise<ReconciliationResult> {
+    const expiryCandidates = await this.db.query<{ order_id: string | null }>(
+      `select distinct metadata->>'orderId' as order_id
+         from payment_intents
+        where status = 'requires_payment_method'
+          and provider_intent_id is not null
+          and metadata->>'orderId' is not null
+          and updated_at <= $1
+        order by order_id
+        limit 100`,
+      [getPaymentClaimExpiryCutoff()],
+    );
+
+    let mismatches = 0;
+    for (const row of expiryCandidates.rows) {
+      if (!row.order_id) continue;
+      try {
+        await expireAbandonedOrderPaymentClaim(RECONCILIATION_CONTEXT, row.order_id, this.db);
+      } catch (error) {
+        mismatches++;
+        console.error(`[PAYMENT] Failed to reconcile expired order claim '${row.order_id}':`, error);
+      }
+    }
+
     const res = await this.db.query<{ count: string }>(
       'select count(*)::text as count from payment_intents where status = $1',
       ['succeeded'],
     );
     return {
       totalProcessed: parseInt(res.rows[0]?.count || '0', 10),
-      mismatches: 0,
+      mismatches,
       reconciledAt: new Date().toISOString(),
     };
   }

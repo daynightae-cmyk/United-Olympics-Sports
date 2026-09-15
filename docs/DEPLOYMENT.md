@@ -2,6 +2,8 @@
 **Target:** Vercel · **Production branch:** `main` · **URL:** https://unitedolympicsports.store
 
 ## 1. How deploys happen
+- Canonical package manager is **npm** (`package-lock.json`, `packageManager`, CI `npm ci`). Do NOT commit a second lockfile (`bun.lock` was removed — dual lockfiles fail Vercel's package-manager detection and chronically failed production deployments).
+- Node `>=20.11` is pinned via `engines` (required by `import.meta.dirname` and modern APIs).
 - Push/merge to `main` triggers the Vercel production deployment (Git integration, `main` only per `vercel.json`).
 - CI (`Verify`: static gates → build → production tests → browser QA → Store Golden Master) must be green before merge.
 - SPA fallback: `vercel.json` rewrites all non-API routes to `/index.html`; API routes rewrite to `/api/index`.
