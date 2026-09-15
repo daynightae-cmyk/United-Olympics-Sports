@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { useCoaches } from '../../admin/data/adminHooks';
+import React, { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useAdminData } from '../../admin/data/AdminDataProvider';
 import type { CoachViewModel } from '../../admin/data/viewModels';
 import { signOutEverywhere } from '../../lib/auth-client';
+import { fetchCoachPortalScope } from '../../lib/portal-data-client';
 
 const PREVIEW_SESSION_KEY = 'uos:coach-portal:preview-session:v1';
 const PRODUCTION_SESSION_KEY = 'uos:coach-portal:session:v1';
@@ -71,42 +72,99 @@ function readStoredCoachSession(): { coachId?: string; provider: CoachSessionPro
     : { provider: null, scope: { groupIds: [], playerIds: [] } };
 }
 
-export function CoachSessionProvider({ children }: { children: React.ReactNode }) {
-  const coachQuery = useCoaches({ page: 1, pageSize: 500 });
-  const allCoaches = useMemo(
-    () => coachQuery.data.items.filter((item) => item.status === 'active'),
-    [coachQuery.data.items],
-  );
+function scopedCoach(
+  id: string,
+  fullName: string,
+  branchId: string | null,
+  groupIds: string[],
+  playerIds: string[],
+): CoachViewModel {
+  return {
+    id,
+    nameEn: fullName,
+    nameAr: fullName,
+    sportIds: [],
+    branchIds: branchId ? [branchId] : [],
+    groupIds,
+    playerCount: playerIds.length,
+    specializations: [],
+    certifications: [],
+    status: 'active',
+  };
+}
+
+export function CoachSessionProvider({ children }: { children: ReactNode }) {
+  const { gateway, mode } = useAdminData();
   const initial = useMemo(readStoredCoachSession, []);
   const [activeCoachId, setActiveCoachIdState] = useState<string | undefined>(initial.coachId);
   const [sessionProvider, setSessionProvider] = useState<CoachSessionProviderKind>(initial.provider);
   const [productionScope, setProductionScope] = useState<CoachAuthorizationScope>(initial.scope);
+  const [allCoaches, setAllCoaches] = useState<CoachViewModel[]>([]);
+  const [loading, setLoading] = useState(Boolean(initial.coachId));
+  const [error, setError] = useState<Error | null>(null);
 
-  const baseCoach = useMemo(
+  useEffect(() => {
+    let active = true;
+    if (!activeCoachId || !sessionProvider) {
+      setAllCoaches([]);
+      setLoading(false);
+      setError(null);
+      return () => { active = false; };
+    }
+
+    setLoading(true);
+    setError(null);
+
+    if (sessionProvider === 'production') {
+      void fetchCoachPortalScope()
+        .then((snapshot) => {
+          if (!active) return;
+          if (snapshot.coach.id !== activeCoachId) throw new Error('COACH_BINDING_MISMATCH');
+          const scope = {
+            groupIds: normalizeIds(snapshot.assignedGroups),
+            playerIds: normalizeIds(snapshot.assignedPlayerIds),
+          };
+          setProductionScope(scope);
+          setAllCoaches([scopedCoach(snapshot.coach.id, snapshot.coach.fullName, snapshot.coach.branchId, scope.groupIds, scope.playerIds)]);
+          writeProductionSession(snapshot.coach.id, scope);
+        })
+        .catch((caught) => {
+          if (!active) return;
+          setAllCoaches([]);
+          setError(caught instanceof Error ? caught : new Error('COACH_PORTAL_DATA_FAILED'));
+        })
+        .finally(() => { if (active) setLoading(false); });
+      return () => { active = false; };
+    }
+
+    if (mode !== 'preview') {
+      setAllCoaches([]);
+      setLoading(false);
+      setError(new Error('PREVIEW_PROVIDER_DISABLED'));
+      return () => { active = false; };
+    }
+
+    void gateway.listCoaches({ page: 1, pageSize: 500 })
+      .then((result) => {
+        if (!active) return;
+        setAllCoaches(result.items.filter((item) => item.status === 'active'));
+      })
+      .catch((caught) => {
+        if (!active) return;
+        setAllCoaches([]);
+        setError(caught instanceof Error ? caught : new Error('COACH_PREVIEW_DATA_FAILED'));
+      })
+      .finally(() => { if (active) setLoading(false); });
+
+    return () => { active = false; };
+  }, [activeCoachId, gateway, mode, sessionProvider]);
+
+  const coach = useMemo(
     () => activeCoachId ? allCoaches.find((item) => item.id === activeCoachId) : undefined,
     [activeCoachId, allCoaches],
   );
 
-  const coach = useMemo(() => {
-    if (!baseCoach) return undefined;
-    if (sessionProvider !== 'production') return baseCoach;
-    return { ...baseCoach, groupIds: productionScope.groupIds };
-  }, [baseCoach, productionScope.groupIds, sessionProvider]);
-
-  useEffect(() => {
-    if (coachQuery.loading || !activeCoachId) return;
-    if (!allCoaches.some((item) => item.id === activeCoachId)) {
-      setActiveCoachIdState(undefined);
-      setSessionProvider(null);
-      setProductionScope({ groupIds: [], playerIds: [] });
-      if (typeof window !== 'undefined') {
-        window.sessionStorage.removeItem(PREVIEW_SESSION_KEY);
-        window.localStorage.removeItem(PRODUCTION_SESSION_KEY);
-      }
-    }
-  }, [activeCoachId, allCoaches, coachQuery.loading]);
-
-  const writeProductionSession = (id: string, scope: CoachAuthorizationScope) => {
+  function writeProductionSession(id: string, scope: CoachAuthorizationScope) {
     const normalizedScope = { groupIds: normalizeIds(scope.groupIds), playerIds: normalizeIds(scope.playerIds) };
     setProductionScope(normalizedScope);
     if (typeof window !== 'undefined') {
@@ -120,13 +178,15 @@ export function CoachSessionProvider({ children }: { children: React.ReactNode }
       window.localStorage.setItem(PRODUCTION_SESSION_KEY, JSON.stringify(session));
       window.sessionStorage.removeItem(PREVIEW_SESSION_KEY);
     }
-  };
+  }
 
   const persistCoachId = (id: string, provider: Exclude<CoachSessionProviderKind, null>, scope?: CoachAuthorizationScope) => {
-    if (!allCoaches.some((item) => item.id === id)) return false;
+    if (provider === 'preview' && mode !== 'preview') return false;
+    if (provider === 'preview' && allCoaches.length && !allCoaches.some((item) => item.id === id)) return false;
     if (sessionProvider === 'production' && activeCoachId && id !== activeCoachId) return false;
     setActiveCoachIdState(id);
     setSessionProvider(provider);
+    setError(null);
     if (provider === 'production') {
       writeProductionSession(id, scope ?? { groupIds: [], playerIds: [] });
     } else if (typeof window !== 'undefined') {
@@ -160,6 +220,8 @@ export function CoachSessionProvider({ children }: { children: React.ReactNode }
     setActiveCoachIdState(undefined);
     setSessionProvider(null);
     setProductionScope({ groupIds: [], playerIds: [] });
+    setAllCoaches([]);
+    setError(null);
     if (typeof window !== 'undefined') {
       window.sessionStorage.removeItem(PREVIEW_SESSION_KEY);
       window.localStorage.removeItem(PRODUCTION_SESSION_KEY);
@@ -170,23 +232,21 @@ export function CoachSessionProvider({ children }: { children: React.ReactNode }
   };
 
   return (
-    <CoachSessionContext.Provider
-      value={{
-        coach,
-        allCoaches,
-        isAuthenticated: Boolean(coach),
-        isPreviewSession: sessionProvider === 'preview',
-        activeCoachId,
-        authorizedGroupIds: sessionProvider === 'production' ? productionScope.groupIds : [],
-        authorizedPlayerIds: sessionProvider === 'production' ? productionScope.playerIds : [],
-        loading: coachQuery.loading,
-        error: coachQuery.error,
-        setActiveCoachId,
-        login,
-        refreshProductionScope,
-        logout,
-      }}
-    >
+    <CoachSessionContext.Provider value={{
+      coach,
+      allCoaches,
+      isAuthenticated: Boolean(coach && !error),
+      isPreviewSession: sessionProvider === 'preview',
+      activeCoachId,
+      authorizedGroupIds: sessionProvider === 'production' ? productionScope.groupIds : coach?.groupIds ?? [],
+      authorizedPlayerIds: sessionProvider === 'production' ? productionScope.playerIds : [],
+      loading,
+      error,
+      setActiveCoachId,
+      login,
+      refreshProductionScope,
+      logout,
+    }}>
       {children}
     </CoachSessionContext.Provider>
   );
