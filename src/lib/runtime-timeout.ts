@@ -23,10 +23,6 @@ export async function withRuntimeTimeout<T>(
   }
 }
 
-function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'AbortError';
-}
-
 function operationName(input: RequestInfo | URL): string {
   return typeof input === 'string' ? input : input instanceof URL ? input.toString() : 'fetch';
 }
@@ -35,9 +31,9 @@ const BODY_METHODS = new Set<PropertyKey>(['arrayBuffer', 'blob', 'formData', 'j
 
 /**
  * Fetches with a deadline that remains active through body consumption.
- * Returning headers is not treated as completion: json/text/blob/etc. retain
- * the same AbortController until the body is fully consumed. This prevents a
- * response that stalls after headers from leaving portal/account loaders alive.
+ * Caller cancellation and the internal deadline are both preserved. Only the
+ * internal deadline is translated into RuntimeTimeoutError; caller aborts keep
+ * their original abort error/reason.
  */
 export async function fetchWithRuntimeTimeout(
   input: RequestInfo | URL,
@@ -45,13 +41,26 @@ export async function fetchWithRuntimeTimeout(
   timeoutMs = 10_000,
 ): Promise<Response> {
   const controller = new AbortController();
+  const callerSignal = init.signal;
   const name = operationName(input);
-  let timer: ReturnType<typeof setTimeout> | undefined = setTimeout(() => controller.abort(), timeoutMs);
+  let timedOut = false;
+  let timer: ReturnType<typeof setTimeout> | undefined = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+
+  const forwardCallerAbort = () => controller.abort(callerSignal?.reason);
+  if (callerSignal) {
+    if (callerSignal.aborted) forwardCallerAbort();
+    else callerSignal.addEventListener('abort', forwardCallerAbort, { once: true });
+  }
+
   const clearDeadline = () => {
     if (timer) {
       clearTimeout(timer);
       timer = undefined;
     }
+    callerSignal?.removeEventListener('abort', forwardCallerAbort);
   };
 
   try {
@@ -64,9 +73,7 @@ export async function fetchWithRuntimeTimeout(
             try {
               return await method.apply(target, args);
             } catch (error) {
-              if (controller.signal.aborted || isAbortError(error)) {
-                throw new RuntimeTimeoutError(name, timeoutMs);
-              }
+              if (timedOut) throw new RuntimeTimeoutError(name, timeoutMs);
               throw error;
             } finally {
               clearDeadline();
@@ -79,9 +86,7 @@ export async function fetchWithRuntimeTimeout(
     });
   } catch (error) {
     clearDeadline();
-    if (controller.signal.aborted || isAbortError(error)) {
-      throw new RuntimeTimeoutError(name, timeoutMs);
-    }
+    if (timedOut) throw new RuntimeTimeoutError(name, timeoutMs);
     throw error;
   }
 }
