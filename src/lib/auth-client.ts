@@ -4,6 +4,7 @@ import { fetchJsonWithRuntimeTimeout, withRuntimeTimeout } from './runtime-timeo
 
 const RETURN_TO_KEY = 'uos:auth:return-to';
 const AUTH_RUNTIME_TIMEOUT_MS = 10_000;
+const PASSKEY_RUNTIME_TIMEOUT_MS = 60_000;
 const PRODUCTION_AUTH_APEX_HOST = 'unitedolympicsports.store';
 const PRODUCTION_AUTH_CANONICAL_HOST = 'www.unitedolympicsports.store';
 
@@ -102,7 +103,7 @@ export async function signInWithSupabasePasskey(): Promise<string> {
   const { data, error } = await withRuntimeTimeout(
     'supabase-passkey-sign-in',
     supabase.auth.signInWithPasskey(),
-    AUTH_RUNTIME_TIMEOUT_MS,
+    PASSKEY_RUNTIME_TIMEOUT_MS,
   );
   if (error || !data.session?.access_token) {
     throw error ?? new Error('PASSKEY_SESSION_MISSING');
@@ -115,7 +116,7 @@ export async function registerSupabasePasskey() {
   const { data, error } = await withRuntimeTimeout(
     'supabase-passkey-register',
     supabase.auth.registerPasskey(),
-    AUTH_RUNTIME_TIMEOUT_MS,
+    PASSKEY_RUNTIME_TIMEOUT_MS,
   );
   if (error || !data) throw error ?? new Error('PASSKEY_REGISTRATION_FAILED');
   return data;
