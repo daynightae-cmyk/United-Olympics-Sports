@@ -8,6 +8,7 @@ import {
   EyeOff,
   Fingerprint,
   HeartHandshake,
+  KeyRound,
   LockKeyhole,
   Mail,
   PackageCheck,
@@ -26,7 +27,7 @@ import { ThemeToggle } from '../ui/ThemeToggle';
 import { PortalEmblem } from '../brand/PortalEmblem';
 
 export type PortalAuthKind = 'admin' | 'store' | 'player' | 'parent' | 'coach';
-export type PortalAuthProvider = 'phone' | 'google' | 'apple' | 'biometric';
+export type PortalAuthProvider = 'phone' | 'google' | 'apple' | 'passkey' | 'biometric';
 
 export type PortalAuthNotice = {
   tone: 'info' | 'error';
@@ -235,7 +236,7 @@ export function PortalAuthPage({ portal, busy = false, extraContent, onProvider,
               </div>
             ) : (
               <p className="portal-auth-provider-state" id="portal-auth-status">
-                <BilingualText value={bi('Production providers appear only when configured.', 'تعمل موفّرات الإنتاج فقط عند تهيئتها.')} />
+                <BilingualText value={bi('Use Google, a passkey, or your device biometric security.', 'استخدم Google أو مفتاح مرور أو أمان البصمة في جهازك.')} />
               </p>
             )}
 
@@ -274,13 +275,22 @@ export function PortalAuthPage({ portal, busy = false, extraContent, onProvider,
             <div className="portal-auth-divider"><span><BilingualText value={bi('Or continue with', 'أو تابع باستخدام')} /></span></div>
 
             <div className="portal-auth-providers" aria-describedby="portal-auth-status">
-              <button type="button" onClick={() => handleProvider('phone')} disabled={isBusy} aria-label="Sign in with phone number | تسجيل الدخول برقم الهاتف"><Smartphone aria-hidden="true" /><BilingualText value={bi('Phone', 'الهاتف')} /></button>
               <button type="button" onClick={() => handleProvider('google')} disabled={isBusy} aria-label="Sign in with Google | تسجيل الدخول عبر Google"><span className="portal-auth-google" aria-hidden="true">G</span><BilingualText value={bi('Google', 'Google')} /></button>
-              <button type="button" onClick={() => handleProvider('apple')} disabled={isBusy} aria-label="Sign in with Apple | تسجيل الدخول عبر Apple"><Apple aria-hidden="true" /><BilingualText value={bi('Apple', 'Apple')} /></button>
+              <button type="button" onClick={() => handleProvider('passkey')} disabled={isBusy} aria-label="Sign in with a passkey | تسجيل الدخول بمفتاح مرور"><KeyRound aria-hidden="true" /><BilingualText value={bi('Passkey', 'مفتاح مرور')} /></button>
               <button type="button" onClick={() => handleProvider('biometric')} disabled={isBusy} aria-label="Biometric sign in | تسجيل الدخول بالبصمة"><Fingerprint aria-hidden="true" /><BilingualText value={bi('Biometric', 'البصمة')} /></button>
+              <button type="button" onClick={() => handleProvider('phone')} disabled={isBusy} aria-label="Sign in with phone number | تسجيل الدخول برقم الهاتف"><Smartphone aria-hidden="true" /><BilingualText value={bi('Phone', 'الهاتف')} /></button>
+              <button type="button" onClick={() => handleProvider('apple')} disabled={isBusy} aria-label="Sign in with Apple | تسجيل الدخول عبر Apple"><Apple aria-hidden="true" /><BilingualText value={bi('Apple', 'Apple')} /></button>
             </div>
 
             {extraContent}
+
+            <div className="portal-auth-entry-note">
+              <KeyRound aria-hidden="true" />
+              <div>
+                <BilingualText value={bi('Passkey & biometric security', 'أمان مفتاح المرور والبصمة')} />
+                <Link to={`/auth/passkeys?returnTo=${encodeURIComponent(config.destination)}`}><BilingualText value={bi('Set up or manage this device', 'إعداد أو إدارة هذا الجهاز')} /></Link>
+              </div>
+            </div>
 
             <div className="portal-auth-entry-note">
               <ShieldCheck aria-hidden="true" />
