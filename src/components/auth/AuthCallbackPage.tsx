@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { ShieldCheck } from 'lucide-react';
 import {
+  canonicalAuthPageUrl,
   consumeAuthReturnTo,
   exchangeSupabaseAuthCode,
   fetchPortalIdentity,
@@ -31,6 +32,17 @@ function loginRouteForDestination(destination: string): string {
   if (destination.startsWith('/coach')) return '/coach/login';
   if (destination.startsWith('/admin')) return '/admin/login';
   return '/';
+}
+
+function classifyAuthError(error: unknown): string {
+  const message = error instanceof Error ? error.message : '';
+  if (/code verifier|pkce/i.test(message)) return 'PKCE_VERIFIER_MISSING';
+  if (/AUTHORIZATION_UNAVAILABLE/.test(message)) return 'AUTHORIZATION_UNAVAILABLE';
+  if (/AUTH_INVALID/.test(message)) return 'AUTH_INVALID';
+  if (/AUTH_REQUIRED/.test(message)) return 'AUTH_REQUIRED';
+  if (/AUTH_SESSION_FAILED/.test(message)) return 'AUTH_SESSION_FAILED';
+  if (/timeout/i.test(message)) return 'AUTH_TIMEOUT';
+  return 'AUTH_CALLBACK_UNCLASSIFIED';
 }
 
 function persistSinglePortalBinding(destination: string, portal: PortalIdentity): boolean {
@@ -79,6 +91,7 @@ function persistSinglePortalBinding(destination: string, portal: PortalIdentity)
 export function AuthCallbackPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
+  const canonicalTarget = typeof window === 'undefined' ? null : canonicalAuthPageUrl(window.location.href);
   const destinationHint = peekAuthReturnTo('/');
   const portal = portalFromDestination(destinationHint);
   const retryRoute = loginRouteForDestination(destinationHint);
@@ -116,6 +129,10 @@ export function AuthCallbackPage() {
   };
 
   useEffect(() => {
+    if (canonicalTarget) {
+      window.location.replace(canonicalTarget);
+      return;
+    }
     if (providerError) {
       setState('error');
       setMessage('Sign-in was not completed. Please try again. | لم يكتمل تسجيل الدخول. يرجى المحاولة مرة أخرى.');
@@ -128,15 +145,48 @@ export function AuthCallbackPage() {
     }
 
     let active = true;
-    void exchangeSupabaseAuthCode(code)
-      .then((token) => active ? finish(token) : undefined)
-      .catch(() => {
+    void (async () => {
+      let token: string;
+      try {
+        token = await exchangeSupabaseAuthCode(code);
+      } catch (error) {
         if (!active) return;
+        console.error('OAuth callback exchange failed', { code: classifyAuthError(error) });
         setState('error');
-        setMessage('We could not complete secure sign-in. Please try again. | تعذر إكمال تسجيل الدخول الآمن. يرجى المحاولة مرة أخرى.');
-      });
+        setMessage('Google verified the account, but the secure browser session could not be completed. Restart sign-in from this same domain. | تحقق Google من الحساب، لكن تعذر إكمال جلسة المتصفح الآمنة. أعد تسجيل الدخول من نفس هذا النطاق.');
+        return;
+      }
+
+      try {
+        await finish(token);
+      } catch (error) {
+        if (!active) return;
+        const errorCode = classifyAuthError(error);
+        console.error('OAuth callback server session failed', { code: errorCode });
+        await signOutEverywhere().catch(() => undefined);
+        setState('error');
+        setMessage(
+          errorCode === 'AUTHORIZATION_UNAVAILABLE'
+            ? 'Your Google identity is verified, but the authorization service is temporarily unavailable. | تم التحقق من هوية Google، لكن خدمة الصلاحيات غير متاحة مؤقتًا.'
+            : 'Your Google identity is verified, but the application session could not be established. | تم التحقق من هوية Google، لكن تعذر إنشاء جلسة التطبيق.',
+        );
+      }
+    })();
+
     return () => { active = false; };
-  }, [code, providerError]);
+  }, [canonicalTarget, code, providerError]);
+
+  if (canonicalTarget) {
+    return (
+      <main className="portal-auth" data-portal={portal}>
+        <section className="portal-auth-panel" style={{ margin: '10vh auto', maxWidth: 620 }}>
+          <div className="portal-auth-card" role="status" aria-live="polite">
+            Securing authentication origin… | جارٍ توحيد نطاق المصادقة الآمن…
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   if (params.get('next')?.startsWith('//')) return <Navigate to="/" replace />;
 
