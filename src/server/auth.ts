@@ -1,6 +1,7 @@
 import { adminAuth } from '../lib/firebase-admin';
 import { getPool, databaseConfigured } from '../db/index';
 import { ApiError, getHeader, type ApiRequest } from './http';
+import { getSupabaseAuthConfig } from './supabase-auth-config';
 
 export type IdentityProvider = 'supabase' | 'firebase';
 
@@ -14,19 +15,6 @@ export interface ProviderIdentity {
 export interface VerifiedIdentity extends ProviderIdentity {
   roles: string[];
   scopes: string[];
-}
-
-const DEFAULT_SUPABASE_URL = 'https://olmbezzzqavgjwydlfey.supabase.co';
-const DEFAULT_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_BU7Yk24M8ClMH_w1XL8Wgw_zSMbaXEA';
-
-function supabaseConfig(): { url: string; publishableKey: string } {
-  return {
-    url: process.env.SUPABASE_URL?.trim() || process.env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL,
-    publishableKey:
-      process.env.SUPABASE_PUBLISHABLE_KEY?.trim()
-      || process.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim()
-      || DEFAULT_SUPABASE_PUBLISHABLE_KEY,
-  };
 }
 
 function tokenIssuer(token: string): string | null {
@@ -62,7 +50,7 @@ export async function verifySupabaseAccessToken(
   token: string,
   fetchImpl: typeof fetch = fetch,
 ): Promise<ProviderIdentity | null> {
-  const { url, publishableKey } = supabaseConfig();
+  const { url, publishableKey } = getSupabaseAuthConfig();
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5000);
   try {
@@ -108,8 +96,8 @@ export async function verifyBearerIdentity(req: ApiRequest): Promise<VerifiedIde
   if (!token) throw new ApiError(401, 'AUTH_REQUIRED', 'A valid sign-in token is required.');
 
   const issuer = tokenIssuer(token);
-  const { url: supabaseUrl } = supabaseConfig();
-  const supabaseIssuer = `${supabaseUrl.replace(/\/$/, '')}/auth/v1`;
+  const { url: supabaseUrl } = getSupabaseAuthConfig();
+  const supabaseIssuer = `${supabaseUrl}/auth/v1`;
 
   const providerIdentity: ProviderIdentity | null =
     issuer === supabaseIssuer
