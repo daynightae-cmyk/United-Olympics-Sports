@@ -67,11 +67,13 @@ The supplied external-agent report claimed local changes to preview handling, bu
 
 More importantly, the claimed preview-leak fixes are not accepted as valid without further evidence:
 
-- `AdminDataProvider` explicitly selects `previewAdminGateway` when preview mode is active.
+- `AdminDataProvider` explicitly selects `previewAdminGateway` when mode is `preview`, and `productionAdminGateway` otherwise.
 - `StoreDataProvider` selects `previewStoreGateway` only when preview mode is allowed.
 - canonical production hosts are guarded by `previewModeAllowed(...)`.
 
 Therefore calls through `gateway` while `mode === 'preview'` are not, by themselves, evidence of production-database leakage. Replacing preview data with empty states would remove intended safe preview QA/demo behavior and is not applied by this pass.
+
+A detailed review is recorded in `docs/EXTERNAL-AGENT-82PCT-REVIEW-20260916.md`.
 
 ## Closure rule
 
