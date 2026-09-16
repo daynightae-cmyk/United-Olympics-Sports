@@ -4,6 +4,8 @@ import { fetchJsonWithRuntimeTimeout, withRuntimeTimeout } from './runtime-timeo
 
 const RETURN_TO_KEY = 'uos:auth:return-to';
 const AUTH_RUNTIME_TIMEOUT_MS = 10_000;
+const PRODUCTION_AUTH_APEX_HOST = 'unitedolympicsports.store';
+const PRODUCTION_AUTH_CANONICAL_HOST = 'www.unitedolympicsports.store';
 
 export type ClientAuthProvider = 'supabase' | 'firebase';
 
@@ -38,6 +40,22 @@ export type PortalIdentity = {
 export function safeReturnTo(value: string | null | undefined, fallback = '/'): string {
   if (!value || !value.startsWith('/') || value.startsWith('//')) return fallback;
   return value;
+}
+
+/**
+ * Supabase PKCE stores the code verifier in browser storage, which is scoped to
+ * the exact origin. Production currently resolves auth callbacks on the `www`
+ * host, so authentication must start on that same host. Otherwise an apex → www
+ * redirect can strand the verifier on the apex origin and make the code exchange
+ * fail even though Google has already created the Supabase user.
+ */
+export function canonicalAuthPageUrl(href: string): string | null {
+  const url = new URL(href);
+  if (url.hostname !== PRODUCTION_AUTH_APEX_HOST) return null;
+  url.hostname = PRODUCTION_AUTH_CANONICAL_HOST;
+  url.protocol = 'https:';
+  url.port = '';
+  return url.toString();
 }
 
 export async function beginSupabaseGoogleOAuth(returnTo = '/'): Promise<void> {
