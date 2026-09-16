@@ -4,9 +4,12 @@ import { Sparkles } from 'lucide-react';
 import { PortalAuthPage, type PortalAuthNotice, type PortalAuthProvider } from '../../components/auth/PortalAuthPage';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { beginSupabaseGoogleOAuth, fetchPortalIdentity, getAccessToken, signOutEverywhere } from '../../lib/auth-client';
+import { previewModeAllowed } from '../../lib/preview-guard';
 
 const COACH_PRODUCTION_SESSION_KEY = 'uos:coach-portal:session:v1';
-const demoRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_PORTAL_DEMO === 'true';
+// Safe demo links are blocked on canonical production hosts even when the
+// flag is set (see preview-guard); elsewhere they enable local/preview QA.
+const demoRuntime = previewModeAllowed(import.meta.env.VITE_UOS_PORTAL_DEMO === 'true');
 
 function readCoachProductionSession(): { coachId: string } | null {
   if (typeof window === 'undefined') return null;

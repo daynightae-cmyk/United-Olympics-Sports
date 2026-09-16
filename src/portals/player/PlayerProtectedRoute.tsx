@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { PortalRouteLoader, PortalRuntimeError } from '../../components/portal/PortalRouteState';
 import { fetchPortalIdentity } from '../../lib/auth-client';
+import { previewModeAllowed } from '../../lib/preview-guard';
 import { usePlayerSession } from './PlayerSessionContext';
 
 interface PlayerProtectedRouteProps {
@@ -11,7 +12,9 @@ interface PlayerProtectedRouteProps {
 export function PlayerProtectedRoute({ children }: PlayerProtectedRouteProps) {
   const { isAuthenticated, isPreviewSession, activePlayerId, loading, error, logout } = usePlayerSession();
   const location = useLocation();
-  const previewRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true';
+  // Preview sessions are blocked on canonical production hosts even when the
+  // flag is set (see preview-guard); elsewhere they enable local/preview QA.
+  const previewRuntime = previewModeAllowed(import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true');
   const [productionValidated, setProductionValidated] = useState<boolean | null>(null);
   const [validationError, setValidationError] = useState(false);
   const [revision, setRevision] = useState(0);

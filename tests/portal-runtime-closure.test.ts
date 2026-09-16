@@ -91,9 +91,12 @@ for (const marker of [
 assert(portalRepo.includes("where sender_uid = $1 or recipient_uid = $1"), 'Portal messages must be identity scoped');
 assert(portalRepo.includes('user_uid = $2'), 'Parent/Coach portal records must verify the authenticated uid');
 
-for (const marker of ['StoreAccountBoundary', 'ConnectedAccountPage', 'ConnectedOrdersPage', 'ConnectedAddressesPage', 'ConnectedNotificationsPage', 'ConnectedWishlistPage']) {
+for (const marker of ['StoreAccountBoundary', 'ConnectedAccountPage', 'ConnectedOrdersPage', 'ConnectedOrderDetailPage', 'ConnectedAddressesPage', 'ConnectedNotificationsPage', 'ConnectedWishlistPage', 'ConnectedPaymentMethodsPage', 'ConnectedSettingsPage']) {
   assert(storeApp.includes(marker), `Store account closure missing ${marker}`);
 }
+assert.equal(/[{,\s]OrderDetailPage[,}\s]/.test(storeApp), false, 'Authenticated order detail must use the account-scoped page, not the static snapshot');
+assert.equal(/[{,\s]PaymentMethodsPage[,}\s]/.test(storeApp), false, 'Authenticated payment methods must use the account-scoped page');
+assert.equal(/[{,\s]StoreSettingsPage[,}\s]/.test(storeApp), false, 'Authenticated settings must use the account-scoped page');
 assert(storeAccountRepo.includes('where customer_uid = $1'), 'Store orders must be scoped by verified customer uid');
 assert(storeAccountRepo.includes('[ctx.uid]'), 'Store account query must bind ctx.uid');
 assert(dbIndex.includes('statement_timeout: statementTimeout'), 'Production pool must enforce a server-side PostgreSQL statement timeout');

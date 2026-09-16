@@ -4,6 +4,7 @@ import type { StoreCategory, StoreDataState, StoreProduct } from '../storeTypes'
 import type { StoreDataGateway, StoreDataMode } from './StoreDataGateway';
 import { previewStoreGateway } from './previewStoreGateway';
 import { productionStoreGateway } from './productionStoreGateway';
+import { previewModeAllowed } from '../../lib/preview-guard';
 import { unavailableStoreGateway } from './unavailableStoreGateway';
 
 type StoreDataContextValue = {
@@ -18,7 +19,9 @@ type StoreDataContextValue = {
 const StoreDataContext = createContext<StoreDataContextValue | undefined>(undefined);
 
 function defaultGateway(): StoreDataGateway {
-  const previewEnabled = import.meta.env.DEV || import.meta.env.VITE_UOS_STORE_PREVIEW === 'true';
+  // Blocked on canonical production hosts even when the flag is set (see
+  // preview-guard); elsewhere the flag enables local/preview QA fixtures.
+  const previewEnabled = previewModeAllowed(import.meta.env.VITE_UOS_STORE_PREVIEW === 'true');
   if (previewEnabled) return previewStoreGateway;
   // Production default: live server catalog. The provider surfaces fetch
   // failures as an error state and never silently falls back to preview

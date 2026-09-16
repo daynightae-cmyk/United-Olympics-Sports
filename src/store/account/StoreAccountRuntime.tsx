@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Bell, Heart, LogOut, MapPin, Package, RefreshCw, Settings, ShieldCheck, UserRound, WalletCards } from 'lucide-react';
-import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { getAccessToken, signOutEverywhere } from '../../lib/auth-client';
 import { fetchWithRuntimeTimeout, withRuntimeTimeout } from '../../lib/runtime-timeout';
 import { supabase } from '../../lib/supabase';
@@ -258,6 +258,64 @@ export function ConnectedWishlistPage() {
   return (
     <StoreAccountShell title={{ en: 'Wishlist', ar: 'المفضلة' }}>
       {items.length ? <ProductGrid products={items} /> : <StoreState kind="empty" title={{ en: 'Your wishlist is empty', ar: 'قائمة المفضلة فارغة' }} description={{ en: 'Saved products from this authenticated browser session will appear here.', ar: 'ستظهر هنا المنتجات المحفوظة من جلسة المتصفح الموثقة.' }} action={<Link className="store-button store-button-primary" to="/store/shop"><StoreCopy value={{ en: 'Explore Products', ar: 'استكشف المنتجات' }} inline /></Link>} />}
+    </StoreAccountShell>
+  );
+}
+
+export function ConnectedOrderDetailPage() {
+  const { account } = useStoreAccount();
+  const { id } = useParams();
+  const order = account!.orders.find((item) => item.id === id || item.orderNumber === id);
+  if (!order) {
+    return (
+      <StoreAccountShell title={{ en: 'Order Details', ar: 'تفاصيل الطلب' }}>
+        <StoreState kind="empty" title={{ en: 'Order not found', ar: 'لم يتم العثور على الطلب' }} description={{ en: `No verified order was found for reference ${id ?? '—'} in this authenticated account.`, ar: `لم يتم العثور على طلب موثق للمرجع ${id ?? '—'} في هذا الحساب الموثق.` }} action={<Link className="store-button store-button-secondary" to="/store/orders"><StoreCopy value={{ en: 'Back to Orders', ar: 'العودة للطلبات' }} inline /></Link>} />
+      </StoreAccountShell>
+    );
+  }
+  const total = new Intl.NumberFormat('en-AE', { style: 'currency', currency: order.currency }).format(order.totalMinor / 100);
+  return (
+    <StoreAccountShell title={{ en: 'Order Details', ar: 'تفاصيل الطلب' }}>
+      <div className="store-profile-card">
+        <span><Package /></span>
+        <div>
+          <h2>{order.orderNumber}</h2>
+          <p>{order.status} · {total}</p>
+          <small>{new Date(order.createdAt).toLocaleString()}</small>
+          <small>{order.items.length} item{order.items.length === 1 ? '' : 's'} · verified against your authenticated account</small>
+        </div>
+      </div>
+      <p><Link className="store-button store-button-secondary" to="/store/orders"><StoreCopy value={{ en: 'Back to Orders', ar: 'العودة للطلبات' }} inline /></Link></p>
+    </StoreAccountShell>
+  );
+}
+
+export function ConnectedPaymentMethodsPage() {
+  return (
+    <StoreAccountShell title={{ en: 'Payment Methods', ar: 'طرق الدفع' }}>
+      <StoreState kind="empty" title={{ en: 'No saved payment methods', ar: 'لا توجد طرق دفع محفوظة' }} description={{ en: 'A tokenized payment provider must be connected before saved methods can appear.', ar: 'يجب ربط موفر دفع يعتمد الرموز قبل ظهور طرق الدفع المحفوظة.' }} />
+      <p className="store-security-note"><ShieldCheck /><StoreCopy value={{ en: 'Raw card numbers are never stored by this interface.', ar: 'لا تخزن هذه الواجهة أرقام البطاقات الخام مطلقًا.' }} inline /></p>
+    </StoreAccountShell>
+  );
+}
+
+export function ConnectedSettingsPage() {
+  const { locale, setLocale } = useStore();
+  return (
+    <StoreAccountShell title={{ en: 'Settings', ar: 'الإعدادات' }}>
+      <div className="store-settings-grid">
+        <section>
+          <h2><StoreCopy value={{ en: 'Language', ar: 'اللغة' }} /></h2>
+          <div className="store-setting-choice">
+            <button type="button" className={locale === 'en' ? 'is-active' : ''} onClick={() => setLocale('en')}>English</button>
+            <button type="button" className={locale === 'ar' ? 'is-active' : ''} onClick={() => setLocale('ar')}>العربية</button>
+          </div>
+        </section>
+        <section>
+          <h2><StoreCopy value={{ en: 'Theme', ar: 'المظهر' }} /></h2>
+          <p><StoreCopy value={{ en: 'Use the theme control in the header to choose light, dark or system mode.', ar: 'استخدم أداة المظهر في رأس الصفحة لاختيار الفاتح أو الداكن أو النظام.' }} /></p>
+        </section>
+      </div>
     </StoreAccountShell>
   );
 }

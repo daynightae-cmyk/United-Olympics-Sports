@@ -4,6 +4,7 @@ import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { PortalLayout } from '../layouts/PortalLayout';
 import { PortalErrorBoundary, PortalNotFoundPage, PortalRouteLoader, PortalRuntimeError } from '../components/portal/PortalRouteState';
 import { fetchPortalIdentity, signOutEverywhere } from '../lib/auth-client';
+import { previewModeAllowed } from '../lib/preview-guard';
 import { clearParentSession, readParentSession, startParentProduction } from './parent/parentData';
 
 const load = <T extends Record<string, ComponentType>>(factory: () => Promise<T>, key: keyof T) =>
@@ -27,7 +28,9 @@ const ParentPortalSettingsPage = load(() => import('../pages/portal/parent/Paren
 
 function ParentProtectedRoute({ children }: { children: React.ReactNode }) {
   const session = readParentSession();
-  const previewRuntime = import.meta.env.DEV || import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true';
+  // Preview sessions are blocked on canonical production hosts even when the
+  // flag is set (see preview-guard); elsewhere they enable local/preview QA.
+  const previewRuntime = previewModeAllowed(import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true');
   const [validated, setValidated] = useState<boolean | null>(null);
   const [validationError, setValidationError] = useState(false);
   const [revision, setRevision] = useState(0);

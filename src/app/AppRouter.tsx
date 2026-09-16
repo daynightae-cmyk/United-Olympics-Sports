@@ -6,6 +6,7 @@ import { OlympicRouteTransition } from '../components/navigation/OlympicRouteTra
 import { OlympicLuxurySplash } from '../components/splash/OlympicLuxurySplash';
 import { AuthCallbackPage } from '../components/auth/AuthCallbackPage';
 import { PortalLoginRoute } from '../components/auth/PortalLoginRoute';
+import { previewModeAllowed } from '../lib/preview-guard';
 
 const AdminLayout = lazy(() => import('../layouts/AdminLayout').then((module) => ({ default: module.AdminLayout })));
 const PlayerPortalRouter = lazy(() => import('../portals/PlayerPortalRouter').then((module) => ({ default: module.PlayerPortalRouter })));
@@ -35,7 +36,9 @@ function InternalProductUtilities() {
 }
 
 const isBenchmarkEnabled = import.meta.env.DEV === true;
-const isSafeDemoEnabled = import.meta.env.DEV || import.meta.env.VITE_UOS_PORTAL_DEMO === 'true';
+// Demo routes are blocked on canonical production hosts even when the flag
+// is set (see preview-guard); elsewhere the flag enables local/preview QA.
+const isSafeDemoEnabled = previewModeAllowed(import.meta.env.VITE_UOS_PORTAL_DEMO === 'true');
 
 export function AppRouter() {
   return (
