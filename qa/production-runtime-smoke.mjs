@@ -89,6 +89,17 @@ async function assertStableRoute(browser, spec) {
       throw new Error(`${spec.route}: route remained in loading state: ${loadingText.join(' | ')}`);
     }
 
+    // A protected route can update history before React commits the destination
+    // login surface. Wait for the actual UI, not only the pathname, so this gate
+    // detects a genuinely missing login screen without racing the router render.
+    if (spec.kind === 'login' || spec.kind === 'redirect') {
+      try {
+        await page.locator('.portal-auth').first().waitFor({ state: 'visible', timeout: 12_000 });
+      } catch {
+        throw new Error(`${spec.route}: stable login surface was not rendered`);
+      }
+    }
+
     const state = await page.evaluate(() => ({
       path: window.location.pathname,
       rootText: document.querySelector('#root')?.textContent?.trim().length ?? 0,
