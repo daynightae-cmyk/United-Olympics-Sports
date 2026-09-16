@@ -21,7 +21,7 @@ Canonical repo `daynightae-cmyk/United-Olympics-Sports` · branch `main` · prod
 ## Provider boundary (preview vs production)
 
 - Every surface has an explicit mode: `AdminDataProvider` (`preview`|`live`), `StoreDataProvider` (`preview`|`production`|`unavailable`), portal session contexts (`production`|`preview`).
-- **Production builds ignore preview/demo flags entirely** (`src/lib/preview-guard.ts`: `previewModeAllowed` on all 10 client gates, `tests/production-preview-isolation.test.ts`). Preview modes work in dev and explicit preview-QA builds (non-production hosts) but are blocked on canonical production hosts even if a `VITE_UOS_*` variable is misconfigured — while the separate preview-QA layer keeps full coverage.
+- **Canonical production hosts block preview/demo flags** (`src/lib/preview-guard.ts`: `previewModeAllowed` on all 10 client gates, `tests/production-preview-isolation.test.ts`). Preview modes work in dev and explicit preview-QA builds on non-canonical hosts but are blocked on canonical production hosts even if a `VITE_UOS_*` variable is misconfigured — while the separate preview-QA layer keeps full coverage.
 - Preview gateways are in-memory/tab-local and never write to the server.
 
 ## Request path (authenticated)
