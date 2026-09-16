@@ -1,3 +1,5 @@
+import { getSupabaseAuthConfig } from './supabase-auth-config';
+
 export interface RuntimeReadiness {
   databaseConfigured: boolean;
   authVerificationConfigured: boolean;
@@ -27,12 +29,7 @@ export function databaseConfigured(): boolean {
 }
 
 export function supabaseAuthConfigured(): boolean {
-  const url = process.env.SUPABASE_URL?.trim()
-    || process.env.VITE_SUPABASE_URL?.trim()
-    || 'https://olmbezzzqavgjwydlfey.supabase.co';
-  const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY?.trim()
-    || process.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim()
-    || 'sb_publishable_BU7Yk24M8ClMH_w1XL8Wgw_zSMbaXEA';
+  const { url, publishableKey } = getSupabaseAuthConfig();
   return Boolean(url && publishableKey);
 }
 
