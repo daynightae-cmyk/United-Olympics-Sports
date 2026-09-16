@@ -4,6 +4,10 @@ import {
   normalizePhoneNumber,
   validateSafeReturnTo,
 } from '../src/server/identity-strategy.ts';
+import {
+  DEFAULT_AUTH_SUPABASE_URL,
+  getSupabaseAuthConfig,
+} from '../src/server/supabase-auth-config.ts';
 
 async function runIdentityStrategyTests() {
   console.log('=== RUNNING IDENTITY PROVIDER STRATEGY TESTS ===');
@@ -36,6 +40,32 @@ async function runIdentityStrategyTests() {
   assert.equal(validateSafeReturnTo('https://evil-phishing.com/steal-creds'), '/portal/overview');
   assert.equal(validateSafeReturnTo('//attacker.com'), '/portal/overview');
   assert.equal(validateSafeReturnTo('javascript:alert(1)'), '/portal/overview');
+
+  // 4. Supabase Auth authority must not be silently retargeted by a generic
+  // database/integration SUPABASE_URL injected into the server environment.
+  const genericOnly = getSupabaseAuthConfig({
+    SUPABASE_URL: 'https://wrong-data-project.supabase.co',
+    SUPABASE_PUBLISHABLE_KEY: 'wrong-data-project-key',
+  });
+  assert.equal(genericOnly.url, DEFAULT_AUTH_SUPABASE_URL);
+
+  const browserAuthWins = getSupabaseAuthConfig({
+    SUPABASE_URL: 'https://wrong-data-project.supabase.co',
+    SUPABASE_PUBLISHABLE_KEY: 'wrong-data-project-key',
+    VITE_SUPABASE_URL: 'https://browser-auth-project.supabase.co/',
+    VITE_SUPABASE_PUBLISHABLE_KEY: 'browser-auth-key',
+  });
+  assert.equal(browserAuthWins.url, 'https://browser-auth-project.supabase.co');
+  assert.equal(browserAuthWins.publishableKey, 'browser-auth-key');
+
+  const explicitAuthWins = getSupabaseAuthConfig({
+    AUTH_SUPABASE_URL: 'https://explicit-auth-project.supabase.co/',
+    AUTH_SUPABASE_PUBLISHABLE_KEY: 'explicit-auth-key',
+    VITE_SUPABASE_URL: 'https://browser-auth-project.supabase.co',
+    VITE_SUPABASE_PUBLISHABLE_KEY: 'browser-auth-key',
+  });
+  assert.equal(explicitAuthWins.url, 'https://explicit-auth-project.supabase.co');
+  assert.equal(explicitAuthWins.publishableKey, 'explicit-auth-key');
 
   console.log('Identity provider strategy tests: PASS');
 }
