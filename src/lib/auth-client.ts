@@ -4,6 +4,7 @@ import { fetchJsonWithRuntimeTimeout, withRuntimeTimeout } from './runtime-timeo
 
 const RETURN_TO_KEY = 'uos:auth:return-to';
 const AUTH_RUNTIME_TIMEOUT_MS = 10_000;
+const PASSKEY_RUNTIME_TIMEOUT_MS = 60_000;
 const PRODUCTION_AUTH_APEX_HOST = 'unitedolympicsports.store';
 const PRODUCTION_AUTH_CANONICAL_HOST = 'www.unitedolympicsports.store';
 
@@ -58,6 +59,23 @@ export function canonicalAuthPageUrl(href: string): string | null {
   return url.toString();
 }
 
+export function isPasskeySupported(): boolean {
+  return typeof window !== 'undefined'
+    && window.isSecureContext
+    && typeof window.PublicKeyCredential !== 'undefined'
+    && typeof navigator !== 'undefined'
+    && !!navigator.credentials;
+}
+
+export async function isPlatformAuthenticatorAvailable(): Promise<boolean> {
+  if (!isPasskeySupported()) return false;
+  try {
+    return await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+  } catch {
+    return false;
+  }
+}
+
 export async function beginSupabaseGoogleOAuth(returnTo = '/'): Promise<void> {
   const safeDestination = safeReturnTo(returnTo);
   sessionStorage.setItem(RETURN_TO_KEY, safeDestination);
@@ -77,6 +95,51 @@ export async function beginSupabaseGoogleOAuth(returnTo = '/'): Promise<void> {
     throw error ?? new Error('Supabase did not return an OAuth redirect URL.');
   }
   window.location.assign(data.url);
+}
+
+export async function signInWithSupabasePasskey(): Promise<string> {
+  if (!isPasskeySupported()) throw new Error('PASSKEY_UNSUPPORTED');
+
+  const { data, error } = await withRuntimeTimeout(
+    'supabase-passkey-sign-in',
+    supabase.auth.signInWithPasskey(),
+    PASSKEY_RUNTIME_TIMEOUT_MS,
+  );
+  if (error || !data.session?.access_token) {
+    throw error ?? new Error('PASSKEY_SESSION_MISSING');
+  }
+  return data.session.access_token;
+}
+
+export async function registerSupabasePasskey() {
+  if (!isPasskeySupported()) throw new Error('PASSKEY_UNSUPPORTED');
+  const { data, error } = await withRuntimeTimeout(
+    'supabase-passkey-register',
+    supabase.auth.registerPasskey(),
+    PASSKEY_RUNTIME_TIMEOUT_MS,
+  );
+  if (error || !data) throw error ?? new Error('PASSKEY_REGISTRATION_FAILED');
+  return data;
+}
+
+export async function listSupabasePasskeys() {
+  const { data, error } = await withRuntimeTimeout(
+    'supabase-passkey-list',
+    supabase.auth.passkey.list(),
+    AUTH_RUNTIME_TIMEOUT_MS,
+  );
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function deleteSupabasePasskey(passkeyId: string): Promise<void> {
+  if (!passkeyId) throw new Error('PASSKEY_ID_REQUIRED');
+  const { error } = await withRuntimeTimeout(
+    'supabase-passkey-delete',
+    supabase.auth.passkey.delete({ passkeyId }),
+    AUTH_RUNTIME_TIMEOUT_MS,
+  );
+  if (error) throw error;
 }
 
 export function peekAuthReturnTo(fallback = '/'): string {
