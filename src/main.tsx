@@ -20,6 +20,7 @@ import './styles/uos-benchmark.css';
 import './styles/player-portal.css';
 import './styles/portal-unification.css';
 import './styles/portal-auth.css';
+import './styles/passkey-auth.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
