@@ -1,6 +1,6 @@
 # United Olympics Sports — Client Acceptance Checklist (v1.0.1)
 
-**Delivery date:** 2026-09-17  
+**Delivery date:** 2026-09-17
 **Production domain:** https://unitedolympicsports.store
 
 Use a normal production browser/device. Do not use browser-storage tricks or preview/demo flags to manufacture acceptance.
@@ -69,8 +69,8 @@ Use a normal production browser/device. Do not use browser-storage tricks or pre
 
 ## Sign-off
 
-Owner / Client name: ______________________________  
-Date: __________________  
+Owner / Client name: ______________________________
+Date: __________________
 Result: **ACCEPTED / ACCEPTED WITH NOTES / REJECTED**
 
 Notes / evidence links:
