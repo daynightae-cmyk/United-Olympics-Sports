@@ -2,9 +2,9 @@
  *
  * Safety contract:
  * - Never cache authenticated, API, payment, or version-check traffic.
- * - Cache only the application shell and immutable/static same-origin assets.
- * - Large portal artwork stays network-only so cancelled image requests are
- *   handled by the browser rather than surfacing as service-worker failures.
+ * - Cache only the stable application shell and small same-origin brand assets.
+ * - Vite build chunks and large portal artwork stay network-only because rapid
+ *   route changes can cancel in-flight module/image requests in Firefox/WebKit.
  * - Navigation is network-first and falls back to the cached shell when offline.
  * - Runtime cache writes are best-effort and can never break a network response.
  */
@@ -24,6 +24,7 @@ const NEVER_CACHE_PREFIXES = [
 ];
 
 const NETWORK_ONLY_STATIC_PREFIXES = [
+  '/assets',
   '/brand/portals',
 ];
 
@@ -45,8 +46,7 @@ function isNetworkOnlyStaticPath(pathname) {
 }
 
 function isStaticAsset(pathname) {
-  return pathname.startsWith('/assets/')
-    || pathname.startsWith('/brand/')
+  return pathname.startsWith('/brand/')
     || pathname === '/manifest.webmanifest';
 }
 
@@ -69,9 +69,9 @@ async function serveStaticAsset(request) {
     if (response.ok) await putBestEffort(request, response.clone());
     return response;
   } catch {
-    // For cached static resources, resolve the fetch event deterministically.
-    // Large portal artwork is excluded before this handler so browser-driven
-    // navigation cancellation never becomes a service-worker console failure.
+    // Only stable brand/manifest resources reach this handler. Build chunks and
+    // portal artwork bypass the service worker so browser-driven cancellation
+    // cannot surface as a service-worker console failure.
     return (await caches.match(request)) || Response.error();
   }
 }
