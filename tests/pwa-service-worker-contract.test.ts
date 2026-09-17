@@ -20,14 +20,17 @@ assert.match(sw, /if \(isNetworkOnlyStaticPath\(url\.pathname\)\) return;/, 'net
 assert.ok(!sw.includes("pathname.startsWith('/assets/')"), 'Vite build chunks must not be classified as runtime-cacheable assets');
 assert.ok(!sw.includes("pathname.startsWith('/media/')"), 'large/dynamic media must not be broadly runtime-cached');
 assert.match(sw, /request\.mode === 'navigate'/, 'navigation should have an offline shell fallback');
-assert.match(sw, /caches\.match\(SHELL_URL\)/, 'offline navigation fallback must use the cached shell');
+assert.match(sw, /async function matchBestEffort\(key\)/, 'cache reads must be isolated from response delivery');
+assert.match(sw, /return await caches\.match\(key\);/, 'best-effort cache reads must use CacheStorage lookup');
+assert.match(sw, /return undefined;/, 'failed cache reads must settle as cache misses');
+assert.match(sw, /const cached = await matchBestEffort\(SHELL_URL\);/, 'offline navigation fallback must use a best-effort cached shell lookup');
 assert.match(sw, /async function putBestEffort/, 'runtime cache writes must be isolated from response delivery');
 assert.match(sw, /catch \{[\s\S]*Cache persistence is an enhancement only/, 'cache write failures must be non-fatal');
 assert.match(sw, /async function serveStaticAsset\(request\)/, 'stable static asset delivery must use an explicit resilient handler');
 assert.match(
   sw,
-  /async function serveStaticAsset\(request\)[\s\S]*catch \{[\s\S]*return \(await caches\.match\(request\)\) \|\| Response\.error\(\);/,
-  'cacheable stable assets must settle deterministically on network failure',
+  /async function serveStaticAsset\(request\)[\s\S]*const cached = await matchBestEffort\(request\);[\s\S]*catch \{[\s\S]*return \(await matchBestEffort\(request\)\) \|\| Response\.error\(\);/,
+  'cacheable stable assets must treat cache-read failures as misses and settle deterministically on network failure',
 );
 assert.match(sw, /event\.respondWith\(serveStaticAsset\(request\)\);/, 'cacheable stable assets must use the resilient handler');
 assert.ok(

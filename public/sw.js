@@ -6,7 +6,7 @@
  * - Vite build chunks and large portal artwork stay network-only because rapid
  *   route changes can cancel in-flight module/image requests in Firefox/WebKit.
  * - Navigation is network-first and falls back to the cached shell when offline.
- * - Runtime cache writes are best-effort and can never break a network response.
+ * - Runtime cache reads/writes are best-effort and can never break a network response.
  */
 
 const CACHE_NAME = 'uos-static-shell-v1';
@@ -50,6 +50,16 @@ function isStaticAsset(pathname) {
     || pathname === '/manifest.webmanifest';
 }
 
+async function matchBestEffort(key) {
+  try {
+    return await caches.match(key);
+  } catch {
+    // CacheStorage reads are optional. Storage eviction/corruption must behave
+    // like a cache miss so a healthy network request can still proceed.
+    return undefined;
+  }
+}
+
 async function putBestEffort(key, response) {
   try {
     const cache = await caches.open(CACHE_NAME);
@@ -61,7 +71,7 @@ async function putBestEffort(key, response) {
 }
 
 async function serveStaticAsset(request) {
-  const cached = await caches.match(request);
+  const cached = await matchBestEffort(request);
   if (cached) return cached;
 
   try {
@@ -72,7 +82,7 @@ async function serveStaticAsset(request) {
     // Only stable brand/manifest resources reach this handler. Build chunks and
     // portal artwork bypass the service worker so browser-driven cancellation
     // cannot surface as a service-worker console failure.
-    return (await caches.match(request)) || Response.error();
+    return (await matchBestEffort(request)) || Response.error();
   }
 }
 
@@ -108,7 +118,7 @@ self.addEventListener('fetch', (event) => {
         if (response.ok) await putBestEffort(SHELL_URL, response.clone());
         return response;
       } catch {
-        const cached = await caches.match(SHELL_URL);
+        const cached = await matchBestEffort(SHELL_URL);
         return cached || Response.error();
       }
     })());
