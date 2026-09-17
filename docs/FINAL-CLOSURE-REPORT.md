@@ -1,51 +1,128 @@
-# United Olympics Sports — Final Closure Report (v1.0.0)
+# United Olympics Sports — Final Closure Report (v1.0.1)
 
-## Canonical
+## Canonical product line
 
-- Repository: `https://github.com/daynightae-cmyk/United-Olympics-Sports`, branch `main`.
-- Baseline SHA at mission start: `6452a6298785bc21d123af66f3656a2bd1f57d4c` (PR #27; local checkout was one merge behind at `ee61843`/PR #24 and was rebased to baseline — no drift after fetch).
-- Mission branch: `closure/absolute-production-client-acceptance-20260916`.
-- Production URL: `https://unitedolympicsports.store` · Vercel project previously recorded as `daynightae-cmyks-projects/united-olympics-sports`.
-- Supabase browser Auth/public project verified on 2026-09-16: `olmbezzzqavgjwydlfey` (`Unitedolympicsports`, `ACTIVE_HEALTHY`).
-- Server system-of-record PostgreSQL is selected by `DATABASE_URL` or `SQL_*`; do not infer the server database authority from the browser Supabase project ref alone.
+- Repository: `daynightae-cmyk/United-Olympics-Sports`.
+- Canonical branch: `main`.
+- Production domain: `https://unitedolympicsports.store`.
+- Supabase Auth/public project: `olmbezzzqavgjwydlfey` (`Unitedolympicsports`).
+- v1.0.1 delivery build: `client-delivery-20260917`.
+- Minimum supported application version: `1.0.0`.
 
-## Implemented (v1.0.0 closure mission)
+This report distinguishes implemented/automated closure from interactive owner/provider acceptance. It must not be used to claim an unexecuted browser or payment-provider flow.
 
-- **Security:** preview/demo flags are blocked on canonical production hosts across all 10 client gates (`src/lib/preview-guard.ts`; dev + explicit preview-QA builds unaffected) (`fix(security)` + `tests/production-preview-isolation.test.ts` in suite).
-- **Store:** account-scoped order detail / payment-methods / settings behind `StoreAccountBoundary`; truthful checkout header; dead static shell removed.
-- **DB:** migration 0009 (anon inventory → active products only); bootstrap 0001→0009.
-- **Auth:** dead Firebase-only middleware removed; dual-provider verifier is canonical.
-- **Docs:** client handoff pack under `docs/` (architecture, route map, role matrix, data map, operations guides, runbooks, environment inventory, security closure, QA evidence, acceptance checklist, release notes and closure reports).
+## Implemented product closure
 
-## Preserved from baseline (no regressions claimed by this evidence pass)
+### Product family
 
-Portal runtime boundaries (PR #27), store auth/wishlist scoping, provider/session ordering, emblem eager-load fix, preview/production QA separation, all required release checks already recorded on the release SHA.
+- Public experience, Store, Super Admin, Player, Parent and Coach surfaces remain in one shared React product core.
+- Shared bilingual design system, premium field primitives, portal layout primitives, overlays, responsive behavior and theme architecture are integrated.
+- United Assistant and update-awareness UI remain part of the shared portal product family.
+- Production preview/demo isolation remains enforced on canonical production hosts.
 
-## Automated / release evidence
+### Authentication and authorization
 
-See `docs/QA-EVIDENCE.md` for typecheck/lint/media/production-suite/build evidence from the release mission.
+- Google/Supabase browser authentication is connected to the canonical Supabase Auth project.
+- Server-side bearer-token verification is pinned to the canonical authentication authority. Generic Supabase data/integration environment variables cannot silently retarget identity verification.
+- Passkey / device-biometric sign-in surfaces and authenticated passkey management are integrated across supported portal entry points.
+- Authorization is role-gated after identity verification; successful OAuth alone does not grant administrator access.
+- The connected canonical Supabase project is `ACTIVE_HEALTHY` as verified on 2026-09-17.
+- A real authenticated user now exists in `auth.users` and has signed in.
+- The application role store contains an active `super_admin` role bound to that Supabase identity.
 
-Release `v1.0.0` exists and targets merge SHA `cef89a3d7b47ac203309a322b3672070bfabcfdb`. The release SHA previously recorded successful CI/Vercel evidence. A release tag is not, by itself, proof of interactive owner acceptance.
+### Data and security
 
-## Live acceptance evidence — 2026-09-16
+- Production/provider boundaries, multi-tenant authorization, portal role isolation, RLS contracts, service-role leak gates, migration/bootstrap lifecycle and production-preview isolation remain covered by the production suite.
+- Server system-of-record PostgreSQL continues to be selected by `DATABASE_URL` / `SQL_*`; browser Supabase project identity must not be confused with database authority where deployment configuration differs.
 
-See `docs/LIVE-ACCEPTANCE-EVIDENCE-20260916.md`.
+### Store and payments
 
-A rollback-only transaction against the connected live Supabase database proved a representative relational chain plus Player / Guardian / Coach RLS paths and left zero acceptance rows behind.
+- Store/account authorization and payment contracts remain covered by automated provider-boundary and production tests.
+- The connected Stripe context verified during this pass is in **test mode**.
+- The Stripe account contained zero PaymentIntents at the time of the 2026-09-17 inspection.
+- `qa/live-payment-proof.mjs` intentionally requires a real authenticated test-user bearer token and explicit consent before it creates a small test PaymentIntent; therefore no provider E2E PASS is fabricated here.
 
-The same acceptance pass also established that:
+### PWA / installable web application
 
-- `auth.users = 0` on the connected Supabase project at execution time, so real OAuth portal acceptance could not be claimed;
-- the connected Stripe account was in test mode but contained zero PaymentIntents, and the available Stripe connector session exposed read operations only for the required PaymentIntent / Checkout Session path;
-- the owner acceptance checklist remains unsigned.
+v1.0.1 closes the previous manifest-only limitation:
 
-## Remaining blockers / limitations
+- Web app manifest/mobile metadata are present.
+- A production-only service-worker registration boundary is included.
+- Service-worker caching is deliberately conservative.
+- `/api`, `/auth`, `/public/enquiries`, `/version.json`, non-GET traffic and cross-origin requests bypass service-worker caching.
+- Navigation is network-first with a cached application-shell fallback when offline.
+- Authenticated records, API responses and payment responses are not treated as general offline cache data.
+- The service-worker safety contract is included in the production test suite.
 
-- **Client acceptance remains PARTIAL.** Real Admin / Player / Parent / Coach authenticated browser acceptance is not yet evidenced.
-- Stripe test-provider E2E (`checkout → PaymentIntent → test payment → signed webhook → pending → paid`) is not yet evidenced end-to-end.
-- Owner sign-off in `docs/CLIENT-ACCEPTANCE-CHECKLIST.md` is still required.
-- Provider activations (payments/OTP/email where applicable) remain owner dashboard/environment actions.
-- Per-instance rate limiting remains until Redis is configured.
-- PWA remains manifest-only unless a service-worker lifecycle is explicitly added and verified.
+## Release metadata closure
 
-Do not report `COMPLETE` solely from automated gates while the live acceptance items above remain open.
+The stale `0.0.0 / preview` user-facing release metadata is replaced for client delivery:
+
+- Application version: `1.0.1`.
+- Build: `client-delivery-20260917`.
+- Release date: `2026-09-17`.
+- Minimum supported version: `1.0.0`.
+- Runtime and public release metadata are protected by `tests/release-version-contract.test.ts`.
+
+See:
+
+- `docs/RELEASE-NOTES-v1.0.1.md`
+- `docs/CLIENT-DELIVERY-STATUS-20260917.md`
+
+## Automated release gates
+
+Protected repository gates remain authoritative:
+
+- `static-gates`
+- `build`
+- `Production test suite`
+- `browser-qa`
+
+A release branch must not be called merged/released solely because source code looks correct. The final merge SHA and its post-merge checks are the release authority.
+
+## Connected-provider evidence — 2026-09-17
+
+### Supabase
+
+Verified:
+
+- Project status: `ACTIVE_HEALTHY`.
+- At least one real Auth user exists.
+- A recent real sign-in timestamp exists for that user.
+- The application role layer contains an active `super_admin` role for the same Supabase identity.
+
+This replaces the older v1.0.0 report statement that `auth.users = 0` at the time of its earlier acceptance run.
+
+### Stripe
+
+Verified:
+
+- Connected account is available in test mode.
+- PaymentIntent list was empty at inspection time.
+
+Not claimed:
+
+- application checkout → test PaymentIntent → provider payment → signed webhook → reconciled paid order.
+
+That sequence still requires a real authenticated test-user session plus provider interaction.
+
+### Hosting dashboard visibility
+
+The repository records the production domain and prior Vercel association. The Vercel connector available during this delivery pass did not expose the United Olympics Sports project in its accessible project list, so deployment-dashboard state was not independently re-certified through that connector. This limitation is not evidence that the deployment is absent.
+
+## Remaining interactive acceptance
+
+The implementation can be handed to the client, but the following evidence remains interactive and must not be mislabeled as automated completion:
+
+1. Production-browser OAuth/session acceptance for the Admin account after the v1.0.1 auth-authority deployment.
+2. Real intended Player / Parent / Coach account acceptance and role routing.
+3. Stripe test-provider end-to-end payment/webhook reconciliation using an authenticated test account.
+4. Owner/client sign-off in the acceptance checklist.
+
+## Delivery verdict
+
+**Repository/product implementation: delivery-ready subject to protected CI.**
+
+**Interactive owner/provider acceptance: still partially open as listed above.**
+
+Do not replace these two separate statements with a blanket `100% COMPLETE` claim until the interactive acceptance evidence is actually recorded.
