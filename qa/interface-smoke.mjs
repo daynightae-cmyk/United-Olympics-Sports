@@ -103,7 +103,7 @@ function sessionBootstrap() {
   };
 }
 
-async function createCheckedPage(browser, options = {}) {
+async function createCheckedContext(browser, options = {}) {
   const context = await browser.newContext({ viewport: options.viewport ?? { width: 1440, height: 900 }, reducedMotion: 'reduce' });
   await context.addInitScript(sessionBootstrap(), {
     playerId: options.playerId ?? previewPlayerId,
@@ -113,6 +113,10 @@ async function createCheckedPage(browser, options = {}) {
     theme: options.appearance ?? 'dark',
     forceRtl: Boolean(options.rtl),
   });
+  return context;
+}
+
+async function createCheckedPageInContext(context) {
   const page = await context.newPage();
   const runtimeErrors = [];
   page.on('pageerror', (error) => runtimeErrors.push(`pageerror: ${error.message}`));
@@ -137,7 +141,7 @@ async function createCheckedPage(browser, options = {}) {
       runtimeErrors.push(`console: ${text}`);
     }
   });
-  return { context, page, runtimeErrors };
+  return { page, runtimeErrors };
 }
 
 async function waitForRouteSettled(page, route) {
@@ -203,22 +207,30 @@ function isTransientRouteSweepError(error, browserName) {
 
 async function runRouteSweep(browserType, browserName) {
   let browser = await browserType.launch({ headless: true });
-  let { context, page, runtimeErrors } = await createCheckedPage(browser);
+  let context = await createCheckedContext(browser);
 
   try {
     for (const route of allRoutes) {
+      let page;
       try {
+        let runtimeErrors;
+        ({ page, runtimeErrors } = await createCheckedPageInContext(context));
         await assertRoute(page, runtimeErrors, route);
       } catch (error) {
         if (!isTransientRouteSweepError(error, browserName)) throw error;
 
         console.warn(`${browserName}: retrying transient route failure once for ${route}: ${error instanceof Error ? error.message : String(error)}`);
+        await page?.close().catch(() => undefined);
         await context.close().catch(() => undefined);
         await browser.close().catch(() => undefined);
 
         browser = await browserType.launch({ headless: true });
-        ({ context, page, runtimeErrors } = await createCheckedPage(browser));
-        await assertRoute(page, runtimeErrors, route);
+        context = await createCheckedContext(browser);
+        const retry = await createCheckedPageInContext(context);
+        page = retry.page;
+        await assertRoute(page, retry.runtimeErrors, route);
+      } finally {
+        await page?.close().catch(() => undefined);
       }
     }
   } finally {
@@ -231,10 +243,15 @@ async function runResponsiveSweep() {
   const browser = await chromium.launch({ headless: true });
   try {
     for (const viewport of viewportMatrix) {
-      const { context, page, runtimeErrors } = await createCheckedPage(browser, { viewport });
+      const context = await createCheckedContext(browser, { viewport });
       try {
         for (const route of responsiveRoutes) {
-          await assertRoute(page, runtimeErrors, route);
+          const { page, runtimeErrors } = await createCheckedPageInContext(context);
+          try {
+            await assertRoute(page, runtimeErrors, route);
+          } finally {
+            await page.close().catch(() => undefined);
+          }
         }
       } finally {
         await context.close();
