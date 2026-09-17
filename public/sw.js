@@ -4,6 +4,7 @@
  * - Never cache authenticated, API, payment, or version-check traffic.
  * - Cache only the application shell and immutable/static same-origin assets.
  * - Navigation is network-first and falls back to the cached shell when offline.
+ * - Runtime cache writes are best-effort and can never break a network response.
  */
 
 const CACHE_NAME = 'uos-static-shell-v1';
@@ -35,6 +36,16 @@ function isStaticAsset(pathname) {
     || pathname === '/manifest.webmanifest';
 }
 
+async function putBestEffort(key, response) {
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.put(key, response);
+  } catch {
+    // Cache persistence is an enhancement only. A cache failure must never
+    // turn a successful network response into a failed application request.
+  }
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -60,34 +71,27 @@ self.addEventListener('fetch', (event) => {
   if (isSensitivePath(url.pathname)) return;
 
   if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (response.ok) {
-            const copy = response.clone();
-            event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(SHELL_URL, copy)));
-          }
-          return response;
-        })
-        .catch(async () => {
-          const cached = await caches.match(SHELL_URL);
-          return cached || Response.error();
-        }),
-    );
+    event.respondWith((async () => {
+      try {
+        const response = await fetch(request);
+        if (response.ok) await putBestEffort(SHELL_URL, response.clone());
+        return response;
+      } catch {
+        const cached = await caches.match(SHELL_URL);
+        return cached || Response.error();
+      }
+    })());
     return;
   }
 
   if (isStaticAsset(url.pathname)) {
-    event.respondWith(
-      caches.match(request).then(async (cached) => {
-        if (cached) return cached;
-        const response = await fetch(request);
-        if (response.ok) {
-          const copy = response.clone();
-          event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)));
-        }
-        return response;
-      }),
-    );
+    event.respondWith((async () => {
+      const cached = await caches.match(request);
+      if (cached) return cached;
+
+      const response = await fetch(request);
+      if (response.ok) await putBestEffort(request, response.clone());
+      return response;
+    })());
   }
 });
