@@ -1,8 +1,8 @@
 # United Olympics Sports — Client Delivery Status
 
-**Delivery date:** 2026-09-17  
-**Target release:** v1.0.1  
-**Production domain:** https://unitedolympicsports.store  
+**Delivery date:** 2026-09-17
+**Target release:** v1.0.1
+**Production domain:** https://unitedolympicsports.store
 **Canonical repository:** `daynightae-cmyk/United-Olympics-Sports`
 
 This document separates implemented and verified work from interactive owner/provider acceptance that cannot be truthfully replaced by automated tests.
