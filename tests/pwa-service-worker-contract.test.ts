@@ -18,6 +18,13 @@ assert.match(sw, /request\.mode === 'navigate'/, 'navigation should have an offl
 assert.match(sw, /caches\.match\(SHELL_URL\)/, 'offline navigation fallback must use the cached shell');
 assert.match(sw, /async function putBestEffort/, 'runtime cache writes must be isolated from response delivery');
 assert.match(sw, /catch \{[\s\S]*Cache persistence is an enhancement only/, 'cache write failures must be non-fatal');
+assert.match(sw, /async function serveStaticAsset\(request\)/, 'static asset delivery must use an explicit resilient handler');
+assert.match(
+  sw,
+  /async function serveStaticAsset\(request\)[\s\S]*catch \{[\s\S]*return \(await caches\.match\(request\)\) \|\| Response\.error\(\);/,
+  'cancelled static asset requests must resolve respondWith instead of leaking a rejected promise',
+);
+assert.match(sw, /event\.respondWith\(serveStaticAsset\(request\)\);/, 'static assets must use the resilient handler');
 assert.equal(
   (sw.match(/event\.waitUntil\(/g) ?? []).length,
   2,
