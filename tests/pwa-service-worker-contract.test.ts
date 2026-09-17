@@ -16,6 +16,13 @@ assert.match(sw, /if \(isSensitivePath\(url\.pathname\)\) return;/, 'sensitive r
 assert.ok(!sw.includes("pathname.startsWith('/media/')"), 'large/dynamic media must not be broadly runtime-cached');
 assert.match(sw, /request\.mode === 'navigate'/, 'navigation should have an offline shell fallback');
 assert.match(sw, /caches\.match\(SHELL_URL\)/, 'offline navigation fallback must use the cached shell');
+assert.match(sw, /async function putBestEffort/, 'runtime cache writes must be isolated from response delivery');
+assert.match(sw, /catch \{[\s\S]*Cache persistence is an enhancement only/, 'cache write failures must be non-fatal');
+assert.equal(
+  (sw.match(/event\.waitUntil\(/g) ?? []).length,
+  2,
+  'event.waitUntil must be limited to install/activate and never called late from fetch handlers',
+);
 
 assert.match(registration, /if \(!import\.meta\.env\.PROD\) return;/, 'service worker must not register in development');
 assert.match(registration, /navigator\.serviceWorker\.register\('\/sw\.js'/, 'production registration must target /sw.js');
