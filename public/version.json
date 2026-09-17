@@ -1,8 +1,8 @@
 {
-  "version": "0.0.0",
-  "build": "preview",
-  "releasedAt": "2026-09-04",
-  "minimumSupportedVersion": "0.0.0",
-  "title": { "en": "Preview build", "ar": "نسخة المعاينة" },
-  "notes": { "en": "You are on the latest preview build.", "ar": "أنت على أحدث نسخة معاينة." }
+  "version": "1.0.1",
+  "build": "client-delivery-20260917",
+  "releasedAt": "2026-09-17",
+  "minimumSupportedVersion": "1.0.0",
+  "title": { "en": "Client delivery patch", "ar": "تحديث تسليم العميل" },
+  "notes": { "en": "Improves authentication reliability and completes the safe installable PWA lifecycle.", "ar": "يحسن موثوقية تسجيل الدخول ويكمل دورة تطبيق الويب القابل للتثبيت بصورة آمنة." }
 }
