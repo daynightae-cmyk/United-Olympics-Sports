@@ -46,6 +46,22 @@ async function putBestEffort(key, response) {
   }
 }
 
+async function serveStaticAsset(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+
+  try {
+    const response = await fetch(request);
+    if (response.ok) await putBestEffort(request, response.clone());
+    return response;
+  } catch {
+    // Browser navigations may cancel in-flight image/font requests while a
+    // service worker still owns the fetch event. Resolve the event explicitly
+    // instead of leaking a rejected respondWith() promise to Firefox/WebKit.
+    return (await caches.match(request)) || Response.error();
+  }
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -85,13 +101,6 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (isStaticAsset(url.pathname)) {
-    event.respondWith((async () => {
-      const cached = await caches.match(request);
-      if (cached) return cached;
-
-      const response = await fetch(request);
-      if (response.ok) await putBestEffort(request, response.clone());
-      return response;
-    })());
+    event.respondWith(serveStaticAsset(request));
   }
 });
