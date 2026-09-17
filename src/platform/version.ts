@@ -1,14 +1,14 @@
 /**
  * UOS version / update-awareness service (Mission 10X).
- * Source of truth for user-facing version UI. Values are real build
- * metadata (synced with package.json); no version is ever fabricated.
- * Native binary updates still require store builds — this service only
+ * Source of truth for user-facing version UI. Values are real release
+ * metadata and must stay aligned with package.json and /version.json.
+ * Native binary updates still require store builds; this service only
  * reports deployable web/PWA content updates within platform rules.
  */
 
-export const CURRENT_VERSION = '0.0.0';
-export const CURRENT_BUILD = 'preview';
-export const BUILD_LABEL = 'Preview build';
+export const CURRENT_VERSION = '1.0.1';
+export const CURRENT_BUILD = 'client-delivery-20260917';
+export const BUILD_LABEL = 'Client delivery patch';
 
 export interface ReleaseManifest {
   version: string;
