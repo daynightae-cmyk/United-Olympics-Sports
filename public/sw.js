@@ -3,6 +3,8 @@
  * Safety contract:
  * - Never cache authenticated, API, payment, or version-check traffic.
  * - Cache only the application shell and immutable/static same-origin assets.
+ * - Large portal artwork stays network-only so cancelled image requests are
+ *   handled by the browser rather than surfacing as service-worker failures.
  * - Navigation is network-first and falls back to the cached shell when offline.
  * - Runtime cache writes are best-effort and can never break a network response.
  */
@@ -21,13 +23,25 @@ const NEVER_CACHE_PREFIXES = [
   '/public/enquiries',
 ];
 
+const NETWORK_ONLY_STATIC_PREFIXES = [
+  '/brand/portals',
+];
+
 const NEVER_CACHE_EXACT = new Set([
   '/version.json',
 ]);
 
+function hasPathPrefix(pathname, prefix) {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
 function isSensitivePath(pathname) {
   return NEVER_CACHE_EXACT.has(pathname)
-    || NEVER_CACHE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+    || NEVER_CACHE_PREFIXES.some((prefix) => hasPathPrefix(pathname, prefix));
+}
+
+function isNetworkOnlyStaticPath(pathname) {
+  return NETWORK_ONLY_STATIC_PREFIXES.some((prefix) => hasPathPrefix(pathname, prefix));
 }
 
 function isStaticAsset(pathname) {
@@ -55,9 +69,9 @@ async function serveStaticAsset(request) {
     if (response.ok) await putBestEffort(request, response.clone());
     return response;
   } catch {
-    // Browser navigations may cancel in-flight image/font requests while a
-    // service worker still owns the fetch event. Resolve the event explicitly
-    // instead of leaking a rejected respondWith() promise to Firefox/WebKit.
+    // For cached static resources, resolve the fetch event deterministically.
+    // Large portal artwork is excluded before this handler so browser-driven
+    // navigation cancellation never becomes a service-worker console failure.
     return (await caches.match(request)) || Response.error();
   }
 }
@@ -85,6 +99,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
   if (isSensitivePath(url.pathname)) return;
+  if (isNetworkOnlyStaticPath(url.pathname)) return;
 
   if (request.mode === 'navigate') {
     event.respondWith((async () => {
