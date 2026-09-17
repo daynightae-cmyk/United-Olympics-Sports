@@ -148,7 +148,17 @@ async function waitForRouteSettled(page, route) {
     const stillLoading = await page.locator('[data-route-loading="true"]').count();
     if (stillLoading) throw new Error(`${route}: lazy route loader did not settle`);
   }
-  await page.waitForTimeout(75);
+
+  try {
+    await page.waitForFunction(
+      () => (document.querySelector('#root')?.textContent?.trim().length ?? 0) >= 8,
+      undefined,
+      { timeout: 10_000 },
+    );
+  } catch {
+    const rootText = await page.locator('#root').textContent().catch(() => '');
+    throw new Error(`${route}: app root did not render meaningful content within 10s (length=${rootText?.trim().length ?? 0})`);
+  }
 }
 
 async function assertRoute(page, runtimeErrors, route, checkOverflow = true) {
