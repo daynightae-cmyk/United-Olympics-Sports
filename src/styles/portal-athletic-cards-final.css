@@ -1,0 +1,798 @@
+/* ==========================================================================
+   United Olympics Sports — Athletic Portal Card Authority
+   Final sports-first typography and card treatment for internal portals.
+   Loaded after the shared premium layer and Player-specific visual layers.
+   ========================================================================== */
+
+:root {
+  --uos-athletic-gold: #d4af37;
+  --uos-athletic-gold-soft: #f0d77b;
+  --uos-athletic-ink: #070907;
+  --uos-athletic-panel: rgba(16, 19, 16, .92);
+  --uos-athletic-panel-2: rgba(22, 26, 21, .92);
+  --uos-athletic-line: rgba(212, 175, 55, .17);
+  --uos-athletic-line-strong: rgba(212, 175, 55, .38);
+  --uos-athletic-shadow: 0 22px 64px rgba(0,0,0,.24);
+  --uos-athletic-font-en: "Outfit", "Segoe UI Variable Display", "Segoe UI", Arial, sans-serif;
+  --uos-athletic-font-body: "DM Sans", "Segoe UI Variable Text", "Segoe UI", Arial, sans-serif;
+  --uos-athletic-font-ar: "Tajawal", "Cairo", Tahoma, "Segoe UI", sans-serif;
+}
+
+/* --------------------------------------------------------------------------
+   Typography
+   -------------------------------------------------------------------------- */
+:where(#player-portal-shell,.portal-shell,.admin-shell,.store-shell,.portal-auth) {
+  font-family: var(--uos-athletic-font-body) !important;
+  font-synthesis: none;
+}
+
+:where(#player-portal-shell,.portal-shell,.admin-shell,.store-shell,.portal-auth)
+  :where(h1,h2,h3,h4,.bm-metric-value,.hero-metric-value,.stat-value) {
+  font-family: var(--uos-athletic-font-en) !important;
+  font-weight: 800;
+  letter-spacing: -.025em;
+}
+
+:where(#player-portal-shell,.portal-shell,.admin-shell,.store-shell,.portal-auth) .bi-en {
+  font-family: var(--uos-athletic-font-en) !important;
+}
+
+:where(#player-portal-shell,.portal-shell,.admin-shell,.store-shell,.portal-auth) .bi-ar,
+:where(#player-portal-shell,.portal-shell,.admin-shell,.store-shell,.portal-auth) [lang="ar"] {
+  font-family: var(--uos-athletic-font-ar) !important;
+  letter-spacing: 0 !important;
+}
+
+/* Keep bilingual copy as one visual unit rather than two distant fragments. */
+:where(#player-portal-shell,.portal-shell,.admin-shell,.store-shell,.portal-auth)
+  :where(
+    .bm-card,
+    .admin-panel,
+    .admin-stat-card,
+    .portal-card,
+    .portal-section,
+    .athlete-glass-card,
+    .cgpt-player-stat,
+    .cgpt-session-card,
+    .athlete-field,
+    .bm-field,
+    .bm-section-label,
+    .bm-identity-card,
+    .bm-action-card
+  ) .bi {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  max-width: 100%;
+  line-height: 1.16;
+  vertical-align: middle;
+}
+
+html[dir="rtl"] :where(#player-portal-shell,.portal-shell,.admin-shell,.store-shell,.portal-auth)
+  :where(
+    .bm-card,
+    .admin-panel,
+    .admin-stat-card,
+    .portal-card,
+    .portal-section,
+    .athlete-glass-card,
+    .cgpt-player-stat,
+    .cgpt-session-card,
+    .athlete-field,
+    .bm-field,
+    .bm-section-label,
+    .bm-identity-card,
+    .bm-action-card
+  ) .bi {
+  align-items: flex-end;
+}
+
+:where(#player-portal-shell,.portal-shell,.admin-shell,.store-shell,.portal-auth)
+  :where(
+    .bm-card,
+    .admin-panel,
+    .admin-stat-card,
+    .portal-card,
+    .portal-section,
+    .athlete-glass-card,
+    .cgpt-player-stat,
+    .cgpt-session-card,
+    .athlete-field,
+    .bm-field,
+    .bm-section-label,
+    .bm-identity-card,
+    .bm-action-card
+  ) .bi-ar {
+  display: block;
+  margin-top: 2px;
+  font-size: .78em;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--uos-athletic-gold-soft) 82%, #c8c4b9);
+  opacity: .94;
+}
+
+/* --------------------------------------------------------------------------
+   Canonical sidebar emblem crop
+   The source image is a composite lockup. Square portal slots show only the
+   leading emblem, while the brand name stays as real text beside it.
+   -------------------------------------------------------------------------- */
+/* High-specificity selectors intentionally override the legacy global
+   .official-logo { object-fit: contain !important } contract in compact
+   sidebar slots only. The full brand asset remains unchanged elsewhere. */
+#player-portal-shell .athlete-sidebar-header img.official-logo.athlete-sidebar-logo,
+.portal-shell .portal-sidebar .portal-brand > img.official-logo,
+.admin-shell .admin-sidebar .admin-brand > img.official-logo {
+  width: 52px !important;
+  height: 52px !important;
+  min-width: 52px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  object-position: left center !important;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(212,175,55,.15), transparent 65%),
+    #0b0c0a !important;
+  border: 1px solid rgba(212,175,55,.24) !important;
+  box-shadow:
+    0 0 0 5px rgba(212,175,55,.035),
+    0 10px 26px rgba(0,0,0,.28),
+    0 0 22px rgba(212,175,55,.10) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Player home / athlete identity
+   -------------------------------------------------------------------------- */
+#player-portal-shell .athlete-overview-head {
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:18px;
+  padding:2px 2px 0;
+}
+
+#player-portal-shell .athlete-overview-copy {
+  min-width:0;
+}
+
+#player-portal-shell .athlete-overview-eyebrow {
+  display:block;
+  color:var(--uos-athletic-gold-soft);
+  font-family:var(--uos-athletic-font-en);
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+
+#player-portal-shell .athlete-overview-title {
+  margin:5px 0 0 !important;
+  color:#f7f2e8 !important;
+  font-family:var(--uos-athletic-font-en) !important;
+  font-size:clamp(22px,2.4vw,32px) !important;
+  font-weight:850 !important;
+  line-height:1.05 !important;
+}
+
+#player-portal-shell .athlete-overview-title .bi-ar {
+  margin-top:5px;
+  font-size:.52em;
+  color:var(--uos-athletic-gold-soft);
+}
+
+#player-portal-shell {
+  background:
+    radial-gradient(circle at 78% -12%, rgba(212,175,55,.11), transparent 32rem),
+    radial-gradient(circle at 12% 105%, rgba(61,103,255,.06), transparent 30rem),
+    linear-gradient(180deg,#070907,#090b09 62%,#070907) !important;
+}
+
+#player-portal-shell .athlete-content-area {
+  position: relative;
+}
+
+#player-overview-page {
+  position: relative;
+  isolation: isolate;
+}
+
+#player-overview-page::before {
+  content:"";
+  position:absolute;
+  inset:-24px -24px auto;
+  height:220px;
+  z-index:-1;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 18% 25%, rgba(212,175,55,.11), transparent 34%),
+    linear-gradient(90deg,rgba(212,175,55,.045),transparent 65%);
+  mask-image:linear-gradient(to bottom,#000,transparent);
+}
+
+#player-portal-shell .cgpt-athlete-id {
+  min-height: 390px;
+  border-radius: 28px;
+  border-color: rgba(212,175,55,.30);
+  background:
+    linear-gradient(120deg,rgba(7,9,7,.97),rgba(17,22,17,.95) 52%,rgba(8,10,8,.98)),
+    #090b09;
+  box-shadow:
+    0 32px 82px -42px rgba(0,0,0,.95),
+    inset 0 1px rgba(255,255,255,.035),
+    0 0 64px -44px rgba(212,175,55,.75);
+}
+
+#player-portal-shell .cgpt-athlete-id__name-primary {
+  max-width: 16ch;
+  font-size: clamp(2rem,3.25vw,3.7rem);
+  line-height: .98;
+  letter-spacing: -.045em;
+}
+
+#player-portal-shell .cgpt-athlete-id__name-secondary {
+  font-family: var(--uos-athletic-font-ar) !important;
+  font-size: clamp(.95rem,1.45vw,1.28rem);
+  font-weight: 800;
+  color: var(--uos-athletic-gold-soft);
+}
+
+#player-portal-shell .cgpt-athlete-id__sport,
+#player-portal-shell .cgpt-athlete-id__preview {
+  min-height: 30px;
+  padding-inline: 11px;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: .015em;
+}
+
+#player-portal-shell .cgpt-athlete-id__context > span {
+  min-height: 36px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.035);
+  border-color: rgba(212,175,55,.12);
+}
+
+#player-portal-shell .cgpt-player-stat {
+  position: relative;
+  overflow: hidden;
+  min-height: 92px;
+  padding: 14px 15px;
+  border-radius: 16px;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.05),rgba(255,255,255,.018)),
+    rgba(8,11,8,.70);
+  border-color: rgba(212,175,55,.13);
+}
+
+#player-portal-shell .cgpt-player-stat::before {
+  content:"";
+  position:absolute;
+  inset:0 0 auto;
+  height:2px;
+  background:linear-gradient(90deg,transparent,var(--cgpt-accent,var(--uos-athletic-gold)),transparent);
+  opacity:.7;
+}
+
+#player-portal-shell .cgpt-player-stat__label {
+  align-items: flex-start;
+  text-transform: none;
+  letter-spacing: .015em;
+  color:#9aa59d;
+}
+
+#player-portal-shell .cgpt-player-stat__label > svg {
+  margin-top: 2px;
+  flex: 0 0 auto;
+  color: var(--uos-athletic-gold-soft);
+}
+
+#player-portal-shell .cgpt-player-stat__value {
+  margin-top: 9px;
+  font-family: var(--uos-athletic-font-en);
+  font-size: 16px;
+  line-height:1.15;
+}
+
+#player-portal-shell .athlete-glass-card {
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.038),rgba(255,255,255,.012)),
+    rgba(12,15,12,.89) !important;
+  border-color: rgba(212,175,55,.14) !important;
+  box-shadow:
+    0 24px 58px -40px rgba(0,0,0,.9),
+    inset 0 1px rgba(255,255,255,.025) !important;
+}
+
+#player-portal-shell .athlete-glass-card:hover {
+  border-color: rgba(212,175,55,.29) !important;
+}
+
+#player-portal-shell .athlete-snapshot-card {
+  position:relative;
+  min-height:112px;
+  padding:15px 16px !important;
+  border-radius:16px !important;
+  border:1px solid rgba(212,175,55,.12) !important;
+  background:
+    radial-gradient(circle at 92% 6%,rgba(212,175,55,.10),transparent 42%),
+    rgba(255,255,255,.025) !important;
+}
+
+#player-portal-shell .athlete-snapshot-card > div:first-child {
+  color:#969f98 !important;
+  text-transform:none !important;
+  letter-spacing:.02em !important;
+}
+
+#player-portal-shell .athlete-snapshot-card > strong {
+  margin-top:12px !important;
+  font-family:var(--uos-athletic-font-en);
+  font-size:clamp(18px,2vw,24px) !important;
+  color:#f6f1e5 !important;
+}
+
+#player-portal-shell .athlete-quick-link-card {
+  position:relative;
+  overflow:hidden;
+  min-height:118px !important;
+  padding:16px !important;
+  border-radius:17px !important;
+  background:
+    linear-gradient(145deg,rgba(212,175,55,.055),rgba(255,255,255,.018)),
+    rgba(11,14,11,.92) !important;
+}
+
+#player-portal-shell .athlete-quick-link-card::before {
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:3px;
+  background:linear-gradient(180deg,var(--uos-athletic-gold-soft),rgba(212,175,55,.14));
+}
+
+html[dir="rtl"] #player-portal-shell .athlete-quick-link-card::before {
+  inset:0 0 0 auto;
+}
+
+#player-portal-shell .athlete-quick-link-card > span {
+  width:38px;
+  height:38px;
+  display:grid;
+  place-items:center;
+  border-radius:12px;
+  background:rgba(212,175,55,.10);
+  border:1px solid rgba(212,175,55,.18);
+}
+
+#player-portal-shell .athlete-quick-link-card > strong {
+  font-size:12px !important;
+  line-height:1.3;
+}
+
+#player-portal-shell .cgpt-session-card {
+  border-radius: 17px;
+  background:
+    linear-gradient(135deg,rgba(212,175,55,.055),rgba(255,255,255,.025)),
+    #0d100d;
+  border-color: rgba(212,175,55,.15);
+}
+
+#player-portal-shell .athlete-field {
+  min-height: 78px;
+  background:
+    linear-gradient(145deg,rgba(212,175,55,.045),rgba(255,255,255,.018)),
+    #0e110e;
+  border-color: rgba(212,175,55,.13);
+}
+
+#player-portal-shell .athlete-field > span:first-child {
+  color:#999f98;
+}
+
+#player-portal-shell .athlete-field > strong {
+  font-family:var(--uos-athletic-font-en);
+  font-size:13px;
+}
+
+/* --------------------------------------------------------------------------
+   Shared athletic Benchmark card system used heavily by Parent + Coach.
+   -------------------------------------------------------------------------- */
+:where(.portal-shell,.admin-shell) .bm-card {
+  position:relative;
+  overflow:hidden;
+  border-radius:20px !important;
+  border-color:rgba(212,175,55,.14) !important;
+  background:
+    radial-gradient(circle at 94% 2%,rgba(212,175,55,.095),transparent 36%),
+    linear-gradient(145deg,rgba(255,255,255,.04),rgba(255,255,255,.012)),
+    rgba(11,14,11,.91) !important;
+  box-shadow:
+    0 24px 58px -42px rgba(0,0,0,.86),
+    inset 0 1px rgba(255,255,255,.025) !important;
+}
+
+:where(.portal-shell,.admin-shell) .bm-card::before {
+  content:"";
+  position:absolute;
+  inset:0 18px auto;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(240,215,123,.42),transparent);
+  opacity:.75;
+  pointer-events:none;
+}
+
+:where(.portal-shell,.admin-shell) .bm-card-clickable:hover,
+:where(.portal-shell,.admin-shell) .bm-action-card:hover {
+  transform:translateY(-4px);
+  border-color:rgba(212,175,55,.34) !important;
+  box-shadow:
+    0 28px 62px -36px rgba(0,0,0,.92),
+    0 0 0 1px rgba(212,175,55,.05) inset !important;
+}
+
+:where(.portal-shell,.admin-shell) .bm-card-featured {
+  background:
+    radial-gradient(circle at 12% -10%,rgba(212,175,55,.18),transparent 42%),
+    linear-gradient(145deg,rgba(212,175,55,.075),rgba(255,255,255,.014)),
+    rgba(12,15,12,.94) !important;
+  border-color:rgba(212,175,55,.26) !important;
+}
+
+:where(.portal-shell,.admin-shell) .bm-metric-card {
+  min-height:180px;
+  padding:22px !important;
+  justify-content:space-between;
+}
+
+:where(.portal-shell,.admin-shell) .bm-metric-icon,
+:where(.portal-shell,.admin-shell) .bm-action-icon,
+:where(.portal-shell,.admin-shell) .bm-identity-avatar {
+  background:
+    linear-gradient(145deg,rgba(212,175,55,.17),rgba(212,175,55,.055)),
+    #101310 !important;
+  border-color:rgba(212,175,55,.28) !important;
+  color:var(--uos-athletic-gold-soft) !important;
+  box-shadow:inset 0 1px rgba(255,255,255,.035),0 10px 24px rgba(0,0,0,.15);
+}
+
+:where(.portal-shell,.admin-shell) .bm-metric-icon {
+  width:48px;
+  height:48px;
+  border-radius:15px;
+}
+
+:where(.portal-shell,.admin-shell) .bm-metric-value {
+  font-size:clamp(34px,3.3vw,48px);
+  font-weight:850;
+  color:#f6f1e7;
+  font-variant-numeric:tabular-nums;
+}
+
+:where(.portal-shell,.admin-shell) .bm-metric-label,
+:where(.portal-shell,.admin-shell) .bm-metric-detail {
+  color:#999f98;
+}
+
+:where(.portal-shell,.admin-shell) .bm-action-card {
+  min-height:190px;
+  padding:22px !important;
+  border-radius:20px !important;
+}
+
+:where(.portal-shell,.admin-shell) .bm-action-card .bm-action-icon {
+  width:52px;
+  height:52px;
+  border-radius:16px;
+}
+
+:where(.portal-shell,.admin-shell) .bm-action-card h3 {
+  font-family:var(--uos-athletic-font-en);
+  font-size:17px;
+  line-height:1.16;
+}
+
+:where(.portal-shell,.admin-shell) .bm-action-card p {
+  font-size:12px;
+  line-height:1.65;
+  color:#929b94;
+}
+
+:where(.portal-shell,.admin-shell) .bm-action-arrow {
+  min-height:34px;
+  padding:0 10px;
+  width:max-content;
+  border-radius:999px;
+  border:1px solid rgba(212,175,55,.18);
+  background:rgba(212,175,55,.065);
+  color:var(--uos-athletic-gold-soft) !important;
+}
+
+:where(.portal-shell,.admin-shell) .bm-identity-card {
+  min-height:100%;
+  padding:24px !important;
+}
+
+:where(.portal-shell,.admin-shell) .bm-identity-name {
+  font-family:var(--uos-athletic-font-en);
+  font-size:22px;
+  line-height:1.12;
+}
+
+:where(.portal-shell,.admin-shell) .bm-identity-field {
+  min-height:68px;
+  padding:11px 13px;
+  border-radius:13px;
+  background:rgba(255,255,255,.025);
+  border-color:rgba(212,175,55,.11);
+}
+
+:where(.portal-shell,.admin-shell) .bm-identity-field dt {
+  color:#8e968f;
+  text-transform:none;
+  letter-spacing:.015em;
+}
+
+:where(.portal-shell,.admin-shell) .bm-identity-field dd {
+  font-family:var(--uos-athletic-font-en);
+  font-size:13px;
+  color:#eee9de;
+}
+
+/* Section headers become athletic rails rather than plain dividers. */
+:where(.portal-shell,.admin-shell) .bm-section-label {
+  position:relative;
+  margin:0 0 18px;
+  padding:0 0 14px;
+  border-bottom:1px solid rgba(212,175,55,.14);
+}
+
+:where(.portal-shell,.admin-shell) .bm-section-label::after {
+  content:"";
+  position:absolute;
+  inset:auto auto -1px 0;
+  width:92px;
+  height:2px;
+  background:linear-gradient(90deg,var(--uos-athletic-gold),transparent);
+}
+
+html[dir="rtl"] :where(.portal-shell,.admin-shell) .bm-section-label::after {
+  inset:auto 0 -1px auto;
+}
+
+:where(.portal-shell,.admin-shell) .bm-section-label .bm-section-num {
+  border-radius:11px;
+  background:rgba(212,175,55,.10);
+  border-color:rgba(212,175,55,.26);
+  color:var(--uos-athletic-gold-soft);
+}
+
+:where(.portal-shell,.admin-shell) .bm-section-label h2 {
+  font-family:var(--uos-athletic-font-en);
+  font-weight:850;
+}
+
+/* Coach day desk */
+.portal-shell .coach-desk-grid {
+  gap:16px !important;
+}
+
+.portal-shell .coach-today {
+  position:relative;
+  overflow:hidden;
+  min-height:210px;
+  padding:22px !important;
+  border:1px solid rgba(212,175,55,.14) !important;
+  border-radius:20px !important;
+  background:
+    radial-gradient(circle at 92% 0,rgba(212,175,55,.10),transparent 38%),
+    linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.012)),
+    rgba(11,14,11,.91) !important;
+  box-shadow:0 24px 58px -42px rgba(0,0,0,.86);
+}
+
+.portal-shell .coach-today h3 {
+  font-family:var(--uos-athletic-font-en);
+  font-size:18px;
+}
+
+.portal-shell .coach-today-list li,
+.portal-shell .coach-upcoming li {
+  min-height:48px;
+  padding:10px 12px;
+  border-radius:12px;
+  background:rgba(255,255,255,.025);
+  border:1px solid rgba(212,175,55,.09);
+}
+
+/* --------------------------------------------------------------------------
+   Forms and editable fields across all portals
+   -------------------------------------------------------------------------- */
+:where(.portal-shell,.admin-shell,.portal-auth,.store-shell) .bm-form-section {
+  position:relative;
+  overflow:hidden;
+  border-radius:20px !important;
+  border:1px solid rgba(212,175,55,.14) !important;
+  background:
+    radial-gradient(circle at 96% 0,rgba(212,175,55,.08),transparent 34%),
+    linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.012)),
+    rgba(11,14,11,.91) !important;
+  box-shadow:0 22px 54px -42px rgba(0,0,0,.85);
+}
+
+:where(.portal-shell,.admin-shell,.portal-auth,.store-shell) .bm-form-section-head {
+  padding:20px 22px !important;
+  border-bottom:1px solid rgba(212,175,55,.12) !important;
+}
+
+:where(.portal-shell,.admin-shell,.portal-auth,.store-shell) .bm-form-section-icon {
+  width:46px;
+  height:46px;
+  display:grid;
+  place-items:center;
+  border-radius:14px;
+  background:rgba(212,175,55,.10);
+  border:1px solid rgba(212,175,55,.22);
+  color:var(--uos-athletic-gold-soft);
+}
+
+:where(.portal-shell,.admin-shell,.portal-auth,.store-shell) .bm-form-section-body {
+  padding:22px !important;
+}
+
+:where(.portal-shell,.admin-shell,.portal-auth,.store-shell)
+  :where(.bm-field-input-wrap,.bm-filter-select,.bm-table-search) {
+  min-height:48px;
+  border-radius:13px !important;
+  border-color:rgba(212,175,55,.13) !important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.012)),
+    #0d100d !important;
+}
+
+:where(.portal-shell,.admin-shell,.portal-auth,.store-shell)
+  :where(.bm-field-input-wrap,.bm-filter-select,.bm-table-search):focus-within {
+  border-color:rgba(212,175,55,.48) !important;
+  box-shadow:0 0 0 3px rgba(212,175,55,.08) !important;
+}
+
+:where(.portal-shell,.admin-shell,.portal-auth,.store-shell)
+  :where(.bm-field-input,.bm-field-select,.bm-field-textarea) {
+  font-family:var(--uos-athletic-font-body) !important;
+  font-size:13px !important;
+  color:#f2eee5 !important;
+}
+
+:where(.portal-shell,.admin-shell,.portal-auth,.store-shell) .bm-field-label {
+  color:#dad5ca !important;
+  font-size:11px !important;
+  font-weight:750 !important;
+}
+
+/* --------------------------------------------------------------------------
+   Admin cards retain operational density but gain the athletic family.
+   -------------------------------------------------------------------------- */
+.admin-shell :where(
+  .admin-panel,
+  .admin-stat-card,
+  .future-panel,
+  .sport-management-card,
+  .group-card,
+  .player-preview-card,
+  .branch-identity-card,
+  .country-identity-card,
+  .player-identity-card,
+  .performance-metric-card,
+  .feedback-card,
+  .readiness-card
+) {
+  position:relative;
+  overflow:hidden;
+  border-radius:18px !important;
+  border-color:rgba(212,175,55,.13) !important;
+  background:
+    radial-gradient(circle at 94% 0,rgba(212,175,55,.07),transparent 34%),
+    linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.010)),
+    var(--color-surface-1) !important;
+  box-shadow:0 22px 54px -42px rgba(0,0,0,.82) !important;
+}
+
+.admin-shell .admin-stat-card::before {
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:3px;
+  background:linear-gradient(180deg,var(--uos-athletic-gold-soft),rgba(212,175,55,.12));
+}
+
+html[dir="rtl"] .admin-shell .admin-stat-card::before {
+  inset:0 0 0 auto;
+}
+
+/* --------------------------------------------------------------------------
+   Store account/card family
+   -------------------------------------------------------------------------- */
+.store-shell :where(.store-product-card,.store-profile-card,.store-account-content,.store-checkout-panel) {
+  border-color:rgba(212,175,55,.13) !important;
+  background:
+    radial-gradient(circle at 95% 0,rgba(212,175,55,.065),transparent 34%),
+    var(--store-surface,#11130f) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
+@media (max-width: 1180px) {
+  :where(.portal-shell,.admin-shell) .bm-grid-4 {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  #player-portal-shell .cgpt-athlete-id {
+    grid-template-columns:minmax(200px,31%) 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  #player-portal-shell .cgpt-athlete-id {
+    grid-template-columns:1fr;
+    min-height:0;
+  }
+
+  #player-portal-shell .cgpt-athlete-id__portrait-zone {
+    min-height:280px;
+  }
+
+  :where(.portal-shell,.admin-shell) :where(.bm-grid-3,.bm-grid-4) {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  #player-portal-shell .athlete-overview-head {
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  #player-portal-shell .athlete-sidebar-header img.official-logo.athlete-sidebar-logo,
+  .portal-shell .portal-sidebar .portal-brand > img.official-logo,
+  .admin-shell .admin-sidebar .admin-brand > img.official-logo {
+    width:46px !important;
+    height:46px !important;
+    min-width:46px !important;
+  }
+
+  #player-portal-shell .cgpt-athlete-id {
+    border-radius:22px;
+  }
+
+  #player-portal-shell .cgpt-athlete-id__content {
+    padding:24px 18px 22px;
+  }
+
+  #player-portal-shell .cgpt-athlete-id__name-primary {
+    font-size:clamp(1.9rem,9vw,2.7rem);
+  }
+
+  :where(.portal-shell,.admin-shell) :where(.bm-grid-2,.bm-grid-3,.bm-grid-4) {
+    grid-template-columns:1fr;
+  }
+
+  :where(.portal-shell,.admin-shell) .bm-metric-card {
+    min-height:150px;
+  }
+
+  :where(.portal-shell,.admin-shell) .bm-action-card {
+    min-height:160px;
+  }
+
+  :where(.portal-shell,.admin-shell) .bm-identity-fields {
+    grid-template-columns:1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.portal-shell,.admin-shell) .bm-card,
+  #player-portal-shell .athlete-quick-link-card {
+    transition:none !important;
+    transform:none !important;
+  }
+}
