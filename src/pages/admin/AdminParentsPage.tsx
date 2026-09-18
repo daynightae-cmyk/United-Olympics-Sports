@@ -5,7 +5,7 @@ import { useCreateParent, useParents, usePlayers } from '../../admin/data/adminH
 import { PageHeader, UserAvatar } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { EnterpriseEmpty, EnterpriseKpi, EnterpriseStatus, EnterpriseToolbar, PreviewNotice } from '../../components/enterprise/EnterpriseUI';
-import { UosEmailField, UosPhoneField, UosSelectField, UosTextField } from '../../components/fields/UosFields';
+import { UosEmailField, UosSelectField, UosTextField } from '../../components/fields/UosFields';
 
 const hasUsefulContact = (value?: string) => Boolean(value && value.trim() && value.trim() !== '-');
 const emptyDraft = { nameEn: '', nameAr: '', playerId: '', preferredLanguage: 'ar' as 'ar' | 'en', phone: '', email: '' };
@@ -111,10 +111,15 @@ export function AdminParentsPage() {
           required
           disabled={createLoading}
         />
-        <UosPhoneField
+        <UosTextField
+          type="tel"
+          autoComplete="tel"
+          inputMode="tel"
           label={bi('Phone', 'الهاتف')}
           value={draft.phone}
           onChange={e => setDraftField('phone', e.target.value)}
+          placeholder="+971..."
+          helper={bi('Enter the full international number, including country code.', 'أدخل الرقم الدولي كاملًا متضمنًا رمز الدولة.')}
           optional
           disabled={createLoading}
           dir="ltr"
