@@ -3,12 +3,14 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path: string) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [adminSidebar, portalLayout, portalAuth, playerPortalShell, playerOverview, splash, serviceWorker, entry, visualClosure, athleticClosure] = await Promise.all([
+const [adminSidebar, portalLayout, portalAuth, playerPortalShell, playerOverview, parentOverview, parentClosure, splash, serviceWorker, entry, visualClosure, athleticClosure] = await Promise.all([
   read('src/components/admin/AdminSidebar.tsx'),
   read('src/layouts/PortalLayout.tsx'),
   read('src/components/auth/PortalAuthPage.tsx'),
   read('src/portals/player/PlayerPortalShell.tsx'),
   read('src/pages/portal/player/PlayerPortalOverviewPage.tsx'),
+  read('src/pages/portal/parent/ParentPortalOverviewPage.tsx'),
+  read('src/styles/parent-portal-final.css'),
   read('src/components/splash/OlympicLuxurySplash.tsx'),
   read('src/platform/serviceWorker.ts'),
   read('src/main.tsx'),
@@ -35,10 +37,15 @@ assert(entry.includes("import './styles/portal-visual-proof-closure.css';"), 'vi
 assert(entry.includes("import './styles/portal-premium-final.css';"), 'shared premium portal system must remain in the app entry');
 assert(entry.includes("import './styles/player-portal-chatgpt-black-gold.css';"), 'Player cinematic athletic layer must be loaded');
 assert(entry.includes("import './styles/player-portal-final.css';"), 'Player final closure layer must be loaded');
+assert(entry.includes("import './styles/parent-portal-final.css';"), 'Parent final visual authority must be loaded');
 assert(entry.includes("import './styles/portal-athletic-cards-final.css';"), 'Athletic portal card authority must be loaded last');
 assert(
   entry.indexOf("portal-athletic-cards-final.css") > entry.indexOf("player-portal-final.css"),
   'Athletic portal card authority must load after Player final closure',
+);
+assert(
+  entry.indexOf("portal-athletic-cards-final.css") > entry.indexOf("parent-portal-final.css"),
+  'Athletic shared authority must load after Parent final closure',
 );
 assert(playerOverview.includes('athlete-snapshot-card'), 'Player overview snapshots must use semantic athletic cards');
 assert(playerOverview.includes('athlete-quick-link-card'), 'Player overview quick links must use semantic athletic cards');
@@ -46,6 +53,12 @@ assert(playerOverview.includes('athlete-overview-title'), 'Player overview must 
 assert(athleticClosure.includes('object-fit: cover !important'), 'Portal emblem crop must prevent the composite lockup from displaying as two visible emblems');
 assert(athleticClosure.includes('.bm-action-card'), 'Parent/Coach action cards must receive the athletic card authority');
 assert(athleticClosure.includes('.bm-form-section'), 'Portal form sections must receive the athletic field authority');
+assert(parentOverview.includes('parent-family-hero'), 'Parent overview must expose the family sports hero');
+assert(parentOverview.includes('parent-athlete-card'), 'Parent overview must expose semantic athlete cards');
+assert(parentOverview.includes('parent-athlete-signal'), 'Parent overview athlete cards must expose semantic performance signals');
+assert(parentClosure.includes('PARENT PORTAL — ATHLETIC FAMILY DASHBOARD CLOSURE'), 'Parent athletic family closure must remain present');
+assert(parentClosure.includes('.parent-field'), 'Parent athletic closure must cover parent fields');
+assert(parentClosure.includes('.parent-table-wrap'), 'Parent athletic closure must cover parent tables');
 assert(visualClosure.includes('.dashboard-hero'), 'visual proof closure must normalize the dashboard hero');
 assert(visualClosure.includes('.admin-stat-card'), 'visual proof closure must normalize admin stat cards');
 assert(visualClosure.includes('.portal-card'), 'visual proof closure must normalize portal cards');

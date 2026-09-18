@@ -28,6 +28,7 @@ import './styles/portal-visual-proof-closure.css';
 import './styles/portal-premium-final.css';
 import './styles/player-portal-chatgpt-black-gold.css';
 import './styles/player-portal-final.css';
+import './styles/parent-portal-final.css';
 import './styles/portal-athletic-cards-final.css';
 
 createRoot(document.getElementById('root')!).render(

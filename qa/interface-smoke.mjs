@@ -196,8 +196,16 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     await page.waitForSelector('#player-overview-page .cgpt-athlete-id', { state: 'visible', timeout: 10_000 });
     await page.waitForSelector('#player-overview-page .cgpt-player-stat', { state: 'visible', timeout: 10_000 });
   }
-  if (route === '/parent' || route === '/coach') {
+  if (route === '/parent') {
+    await page.waitForSelector('#parent-overview-page .parent-family-hero', { state: 'visible', timeout: 10_000 });
+    await page.waitForSelector('#parent-overview-page .parent-athlete-card', { state: 'visible', timeout: 10_000 });
+    await page.waitForSelector('#parent-overview-page .parent-athlete-signal', { state: 'visible', timeout: 10_000 });
+  }
+  if (route === '/coach') {
     await page.waitForSelector('.portal-shell .bm-card', { state: 'visible', timeout: 10_000 });
+  }
+  if (route === '/parent/children' || route === '/parent/attendance' || route.startsWith('/parent/children/')) {
+    await page.waitForSelector('.portal-parent .parent-field', { state: 'visible', timeout: 10_000 });
   }
 
   const proof = await page.evaluate(() => {
@@ -207,6 +215,11 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     const quickLinks = document.querySelectorAll('#player-overview-page .athlete-quick-link-card');
     const overviewTitle = document.querySelector('#player-overview-page .athlete-overview-title');
     const portalCard = document.querySelector('.portal-shell .bm-card');
+    const parentHero = document.querySelector('#parent-overview-page .parent-family-hero');
+    const parentAthleteCard = document.querySelector('#parent-overview-page .parent-athlete-card');
+    const parentAthleteAction = document.querySelector('#parent-overview-page .parent-athlete-card__action');
+    const parentField = document.querySelector('.portal-parent .parent-field');
+    const parentPanel = document.querySelector('.portal-parent .parent-panel');
     return {
       splashCount: document.querySelectorAll('#olympic-luxury-splash-root').length,
       playerLogoCount: document.querySelectorAll('#player-portal-shell .athlete-sidebar-logo').length,
@@ -221,6 +234,15 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
       overviewTitleFont: overviewTitle ? getComputedStyle(overviewTitle).fontFamily : null,
       portalCardRadius: portalCard ? parseFloat(getComputedStyle(portalCard).borderTopLeftRadius) : null,
       portalCardBackground: portalCard ? getComputedStyle(portalCard).backgroundImage : null,
+      parentHeroRadius: parentHero ? parseFloat(getComputedStyle(parentHero).borderTopLeftRadius) : null,
+      parentHeroBackground: parentHero ? getComputedStyle(parentHero).backgroundImage : null,
+      parentAthleteCount: document.querySelectorAll('#parent-overview-page .parent-athlete-card').length,
+      parentAthleteBackground: parentAthleteCard ? getComputedStyle(parentAthleteCard).backgroundImage : null,
+      parentAthleteActionHeight: parentAthleteAction ? parseFloat(getComputedStyle(parentAthleteAction).minHeight) : null,
+      parentSignalCount: document.querySelectorAll('#parent-overview-page .parent-athlete-signal').length,
+      parentFieldMinHeight: parentField ? parseFloat(getComputedStyle(parentField).minHeight) : null,
+      parentFieldBackground: parentField ? getComputedStyle(parentField).backgroundImage : null,
+      parentPanelRadius: parentPanel ? parseFloat(getComputedStyle(parentPanel).borderTopLeftRadius) : null,
     };
   });
 
@@ -252,7 +274,28 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     }
   }
 
-  if ((route === '/parent' || route === '/coach') && proof.portalCardRadius !== null) {
+  if (route === '/parent') {
+    if (!(proof.parentHeroRadius >= 20) || !proof.parentHeroBackground || proof.parentHeroBackground === 'none') {
+      throw new Error(`${route}: family hero must use the Parent athletic authority; radius=${proof.parentHeroRadius}, background=${proof.parentHeroBackground}`);
+    }
+    if (proof.parentAthleteCount < 1 || !proof.parentAthleteBackground || proof.parentAthleteBackground === 'none') {
+      throw new Error(`${route}: expected at least one rendered sports athlete card; count=${proof.parentAthleteCount}, background=${proof.parentAthleteBackground}`);
+    }
+    if (proof.parentSignalCount < 4 || !(proof.parentAthleteActionHeight >= 40)) {
+      throw new Error(`${route}: athlete cards must expose four sports signals and a full action control; signals=${proof.parentSignalCount}, actionMinHeight=${proof.parentAthleteActionHeight}`);
+    }
+  }
+
+  if ((route === '/parent/children' || route === '/parent/attendance' || route.startsWith('/parent/children/'))) {
+    if (!(proof.parentFieldMinHeight >= 68) || !proof.parentFieldBackground || proof.parentFieldBackground === 'none') {
+      throw new Error(`${route}: Parent record fields must use the athletic field surface; minHeight=${proof.parentFieldMinHeight}, background=${proof.parentFieldBackground}`);
+    }
+    if (proof.parentPanelRadius !== null && proof.parentPanelRadius < 18) {
+      throw new Error(`${route}: Parent panels must keep the athletic rounded hierarchy; radius=${proof.parentPanelRadius}`);
+    }
+  }
+
+  if (route === '/coach' && proof.portalCardRadius !== null) {
     if (proof.portalCardRadius < 16 || !proof.portalCardBackground || proof.portalCardBackground === 'none') {
       throw new Error(`${route}: portal overview cards must use the athletic card authority; radius=${proof.portalCardRadius}, background=${proof.portalCardBackground}`);
     }

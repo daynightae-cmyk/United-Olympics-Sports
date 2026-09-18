@@ -5,3 +5,504 @@
 @media(max-width:720px){.portal-parent .portal-main{padding-inline:14px}.parent-hero,.parent-panel{border-radius:18px;padding:16px}.parent-hero-row{flex-direction:column}.parent-metrics,.parent-grid-2,.parent-grid-3,.parent-field-grid{grid-template-columns:1fr}.parent-login-shell{padding:22px 14px}.parent-login-brand h1{font-size:38px}.parent-login-card{padding:20px;border-radius:22px}.parent-actions>*{flex:1 1 140px}.parent-metric strong{font-size:17px}}
 html[data-theme='light'] .portal-parent{--parent-bg:#f6f1e7;--parent-panel:rgba(255,255,255,.92);--parent-line:rgba(30,41,59,.11);background:#f6f1e7;color:#172033}html[data-theme='light'] .portal-parent .portal-sidebar,html[data-theme='light'] .portal-parent .portal-topbar{background:rgba(252,249,241,.94)}html[data-theme='light'] .portal-parent .parent-hero,html[data-theme='light'] .portal-parent .parent-panel{background:rgba(255,255,255,.92);box-shadow:0 16px 45px rgba(35,31,20,.08)}html[data-theme='light'] .portal-parent .parent-hero h1,html[data-theme='light'] .portal-parent .parent-panel h2,html[data-theme='light'] .portal-parent .parent-card h3,html[data-theme='light'] .portal-parent .parent-field strong{color:#172033}html[data-theme='light'] .portal-parent .parent-card,html[data-theme='light'] .portal-parent .parent-field,html[data-theme='light'] .portal-parent .parent-list-row{background:rgba(15,23,42,.025)}
 @media(prefers-reduced-motion:reduce){.parent-card,.parent-primary-action,.parent-secondary-action{transition:none}.parent-card:hover{transform:none}}
+
+
+/* ==========================================================================
+   PARENT PORTAL — ATHLETIC FAMILY DASHBOARD CLOSURE
+   ========================================================================== */
+.portal-parent {
+  --parent-sport-accent: var(--parent-gold);
+  --parent-panel-deep: rgba(10,13,11,.96);
+  --parent-panel-soft: rgba(255,255,255,.026);
+}
+
+.portal-parent .parent-page {
+  width:min(100%,1480px);
+  margin-inline:auto;
+  gap:clamp(18px,2.4vw,28px);
+}
+
+.portal-parent .parent-hero,
+.portal-parent .parent-panel {
+  position:relative;
+  isolation:isolate;
+  border-color:rgba(212,175,55,.15);
+  background:
+    radial-gradient(circle at 94% 2%,rgba(212,175,55,.09),transparent 34%),
+    linear-gradient(145deg,rgba(255,255,255,.038),rgba(255,255,255,.012)),
+    var(--parent-panel-deep);
+  box-shadow:
+    0 26px 68px -46px rgba(0,0,0,.92),
+    inset 0 1px rgba(255,255,255,.025);
+}
+
+.portal-parent .parent-hero::before,
+.portal-parent .parent-panel::before {
+  content:"";
+  position:absolute;
+  inset:0 22px auto;
+  height:1px;
+  z-index:-1;
+  background:linear-gradient(90deg,transparent,rgba(242,215,123,.36),transparent);
+}
+
+.portal-parent .parent-family-hero {
+  padding:clamp(22px,2.8vw,34px);
+  border-radius:28px;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 14% -8%,rgba(212,175,55,.19),transparent 38%),
+    radial-gradient(circle at 96% 20%,rgba(66,122,255,.055),transparent 32%),
+    linear-gradient(135deg,#0a0d0a,#111510 52%,#080b09);
+}
+
+.portal-parent .parent-family-hero::after {
+  width:380px;
+  height:380px;
+  right:-150px;
+  top:-190px;
+  background:
+    radial-gradient(circle,rgba(212,175,55,.14),rgba(212,175,55,.035) 42%,transparent 68%);
+  filter:blur(6px);
+}
+
+.portal-parent .parent-family-hero h1 {
+  max-width:13ch;
+  font-family:var(--uos-athletic-font-en,"Outfit","Segoe UI",sans-serif);
+  font-size:clamp(30px,4.2vw,54px);
+  line-height:.98;
+  letter-spacing:-.045em;
+  color:#f7f1e5;
+}
+
+.portal-parent .parent-family-hero h1 .bi {
+  display:inline-flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:4px;
+}
+
+.portal-parent .parent-family-hero h1 .bi-ar {
+  font-family:var(--uos-athletic-font-ar,"Tajawal","Cairo",sans-serif);
+  font-size:.48em;
+  letter-spacing:0;
+  color:var(--parent-gold-soft);
+}
+
+.portal-parent .parent-family-hero p {
+  max-width:760px;
+  color:#a7b0a9;
+  font-size:12px;
+  line-height:1.8;
+}
+
+.portal-parent .parent-family-metrics {
+  gap:12px;
+}
+
+.portal-parent .parent-family-metric {
+  position:relative;
+  overflow:hidden;
+  min-height:122px;
+  padding:15px 16px;
+  display:grid;
+  grid-template-columns:auto 1fr;
+  grid-template-rows:auto 1fr;
+  align-items:start;
+  column-gap:9px;
+  background:
+    linear-gradient(145deg,rgba(212,175,55,.055),rgba(255,255,255,.018)),
+    rgba(8,11,9,.72);
+  border-color:rgba(212,175,55,.14);
+}
+
+.portal-parent .parent-family-metric::after {
+  content:"";
+  position:absolute;
+  inset:auto 0 0;
+  height:2px;
+  background:linear-gradient(90deg,transparent,var(--parent-gold),transparent);
+  opacity:.62;
+}
+
+.portal-parent .parent-family-metric__icon {
+  width:30px;
+  height:30px;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  color:var(--parent-gold-soft);
+  background:rgba(212,175,55,.10);
+  border:1px solid rgba(212,175,55,.18);
+}
+
+.portal-parent .parent-family-metric > span:nth-child(2) {
+  align-self:center;
+  color:#969f98;
+  font-size:10px;
+  font-weight:750;
+}
+
+.portal-parent .parent-family-metric strong {
+  grid-column:1/-1;
+  align-self:end;
+  margin-top:12px;
+  font-family:var(--uos-athletic-font-en,"Outfit","Segoe UI",sans-serif);
+  font-size:clamp(23px,2.4vw,32px);
+  line-height:1;
+}
+
+.portal-parent .parent-section-block {
+  position:relative;
+}
+
+.portal-parent .parent-family-identity-grid > .bm-card {
+  min-height:210px;
+}
+
+.portal-parent .parent-family-action-grid .bm-action-card {
+  min-height:188px;
+}
+
+/* Athlete cards: each child gets the accent of the assigned sport. */
+.portal-parent .parent-athlete-grid {
+  align-items:stretch;
+}
+
+.portal-parent .parent-athlete-card {
+  --parent-sport-accent:#d4af37;
+  position:relative;
+  overflow:hidden;
+  min-width:0;
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:17px;
+  border-radius:22px;
+  border:1px solid color-mix(in srgb,var(--parent-sport-accent) 30%,rgba(255,255,255,.08));
+  background:
+    radial-gradient(circle at 94% 0,color-mix(in srgb,var(--parent-sport-accent) 15%,transparent),transparent 38%),
+    linear-gradient(145deg,rgba(255,255,255,.04),rgba(255,255,255,.012)),
+    rgba(10,13,11,.95);
+  box-shadow:
+    0 26px 62px -44px rgba(0,0,0,.92),
+    0 0 44px -36px var(--parent-sport-accent);
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+
+.portal-parent .parent-athlete-card::before {
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:3px;
+  background:linear-gradient(180deg,var(--parent-sport-accent),transparent 92%);
+}
+
+html[dir="rtl"] .portal-parent .parent-athlete-card::before {
+  inset:0 0 0 auto;
+}
+
+.portal-parent .parent-athlete-card:hover {
+  transform:translateY(-3px);
+  border-color:color-mix(in srgb,var(--parent-sport-accent) 52%,rgba(255,255,255,.08));
+  box-shadow:
+    0 30px 68px -40px rgba(0,0,0,.94),
+    0 0 58px -38px var(--parent-sport-accent);
+}
+
+.portal-parent .parent-athlete-card__head {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+}
+
+.portal-parent .parent-athlete-card__avatar {
+  width:52px;
+  height:52px;
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  border-radius:16px;
+  color:var(--parent-sport-accent);
+  border:1px solid color-mix(in srgb,var(--parent-sport-accent) 34%,transparent);
+  background:color-mix(in srgb,var(--parent-sport-accent) 11%,rgba(255,255,255,.018));
+  box-shadow:inset 0 1px rgba(255,255,255,.035);
+}
+
+.portal-parent .parent-athlete-card__identity {
+  min-width:0;
+  flex:1;
+}
+
+.portal-parent .parent-athlete-card__identity > strong {
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#f4f0e7;
+  font-family:var(--uos-athletic-font-en,"Outfit","Segoe UI",sans-serif);
+  font-size:16px;
+  font-weight:850;
+}
+
+.portal-parent .parent-athlete-card__identity > span {
+  display:block;
+  margin-top:2px;
+  color:color-mix(in srgb,var(--parent-sport-accent) 72%,#f1dfaa);
+  font-family:var(--uos-athletic-font-ar,"Tajawal","Cairo",sans-serif);
+  font-size:12px;
+  font-weight:800;
+}
+
+.portal-parent .parent-athlete-card__identity > small {
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px;
+  margin-top:5px;
+  color:#8f9991;
+  font-size:9px;
+}
+
+.portal-parent .parent-athlete-signals {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+}
+
+.portal-parent .parent-athlete-signal {
+  min-width:0;
+  min-height:78px;
+  padding:10px 11px;
+  border-radius:13px;
+  border:1px solid rgba(255,255,255,.075);
+  background:rgba(255,255,255,.022);
+}
+
+.portal-parent .parent-athlete-signal > span {
+  display:block;
+  color:#89938c;
+  font-size:9px;
+}
+
+.portal-parent .parent-athlete-signal > strong {
+  display:block;
+  margin-top:9px;
+  overflow-wrap:anywhere;
+  color:#f0ece4;
+  font-family:var(--uos-athletic-font-en,"Outfit","Segoe UI",sans-serif);
+  font-size:12px;
+  font-weight:800;
+}
+
+.portal-parent .parent-athlete-signal.gold {
+  border-color:rgba(212,175,55,.16);
+  background:rgba(212,175,55,.045);
+}
+
+.portal-parent .parent-athlete-signal.gold > strong {
+  color:var(--parent-gold-soft);
+}
+
+.portal-parent .parent-athlete-signal.success > strong {
+  color:#79ddb4;
+}
+
+.portal-parent .parent-athlete-signal .missing {
+  color:#69746d;
+  font-family:var(--uos-athletic-font-body,"Segoe UI",sans-serif);
+  font-size:10px;
+  font-weight:650;
+}
+
+.portal-parent .parent-athlete-card__action {
+  min-height:42px;
+  margin-top:auto;
+  padding:0 14px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  border-radius:12px;
+  border:1px solid color-mix(in srgb,var(--parent-sport-accent) 30%,transparent);
+  background:
+    linear-gradient(135deg,color-mix(in srgb,var(--parent-sport-accent) 14%,transparent),rgba(255,255,255,.018));
+  color:color-mix(in srgb,var(--parent-sport-accent) 74%,#f7e5a8);
+  font-size:11px;
+  font-weight:850;
+  text-decoration:none;
+}
+
+/* Existing Parent cards/fields receive the same sports-product language. */
+.portal-parent .parent-panel,
+.portal-parent .parent-card {
+  border-radius:20px;
+}
+
+.portal-parent .parent-card {
+  position:relative;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 96% 0,rgba(212,175,55,.065),transparent 34%),
+    rgba(255,255,255,.022);
+  border-color:rgba(212,175,55,.11);
+}
+
+.portal-parent .parent-panel-head {
+  border-bottom-color:rgba(212,175,55,.12);
+}
+
+.portal-parent .parent-panel-head h2,
+.portal-parent .parent-card h3 {
+  font-family:var(--uos-athletic-font-en,"Outfit","Segoe UI",sans-serif);
+  font-weight:820;
+}
+
+.portal-parent .parent-field {
+  min-height:72px;
+  padding:12px 13px;
+  background:
+    linear-gradient(145deg,rgba(212,175,55,.035),rgba(255,255,255,.012)),
+    rgba(255,255,255,.018);
+  border-color:rgba(212,175,55,.10);
+}
+
+.portal-parent .parent-field span {
+  color:#87918a;
+  font-size:9px;
+  font-weight:700;
+}
+
+.portal-parent .parent-field strong {
+  margin-top:7px;
+  color:#eee9df;
+  font-family:var(--uos-athletic-font-en,"Outfit","Segoe UI",sans-serif);
+  font-size:12px;
+  line-height:1.35;
+}
+
+.portal-parent :where(.parent-field,.parent-metric,.parent-athlete-signal) .bi {
+  display:inline-flex;
+  flex-direction:column;
+  align-items:flex-start;
+  line-height:1.18;
+}
+
+html[dir="rtl"] .portal-parent :where(.parent-field,.parent-metric,.parent-athlete-signal) .bi {
+  align-items:flex-end;
+}
+
+.portal-parent :where(.parent-field,.parent-metric,.parent-athlete-signal) .bi-ar {
+  display:block;
+  margin-top:2px;
+  color:#c5ae70;
+  font-family:var(--uos-athletic-font-ar,"Tajawal","Cairo",sans-serif);
+  font-size:.78em;
+  letter-spacing:0;
+}
+
+.portal-parent .parent-list-row {
+  min-height:58px;
+  padding:12px 13px;
+  border-color:rgba(212,175,55,.09);
+  background:rgba(255,255,255,.018);
+}
+
+.portal-parent .parent-table-wrap {
+  border-color:rgba(212,175,55,.13);
+  border-radius:18px;
+  background:rgba(8,11,9,.55);
+}
+
+.portal-parent .parent-table th {
+  color:#9c9587;
+  background:rgba(212,175,55,.04);
+  border-bottom-color:rgba(212,175,55,.11);
+}
+
+.portal-parent .parent-table td {
+  border-bottom-color:rgba(255,255,255,.045);
+}
+
+.portal-parent .parent-form-field input,
+.portal-parent .parent-form-field select {
+  min-height:48px;
+  border-radius:13px;
+  border-color:rgba(212,175,55,.13);
+  background:#0b0f0c;
+  font-family:var(--uos-athletic-font-body,"Segoe UI",sans-serif);
+}
+
+.portal-parent .parent-primary-action {
+  background:linear-gradient(135deg,#ead070,#cfa93d);
+  color:#111008;
+  border-color:#ead070;
+  box-shadow:0 12px 28px -18px rgba(212,175,55,.72);
+}
+
+.portal-parent .parent-secondary-action {
+  background:rgba(212,175,55,.045);
+  border-color:rgba(212,175,55,.14);
+}
+
+html[data-theme='light'] .portal-parent .parent-family-hero,
+html[data-theme='light'] .portal-parent .parent-athlete-card {
+  background:
+    radial-gradient(circle at 94% 0,rgba(185,149,78,.10),transparent 34%),
+    linear-gradient(145deg,#fffdf8,#f6efe2);
+  color:#172033;
+  box-shadow:0 18px 48px rgba(63,52,30,.09);
+}
+
+html[data-theme='light'] .portal-parent .parent-family-hero h1,
+html[data-theme='light'] .portal-parent .parent-athlete-card__identity > strong,
+html[data-theme='light'] .portal-parent .parent-athlete-signal > strong {
+  color:#172033;
+}
+
+html[data-theme='light'] .portal-parent .parent-athlete-signal,
+html[data-theme='light'] .portal-parent .parent-field {
+  background:rgba(15,23,42,.025);
+}
+
+@media(max-width:1180px) {
+  .portal-parent .parent-athlete-signals {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:720px) {
+  .portal-parent .parent-family-hero {
+    border-radius:20px;
+    padding:18px;
+  }
+
+  .portal-parent .parent-family-hero h1 {
+    font-size:clamp(30px,10vw,42px);
+  }
+
+  .portal-parent .parent-athlete-card {
+    padding:16px;
+    border-radius:18px;
+  }
+
+  .portal-parent .parent-athlete-signals {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:430px) {
+  .portal-parent .parent-athlete-card__head {
+    align-items:flex-start;
+  }
+
+  .portal-parent .parent-athlete-card__avatar {
+    width:46px;
+    height:46px;
+    border-radius:14px;
+  }
+
+  .portal-parent .parent-athlete-signals {
+    grid-template-columns:1fr 1fr;
+  }
+}
