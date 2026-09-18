@@ -8,6 +8,7 @@ import { EnterpriseEmpty, EnterpriseSelect, EnterpriseStatus, EnterpriseToolbar,
 import { UiPreviewState } from '../../components/ui/UiPrimitives';
 import { Sports3DIcon } from '../../design/sports3d';
 import { getSportPreviewMedia } from '../../data/media';
+import { UosSelectField, UosTextAreaField, UosTextField } from '../../components/fields/UosFields';
 
 const knownSportIds = new Set(['football', 'basketball', 'swimming', 'tennis', 'gymnastics', 'martial-arts']);
 const emptySportDraft = { nameEn: '', nameAr: '', descriptionEn: '', descriptionAr: '', ageGroupEn: '', ageGroupAr: '', icon: 'trophy' };
@@ -55,7 +56,80 @@ export function AdminSportsPage() {
       return <article className="enterprise-panel organization-card" key={sport.id}>{media && <img className="organization-card-media" src={media.url} alt={`${media.altEn} | ${media.altAr}`} />}<div className="organization-card-head"><span className="portal-card-icon">{knownSportIds.has(sport.id) ? <Sports3DIcon sport={sport.id as 'football' | 'basketball' | 'swimming' | 'tennis' | 'gymnastics' | 'martial-arts'} size="sm" decorative /> : <Trophy size={20} />}</span><EnterpriseStatus label={sport.status === 'active' ? bi('Active', 'نشط') : bi('Inactive', 'غير نشط')} tone={sport.status === 'active' ? 'active' : 'neutral'} /></div><h2><BilingualText value={sport.name} /></h2><p><BilingualText value={sport.description} /></p><div className="organization-stat-grid"><span><UsersRound size={13} /><BilingualText value={bi('Players', 'اللاعبون')} /><strong>{players.length}</strong></span><span><ShieldCheck size={13} /><BilingualText value={bi('Coaches', 'المدربون')} /><strong>{coaches.length}</strong></span><span><FolderCog size={13} /><BilingualText value={bi('Programs', 'البرامج')} /><strong>{programs.length}</strong></span><span><BarChart3 size={13} /><BilingualText value={bi('Groups', 'المجموعات')} /><strong>{groups.length}</strong></span></div><Link className="admin-link-button" to={`/admin/sports/${sport.id}`}><BilingualText value={bi('Open sport cockpit', 'فتح مركز الرياضة')} /><ArrowRight size={14} /></Link></article>;
     })}</section>}
     {!loading && !error && !sports.length && <EnterpriseEmpty title={bi('No sports match', 'لا تطابق أي رياضات')} description={bi('Try a different search term.', 'جرب مصطلح بحث آخر.')} />}
-    {showCreate && <ModalShell title={bi('Add Sport', 'إضافة رياضة')} onClose={closeCreate}>{formError && <p className="form-error" role="alert">{formError}</p>}<div className="preview-form-grid"><label><BilingualText value={bi('Name (English)', 'الاسم (إنجليزي)')} /><input value={draft.nameEn} onChange={e => setField('nameEn', e.target.value)} /></label><label><BilingualText value={bi('Name (Arabic)', 'الاسم (عربي)')} /><input value={draft.nameAr} onChange={e => setField('nameAr', e.target.value)} /></label><label><BilingualText value={bi('Description (English)', 'الوصف (إنجليزي)')} /><textarea rows={3} value={draft.descriptionEn} onChange={e => setField('descriptionEn', e.target.value)} /></label><label><BilingualText value={bi('Description (Arabic)', 'الوصف (عربي)')} /><textarea rows={3} value={draft.descriptionAr} onChange={e => setField('descriptionAr', e.target.value)} /></label><label><BilingualText value={bi('Initial age group (English)', 'الفئة العمرية الأولية (إنجليزي)')} /><input value={draft.ageGroupEn} onChange={e => setField('ageGroupEn', e.target.value)} placeholder="U12" /></label><label><BilingualText value={bi('Initial age group (Arabic)', 'الفئة العمرية الأولية (عربي)')} /><input value={draft.ageGroupAr} onChange={e => setField('ageGroupAr', e.target.value)} placeholder="تحت 12" /></label><label><BilingualText value={bi('Icon key', 'مفتاح الأيقونة')} /><input value={draft.icon} onChange={e => setField('icon', e.target.value)} /></label></div><div className="dialog-actions"><button className="admin-secondary-button" disabled={createLoading} onClick={closeCreate}><BilingualText value={bi('Cancel', 'إلغاء')} /></button><button className="admin-primary-button" disabled={createLoading} onClick={() => void submit()}><BilingualText value={bi(createLoading ? 'Saving…' : 'Save Sport', createLoading ? 'جارٍ الحفظ…' : 'حفظ الرياضة')} /></button></div></ModalShell>}
+    {showCreate && <ModalShell title={bi('Add Sport', 'إضافة رياضة')} onClose={closeCreate}>
+      {formError && <p className="form-error" role="alert">{formError}</p>}
+      <div className="uos-form-grid">
+        <UosTextField
+          label={bi('Sport name (English)', 'اسم الرياضة (إنجليزي)')}
+          value={draft.nameEn}
+          onChange={e => setField('nameEn', e.target.value)}
+          required
+          disabled={createLoading}
+          dir="ltr"
+          autoComplete="off"
+        />
+        <UosTextField
+          label={bi('Sport name (Arabic)', 'اسم الرياضة (عربي)')}
+          value={draft.nameAr}
+          onChange={e => setField('nameAr', e.target.value)}
+          required
+          disabled={createLoading}
+          dir="rtl"
+          lang="ar"
+          autoComplete="off"
+        />
+        <UosTextAreaField
+          label={bi('Description (English)', 'الوصف (إنجليزي)')}
+          value={draft.descriptionEn}
+          onChange={value => setField('descriptionEn', value)}
+          rows={3}
+          optional
+          disabled={createLoading}
+          dir="ltr"
+        />
+        <UosTextAreaField
+          label={bi('Description (Arabic)', 'الوصف (عربي)')}
+          value={draft.descriptionAr}
+          onChange={value => setField('descriptionAr', value)}
+          rows={3}
+          optional
+          disabled={createLoading}
+          dir="rtl"
+          lang="ar"
+        />
+        <UosTextField
+          label={bi('Initial age group (English)', 'الفئة العمرية الأولية (إنجليزي)')}
+          value={draft.ageGroupEn}
+          onChange={e => setField('ageGroupEn', e.target.value)}
+          placeholder="U12"
+          optional
+          disabled={createLoading}
+          dir="ltr"
+        />
+        <UosTextField
+          label={bi('Initial age group (Arabic)', 'الفئة العمرية الأولية (عربي)')}
+          value={draft.ageGroupAr}
+          onChange={e => setField('ageGroupAr', e.target.value)}
+          placeholder="تحت 12"
+          optional
+          disabled={createLoading}
+          dir="rtl"
+          lang="ar"
+        />
+        <UosTextField
+          label={bi('Icon key', 'مفتاح الأيقونة')}
+          value={draft.icon}
+          onChange={e => setField('icon', e.target.value)}
+          helper={bi('Internal icon key only; it does not change the official brand logo.', 'مفتاح داخلي للأيقونة فقط؛ ولا يغيّر شعار المؤسسة الرسمي.')}
+          disabled={createLoading}
+          dir="ltr"
+        />
+      </div>
+      <div className="dialog-actions">
+        <button className="admin-secondary-button" disabled={createLoading} onClick={closeCreate}><BilingualText value={bi('Cancel', 'إلغاء')} /></button>
+        <button className="admin-primary-button" disabled={createLoading} onClick={() => void submit()}><BilingualText value={bi(createLoading ? 'Saving…' : 'Save Sport', createLoading ? 'جارٍ الحفظ…' : 'حفظ الرياضة')} /></button>
+      </div>
+    </ModalShell>}
   </div>;
 }
 
@@ -97,6 +171,99 @@ export function AdminProgramsPage() {
       return <article className="enterprise-panel organization-card" key={program.id}><div className="organization-card-head"><span className="portal-card-icon"><FolderCog size={18} /></span><EnterpriseStatus label={program.status === 'active' ? bi('Active', 'نشط') : bi('Inactive', 'غير نشط')} tone={program.status === 'active' ? 'active' : 'neutral'} /></div><h2><BilingualText value={program.name} /></h2><p><BilingualText value={program.description} /></p><div className="program-pill-list">{program.ageGroups.map((ageGroup, index) => <span key={`${ageGroup.en}-${index}`}><BilingualText value={ageGroup} /></span>)}</div><div className="organization-stat-grid"><span><Trophy size={13} /><BilingualText value={bi('Sport', 'الرياضة')} /><strong>{sport?.name.en ?? program.sportId}</strong></span><span><UsersRound size={13} /><BilingualText value={bi('Groups', 'المجموعات')} /><strong>{groups.length}</strong></span><span><UsersRound size={13} /><BilingualText value={bi('Players', 'اللاعبون')} /><strong>{players.length}</strong></span><span><BarChart3 size={13} /><BilingualText value={bi('Level', 'المستوى')} /><strong>{program.level.en}</strong></span></div><Link className="admin-link-button" to={`/admin/programs/${program.id}`}><BilingualText value={bi('Open program cockpit', 'فتح مركز البرنامج')} /><ArrowRight size={14} /></Link></article>;
     })}</section>}
     {!loading && !error && !programs.length && <EnterpriseEmpty title={bi('No programs match', 'لا تطابق أي برامج')} description={bi('Reset the sport filter or search term.', 'أعد ضبط فلتر الرياضة أو مصطلح البحث.')} />}
-    {showCreate && <ModalShell title={bi('Add Program', 'إضافة برنامج')} onClose={closeCreate}>{formError && <p className="form-error" role="alert">{formError}</p>}<div className="preview-form-grid"><label><BilingualText value={bi('Name (English)', 'الاسم (إنجليزي)')} /><input value={draft.nameEn} onChange={e => setField('nameEn', e.target.value)} /></label><label><BilingualText value={bi('Name (Arabic)', 'الاسم (عربي)')} /><input value={draft.nameAr} onChange={e => setField('nameAr', e.target.value)} /></label><label><BilingualText value={bi('Sport', 'الرياضة')} /><select value={draft.sportId} onChange={e => setField('sportId', e.target.value)}><option value="">Select Sport | اختر الرياضة</option>{sports.map(sport => <option key={sport.id} value={sport.id}>{sport.name.en} | {sport.name.ar}</option>)}</select></label><label><BilingualText value={bi('Level (English)', 'المستوى (إنجليزي)')} /><input value={draft.levelEn} onChange={e => setField('levelEn', e.target.value)} placeholder="Foundation" /></label><label><BilingualText value={bi('Level (Arabic)', 'المستوى (عربي)')} /><input value={draft.levelAr} onChange={e => setField('levelAr', e.target.value)} placeholder="أساسي" /></label><label><BilingualText value={bi('Age group (English)', 'الفئة العمرية (إنجليزي)')} /><input value={draft.ageGroupEn} onChange={e => setField('ageGroupEn', e.target.value)} placeholder="U12" /></label><label><BilingualText value={bi('Age group (Arabic)', 'الفئة العمرية (عربي)')} /><input value={draft.ageGroupAr} onChange={e => setField('ageGroupAr', e.target.value)} placeholder="تحت 12" /></label><label><BilingualText value={bi('Description (English)', 'الوصف (إنجليزي)')} /><textarea rows={3} value={draft.descriptionEn} onChange={e => setField('descriptionEn', e.target.value)} /></label><label><BilingualText value={bi('Description (Arabic)', 'الوصف (عربي)')} /><textarea rows={3} value={draft.descriptionAr} onChange={e => setField('descriptionAr', e.target.value)} /></label></div><div className="dialog-actions"><button className="admin-secondary-button" disabled={createLoading} onClick={closeCreate}><BilingualText value={bi('Cancel', 'إلغاء')} /></button><button className="admin-primary-button" disabled={createLoading} onClick={() => void submit()}><BilingualText value={bi(createLoading ? 'Saving…' : 'Save Program', createLoading ? 'جارٍ الحفظ…' : 'حفظ البرنامج')} /></button></div></ModalShell>}
+    {showCreate && <ModalShell title={bi('Add Program', 'إضافة برنامج')} onClose={closeCreate}>
+      {formError && <p className="form-error" role="alert">{formError}</p>}
+      <div className="uos-form-grid">
+        <UosTextField
+          label={bi('Program name (English)', 'اسم البرنامج (إنجليزي)')}
+          value={draft.nameEn}
+          onChange={e => setField('nameEn', e.target.value)}
+          required
+          disabled={createLoading}
+          dir="ltr"
+          autoComplete="off"
+        />
+        <UosTextField
+          label={bi('Program name (Arabic)', 'اسم البرنامج (عربي)')}
+          value={draft.nameAr}
+          onChange={e => setField('nameAr', e.target.value)}
+          required
+          disabled={createLoading}
+          dir="rtl"
+          lang="ar"
+          autoComplete="off"
+        />
+        <UosSelectField
+          label={bi('Sport', 'الرياضة')}
+          value={draft.sportId}
+          onChange={e => setField('sportId', e.target.value)}
+          options={sports.map(sport => ({ value: sport.id, label: sport.name }))}
+          placeholder={bi('Select Sport', 'اختر الرياضة')}
+          required
+          disabled={createLoading}
+        />
+        <UosTextField
+          label={bi('Level (English)', 'المستوى (إنجليزي)')}
+          value={draft.levelEn}
+          onChange={e => setField('levelEn', e.target.value)}
+          placeholder="Foundation"
+          required
+          disabled={createLoading}
+          dir="ltr"
+        />
+        <UosTextField
+          label={bi('Level (Arabic)', 'المستوى (عربي)')}
+          value={draft.levelAr}
+          onChange={e => setField('levelAr', e.target.value)}
+          placeholder="أساسي"
+          required
+          disabled={createLoading}
+          dir="rtl"
+          lang="ar"
+        />
+        <UosTextField
+          label={bi('Age group (English)', 'الفئة العمرية (إنجليزي)')}
+          value={draft.ageGroupEn}
+          onChange={e => setField('ageGroupEn', e.target.value)}
+          placeholder="U12"
+          optional
+          disabled={createLoading}
+          dir="ltr"
+        />
+        <UosTextField
+          label={bi('Age group (Arabic)', 'الفئة العمرية (عربي)')}
+          value={draft.ageGroupAr}
+          onChange={e => setField('ageGroupAr', e.target.value)}
+          placeholder="تحت 12"
+          optional
+          disabled={createLoading}
+          dir="rtl"
+          lang="ar"
+        />
+        <UosTextAreaField
+          label={bi('Description (English)', 'الوصف (إنجليزي)')}
+          value={draft.descriptionEn}
+          onChange={value => setField('descriptionEn', value)}
+          rows={3}
+          optional
+          disabled={createLoading}
+          dir="ltr"
+        />
+        <UosTextAreaField
+          label={bi('Description (Arabic)', 'الوصف (عربي)')}
+          value={draft.descriptionAr}
+          onChange={value => setField('descriptionAr', value)}
+          rows={3}
+          optional
+          disabled={createLoading}
+          dir="rtl"
+          lang="ar"
+        />
+      </div>
+      <div className="dialog-actions">
+        <button className="admin-secondary-button" disabled={createLoading} onClick={closeCreate}><BilingualText value={bi('Cancel', 'إلغاء')} /></button>
+        <button className="admin-primary-button" disabled={createLoading} onClick={() => void submit()}><BilingualText value={bi(createLoading ? 'Saving…' : 'Save Program', createLoading ? 'جارٍ الحفظ…' : 'حفظ البرنامج')} /></button>
+      </div>
+    </ModalShell>}
   </div>;
 }
