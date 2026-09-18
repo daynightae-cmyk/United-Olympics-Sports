@@ -89,7 +89,7 @@ export function ParentPortalOverviewPage() {
           const group = child.groupId ? groups.find((item) => item.id === child.groupId) : undefined;
           const next = upcomingSessions.find((session) => session.groupId === child.groupId);
           const subscription = familySubscriptions.find((item) => item.playerId === child.id);
-          const accent = sport?.accent ?? '#d4af37';
+          const accent = sportAccent(child.sportId);
 
           return <article
             key={child.id}
@@ -121,6 +121,19 @@ export function ParentPortalOverviewPage() {
       </div> : <EnterpriseEmpty title={bi('No linked children', 'لا يوجد أبناء مرتبطون')} description={bi('Link an athlete to this parent profile from Admin to populate the family workspace.', 'اربط لاعبًا بملف ولي الأمر من الإدارة لملء مساحة الأسرة.')} />}
     </section>
   </div>;
+}
+
+
+function sportAccent(sportId: string) {
+  const accents: Record<string, string> = {
+    football: '#65d39a',
+    swimming: '#53c7e8',
+    basketball: '#e9a54b',
+    tennis: '#c8db66',
+    gymnastics: '#d893d5',
+    'martial-arts': '#d36c5f',
+  };
+  return accents[sportId] ?? '#d4af37';
 }
 
 function FamilyMetric({ icon, label, value, tone = '' }: { icon: React.ReactNode; label: { en: string; ar: string }; value: string; tone?: string }) {
