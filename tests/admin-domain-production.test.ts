@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { AdminDomainRepository } from '../src/server/repositories/admin-repository.ts';
 import type { AuthorizationContext } from '../src/server/authorization-context.ts';
 import { ApiError } from '../src/server/http.ts';
@@ -130,6 +131,21 @@ async function runAdminDomainTests() {
       assert.equal(err.code, 'VALIDATION_ERROR');
       return true;
     },
+  );
+
+  const dashboardSource = readFileSync('src/pages/admin/AdminDashboardPage.tsx', 'utf8');
+  for (const hook of ['useSports', 'usePlayers', 'useCoaches', 'useSessions', 'useAuditActivity']) {
+    assert(dashboardSource.includes(hook), `Admin dashboard must use ${hook} for live overview data`);
+  }
+  assert.equal(
+    dashboardSource.includes('value={0}'),
+    false,
+    'Admin dashboard must not hardcode zero overview metrics',
+  );
+  assert.equal(
+    dashboardSource.includes('Upcoming Sessions'),
+    false,
+    'Admin dashboard must not label unfiltered session totals as upcoming sessions',
   );
 
   console.log('Admin core domain production tests: PASS');

@@ -186,7 +186,43 @@ async function assertRoute(page, runtimeErrors, route, checkOverflow = true) {
   if (route.startsWith('/parent') && route !== '/parent/login' && state.pathname === '/parent/login') throw new Error(`${route}: unexpectedly redirected to parent login`);
   if (route.startsWith('/player') && !route.includes('/login') && !intentionalPlayerLoginRedirects.has(route) && state.pathname === '/player/login') throw new Error(`${route}: unexpectedly redirected to player login`);
   if (runtimeErrors.length) throw new Error(`${route}: ${runtimeErrors.join(' | ')}`);
+  if (route === '/admin') await assertAdminVisualAuthority(page);
   return state;
+}
+
+async function assertAdminVisualAuthority(page) {
+  const proof = await page.evaluate(() => {
+    const brand = document.querySelector('.admin-brand');
+    const brandImages = brand ? [...brand.querySelectorAll(':scope > img')] : [];
+    const canonicalLogoCount = brandImages.filter((image) =>
+      (image.getAttribute('src') ?? '').includes('/brand/united-olympics-sports-logo.png')
+    ).length;
+
+    const selectors = ['.dashboard-hero', '.admin-stat-card', '.admin-panel:not(.dashboard-hero)'];
+    const surfaces = selectors.map((selector) => {
+      const element = document.querySelector(selector);
+      return element ? getComputedStyle(element).backgroundColor : null;
+    });
+
+    return {
+      totalBrandImages: brandImages.length,
+      canonicalLogoCount,
+      surfaces,
+    };
+  });
+
+  if (proof.totalBrandImages !== 1 || proof.canonicalLogoCount !== 1) {
+    throw new Error(`/admin: expected exactly one canonical sidebar logo, got ${proof.totalBrandImages} brand images / ${proof.canonicalLogoCount} canonical`);
+  }
+
+  if (proof.surfaces.some((surface) => !surface)) {
+    throw new Error(`/admin: missing dashboard visual proof surface: ${proof.surfaces.join(' | ')}`);
+  }
+
+  const uniqueSurfaces = new Set(proof.surfaces);
+  if (uniqueSurfaces.size !== 1) {
+    throw new Error(`/admin: dashboard blocks do not share one canonical background: ${proof.surfaces.join(' | ')}`);
+  }
 }
 
 function isTransientRouteSweepError(error, browserName) {

@@ -1,0 +1,142 @@
+/* ==========================================================================
+   United Olympics Sports — portal visual proof closure
+   Final background/surface authority for Admin, Player, Parent and Coach.
+   Keeps one consistent charcoal/ivory/gold system instead of legacy gradients.
+   ========================================================================== */
+
+:where(.admin-shell,.portal-shell,#player-portal-shell) {
+  background: var(--color-canvas) !important;
+}
+
+/* Navigation chrome stays deliberately dark and identical across portals. */
+:where(.admin-sidebar,.portal-sidebar,#player-portal-shell .athlete-sidebar) {
+  background:
+    linear-gradient(180deg, rgba(185,149,78,.045), transparent 26%),
+    #0c0c0a !important;
+  border-color: rgba(221,199,137,.14) !important;
+}
+
+/* One workspace surface. Older feature CSS used several competing blacks/browns. */
+:where(.admin-shell,.portal-shell,#player-portal-shell) :where(
+  .admin-page-header,
+  .admin-panel,
+  .admin-stat-card,
+  .future-panel,
+  .sport-management-card,
+  .group-card,
+  .player-preview-card,
+  .admin-entity-grid > article,
+  .amp-card,
+  .branch-identity-card,
+  .country-identity-card,
+  .player-identity-card,
+  .player-mobile-card,
+  .performance-metric-card,
+  .feedback-card,
+  .readiness-card,
+  .dashboard-hero,
+  .feature-strip,
+  .portal-section,
+  .portal-card,
+  .portal-preview-card,
+  .portal-overview-hero > article,
+  .portal-overview-list,
+  .athlete-glass-card,
+  .athlete-hero-card,
+  .athlete-action-card,
+  .athlete-stat-pill,
+  .ui-dialog,
+  .admin-modal
+) {
+  background: var(--color-surface-1) !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-text-primary) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+/* Secondary content gets one secondary surface, not page-specific slate/brown shades. */
+:where(.admin-shell,.portal-shell,#player-portal-shell) :where(
+  .hero-metric,
+  .quick-grid > a,
+  .linked-player-list,
+  .linked-player-list > a,
+  .group-card dl > div,
+  .detail-list > div,
+  .sport-derived-stats > span,
+  .feedback-columns > section,
+  .preview-line,
+  .metric-definition-grid article,
+  .media-plan,
+  .player-filter-bar,
+  .filter-search,
+  .filter-fields select,
+  .preview-form-grid select,
+  .preview-form-grid input
+) {
+  background: var(--color-surface-2) !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* Command Center / dashboard hero no longer drifts olive-brown from the stat cards. */
+.admin-shell :where(.dashboard-hero,.admin-page-header,.admin-stat-card,.admin-panel) {
+  background-color: var(--color-surface-1) !important;
+  background-image: none !important;
+}
+
+.admin-shell .dashboard-hero {
+  border-color: var(--color-border-strong) !important;
+}
+
+.admin-shell .hero-metric {
+  background-image: none !important;
+}
+
+/* Tables use the same family as cards. */
+.admin-shell :where(
+  .admin-table-head,
+  .amp-table-head,
+  .player-table thead th,
+  .enterprise-table thead th
+) {
+  background: var(--color-surface-2) !important;
+  border-color: var(--color-border) !important;
+}
+
+.admin-shell :where(
+  .player-table-wrap,
+  .groups-table-shell,
+  .enterprise-table-shell
+) {
+  background: var(--color-surface-1) !important;
+  border-color: var(--color-border) !important;
+}
+
+/* Shared top bars read as the same product shell. */
+:where(.admin-topbar,.portal-topbar,#player-portal-shell .athlete-topbar) {
+  background: color-mix(in srgb, var(--color-surface-1) 94%, transparent) !important;
+  border-color: var(--color-border) !important;
+}
+
+/* Keep semantic status colors, but remove accidental surface color forks. */
+:where(.admin-shell,.portal-shell,#player-portal-shell) :where(
+  .status-badge,
+  .truth-badge,
+  .preview-badge,
+  .portal-preview-badge
+) {
+  box-shadow: none !important;
+}
+
+@media (max-width:820px) {
+  :where(.admin-shell,.portal-shell,#player-portal-shell) :where(
+    .admin-page-header,
+    .admin-panel,
+    .admin-stat-card,
+    .portal-section,
+    .portal-card,
+    .athlete-glass-card
+  ) {
+    background: var(--color-surface-1) !important;
+  }
+}
