@@ -104,13 +104,13 @@ export function FootballPage() {
       <div className="football-interest-content">
         <BilingualText className="football-eyebrow" value={bi('Register Interest', 'سجل اهتمامك')} />
         <h2><BilingualText value={bi('Interested in the football pathway?', 'مهتم بمسار كرة القدم؟')} /></h2>
-        <p><BilingualText value={bi('Share your interest below. This Phase 1 form is UI only and does not save or send data.', 'شارك اهتمامك أدناه. هذا النموذج في المرحلة الأولى واجهة فقط ولا يحفظ أو يرسل البيانات.')} /></p>
+        <p><BilingualText value={bi('Use the fields below to organise your interest, then continue through the official contact channel.', 'استخدم الحقول أدناه لتنظيم اهتمامك، ثم أكمل التواصل عبر قناة التواصل الرسمية.')} /></p>
         <form onSubmit={submitInterest} className="football-interest-form">
           <label><BilingualText value={bi('Name', 'الاسم')} /><input required placeholder="Name | الاسم" /></label>
           <label><BilingualText value={bi('Email', 'البريد الإلكتروني')} /><input required type="email" placeholder="Email | البريد الإلكتروني" /></label>
-          <button className="button primary" type="submit"><BilingualText value={bi('Preview Registration', 'معاينة التسجيل')} /><ArrowRight size={16} /></button>
+          <button className="button primary" type="submit"><BilingualText value={bi('Prepare Interest', 'تجهيز الاهتمام')} /><ArrowRight size={16} /></button>
         </form>
-        {previewMessage && <p className="football-preview-note"><Check size={15} /><BilingualText value={bi('Preview only — no information was submitted or saved.', 'معاينة فقط — لم يتم إرسال أو حفظ أي معلومات.')} /></p>}
+        {previewMessage && <p className="football-preview-note"><Check size={15} /><BilingualText value={bi('Your details are prepared on this screen only. Nothing has been sent yet.', 'تم تجهيز بياناتك على هذه الشاشة فقط، ولم يتم إرسال أي معلومات بعد.')} /></p>}
       </div>
     </section>
 

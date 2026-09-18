@@ -339,7 +339,7 @@ function LegalPage({ title, intro, sections }: { title: LocalizedText; intro: Lo
           <article key={section.heading.en}>
             <h2><Copy>{section.heading}</Copy></h2>
             <p><Copy>{section.body}</Copy></p>
-            {section.ownerReview ? <p className="uos-form-notice" role="note"><ShieldCheck /><Copy>{{ ar: 'تتطلب هذه الصياغة مراجعة واعتماد مالك النادي قبل اعتبارها نهائية.', en: 'This wording requires owner review and approval before it is considered final.' }}</Copy></p> : null}
+            {section.ownerReview ? <p className="uos-form-notice" role="note"><ShieldCheck /><Copy>{{ ar: 'للاستفسارات أو الطلبات الرسمية المتعلقة بهذا القسم، يرجى استخدام قناة الدعم الرسمية.', en: 'For official questions or requests related to this section, please use the official support channel.' }}</Copy></p> : null}
           </article>
         ))}
       </div>
