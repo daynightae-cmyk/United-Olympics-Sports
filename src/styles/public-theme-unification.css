@@ -1,0 +1,240 @@
+/* ==========================================================================
+   United Olympics Sports — public visual unification
+   One canonical palette for Home + every public page.
+   This layer intentionally loads after public-relaunch.css.
+   ========================================================================== */
+
+.uos-public {
+  /* Canonical public palette */
+  --uos-charcoal: #0d0d0b;
+  --uos-charcoal-soft: #171610;
+  --uos-black: #080806;
+  --uos-ivory: #f5f0e4;
+  --uos-ivory-muted: #d8cfbd;
+  --uos-gold: #b9954e;
+  --uos-gold-soft: #ddc789;
+  --uos-muted: #746d61;
+  --uos-border: rgba(45, 40, 30, .14);
+  --uos-dark-border: rgba(245, 240, 228, .13);
+  --uos-public-surface: #fbf8f1;
+  --uos-public-surface-soft: #eee7d9;
+  --uos-public-dark-surface: #12110e;
+  --uos-public-dark-surface-soft: #191711;
+  --uos-public-shadow: 0 22px 60px rgba(17, 17, 15, .10);
+
+  background: var(--uos-ivory);
+  color: var(--uos-charcoal);
+}
+
+/* The same base canvas follows every public route. */
+.uos-public main,
+.uos-page-shell,
+.uos-section,
+.uos-field-moments,
+.uos-related-programs,
+.uos-programs-preview,
+.uos-sport-path,
+.uos-value-strip {
+  background-color: var(--uos-ivory);
+}
+
+/* One dark cinematic language for every hero / feature band / footer. */
+.uos-home-hero,
+.uos-page-hero,
+.uos-closing-cta,
+.uos-progress-section,
+.uos-principles,
+.uos-coaching-reflection,
+.uos-site-footer {
+  background-color: var(--uos-charcoal);
+  color: var(--uos-ivory);
+}
+
+.uos-home-hero,
+.uos-page-hero,
+.uos-closing-cta {
+  background-color: var(--uos-black);
+}
+
+/* Header no longer changes personality between Home and internal pages. */
+.uos-site-header {
+  background: rgba(8, 8, 6, .72);
+  color: var(--uos-ivory);
+  backdrop-filter: blur(18px) saturate(120%);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+}
+
+.uos-site-header.is-scrolled {
+  background: rgba(8, 8, 6, .95);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .24);
+}
+
+.uos-site-header::after {
+  background: rgba(245, 240, 228, .12);
+}
+
+/* Home and inner-page heroes use the same overlay strength and brand gold. */
+.uos-home-hero .uos-hero-shade,
+.uos-page-hero .uos-hero-shade {
+  background:
+    linear-gradient(90deg, rgba(8, 8, 6, .92) 0%, rgba(8, 8, 6, .67) 42%, rgba(8, 8, 6, .10) 76%),
+    linear-gradient(0deg, rgba(8, 8, 6, .56), transparent 50%);
+}
+
+.uos-public[dir="rtl"] .uos-home-hero .uos-hero-shade,
+.uos-public[dir="rtl"] .uos-page-hero .uos-hero-shade {
+  background:
+    linear-gradient(-90deg, rgba(8, 8, 6, .92) 0%, rgba(8, 8, 6, .67) 42%, rgba(8, 8, 6, .10) 76%),
+    linear-gradient(0deg, rgba(8, 8, 6, .56), transparent 50%);
+}
+
+/* One card surface everywhere instead of page-specific creams/whites. */
+.uos-sport-card,
+.uos-program-card,
+.uos-empty-state,
+.uos-program-availability,
+.uos-program-detail-meta article,
+.uos-program-pillars article,
+.uos-sport-develops article,
+.uos-coaching-loop article,
+.uos-contact-form,
+.uos-legal-body article {
+  background: var(--uos-public-surface);
+  border-color: var(--uos-border);
+  box-shadow: var(--uos-public-shadow);
+}
+
+.uos-sport-card,
+.uos-program-card,
+.uos-sport-develops,
+.uos-program-detail-meta,
+.uos-program-pillars {
+  /* Inline sport colours may remain in media, but chrome uses one brand accent. */
+  --sport-accent: var(--uos-gold) !important;
+}
+
+.uos-programs-preview,
+.uos-sport-path {
+  background: var(--uos-public-surface-soft);
+}
+
+.uos-value-strip {
+  border-color: var(--uos-border);
+}
+
+/* Forms inherit the same light surface used by cards. */
+.uos-contact-form input,
+.uos-contact-form textarea,
+.uos-contact-form select {
+  background: var(--uos-ivory);
+  color: var(--uos-charcoal);
+  border-color: rgba(45, 40, 30, .20);
+}
+
+.uos-contact-form input:focus,
+.uos-contact-form textarea:focus,
+.uos-contact-form select:focus {
+  border-color: var(--uos-gold);
+  outline-color: rgba(185, 149, 78, .20);
+}
+
+/* Buttons, links and micro accents all point to the same canonical gold. */
+.uos-button.is-primary,
+.uos-portal-trigger-button,
+.uos-skip-link {
+  background: var(--uos-gold);
+  color: #15120c;
+}
+
+.uos-button.is-primary:hover,
+.uos-portal-trigger-button:hover {
+  background: var(--uos-gold-soft);
+}
+
+.uos-nav-link.active {
+  background: rgba(185, 149, 78, .20);
+  border-color: rgba(185, 149, 78, .42);
+}
+
+.uos-section-title > span,
+.uos-home-hero-copy > span,
+.uos-page-hero-copy > span,
+.uos-story-copy > span,
+.uos-coaching-reflection > div > span,
+.uos-contact-intro > span,
+.uos-editorial-head > span,
+.uos-program-detail-meta span,
+.uos-program-detail-split span {
+  color: var(--uos-gold);
+}
+
+.uos-home-hero-copy > span,
+.uos-page-hero-copy > span,
+.uos-closing-cta > div > span,
+.uos-progress-copy > span,
+.uos-progress-copy li > span,
+.uos-footer-main h2 {
+  color: var(--uos-gold-soft);
+}
+
+/* Dark panels share the same treatment and copy contrast. */
+.uos-progress-section,
+.uos-principles,
+.uos-coaching-reflection,
+.uos-program-detail-split article {
+  background: var(--uos-public-dark-surface);
+}
+
+.uos-principle-grid article,
+.uos-program-detail-split article {
+  border: 1px solid var(--uos-dark-border);
+}
+
+.uos-progress-copy p,
+.uos-principles .uos-section-title p,
+.uos-principle-grid p,
+.uos-coaching-reflection p,
+.uos-site-footer p {
+  color: rgba(245, 240, 228, .60);
+}
+
+/* Media fallback also follows the brand palette instead of an isolated tint. */
+.uos-media {
+  background: var(--uos-public-dark-surface-soft);
+}
+
+.uos-media-fallback {
+  background:
+    radial-gradient(circle at 70% 20%, rgba(185, 149, 78, .22), transparent 35%),
+    linear-gradient(135deg, var(--uos-public-dark-surface-soft), var(--uos-black));
+  color: var(--uos-gold-soft);
+}
+
+/* Legal / utility pages stay on the exact same canvas as Home content sections. */
+.uos-page-shell,
+.uos-not-found {
+  color: var(--uos-charcoal);
+}
+
+.uos-legal-body article {
+  background: var(--uos-public-surface);
+}
+
+/* Mobile keeps the same palette rather than switching to a different page colour. */
+@media (max-width: 860px) {
+  .uos-home-hero,
+  .uos-page-hero {
+    background: var(--uos-black);
+  }
+
+  .uos-mobile-drawer,
+  .uos-portal-dropdown-panel {
+    background: var(--uos-public-dark-surface);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .uos-public * {
+    transition-duration: .01ms !important;
+  }
+}
