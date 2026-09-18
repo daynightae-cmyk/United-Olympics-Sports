@@ -1,11 +1,11 @@
+import React, { useState } from "react";
 import { ArrowRight, CheckCircle2, CircleDot, Compass, UsersRound } from "lucide-react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { BilingualText, bi } from "../../components/bilingual/BilingualText";
-import { PreviewBadge, SportConceptVisual } from "../../components/owner-demo/OwnerDemoVisuals";
-import { getDemoProgram } from "../../data/demo/programs";
+import { SportConceptVisual } from "../../components/owner-demo/OwnerDemoVisuals";
+import { getPublicProgram } from "../../data/public/publicContent";
 import { getSportPreviewMedia } from "../../data/media";
 import "../../styles/owner-demo.css";
-import React, { useState } from "react";
 
 const stages = [
   bi("Foundation", "الأساس"),
@@ -16,10 +16,12 @@ const stages = [
 
 export function ProgramPreviewPage() {
   const { programSlug } = useParams();
-  const program = getDemoProgram(programSlug);
+  const program = getPublicProgram(programSlug);
   if (!program) return <Navigate to="/programs" replace />;
+
   const media = getSportPreviewMedia(program.sportId);
   const [mediaAvailable, setMediaAvailable] = useState(true);
+
   return (
     <div className={`od-public-page od-program-detail sport-${program.sportId}`}>
       <section className="od-program-detail-hero">
@@ -40,7 +42,6 @@ export function ProgramPreviewPage() {
           <div className="od-program-detail-shade" />
         </div>
         <div className="od-program-detail-copy">
-          <PreviewBadge />
           <Link className="od-back-link" to="/programs">
             <BilingualText value={bi("All Programs", "كل البرامج")} />
           </Link>
@@ -70,7 +71,7 @@ export function ProgramPreviewPage() {
             <BilingualText value={bi("Development Path", "مسار التطور")} />
           </span>
           <h2>
-            <BilingualText value={bi("A clear progression concept", "تصور واضح للتدرج")} />
+            <BilingualText value={bi("A clear progression pathway", "مسار واضح للتدرج")} />
           </h2>
         </div>
         <div className="od-pathway">
@@ -85,8 +86,8 @@ export function ProgramPreviewPage() {
         <p className="od-preview-note">
           <BilingualText
             value={bi(
-              "This progression is a UI concept for the owner demo and does not claim current operational availability.",
-              "هذا التدرج تصور واجهة للعرض التجريبي ولا يمثل ادعاءً بتوفر تشغيلي حالي."
+              "Athletes progress according to readiness and training needs. Exact groups, schedules and placement are confirmed only from verified operational data.",
+              "يتدرج الرياضي حسب الجاهزية واحتياجات التدريب، ولا تُعرض المجموعات والجداول والتسكين الفعلي إلا من بيانات تشغيلية موثقة."
             )}
           />
         </p>
@@ -123,8 +124,8 @@ export function ProgramPreviewPage() {
           <p>
             <BilingualText
               value={bi(
-                "Role-based coaching presentation only; no real coach identity is implied.",
-                "عرض لدور التدريب فقط ولا يشير إلى هوية مدرب حقيقية."
+                "Coaching combines demonstration, observation, correction and a clear next focus for the athlete.",
+                "يجمع التدريب بين الشرح والملاحظة والتصحيح وتحديد التركيز التالي بوضوح للرياضي."
               )}
             />
           </p>
@@ -138,7 +139,7 @@ export function ProgramPreviewPage() {
           </span>
           <h2>
             <BilingualText
-              value={bi("What the training flow can feel like", "كيف يمكن أن تبدو رحلة التدريب")}
+              value={bi("How a training session is structured", "كيف تُبنى الحصة التدريبية")}
             />
           </h2>
         </div>
@@ -160,23 +161,22 @@ export function ProgramPreviewPage() {
 
       <section className="od-owner-cta">
         <div>
-          <PreviewBadge label={bi("UI Preview", "معاينة الواجهة")} />
           <h2>
             <BilingualText
-              value={bi("Interested in this training direction?", "هل يناسبك هذا التوجه التدريبي؟")}
+              value={bi("Interested in this training pathway?", "مهتم بهذا المسار التدريبي؟")}
             />
           </h2>
           <p>
             <BilingualText
               value={bi(
-                "Use the public enquiry screen to prepare an interest message without claiming a live registration backend.",
-                "استخدم شاشة الاستفسار العامة لإعداد رسالة اهتمام دون الإيحاء بوجود تسجيل فعلي عبر خادم."
+                "Use the official contact channel to ask about verified group availability and the most suitable next step.",
+                "استخدم قناة التواصل الرسمية للاستفسار عن المجموعات المتاحة بعد التحقق والخطوة التالية الأنسب."
               )}
             />
           </p>
         </div>
         <Link className="button primary" to="/contact">
-          <BilingualText value={bi("Registration Interest", "إبداء الاهتمام بالتسجيل")} />
+          <BilingualText value={bi("Contact About Program", "تواصل بخصوص البرنامج")} />
           <ArrowRight />
         </Link>
       </section>
