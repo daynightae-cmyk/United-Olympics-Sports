@@ -22,7 +22,7 @@ import {
   TrendingUp,
   UsersRound,
 } from 'lucide-react';
-import { Link, Route, Routes, useLocation } from 'react-router-dom';
+import { Link, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import {
   PUBLIC_BRANCHES,
   PUBLIC_COACHES,
@@ -30,6 +30,7 @@ import {
   PUBLIC_SOCIAL_LINKS,
   PUBLIC_SPORTS,
   type PublicSport,
+  type PublicTrainingProgram,
 } from '../../data/public/publicContent';
 import {
   UOS_PUBLIC_MEDIA,
@@ -164,6 +165,40 @@ function SportCard({ sport, featured = false }: { sport: PublicSport; featured?:
   );
 }
 
+function ProgramCard({ program }: { program: PublicTrainingProgram }) {
+  const sport = PUBLIC_SPORTS.find((item) => item.slug === program.sportId);
+  if (!sport) return null;
+  const asset = UOS_PUBLIC_MEDIA.sports[sport.id].card;
+
+  return (
+    <article className="uos-program-card uos-reveal" style={{ '--sport-accent': sport.accent } as CSSProperties}>
+      <PublicImage asset={asset} sizes="(max-width: 760px) 100vw, 31vw" />
+      <div className="uos-program-card-copy">
+        <div className="uos-program-meta">
+          <span><Copy>{program.sport}</Copy></span>
+          <span><Copy>{program.level}</Copy></span>
+        </div>
+        <h3><Copy>{program.name}</Copy></h3>
+        <p><Copy>{program.description}</Copy></p>
+        <div className="uos-program-focus"><strong><Copy>{{ ar: 'محور التدريب', en: 'Training focus' }}</Copy></strong><Copy>{program.focus}</Copy></div>
+        <Link to={`/programs/${program.slug}`}><Copy>{{ ar: 'عرض المسار', en: 'View pathway' }}</Copy><ArrowRight /></Link>
+      </div>
+    </article>
+  );
+}
+
+function ProgramAvailabilityNote() {
+  return (
+    <div className="uos-program-availability">
+      <ShieldCheck />
+      <div>
+        <strong><Copy>{{ ar: 'المحتوى التدريبي واضح، والتشغيل يُؤكد بشكل منفصل', en: 'Training content is clear; operations are confirmed separately' }}</Copy></strong>
+        <p><Copy>{{ ar: 'الفروع والمواعيد والأسعار وتوزيع المجموعات لا تُعرض إلا بعد اعتمادها من بيانات التشغيل.', en: 'Branches, schedules, prices and group placement are shown only after they are confirmed by operational data.' }}</Copy></p>
+      </div>
+    </div>
+  );
+}
+
 function ClosingCta({ crop = 'home' }: { crop?: 'home' | 'programs' | 'contact' | 'coaching' }) {
   return (
     <section className={`uos-closing-cta crop-${crop} uos-reveal`}>
@@ -206,8 +241,8 @@ function HomePage() {
       </section>
 
       <section className="uos-section uos-programs-preview">
-        <SectionTitle eyebrow={{ ar: 'البرامج', en: 'Programs' }} title={{ ar: 'الوضوح قبل الاختيار', en: 'Clarity before choosing' }} body={{ ar: 'ننشر تفاصيل البرامج عند اعتمادها فقط، حتى يكون قرارك مبنيًا على معلومات دقيقة.', en: 'Program details are published only when approved, so your decision is based on accurate information.' }} />
-        {PUBLIC_PROGRAMS.length === 0 ? <div className="uos-empty-state"><Compass /><h3><Copy>{{ ar: 'تواصل معنا لمعرفة المسارات المتاحة', en: 'Contact us to learn about available paths' }}</Copy></h3><p><Copy>{{ ar: 'لم تُنشر برامج معتمدة على الموقع بعد.', en: 'No approved programs are currently published.' }}</Copy></p><ButtonLink to="/contact" variant="secondary"><Copy>{{ ar: 'إرسال استفسار', en: 'Send an enquiry' }}</Copy></ButtonLink></div> : null}
+        <SectionTitle eyebrow={{ ar: 'المسارات التدريبية', en: 'Training pathways' }} title={{ ar: 'الوضوح قبل الاختيار', en: 'Clarity before choosing' }} body={{ ar: 'استكشف محاور التدريب والتدرج، ثم أكد الإتاحة التشغيلية من خلال الاستفسار.', en: 'Explore training focus and progression, then confirm operational availability through an enquiry.' }} />
+        {PUBLIC_PROGRAMS.length > 0 ? <><div className="uos-program-grid">{PUBLIC_PROGRAMS.slice(0, 3).map((program) => <ProgramCard key={program.id} program={program} />)}</div><div className="uos-programs-more"><ButtonLink to="/programs" variant="secondary"><Copy>{{ ar: 'عرض جميع المسارات', en: 'View all pathways' }}</Copy></ButtonLink></div></> : <div className="uos-empty-state"><Compass /><h3><Copy>{{ ar: 'تواصل معنا لمعرفة المسارات المتاحة', en: 'Contact us to learn about available paths' }}</Copy></h3><ButtonLink to="/contact" variant="secondary"><Copy>{{ ar: 'إرسال استفسار', en: 'Send an enquiry' }}</Copy></ButtonLink></div>}
       </section>
 
       <section className="uos-section uos-field-moments">
@@ -253,18 +288,52 @@ function SportPage({ sport }: { sport: PublicSport }) {
   const media = UOS_PUBLIC_MEDIA.sports[sport.id];
   usePageMeta(sport.name, sport.heroSummary);
   const technique = 'technique' in media ? media.technique : undefined;
+  const relatedPrograms = PUBLIC_PROGRAMS.filter((program) => program.sportId === sport.slug);
   return <>
     <PageHero asset={media.hero} eyebrow={sport.name} title={sport.heroSummary} body={sport.summary} actions={<div className="uos-hero-actions"><ButtonLink to="/programs"><Copy>{{ ar: 'استكشف البرامج', en: 'Explore programs' }}</Copy></ButtonLink><ButtonLink to="/sports" variant="secondary"><Copy>{{ ar: 'العودة إلى الرياضات', en: 'Back to sports' }}</Copy></ButtonLink></div>} />
     <section className="uos-section uos-sport-develops" style={{ '--sport-accent': sport.accent } as CSSProperties}><SectionTitle eyebrow={{ ar: 'ما الذي تطوره هذه الرياضة؟', en: 'What does this sport develop?' }} title={{ ar: 'مهارات تتحرك مع اللاعب', en: 'Skills that move with the athlete' }} /><div>{sport.themes.map((theme, index) => <article className="uos-reveal" key={theme.en}><span>0{index + 1}</span><Focus /><h3><Copy>{theme}</Copy></h3></article>)}</div></section>
     <section className={`uos-section uos-sport-path ${technique ? 'has-image' : ''}`}><div className="uos-sport-path-copy"><SectionTitle eyebrow={{ ar: 'التطور', en: 'Development' }} title={{ ar: 'بناء المهارة بترتيب واضح', en: 'Building skill in a clear sequence' }} /><ol>{sport.path.map((stage, index) => <li key={stage.en}><span>0{index + 1}</span><h3><Copy>{stage}</Copy></h3></li>)}</ol></div>{technique ? <PublicImage asset={technique} /> : null}</section>
-    <section className="uos-section uos-related-programs"><SectionTitle eyebrow={{ ar: 'البرامج المرتبطة', en: 'Related programs' }} title={{ ar: 'المعلومات الدقيقة أولًا', en: 'Accurate information comes first' }} /><div className="uos-empty-state"><RouteIcon /><h3><Copy>{{ ar: 'لم تُنشر برامج معتمدة لهذه الرياضة بعد', en: 'No approved programs are published for this sport yet' }}</Copy></h3><ButtonLink to="/contact" variant="secondary"><Copy>{{ ar: 'استفسر عن المسارات', en: 'Ask about pathways' }}</Copy></ButtonLink></div></section>
+    <section className="uos-section uos-related-programs"><SectionTitle eyebrow={{ ar: 'المسارات المرتبطة', en: 'Related pathways' }} title={{ ar: 'من المهارة إلى التقدم المنظم', en: 'From skill to structured progress' }} body={{ ar: 'تعرف على محور التدريب وتدرجه قبل الاستفسار عن الإتاحة التشغيلية.', en: 'Understand the training focus and progression before asking about operational availability.' }} />{relatedPrograms.length ? <div className="uos-program-grid">{relatedPrograms.map((program) => <ProgramCard key={program.id} program={program} />)}</div> : <div className="uos-empty-state"><RouteIcon /><h3><Copy>{{ ar: 'تواصل معنا لمعرفة المسار المناسب', en: 'Contact us to find the right pathway' }}</Copy></h3><ButtonLink to="/contact" variant="secondary"><Copy>{{ ar: 'استفسر عن المسارات', en: 'Ask about pathways' }}</Copy></ButtonLink></div>}</section>
     <ClosingCta />
   </>;
 }
 
 function ProgramsPage() {
-  usePageMeta({ ar: 'البرامج', en: 'Programs' }, { ar: 'مسارات تدريب تُنشر بتفاصيل دقيقة بعد اعتمادها.', en: 'Training pathways published with accurate details after approval.' });
-  return <><PageHero asset={UOS_PUBLIC_MEDIA.home.closing} eyebrow={{ ar: 'البرامج', en: 'Programs' }} title={{ ar: 'برامج مصممة للتطور', en: 'Programs designed for progress' }} body={{ ar: 'نشارك اسم البرنامج ومحوره ومستواه ومواعيده فقط بعد اعتمادها رسميًا.', en: 'Program names, focus, level and schedules are shared only after official approval.' }} /><section className="uos-section"><div className="uos-empty-state is-large"><Compass /><h2><Copy>{{ ar: 'تواصل معنا لمعرفة المسارات المتاحة', en: 'Contact us to learn about available pathways' }}</Copy></h2><p><Copy>{{ ar: 'لا توجد برامج معتمدة منشورة حاليًا، ولن نعرض أعمارًا أو أسعارًا أو مواعيد غير مؤكدة.', en: 'No approved programs are currently published. Unconfirmed ages, prices or schedules will not be shown.' }}</Copy></p><ButtonLink to="/contact"><Copy>{{ ar: 'تواصل معنا', en: 'Contact us' }}</Copy></ButtonLink></div></section><ClosingCta crop="programs" /></>;
+  usePageMeta({ ar: 'المسارات التدريبية', en: 'Training pathways' }, { ar: 'ستة مسارات توضح محاور التدريب والتطور لكل رياضة.', en: 'Six pathways explaining the training and development focus for each sport.' });
+  return <><PageHero asset={UOS_PUBLIC_MEDIA.home.closing} eyebrow={{ ar: 'المسارات التدريبية', en: 'Training pathways' }} title={{ ar: 'مسارات مصممة للتطور', en: 'Pathways designed for progress' }} body={{ ar: 'استكشف محاور التدريب والتدرج في الرياضات الست. الإتاحة حسب الفرع والمواعيد والأسعار تُؤكد من بيانات التشغيل فقط.', en: 'Explore training focus and progression across all six sports. Branch availability, schedules and prices are confirmed only from operational data.' }} /><section className="uos-section uos-program-catalog"><SectionTitle eyebrow={{ ar: 'الرياضات الست', en: 'Six sports' }} title={{ ar: 'اختر المسار الذي يناسب هدفك', en: 'Choose the pathway that matches your goal' }} body={{ ar: 'كل مسار يشرح ما الذي يتم تطويره وكيف تُبنى الحصة دون اختلاق مواعيد أو أسعار.', en: 'Each pathway explains what is developed and how a session is structured without inventing schedules or prices.' }} /><div className="uos-program-grid">{PUBLIC_PROGRAMS.map((program) => <ProgramCard key={program.id} program={program} />)}</div><ProgramAvailabilityNote /></section><ClosingCta crop="programs" /></>;
+}
+
+function ProgramDetailPage() {
+  const { programSlug } = useParams();
+  const program = PUBLIC_PROGRAMS.find((item) => item.slug === programSlug);
+  const sport = program ? PUBLIC_SPORTS.find((item) => item.slug === program.sportId) : undefined;
+
+  usePageMeta(
+    program?.name ?? { ar: 'المسار غير موجود', en: 'Pathway not found' },
+    program?.description ?? { ar: 'تعذر العثور على المسار التدريبي المطلوب.', en: 'The requested training pathway could not be found.' },
+  );
+
+  if (!program || !sport) return <NotFoundPage />;
+  const media = UOS_PUBLIC_MEDIA.sports[sport.id];
+
+  return <>
+    <PageHero asset={media.hero} eyebrow={program.sport} title={program.name} body={program.description} actions={<div className="uos-hero-actions"><ButtonLink to="/contact"><Copy>{{ ar: 'استفسر عن الإتاحة', en: 'Ask about availability' }}</Copy></ButtonLink><ButtonLink to="/programs" variant="secondary"><Copy>{{ ar: 'كل المسارات', en: 'All pathways' }}</Copy></ButtonLink></div>} />
+    <section className="uos-section uos-program-detail">
+      <div className="uos-program-detail-meta">
+        <article><span><Copy>{{ ar: 'الفئة', en: 'Audience' }}</Copy></span><strong><Copy>{program.ageGroup}</Copy></strong></article>
+        <article><span><Copy>{{ ar: 'التدرج', en: 'Progression' }}</Copy></span><strong><Copy>{program.level}</Copy></strong></article>
+        <article><span><Copy>{{ ar: 'محور التدريب', en: 'Training focus' }}</Copy></span><strong><Copy>{program.focus}</Copy></strong></article>
+      </div>
+      <SectionTitle eyebrow={{ ar: 'ركائز التدريب', en: 'Training pillars' }} title={{ ar: 'ما الذي نبنيه داخل هذا المسار؟', en: 'What does this pathway build?' }} />
+      <div className="uos-program-pillars">{program.pillars.map((pillar, index) => <article key={pillar.en}><span>0{index + 1}</span><Check /><h3><Copy>{pillar}</Copy></h3></article>)}</div>
+      <div className="uos-program-detail-split">
+        <article><UsersRound /><span><Copy>{{ ar: 'منهج المدرب', en: 'Coach approach' }}</Copy></span><h2><Copy>{program.coachApproach}</Copy></h2></article>
+        <article><RouteIcon /><span><Copy>{{ ar: 'تجربة الحصة', en: 'Session experience' }}</Copy></span><h2><Copy>{program.sessionExperience}</Copy></h2></article>
+      </div>
+      <ProgramAvailabilityNote />
+    </section>
+    <ClosingCta crop="programs" />
+  </>;
 }
 
 function CoachingPage() {
@@ -400,6 +469,7 @@ function PublicRoutes() {
         <Route key={sport.id} path={`/sports/${sport.slug}`} element={<SportPage sport={sport} />} />
       ))}
       <Route path="/programs" element={<ProgramsPage />} />
+      <Route path="/programs/:programSlug" element={<ProgramDetailPage />} />
       <Route path="/philosophy" element={<CoachingPage />} />
       <Route path="/coaches" element={<CoachingPage />} />
       <Route path="/contact" element={<ContactPage />} />
