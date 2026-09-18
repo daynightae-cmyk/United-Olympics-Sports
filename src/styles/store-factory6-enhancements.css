@@ -257,7 +257,7 @@ html[data-theme=dark] .store-shell { --store-canvas:#0c0e12; --store-surface:#14
   .store-utilities svg { width:20px; height:20px; }
   .store-utilities .theme-menu-trigger { width:36px; height:40px; border:0; background:none; }
   .store-utilities i { top:0; right:2px; inset-inline-start:auto; font-size:9px; }
-  .store-search-wrap { display:block; min-width:0; grid-column:1/-1; grid-row:2; width:100%; }
+  .store-search-wrap { display:block; min-width:0; grid-column:1/-1; grid-row:2; width:calc(100% + 8px); margin-inline:-4px; justify-self:center; }
   .store-search { width:100%; height:44px; }
   .store-search-results { width:100%; inset-inline:0; }
   .store-nav { display:flex; position:relative; inset:auto; height:42px; overflow-x:auto; padding:0 12px; flex-direction:row; gap:0; background:#101319; border-top:1px solid #30343c; }
