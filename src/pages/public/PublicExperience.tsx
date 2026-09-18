@@ -42,6 +42,7 @@ import {
 import { PublicHeader } from '../../components/public/PublicHeader';
 import '../../styles/public-relaunch.css';
 import '../../styles/public-theme-unification.css';
+import '../../styles/public-rhythm-unification.css';
 
 const LocaleContext = createContext<{ locale: PublicLocale; setLocale: (locale: PublicLocale) => void } | null>(null);
 

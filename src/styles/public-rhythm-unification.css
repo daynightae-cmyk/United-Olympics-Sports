@@ -1,0 +1,197 @@
+/* ==========================================================================
+   United Olympics Sports — public rhythm unification
+   Typography, section rhythm, controls and card geometry.
+   Loaded after public-theme-unification.css.
+   ========================================================================== */
+
+.uos-public {
+  --uos-public-gutter:clamp(20px,4vw,64px);
+  --uos-public-section-y:clamp(64px,8vw,112px);
+  --uos-public-control-h:46px;
+  --uos-public-radius-control:10px;
+  --uos-public-radius-card:16px;
+  --uos-public-radius-feature:22px;
+  --uos-public-body:clamp(14px,1vw,16px);
+  --uos-public-title:clamp(30px,4vw,56px);
+  --uos-public-display:clamp(48px,7vw,96px);
+  font-family:var(--uos-font-en,"DM Sans","Cairo",system-ui,sans-serif);
+  font-size:var(--uos-public-body);
+  line-height:1.65;
+}
+
+.uos-public[dir="rtl"] {
+  font-family:var(--uos-font-ar,"Cairo","Tajawal","DM Sans",system-ui,sans-serif);
+}
+
+.uos-public :where(
+  .uos-home-hero-copy h1,
+  .uos-page-hero-copy h1
+) {
+  font-size:var(--uos-public-display);
+  line-height:.98;
+  letter-spacing:-.045em;
+  font-weight:800;
+}
+
+.uos-public[dir="rtl"] :where(
+  .uos-home-hero-copy h1,
+  .uos-page-hero-copy h1
+) {
+  letter-spacing:0;
+  line-height:1.12;
+}
+
+.uos-public :where(
+  .uos-section-title h2,
+  .uos-story-copy h2,
+  .uos-coaching-reflection h2,
+  .uos-contact-intro h2,
+  .uos-closing-cta h2,
+  .uos-progress-copy h2,
+  .uos-program-detail-split h2
+) {
+  font-size:var(--uos-public-title);
+  line-height:1.08;
+  letter-spacing:-.025em;
+  font-weight:800;
+}
+
+.uos-public[dir="rtl"] :where(
+  .uos-section-title h2,
+  .uos-story-copy h2,
+  .uos-coaching-reflection h2,
+  .uos-contact-intro h2,
+  .uos-closing-cta h2,
+  .uos-progress-copy h2,
+  .uos-program-detail-split h2
+) {
+  letter-spacing:0;
+  line-height:1.2;
+}
+
+.uos-public :where(
+  .uos-section-title p,
+  .uos-story-copy p,
+  .uos-progress-copy p,
+  .uos-coaching-reflection p,
+  .uos-contact-intro p,
+  .uos-legal-body p,
+  .uos-program-detail-split p
+) {
+  line-height:1.7;
+}
+
+.uos-public :where(
+  .uos-section,
+  .uos-field-moments,
+  .uos-related-programs,
+  .uos-programs-preview,
+  .uos-sport-path,
+  .uos-principles,
+  .uos-progress-section,
+  .uos-coaching-reflection
+) {
+  padding-block:var(--uos-public-section-y);
+}
+
+/* Public cards now share the same silhouette. */
+.uos-public :where(
+  .uos-sport-card,
+  .uos-program-card,
+  .uos-empty-state,
+  .uos-program-availability,
+  .uos-program-detail-meta article,
+  .uos-program-pillars article,
+  .uos-sport-develops article,
+  .uos-coaching-loop article,
+  .uos-contact-form,
+  .uos-legal-body article
+) {
+  border-radius:var(--uos-public-radius-card);
+}
+
+/* Calls to action and navigation use one control height/radius. */
+.uos-public :where(
+  .uos-button,
+  .uos-portal-trigger-button,
+  .uos-nav-link,
+  .uos-mobile-menu-button
+) {
+  min-height:var(--uos-public-control-h);
+  border-radius:var(--uos-public-radius-control);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  line-height:1.15;
+}
+
+.uos-public .uos-button {
+  padding:12px 18px;
+  font-weight:750;
+}
+
+.uos-public :where(
+  .uos-contact-form input,
+  .uos-contact-form select
+) {
+  min-height:48px;
+  border-radius:var(--uos-public-radius-control);
+  padding-inline:13px;
+}
+
+.uos-public .uos-contact-form textarea {
+  min-height:150px;
+  border-radius:var(--uos-public-radius-control);
+  padding:13px;
+  resize:vertical;
+}
+
+.uos-public :where(
+  button,a,input,select,textarea
+):focus-visible {
+  outline:2px solid var(--uos-gold);
+  outline-offset:3px;
+}
+
+/* Internal page content gets one readable measure. */
+.uos-public :where(
+  .uos-legal-body,
+  .uos-contact-layout,
+  .uos-program-detail-meta,
+  .uos-program-detail-split
+) {
+  line-height:1.65;
+}
+
+@media (max-width:860px) {
+  .uos-public {
+    --uos-public-section-y:56px;
+    --uos-public-display:clamp(40px,12vw,64px);
+    --uos-public-title:clamp(28px,8vw,42px);
+  }
+
+  .uos-public :where(
+    .uos-section,
+    .uos-field-moments,
+    .uos-related-programs,
+    .uos-programs-preview,
+    .uos-sport-path,
+    .uos-principles,
+    .uos-progress-section,
+    .uos-coaching-reflection
+  ) {
+    padding-block:var(--uos-public-section-y);
+  }
+}
+
+@media (max-width:540px) {
+  .uos-public {
+    --uos-public-section-y:46px;
+    --uos-public-control-h:44px;
+  }
+
+  .uos-public .uos-button {
+    padding-inline:15px;
+  }
+}

@@ -1,0 +1,310 @@
+/* ==========================================================================
+   United Olympics Sports — product rhythm unification
+   Canonical typography, spacing, controls, cards and tables for portals/auth.
+   Loaded after product-theme-unification.css.
+   ========================================================================== */
+
+:root {
+  --uos-space-1:4px;
+  --uos-space-2:8px;
+  --uos-space-3:12px;
+  --uos-space-4:16px;
+  --uos-space-5:20px;
+  --uos-space-6:24px;
+  --uos-space-8:32px;
+  --uos-space-10:40px;
+  --uos-space-12:48px;
+
+  --uos-control-h:44px;
+  --uos-control-h-lg:48px;
+  --uos-control-radius:10px;
+  --uos-card-radius:16px;
+  --uos-feature-radius:20px;
+
+  --uos-type-xs:11px;
+  --uos-type-sm:12px;
+  --uos-type-body:14px;
+  --uos-type-body-lg:15px;
+  --uos-type-title-sm:18px;
+  --uos-type-title:clamp(22px,2.2vw,30px);
+  --uos-type-page:clamp(28px,3.2vw,40px);
+  --uos-line-body:1.6;
+  --uos-line-tight:1.16;
+}
+
+:where(.admin-shell,.portal-shell,#player-portal-shell,.auth-shell,.portal-auth-shell) {
+  font-family:var(--uos-font-en,"DM Sans","Cairo",system-ui,sans-serif);
+  font-size:var(--uos-type-body);
+  line-height:var(--uos-line-body);
+}
+
+html[dir="rtl"] :where(.admin-shell,.portal-shell,#player-portal-shell,.auth-shell,.portal-auth-shell) {
+  font-family:var(--uos-font-ar,"Cairo","Tajawal","DM Sans",system-ui,sans-serif);
+}
+
+/* Page title hierarchy */
+:where(.admin-shell,.portal-shell,#player-portal-shell) :where(
+  .admin-page-header h1,
+  .portal-page-header h1,
+  .athlete-page-title,
+  .athlete-hero-card h1
+) {
+  font-size:var(--uos-type-page) !important;
+  line-height:var(--uos-line-tight);
+  letter-spacing:-.025em;
+  font-weight:800;
+}
+
+html[dir="rtl"] :where(.admin-shell,.portal-shell,#player-portal-shell) :where(
+  .admin-page-header h1,
+  .portal-page-header h1,
+  .athlete-page-title,
+  .athlete-hero-card h1
+) {
+  letter-spacing:0;
+}
+
+:where(.admin-shell,.portal-shell,#player-portal-shell) :where(
+  .admin-panel h2,
+  .portal-section h2,
+  .portal-card h2,
+  .athlete-glass-card h2,
+  .athlete-hero-card h2
+) {
+  font-size:var(--uos-type-title-sm);
+  line-height:1.25;
+  font-weight:750;
+}
+
+:where(.admin-shell,.portal-shell,#player-portal-shell) :where(
+  p,
+  .admin-panel p,
+  .portal-section p,
+  .portal-card p,
+  .athlete-glass-card p
+) {
+  line-height:var(--uos-line-body);
+}
+
+/* Shared control geometry. */
+:where(.admin-shell,.portal-shell,#player-portal-shell,.auth-shell,.portal-auth-shell) :where(
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  .enterprise-field,
+  .enterprise-search,
+  .inline-select
+) {
+  min-height:var(--uos-control-h) !important;
+  border-radius:var(--uos-control-radius) !important;
+  padding-inline:12px;
+}
+
+:where(.admin-shell,.portal-shell,#player-portal-shell,.auth-shell,.portal-auth-shell) textarea {
+  min-height:120px;
+  border-radius:var(--uos-control-radius) !important;
+  padding:12px;
+  resize:vertical;
+}
+
+:where(.admin-shell,.portal-shell,#player-portal-shell,.auth-shell,.portal-auth-shell) :where(
+  input,select,textarea,button,a
+):focus-visible {
+  outline:2px solid var(--color-brand,#b9954e);
+  outline-offset:2px;
+}
+
+/* Buttons share one touch target, radius and label rhythm without changing intent colors. */
+:where(.admin-shell,.portal-shell,#player-portal-shell,.auth-shell,.portal-auth-shell) :where(
+  .admin-primary-button,
+  .admin-secondary-button,
+  .admin-link-button,
+  .portal-primary-button,
+  .portal-secondary-button,
+  .enterprise-button,
+  .filter-drawer-button,
+  .language-order-toggle
+) {
+  min-height:var(--uos-control-h) !important;
+  border-radius:var(--uos-control-radius) !important;
+  padding:10px 16px;
+  line-height:1.15;
+  font-weight:700;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+
+:where(.admin-shell,.portal-shell,#player-portal-shell) :where(
+  .admin-icon-button,
+  .row-action,
+  .athlete-icon-button,
+  .portal-icon-button
+) {
+  min-width:40px;
+  min-height:40px;
+  border-radius:10px !important;
+  display:inline-grid;
+  place-items:center;
+}
+
+/* One card geometry for all workspaces. */
+:where(.admin-shell,.portal-shell,#player-portal-shell) :where(
+  .admin-page-header,
+  .admin-panel,
+  .admin-stat-card,
+  .future-panel,
+  .sport-management-card,
+  .group-card,
+  .player-preview-card,
+  .player-identity-card,
+  .player-mobile-card,
+  .performance-metric-card,
+  .feedback-card,
+  .portal-section,
+  .portal-card,
+  .portal-preview-card,
+  .portal-overview-hero > article,
+  .portal-overview-list,
+  .athlete-glass-card,
+  .athlete-hero-card,
+  .athlete-action-card,
+  .athlete-stat-pill,
+  .ui-dialog,
+  .admin-modal
+) {
+  border-radius:var(--uos-card-radius) !important;
+}
+
+:where(.admin-shell,.portal-shell,#player-portal-shell) :where(
+  .admin-panel,
+  .portal-section,
+  .portal-card,
+  .portal-preview-card,
+  .athlete-glass-card
+) {
+  padding:var(--uos-space-5);
+}
+
+/* Consistent page spacing, without altering sidebar/topbar dimensions. */
+:where(.admin-main,.portal-main,.athlete-main) {
+  --uos-page-gap:var(--uos-space-5);
+}
+
+:where(.admin-page,.portal-page,.athlete-page) {
+  gap:var(--uos-page-gap);
+}
+
+:where(.admin-dashboard-grid,.overview-grid,.player-overview-grid,.group-grid,.sport-management-grid,.performance-metric-grid,.portal-grid,.athlete-grid) {
+  gap:14px;
+}
+
+/* Data density: readable but still operational. */
+.admin-shell :where(
+  .player-table,
+  .enterprise-table,
+  .admin-table,
+  .amp-table
+) {
+  font-size:12px;
+}
+
+.admin-shell :where(
+  .player-table th,
+  .enterprise-table th,
+  .admin-table th,
+  .amp-table th
+) {
+  min-height:40px;
+  padding:11px 14px !important;
+  font-size:10px !important;
+  line-height:1.25;
+  font-weight:700;
+  letter-spacing:.02em;
+}
+
+.admin-shell :where(
+  .player-table td,
+  .enterprise-table td,
+  .admin-table td,
+  .amp-table td
+) {
+  min-height:48px;
+  padding:12px 14px !important;
+  font-size:12px !important;
+  line-height:1.4;
+}
+
+html[dir="rtl"] .admin-shell :where(
+  .player-table th,
+  .enterprise-table th,
+  .admin-table th,
+  .amp-table th
+) {
+  text-align:right;
+  letter-spacing:0;
+}
+
+.admin-shell :where(.player-table-wrap,.groups-table-shell,.enterprise-table-shell) {
+  border-radius:var(--uos-card-radius) !important;
+  overflow:auto;
+}
+
+/* Labels and helper text are identical across portals. */
+:where(.admin-shell,.portal-shell,#player-portal-shell,.auth-shell,.portal-auth-shell) label {
+  font-size:12px;
+  font-weight:650;
+  line-height:1.35;
+}
+
+:where(.admin-shell,.portal-shell,#player-portal-shell,.auth-shell,.portal-auth-shell) :where(
+  small,
+  .field-help,
+  .form-help
+) {
+  line-height:1.45;
+}
+
+/* Modal/dialog spacing. */
+:where(.admin-modal,.ui-dialog,.portal-modal,.athlete-modal) {
+  border-radius:var(--uos-feature-radius) !important;
+}
+
+:where(.admin-modal,.ui-dialog,.portal-modal,.athlete-modal) :where(
+  .modal-head,.dialog-head
+) {
+  padding-bottom:14px;
+  margin-bottom:16px;
+}
+
+/* Compact responsive rhythm. */
+@media (max-width:820px) {
+  :root {
+    --uos-control-h:44px;
+    --uos-type-page:clamp(26px,7vw,34px);
+  }
+
+  :where(.admin-shell,.portal-shell,#player-portal-shell) :where(
+    .admin-panel,.portal-section,.portal-card,.portal-preview-card,.athlete-glass-card
+  ) {
+    padding:16px;
+  }
+
+  :where(.admin-dashboard-grid,.overview-grid,.player-overview-grid,.group-grid,.sport-management-grid,.performance-metric-grid,.portal-grid,.athlete-grid) {
+    gap:10px;
+  }
+}
+
+@media (max-width:540px) {
+  :where(.admin-shell,.portal-shell,#player-portal-shell) :where(
+    .admin-primary-button,.admin-secondary-button,.portal-primary-button,.portal-secondary-button
+  ) {
+    width:100%;
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  :where(.admin-shell,.portal-shell,#player-portal-shell,.auth-shell,.portal-auth-shell) * {
+    scroll-behavior:auto !important;
+  }
+}

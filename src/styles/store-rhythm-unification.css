@@ -1,0 +1,207 @@
+/* ==========================================================================
+   United Olympics Sports Store — canonical rhythm closure
+   Typography, controls, cards, forms and commerce table/list density.
+   Loaded after store-theme-unification.css.
+   ========================================================================== */
+
+.store-shell {
+  --store-control-h:46px;
+  --store-control-radius:10px;
+  --store-card-radius:16px;
+  --store-feature-radius:20px;
+  --store-space-1:4px;
+  --store-space-2:8px;
+  --store-space-3:12px;
+  --store-space-4:16px;
+  --store-space-5:20px;
+  --store-space-6:24px;
+  --store-space-8:32px;
+  --store-type-body:14px;
+  --store-type-small:12px;
+  --store-type-title:clamp(24px,2.6vw,38px);
+  --store-type-display:clamp(44px,5vw,76px);
+  font-family:var(--uos-font-en,"DM Sans","Cairo",system-ui,sans-serif);
+  font-size:var(--store-type-body);
+  line-height:1.6;
+}
+
+.store-shell[dir="rtl"] {
+  font-family:var(--uos-font-ar,"Cairo","Tajawal","DM Sans",system-ui,sans-serif);
+}
+
+.store-shell :where(
+  .store-hero-copy h1,
+  .store-retail-hero h1
+) {
+  font-size:var(--store-type-display);
+  line-height:.98;
+  letter-spacing:-.04em;
+  font-weight:800;
+}
+
+.store-shell[dir="rtl"] :where(
+  .store-hero-copy h1,
+  .store-retail-hero h1
+) {
+  letter-spacing:0;
+  line-height:1.12;
+}
+
+.store-shell :where(
+  .store-section-heading h2,
+  .store-page-heading h1,
+  .store-category-hero h1,
+  .store-product-info h1
+) {
+  font-size:var(--store-type-title);
+  line-height:1.12;
+  letter-spacing:-.025em;
+  font-weight:800;
+}
+
+.store-shell[dir="rtl"] :where(
+  .store-section-heading h2,
+  .store-page-heading h1,
+  .store-category-hero h1,
+  .store-product-info h1
+) {
+  letter-spacing:0;
+  line-height:1.22;
+}
+
+/* Controls */
+.store-shell :where(
+  .store-button,
+  .store-mega-trigger,
+  .store-mobile-buy > button
+) {
+  min-height:var(--store-control-h);
+  border-radius:var(--store-control-radius);
+  padding:11px 17px;
+  line-height:1.15;
+  font-weight:750;
+}
+
+.store-shell :where(
+  .store-search,
+  input:not([type="checkbox"]):not([type="radio"]),
+  select
+) {
+  min-height:var(--store-control-h);
+  border-radius:var(--store-control-radius);
+}
+
+.store-shell :where(input,select) {
+  padding-inline:12px;
+}
+
+.store-shell textarea {
+  min-height:120px;
+  border-radius:var(--store-control-radius);
+  padding:12px;
+  resize:vertical;
+}
+
+.store-shell :where(button,a,input,select,textarea):focus-visible {
+  outline:2px solid var(--store-gold);
+  outline-offset:3px;
+}
+
+/* Cards and account surfaces share one radius. */
+.store-shell :where(
+  .store-product-card,
+  .store-category-rail > a,
+  .store-search-results,
+  .store-cart-summary,
+  .store-account-sidebar,
+  .store-account-content,
+  .store-checkout-panel,
+  .store-state,
+  .store-mega,
+  .store-editorial-grid article
+) {
+  border-radius:var(--store-card-radius);
+}
+
+.store-shell :where(
+  .store-home-primary,
+  .store-hero-secondary article,
+  .store-category-hero,
+  .store-collection-story
+) {
+  border-radius:var(--store-feature-radius);
+}
+
+/* Stable section rhythm across catalog/account pages. */
+.store-section {
+  padding-block:clamp(56px,6vw,84px);
+}
+
+.store-page-heading {
+  padding-block:clamp(36px,4vw,56px) clamp(24px,3vw,36px);
+}
+
+.store-section-heading {
+  margin-bottom:var(--store-space-6);
+  gap:var(--store-space-5);
+}
+
+.store-product-grid {
+  gap:16px;
+}
+
+/* Product/card content density. */
+.store-product-card :where(p,small),
+.store-account-content :where(p,small),
+.store-cart-summary :where(p,small) {
+  line-height:1.5;
+}
+
+/* Cart/checkout/account rows read with the same operational rhythm as portal tables. */
+.store-shell :where(
+  .store-cart-line,
+  .store-order-row,
+  .store-account-row,
+  .store-checkout-row
+) {
+  min-height:52px;
+  padding-block:12px;
+}
+
+.store-shell :where(
+  .store-cart-summary,
+  .store-checkout-panel,
+  .store-account-content
+) {
+  padding:var(--store-space-5);
+}
+
+@media (max-width:860px) {
+  .store-shell {
+    --store-control-h:44px;
+    --store-type-display:clamp(38px,11vw,58px);
+    --store-type-title:clamp(24px,7vw,34px);
+  }
+
+  .store-section {
+    padding-block:48px;
+  }
+
+  .store-shell :where(
+    .store-cart-summary,
+    .store-checkout-panel,
+    .store-account-content
+  ) {
+    padding:16px;
+  }
+}
+
+@media (max-width:540px) {
+  .store-section {
+    padding-block:40px;
+  }
+
+  .store-shell .store-button {
+    min-height:44px;
+  }
+}
