@@ -4,7 +4,7 @@ import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { PortalLayout } from '../layouts/PortalLayout';
 import { PortalErrorBoundary, PortalNotFoundPage, PortalRouteLoader, PortalRuntimeError } from '../components/portal/PortalRouteState';
 import { fetchPortalIdentity, signOutEverywhere } from '../lib/auth-client';
-import { clientShowcaseMode, portalPreviewModeAllowed } from '../lib/preview-guard';
+import { clientShowcaseMode, previewModeAllowed } from '../lib/preview-guard';
 import { clearParentSession, readParentSession, startParentPreview, startParentProduction } from './parent/parentData';
 
 const load = <T extends Record<string, ComponentType>>(factory: () => Promise<T>, key: keyof T) =>
@@ -30,7 +30,7 @@ function ParentProtectedRoute({ children }: { children: React.ReactNode }) {
   const showcase = clientShowcaseMode();
   const [showcaseSession] = useState(() => showcase ? startParentPreview() : null);
   const session = showcase ? showcaseSession : readParentSession();
-  const previewRuntime = portalPreviewModeAllowed(import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true');
+  const previewRuntime = showcase || previewModeAllowed(import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true');
   const [validated, setValidated] = useState<boolean | null>(null);
   const [validationError, setValidationError] = useState(false);
   const [revision, setRevision] = useState(0);
