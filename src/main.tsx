@@ -22,6 +22,7 @@ import './styles/player-portal.css';
 import './styles/portal-unification.css';
 import './styles/portal-auth.css';
 import './styles/passkey-auth.css';
+import './styles/product-theme-unification.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
