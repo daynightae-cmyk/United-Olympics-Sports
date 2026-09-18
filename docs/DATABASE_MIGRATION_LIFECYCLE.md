@@ -96,3 +96,21 @@ In the catastrophic event of unrecoverable data corruption:
 |---|---|---|
 | `0001_production_foundation.sql` | Base schema: organizations, countries, branches, sports, programs, groups, players, guardians, coaches, sessions, attendance, performance, subscriptions, payments, audit_logs. | Foreign keys, primary keys, UUID defaults. |
 | `0002_constraints_and_hardening.sql` | Hardened domain integrity constraints. | Non-negative amounts/inventory, ends_at >= starts_at, score 0-100, enumerated statuses, currency validation, unique active subscriptions, unique payment references. |
+| `0003_portal_and_operations.sql`–`0009_inventory_anon_scope.sql` | Portal, operations, RLS, indexes, store richness and anonymous inventory scoping. | Forward-only additive hardening; production-data truth preserved. |
+| `0010_verified_sports_catalog.sql` | Canonical six-sport reference catalog. | Idempotent upsert by unique `sports.code`; seeds reference data only, never branches/programs/people/prices/schedules. |
+
+
+---
+
+## 7. Live Production Tracking Status — 2026-09-18
+
+The connected production Supabase project currently contains the application tables, but the repository runner's expected `public.schema_migrations` checksum ledger is not present. Supabase-managed `schema_migrations` tables exist in internal schemas only.
+
+Until the repository migration ledger is reconciled with the live project:
+
+- do not run the complete migration chain blindly against production;
+- treat existing production schema/data as authority for destructive-safety decisions;
+- use versioned repository migrations to codify intended state;
+- reconcile checksums/history before re-enabling unattended production migration execution.
+
+The production database already contains the verified United Olympics Sports organization record and six active sport reference rows. Migration `0010` records the same six-sport catalog idempotently for future controlled bootstrap.
