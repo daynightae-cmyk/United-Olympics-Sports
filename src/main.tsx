@@ -24,6 +24,7 @@ import './styles/portal-auth.css';
 import './styles/passkey-auth.css';
 import './styles/product-theme-unification.css';
 import './styles/product-rhythm-unification.css';
+import './styles/portal-visual-proof-closure.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
