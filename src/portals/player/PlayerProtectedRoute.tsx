@@ -3,7 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAdminData } from '../../admin/data/AdminDataProvider';
 import { PortalRouteLoader, PortalRuntimeError } from '../../components/portal/PortalRouteState';
 import { fetchPortalIdentity } from '../../lib/auth-client';
-import { clientShowcaseMode, portalPreviewModeAllowed } from '../../lib/preview-guard';
+import { clientShowcaseMode, previewModeAllowed } from '../../lib/preview-guard';
 import { usePlayerSession } from './PlayerSessionContext';
 
 interface PlayerProtectedRouteProps {
@@ -19,7 +19,7 @@ export function PlayerProtectedRoute({ children }: PlayerProtectedRouteProps) {
   const { gateway, mode } = useAdminData();
   const location = useLocation();
   const showcase = clientShowcaseMode();
-  const previewRuntime = portalPreviewModeAllowed(import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true');
+  const previewRuntime = showcase || previewModeAllowed(import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true');
   const [productionValidated, setProductionValidated] = useState<boolean | null>(null);
   const [validationError, setValidationError] = useState(false);
   const [revision, setRevision] = useState(0);
