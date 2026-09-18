@@ -819,46 +819,103 @@ function Sports() {
 }
 
 function Contact() {
-  const [previewed, setPreviewed] = useState(false);
+  const [submitState, setSubmitState] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [reference, setReference] = useState("");
+
   return (
     <div className="page">
       <PageIntro
         eyebrow={{ en: "Contact", ar: "تواصل معنا" }}
         title={{ en: "Let's start with a thoughtful conversation.", ar: "لنبدأ بحوار هادف." }}
         text={{
-          en: "Use the form below to organise your enquiry, then continue through the official support channel shown on this page.",
-          ar: "استخدم النموذج أدناه لتنظيم استفسارك، ثم أكمل عبر قناة الدعم الرسمية الموضحة في هذه الصفحة.",
+          en: "Send your enquiry securely to United Olympics Sports. You will receive a reference once it is saved.",
+          ar: "أرسل استفسارك بأمان إلى يونايتد أوليمبيكس سبورت، وستحصل على رقم مرجعي بعد حفظه.",
         }}
       />
       <section className="section section-premium contact-layout-premium">
         <form
           className="contact-form contact-form-premium"
-          onSubmit={(event) => {
+          onSubmit={async (event) => {
             event.preventDefault();
-            setPreviewed(true);
+            const form = event.currentTarget;
+            const data = new FormData(form);
+            const subject = String(data.get("subject") || "").trim();
+            const message = String(data.get("message") || "").trim();
+
+            setSubmitState("submitting");
+            setReference("");
+
+            try {
+              const response = await fetch("/api/v1/public/enquiries", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  name: String(data.get("name") || "").trim(),
+                  email: String(data.get("email") || "").trim(),
+                  message: subject ? `Subject: ${subject}\n\n${message}` : message,
+                  website: String(data.get("website") || "").trim(),
+                }),
+              });
+              const payload = await response.json().catch(() => null) as {
+                reference?: string;
+                error?: { message?: string };
+              } | null;
+
+              if (!response.ok || !payload?.reference) {
+                throw new Error(payload?.error?.message || "Enquiry submission failed");
+              }
+
+              setReference(payload.reference);
+              setSubmitState("success");
+              form.reset();
+            } catch {
+              setSubmitState("error");
+            }
           }}
         >
           <UosFormSection
             title={{ en: "Your enquiry", ar: "استفسارك" }}
             icon={<MessageCircle size={17} />}
-            description={{ en: "Prepare your message before contacting the team.", ar: "جهّز رسالتك قبل التواصل مع الفريق." }}
+            description={{ en: "Complete the form and send it directly to our enquiry system.", ar: "أكمل النموذج وأرسله مباشرة إلى نظام الاستفسارات." }}
           >
             <UosTextField label={{ en: "Name", ar: "الاسم" }} icon={<UserRound size={16} />} name="name" required autoComplete="name" placeholder="Your name | اسمك" />
             <UosTextField label={{ en: "Email", ar: "البريد الإلكتروني" }} icon={<Mail size={16} />} name="email" type="email" required autoComplete="email" placeholder="you@example.com | بريدك الإلكتروني" helper={uosCommonHelpers.email} />
             <UosTextField label={{ en: "Subject", ar: "الموضوع" }} icon={<Tag size={16} />} name="subject" required placeholder="How can we help? | كيف يمكننا مساعدتك؟" />
             <UosTextAreaField label={{ en: "Message", ar: "الرسالة" }} icon={<PenLine size={16} />} name="message" required rows={5} placeholder="Write your message | اكتب رسالتك" />
+            <input
+              aria-hidden="true"
+              autoComplete="off"
+              name="website"
+              tabIndex={-1}
+              type="text"
+              style={{ position: "absolute", inlineSize: 1, blockSize: 1, overflow: "hidden", opacity: 0, pointerEvents: "none" }}
+            />
           </UosFormSection>
-          <button className="button primary button-premium" type="submit">
-            <Bilingual value={{ en: "Prepare Message", ar: "تجهيز الرسالة" }} />
+          <button className="button primary button-premium" type="submit" disabled={submitState === "submitting"}>
+            <Bilingual
+              value={submitState === "submitting"
+                ? { en: "Sending…", ar: "جارٍ الإرسال…" }
+                : { en: "Send Enquiry", ar: "إرسال الاستفسار" }}
+            />
             <Send size={17} />
           </button>
-          {previewed && (
-            <p className="form-note form-note-premium">
+          {submitState === "success" && (
+            <p className="form-note form-note-premium" role="status">
               <CheckCircle size={15} />
               <Bilingual
                 value={{
-                  en: "Your message is prepared on this screen. Nothing has been sent yet.",
-                  ar: "تم تجهيز رسالتك على هذه الشاشة، ولم يتم إرسالها بعد.",
+                  en: `Enquiry received successfully. Reference: ${reference}`,
+                  ar: `تم استلام الاستفسار بنجاح. الرقم المرجعي: ${reference}`,
+                }}
+              />
+            </p>
+          )}
+          {submitState === "error" && (
+            <p className="form-note form-note-premium" role="alert">
+              <Bilingual
+                value={{
+                  en: "We could not save your enquiry right now. Please try again.",
+                  ar: "تعذر حفظ استفسارك حاليًا. يرجى المحاولة مرة أخرى.",
                 }}
               />
             </p>
@@ -869,21 +926,23 @@ function Contact() {
             <Mail size={32} />
           </div>
           <h3>
-            <Bilingual value={{ en: "Official Support", ar: "الدعم الرسمي" }} />
+            <Bilingual value={{ en: "Secure Enquiry", ar: "استفسار آمن" }} />
           </h3>
           <p>
             <Bilingual
               value={{
-                en: "For support, enquiries, or to join our programs, please reach out via our official email address.",
-                ar: "للدعم والاستفسارات أو للانضمام إلى برامجنا، يرجى التواصل عبر عنوان بريدنا الإلكتروني الرسمي.",
+                en: "Your enquiry is saved in the United Olympics Sports data service and receives a unique reference for follow-up.",
+                ar: "يُحفظ استفسارك في خدمة بيانات يونايتد أوليمبيكس سبورت ويحصل على رقم مرجعي فريد للمتابعة.",
               }}
             />
           </p>
-          <div className="contact-integrity" style={{ marginTop: '1.5rem', padding: '1rem', background: 'color-mix(in srgb, var(--color-brand) 5%, transparent)', borderRadius: '12px' }}>
-            <a href="mailto:Knouxio@gmail.com" className="integrity-item" style={{ textDecoration: 'none', color: 'var(--color-text-primary)' }}>
-              <Mail size={20} style={{ color: 'var(--color-brand)' }} />
-              <strong style={{ fontWeight: 700, letterSpacing: '0.5px' }}>Knouxio@gmail.com</strong>
-            </a>
+          <div className="contact-integrity" style={{ marginTop: "1.5rem", padding: "1rem", background: "color-mix(in srgb, var(--color-brand) 5%, transparent)", borderRadius: "12px" }}>
+            <div className="integrity-item">
+              <CheckCircle size={20} style={{ color: "var(--color-brand)" }} />
+              <strong style={{ fontWeight: 700 }}>
+                <Bilingual value={{ en: "Validated • Rate-limited • Reference tracked", ar: "تحقق • تحديد معدل • تتبع برقم مرجعي" }} />
+              </strong>
+            </div>
           </div>
         </aside>
       </section>
