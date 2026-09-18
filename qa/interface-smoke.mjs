@@ -6,7 +6,7 @@ const previewPlayerId = 'player-demo-001';
 const previewParentId = 'parent-preview-01';
 const previewCoachId = 'coach-preview-01';
 
-const publicRoutes = ['/', '/about', '/sports', '/sports/football', '/sports/swimming', '/sports/basketball', '/sports/tennis', '/sports/gymnastics', '/sports/martial-arts', '/programs', '/programs/football-foundations', '/coaches', '/contact', '/auth/callback', '/admin/login', '/store/login', '/route-that-must-404'];
+const publicRoutes = ['/', '/about', '/sports', '/sports/football', '/sports/swimming', '/sports/basketball', '/sports/tennis', '/sports/gymnastics', '/sports/martial-arts', '/programs', '/programs/football-foundations', '/coaches', '/coaches', '/contact', '/auth/callback', '/admin/login', '/store/login', '/route-that-must-404'];
 const playerRoutes = ['/player', '/player/login', '/player/auth/phone', '/player/auth/verify', '/player/phone', '/player/otp', '/player/home', '/player/schedule', '/player/schedule/session-demo-001', '/player/session/session-demo-001', '/player/attendance', '/player/performance', '/player/achievements', '/player/feedback', '/player/subscription', '/player/payments', '/player/documents', '/player/messages', '/player/notifications', '/player/profile', '/player/settings', '/player/route-that-must-404'];
 const parentRoutes = ['/parent', '/parent/login', '/parent/children', '/parent/children/player-demo-001', '/parent/schedule', '/parent/attendance', '/parent/performance', '/parent/feedback', '/parent/subscriptions', '/parent/payments', '/parent/documents', '/parent/messages', '/parent/notifications', '/parent/profile', '/parent/settings', '/parent/route-that-must-404'];
 const coachRoutes = ['/coach', '/coach/login', '/coach/schedule', '/coach/groups', '/coach/groups/football-demo-u12', '/coach/evaluations', '/coach/players', '/coach/players/player-demo-001', '/coach/attendance', '/coach/programs', '/coach/messages', '/coach/profile', '/coach/route-that-must-404'];
@@ -186,7 +186,43 @@ async function assertRoute(page, runtimeErrors, route, checkOverflow = true) {
   if (route.startsWith('/parent') && route !== '/parent/login' && state.pathname === '/parent/login') throw new Error(`${route}: unexpectedly redirected to parent login`);
   if (route.startsWith('/player') && !route.includes('/login') && !intentionalPlayerLoginRedirects.has(route) && state.pathname === '/player/login') throw new Error(`${route}: unexpectedly redirected to player login`);
   if (runtimeErrors.length) throw new Error(`${route}: ${runtimeErrors.join(' | ')}`);
+  if (route === '/admin') await assertAdminVisualAuthority(page);
   return state;
+}
+
+async function assertAdminVisualAuthority(page) {
+  const proof = await page.evaluate(() => {
+    const brand = document.querySelector('.admin-brand');
+    const brandImages = brand ? [...brand.querySelectorAll(':scope > img')] : [];
+    const canonicalLogoCount = brandImages.filter((image) =>
+      (image.getAttribute('src') ?? '').includes('/brand/united-olympics-sports-logo.png')
+    ).length;
+
+    const selectors = ['.dashboard-hero', '.admin-stat-card', '.admin-panel:not(.dashboard-hero)'];
+    const surfaces = selectors.map((selector) => {
+      const element = document.querySelector(selector);
+      return element ? getComputedStyle(element).backgroundColor : null;
+    });
+
+    return {
+      totalBrandImages: brandImages.length,
+      canonicalLogoCount,
+      surfaces,
+    };
+  });
+
+  if (proof.totalBrandImages !== 1 || proof.canonicalLogoCount !== 1) {
+    throw new Error(`/admin: expected exactly one canonical sidebar logo, got ${proof.totalBrandImages} brand images / ${proof.canonicalLogoCount} canonical`);
+  }
+
+  if (proof.surfaces.some((surface) => !surface)) {
+    throw new Error(`/admin: missing dashboard visual proof surface: ${proof.surfaces.join(' | ')}`);
+  }
+
+  const uniqueSurfaces = new Set(proof.surfaces);
+  if (uniqueSurfaces.size !== 1) {
+    throw new Error(`/admin: dashboard blocks do not share one canonical background: ${proof.surfaces.join(' | ')}`);
+  }
 }
 
 function isTransientRouteSweepError(error, browserName) {
