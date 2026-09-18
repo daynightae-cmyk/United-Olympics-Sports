@@ -1,16 +1,12 @@
 // Preview/demo mode guard.
 //
-// Preview data, preview auth bypass, demo routes, and demo links are
-// local/visual-QA tools. They must work in development and in explicit
-// preview-QA builds (production builds served on loopback/preview hosts
-// with VITE_UOS_* flags set), but they must NEVER activate on the
-// canonical production hosts — even if a preview flag is misconfigured
-// in the production deployment environment.
+// Standard preview data, preview auth bypass, demo routes, and demo links are
+// local/visual-QA tools. They remain blocked on canonical production hosts.
 //
-// The check is hostname-based on purpose: window.location.hostname is
-// browser truth and cannot be enabled by a leaked env flag alone. Only
-// exact canonical hosts are blocked; preview deployments, loopback, and
-// LAN QA hosts keep working.
+// Client Showcase is a separate, temporary handoff mode requested by the owner.
+// It intentionally switches portal surfaces to synthetic preview data so a
+// customer can inspect the product without production authentication or data.
+// Disable it by setting VITE_UOS_CLIENT_SHOWCASE=false when real auth goes live.
 
 const CANONICAL_PRODUCTION_HOSTS = [
   'unitedolympicsports.store',
@@ -27,8 +23,19 @@ export function isCanonicalProductionHost(hostname?: string): boolean {
   return (CANONICAL_PRODUCTION_HOSTS as readonly string[]).includes(host);
 }
 
-// Central gate: call with the explicit VITE_UOS_* flag value.
+export function clientShowcaseMode(): boolean {
+  const raw = String(import.meta.env.VITE_UOS_CLIENT_SHOWCASE ?? 'true').trim().toLowerCase();
+  return !['0', 'false', 'off', 'no'].includes(raw);
+}
+
+// Central standard-preview gate: call with the explicit VITE_UOS_* flag value.
 export function previewModeAllowed(explicitFlag: boolean): boolean {
   if (isCanonicalProductionHost()) return false;
   return import.meta.env.DEV || explicitFlag;
+}
+
+// Portal surfaces can opt into the owner's temporary Client Showcase mode
+// without weakening the standard production preview guard above.
+export function portalPreviewModeAllowed(explicitFlag: boolean): boolean {
+  return clientShowcaseMode() || previewModeAllowed(explicitFlag);
 }
