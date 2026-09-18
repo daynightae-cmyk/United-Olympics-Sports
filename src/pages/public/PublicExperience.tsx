@@ -241,7 +241,7 @@ function HomePage() {
       </section>
 
       <section className="uos-section uos-programs-preview">
-        <SectionTitle eyebrow={{ ar: 'البرامج', en: 'Programs' }} title={{ ar: 'الوضوح قبل الاختيار', en: 'Clarity before choosing' }} body={{ ar: 'ننشر تفاصيل البرامج عند اعتمادها فقط، حتى يكون قرارك مبنيًا على معلومات دقيقة.', en: 'Program details are published only when approved, so your decision is based on accurate information.' }} />
+        <SectionTitle eyebrow={{ ar: 'المسارات التدريبية', en: 'Training pathways' }} title={{ ar: 'الوضوح قبل الاختيار', en: 'Clarity before choosing' }} body={{ ar: 'استكشف محاور التدريب والتدرج، ثم أكد الإتاحة التشغيلية من خلال الاستفسار.', en: 'Explore training focus and progression, then confirm operational availability through an enquiry.' }} />
         {PUBLIC_PROGRAMS.length > 0 ? <><div className="uos-program-grid">{PUBLIC_PROGRAMS.slice(0, 3).map((program) => <ProgramCard key={program.id} program={program} />)}</div><div className="uos-programs-more"><ButtonLink to="/programs" variant="secondary"><Copy>{{ ar: 'عرض جميع المسارات', en: 'View all pathways' }}</Copy></ButtonLink></div></> : <div className="uos-empty-state"><Compass /><h3><Copy>{{ ar: 'تواصل معنا لمعرفة المسارات المتاحة', en: 'Contact us to learn about available paths' }}</Copy></h3><ButtonLink to="/contact" variant="secondary"><Copy>{{ ar: 'إرسال استفسار', en: 'Send an enquiry' }}</Copy></ButtonLink></div>}
       </section>
 
@@ -306,13 +306,15 @@ function ProgramsPage() {
 function ProgramDetailPage() {
   const { programSlug } = useParams();
   const program = PUBLIC_PROGRAMS.find((item) => item.slug === programSlug);
-  if (!program) return <NotFoundPage />;
+  const sport = program ? PUBLIC_SPORTS.find((item) => item.slug === program.sportId) : undefined;
 
-  const sport = PUBLIC_SPORTS.find((item) => item.slug === program.sportId);
-  if (!sport) return <NotFoundPage />;
+  usePageMeta(
+    program?.name ?? { ar: 'المسار غير موجود', en: 'Pathway not found' },
+    program?.description ?? { ar: 'تعذر العثور على المسار التدريبي المطلوب.', en: 'The requested training pathway could not be found.' },
+  );
+
+  if (!program || !sport) return <NotFoundPage />;
   const media = UOS_PUBLIC_MEDIA.sports[sport.id];
-
-  usePageMeta(program.name, program.description);
 
   return <>
     <PageHero asset={media.hero} eyebrow={program.sport} title={program.name} body={program.description} actions={<div className="uos-hero-actions"><ButtonLink to="/contact"><Copy>{{ ar: 'استفسر عن الإتاحة', en: 'Ask about availability' }}</Copy></ButtonLink><ButtonLink to="/programs" variant="secondary"><Copy>{{ ar: 'كل المسارات', en: 'All pathways' }}</Copy></ButtonLink></div>} />
