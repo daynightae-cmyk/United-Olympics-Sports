@@ -192,13 +192,29 @@ async function assertRoute(page, runtimeErrors, route, checkOverflow = true) {
 }
 
 async function assertInternalPortalVisualAuthority(page, route, pathname) {
-  const proof = await page.evaluate(() => ({
-    splashCount: document.querySelectorAll('#olympic-luxury-splash-root').length,
-    playerLogoCount: document.querySelectorAll('#player-portal-shell .athlete-sidebar-logo').length,
-    playerExtraEmblemCount: document.querySelectorAll('#player-portal-shell .athlete-sidebar-portal-emblem').length,
-    sharedPortalLogoCount: document.querySelectorAll('.portal-shell .portal-brand > img').length,
-    authLogoCount: document.querySelectorAll('.portal-auth .portal-auth-home > img').length,
-  }));
+  const proof = await page.evaluate(() => {
+    const playerLogo = document.querySelector('#player-portal-shell .athlete-sidebar-logo');
+    const athleteId = document.querySelector('#player-overview-page .cgpt-athlete-id');
+    const athleteStat = document.querySelector('#player-overview-page .cgpt-player-stat');
+    const quickLinks = document.querySelectorAll('#player-overview-page .athlete-quick-link-card');
+    const overviewTitle = document.querySelector('#player-overview-page .athlete-overview-title');
+    const portalCard = document.querySelector('.portal-shell .bm-card');
+    return {
+      splashCount: document.querySelectorAll('#olympic-luxury-splash-root').length,
+      playerLogoCount: document.querySelectorAll('#player-portal-shell .athlete-sidebar-logo').length,
+      playerExtraEmblemCount: document.querySelectorAll('#player-portal-shell .athlete-sidebar-portal-emblem').length,
+      playerLogoObjectFit: playerLogo ? getComputedStyle(playerLogo).objectFit : null,
+      sharedPortalLogoCount: document.querySelectorAll('.portal-shell .portal-brand > img').length,
+      authLogoCount: document.querySelectorAll('.portal-auth .portal-auth-home > img').length,
+      athleteIdDisplay: athleteId ? getComputedStyle(athleteId).display : null,
+      athleteIdRadius: athleteId ? parseFloat(getComputedStyle(athleteId).borderTopLeftRadius) : null,
+      athleteStatBackground: athleteStat ? getComputedStyle(athleteStat).backgroundImage : null,
+      quickLinkCount: quickLinks.length,
+      overviewTitleFont: overviewTitle ? getComputedStyle(overviewTitle).fontFamily : null,
+      portalCardRadius: portalCard ? parseFloat(getComputedStyle(portalCard).borderTopLeftRadius) : null,
+      portalCardBackground: portalCard ? getComputedStyle(portalCard).backgroundImage : null,
+    };
+  });
 
   if (proof.splashCount !== 0) {
     throw new Error(`${route}: internal product route must never be blocked by the public luxury splash`);
@@ -207,6 +223,30 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
   if (pathname.startsWith('/player') && !pathname.endsWith('/login')) {
     if (proof.playerLogoCount !== 1 || proof.playerExtraEmblemCount !== 0) {
       throw new Error(`${route}: player shell must render exactly one canonical logo; logo=${proof.playerLogoCount}, extraEmblem=${proof.playerExtraEmblemCount}`);
+    }
+    if (proof.playerLogoObjectFit !== 'cover') {
+      throw new Error(`${route}: player sidebar logo must crop the composite brand lockup to one emblem; object-fit=${proof.playerLogoObjectFit}`);
+    }
+  }
+
+  if (pathname === '/player/home') {
+    if (proof.athleteIdDisplay !== 'grid' || !(proof.athleteIdRadius >= 20)) {
+      throw new Error(`${route}: athlete identity must render as a sports card grid with >=20px radius; display=${proof.athleteIdDisplay}, radius=${proof.athleteIdRadius}`);
+    }
+    if (!proof.athleteStatBackground || proof.athleteStatBackground === 'none') {
+      throw new Error(`${route}: athlete stat cards must have a real athletic surface`);
+    }
+    if (proof.quickLinkCount < 4) {
+      throw new Error(`${route}: expected four semantic athletic quick-link cards; got ${proof.quickLinkCount}`);
+    }
+    if (!proof.overviewTitleFont || !/(Outfit|Segoe UI)/i.test(proof.overviewTitleFont)) {
+      throw new Error(`${route}: athlete overview title must use the athletic display font stack; got ${proof.overviewTitleFont}`);
+    }
+  }
+
+  if ((pathname === '/parent' || pathname === '/coach') && proof.portalCardRadius !== null) {
+    if (proof.portalCardRadius < 16 || !proof.portalCardBackground || proof.portalCardBackground === 'none') {
+      throw new Error(`${route}: portal overview cards must use the athletic card authority; radius=${proof.portalCardRadius}, background=${proof.portalCardBackground}`);
     }
   }
 
