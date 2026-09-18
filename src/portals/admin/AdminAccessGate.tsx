@@ -1,11 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { getAccessToken } from '../../lib/auth-client';
-import { portalPreviewModeAllowed } from '../../lib/preview-guard';
+import { clientShowcaseMode, previewModeAllowed } from '../../lib/preview-guard';
 
 export function AdminAccessGate({ children }: { children: ReactNode }) {
   const location = useLocation();
-  const previewAccess = portalPreviewModeAllowed(import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true');
+  const previewAccess = clientShowcaseMode() || previewModeAllowed(import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true');
   const [status, setStatus] = useState<'checking' | 'allowed' | 'denied'>(previewAccess ? 'allowed' : 'checking');
 
   useEffect(() => {
