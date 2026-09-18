@@ -6,6 +6,7 @@ import { PlayerPortalShell } from './player/PlayerPortalShell';
 import { PlayerProtectedRoute } from './player/PlayerProtectedRoute';
 import { BilingualText } from '../components/bilingual/BilingualText';
 import { PlayerPortalNotFoundPage } from '../pages/portal/player/PlayerPortalNotFoundPage';
+import { clientShowcaseMode } from '../lib/preview-guard';
 
 const PlayerPortalOverviewPage = lazy(() => import('../pages/portal/player/PlayerPortalOverviewPage').then(m => ({ default: m.PlayerPortalOverviewPage })));
 const PlayerPortalSchedulePage = lazy(() => import('../pages/portal/player/PlayerPortalSchedulePage').then(m => ({ default: m.PlayerPortalSchedulePage })));
@@ -72,16 +73,18 @@ function PlayerPortalApp() {
 }
 
 export function PlayerPortalRouter() {
+  const showcase = clientShowcaseMode();
+
   return (
     <Routes>
-      <Route path="login" element={<PlayerLoginPage />} />
+      <Route path="login" element={showcase ? <Navigate to="/player/home" replace /> : <PlayerLoginPage />} />
 
-      {/* Legacy authentication entry points resolve to one canonical login screen. */}
-      <Route path="auth/phone" element={<Navigate to="/player/login" replace />} />
-      <Route path="auth/verify" element={<Navigate to="/player/login" replace />} />
-      <Route path="otp" element={<Navigate to="/player/login" replace />} />
-      <Route path="phone" element={<Navigate to="/player/login" replace />} />
-      <Route path="verify" element={<Navigate to="/player/login" replace />} />
+      {/* Legacy authentication entry points resolve to one canonical entry screen. */}
+      <Route path="auth/phone" element={<Navigate to={showcase ? '/player/home' : '/player/login'} replace />} />
+      <Route path="auth/verify" element={<Navigate to={showcase ? '/player/home' : '/player/login'} replace />} />
+      <Route path="otp" element={<Navigate to={showcase ? '/player/home' : '/player/login'} replace />} />
+      <Route path="phone" element={<Navigate to={showcase ? '/player/home' : '/player/login'} replace />} />
+      <Route path="verify" element={<Navigate to={showcase ? '/player/home' : '/player/login'} replace />} />
 
       <Route path="*" element={<PlayerPortalApp />} />
     </Routes>

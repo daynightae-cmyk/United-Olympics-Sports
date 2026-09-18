@@ -1,13 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { getAccessToken } from '../../lib/auth-client';
-import { previewModeAllowed } from '../../lib/preview-guard';
+import { clientShowcaseMode, previewModeAllowed } from '../../lib/preview-guard';
 
 export function AdminAccessGate({ children }: { children: ReactNode }) {
   const location = useLocation();
-  // Preview access is blocked on canonical production hosts even when the
-  // flag is set (see preview-guard); elsewhere it enables local/preview QA.
-  const previewAccess = previewModeAllowed(import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true');
+  const previewAccess = clientShowcaseMode() || previewModeAllowed(import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true');
   const [status, setStatus] = useState<'checking' | 'allowed' | 'denied'>(previewAccess ? 'allowed' : 'checking');
 
   useEffect(() => {

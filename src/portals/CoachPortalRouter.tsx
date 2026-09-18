@@ -2,6 +2,7 @@ import { lazy, Suspense, type ComponentType } from 'react';
 import { Outlet, Route, Routes, Navigate } from 'react-router-dom';
 import { PortalLayout } from '../layouts/PortalLayout';
 import { PortalErrorBoundary, PortalNotFoundPage, PortalRouteLoader } from '../components/portal/PortalRouteState';
+import { clientShowcaseMode } from '../lib/preview-guard';
 import { CoachSessionProvider } from './coach/CoachSessionContext';
 import { CoachProtectedRoute } from './coach/CoachProtectedRoute';
 import { CoachLoginPage } from './coach/CoachLoginPage';
@@ -58,9 +59,11 @@ function CoachPortalApp() {
 }
 
 export function CoachPortalRouter() {
+  const showcase = clientShowcaseMode();
+
   return (
     <Routes>
-      <Route path="login" element={<CoachLoginPage />} />
+      <Route path="login" element={showcase ? <Navigate to="/coach/home" replace /> : <CoachLoginPage />} />
       <Route path="*" element={<CoachPortalApp />} />
     </Routes>
   );
