@@ -1,0 +1,1064 @@
+/* ==========================================================================
+   United Olympics Sports — Coach Portal Athletic Authority
+   Sports-first command, roster, schedule, table and training detail system.
+   ========================================================================== */
+
+.portal-coach {
+  --coach-gold:#d4af37;
+  --coach-gold-soft:#f0d77b;
+  --coach-bg:#070907;
+  --coach-panel:#0c100d;
+  --coach-panel-2:#111610;
+  --coach-line:rgba(212,175,55,.14);
+  --coach-line-strong:rgba(212,175,55,.32);
+  --coach-muted:#8f9991;
+  --coach-text:#f3efe6;
+  --coach-success:#79ddb4;
+  --coach-sport-accent:#d4af37;
+  background:
+    radial-gradient(circle at 82% -10%,rgba(212,175,55,.095),transparent 34rem),
+    radial-gradient(circle at 8% 100%,rgba(76,122,255,.05),transparent 28rem),
+    linear-gradient(180deg,#070907,#090c09 68%,#070907);
+  color:var(--coach-text);
+}
+
+.portal-coach .portal-main {
+  max-width:1500px;
+  width:100%;
+  margin-inline:auto;
+  padding-bottom:90px;
+}
+
+.portal-coach .coach-page {
+  width:min(100%,1480px);
+  margin-inline:auto;
+  display:grid;
+  gap:clamp(18px,2.4vw,28px);
+}
+
+.portal-coach .coach-section-block {
+  position:relative;
+}
+
+/* ---------- Training command hero ---------- */
+.portal-coach .coach-command-hero {
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  min-height:350px;
+  display:grid;
+  grid-template-columns:minmax(0,1.25fr) minmax(170px,.45fr);
+  gap:24px;
+  align-items:center;
+  padding:clamp(24px,3.4vw,42px);
+  border:1px solid rgba(212,175,55,.22);
+  border-radius:30px;
+  background:
+    radial-gradient(circle at 14% -6%,rgba(212,175,55,.20),transparent 35%),
+    radial-gradient(circle at 92% 12%,rgba(82,136,255,.065),transparent 34%),
+    linear-gradient(135deg,#090c09,#121711 54%,#080a08);
+  box-shadow:
+    0 34px 88px -46px rgba(0,0,0,.96),
+    inset 0 1px rgba(255,255,255,.035);
+}
+
+.portal-coach .coach-command-hero::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background:
+    linear-gradient(115deg,transparent 0 44%,rgba(255,255,255,.025) 48%,transparent 52%),
+    linear-gradient(rgba(212,175,55,.08) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(212,175,55,.055) 1px,transparent 1px);
+  background-size:auto,88px 88px,88px 88px;
+  mask-image:linear-gradient(to bottom,rgba(0,0,0,.55),transparent 76%);
+}
+
+.portal-coach .coach-command-hero::after {
+  content:"";
+  position:absolute;
+  width:390px;
+  height:390px;
+  right:-170px;
+  top:-180px;
+  z-index:-1;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(212,175,55,.16),rgba(212,175,55,.03) 48%,transparent 70%);
+}
+
+.portal-coach .coach-command-hero__copy {
+  min-width:0;
+}
+
+.portal-coach .coach-command-kicker {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  color:var(--coach-gold-soft);
+  font-size:10px;
+  font-weight:850;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+
+.portal-coach .coach-command-hero h1 {
+  margin:12px 0 0;
+  max-width:13ch;
+  color:#f8f3e9;
+  font-family:var(--uos-athletic-font-en,"Outfit","Segoe UI",sans-serif);
+  font-size:clamp(38px,5vw,68px);
+  line-height:.94;
+  letter-spacing:-.055em;
+  font-weight:900;
+}
+
+.portal-coach .coach-command-hero h1 .bi {
+  display:inline-flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:7px;
+}
+
+.portal-coach .coach-command-hero h1 .bi-ar {
+  display:block;
+  color:var(--coach-gold-soft);
+  font-family:var(--uos-athletic-font-ar,"Tajawal","Cairo",sans-serif);
+  font-size:.42em;
+  line-height:1.12;
+  letter-spacing:0;
+}
+
+.portal-coach .coach-command-hero p {
+  max-width:760px;
+  margin:16px 0 0;
+  color:#a4ada6;
+  font-size:12px;
+  line-height:1.85;
+}
+
+.portal-coach .coach-command-tags {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:18px;
+}
+
+.portal-coach .coach-command-tags > span {
+  min-height:34px;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:0 11px;
+  border-radius:999px;
+  border:1px solid rgba(212,175,55,.16);
+  background:rgba(212,175,55,.055);
+  color:#d9d3c7;
+  font-size:10px;
+  font-weight:750;
+}
+
+.portal-coach .coach-command-tags svg {
+  color:var(--coach-gold-soft);
+}
+
+.portal-coach .coach-command-hero__mark {
+  position:relative;
+  display:grid;
+  place-items:center;
+  min-height:210px;
+  opacity:.92;
+  filter:drop-shadow(0 18px 36px rgba(0,0,0,.34));
+}
+
+.portal-coach .coach-command-hero__mark::before {
+  content:"";
+  position:absolute;
+  width:210px;
+  height:210px;
+  border-radius:50%;
+  border:1px solid rgba(212,175,55,.16);
+  box-shadow:
+    0 0 0 18px rgba(212,175,55,.025),
+    0 0 0 42px rgba(212,175,55,.012);
+}
+
+.portal-coach .coach-command-metrics {
+  grid-column:1/-1;
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+  padding-top:19px;
+  border-top:1px solid rgba(212,175,55,.13);
+}
+
+.portal-coach .coach-command-metric {
+  position:relative;
+  overflow:hidden;
+  min-height:118px;
+  padding:14px 15px;
+  display:grid;
+  grid-template-columns:auto 1fr;
+  grid-template-rows:auto 1fr;
+  column-gap:9px;
+  border-radius:16px;
+  border:1px solid rgba(212,175,55,.11);
+  background:
+    linear-gradient(145deg,rgba(212,175,55,.045),rgba(255,255,255,.014)),
+    rgba(5,8,6,.58);
+}
+
+.portal-coach .coach-command-metric::after {
+  content:"";
+  position:absolute;
+  inset:auto 0 0;
+  height:2px;
+  background:linear-gradient(90deg,transparent,var(--coach-gold),transparent);
+  opacity:.56;
+}
+
+.portal-coach .coach-command-metric__icon {
+  width:30px;
+  height:30px;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  border:1px solid rgba(212,175,55,.18);
+  background:rgba(212,175,55,.09);
+  color:var(--coach-gold-soft);
+}
+
+.portal-coach .coach-command-metric > span:nth-child(2) {
+  align-self:center;
+  color:#929b94;
+  font-size:10px;
+  font-weight:750;
+}
+
+.portal-coach .coach-command-metric strong {
+  grid-column:1/-1;
+  align-self:end;
+  margin-top:12px;
+  color:#f5f0e5;
+  font-family:var(--uos-athletic-font-en,"Outfit","Segoe UI",sans-serif);
+  font-size:clamp(24px,2.7vw,34px);
+  line-height:1;
+}
+
+.portal-coach .coach-command-metric.success strong {
+  color:var(--coach-success);
+}
+
+.portal-coach .coach-command-metric.gold strong {
+  color:var(--coach-gold-soft);
+}
+
+/* ---------- Coach assignment / benchmark system ---------- */
+.portal-coach .coach-assignment-grid > .bm-card {
+  min-height:220px;
+}
+
+.portal-coach .coach-action-grid .bm-action-card {
+  min-height:190px;
+}
+
+/* ---------- Today desk ---------- */
+.portal-coach .coach-desk-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:16px;
+}
+
+.portal-coach .coach-today {
+  position:relative;
+  overflow:hidden;
+  min-height:245px;
+  padding:22px;
+  border:1px solid rgba(212,175,55,.13);
+  border-radius:22px;
+  background:
+    radial-gradient(circle at 94% 0,rgba(212,175,55,.09),transparent 38%),
+    linear-gradient(145deg,rgba(255,255,255,.033),rgba(255,255,255,.012)),
+    rgba(10,13,10,.94);
+  box-shadow:0 26px 62px -46px rgba(0,0,0,.9);
+}
+
+.portal-coach .coach-today--primary {
+  border-color:rgba(212,175,55,.22);
+}
+
+.portal-coach .coach-today::before {
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:3px;
+  background:linear-gradient(180deg,var(--coach-gold-soft),transparent 90%);
+}
+
+html[dir="rtl"] .portal-coach .coach-today::before {
+  inset:0 0 0 auto;
+}
+
+.portal-coach .coach-today > header {
+  display:flex;
+  align-items:center;
+  gap:11px;
+  margin-bottom:12px;
+}
+
+.portal-coach .coach-today > header > span {
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  border-radius:13px;
+  border:1px solid rgba(212,175,55,.19);
+  background:rgba(212,175,55,.085);
+  color:var(--coach-gold-soft);
+}
+
+.portal-coach .coach-today > header small {
+  display:block;
+  color:#878f88;
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.portal-coach .coach-today h3 {
+  margin:3px 0 0;
+  color:#f3eee4;
+  font-family:var(--uos-athletic-font-en,"Outfit","Segoe UI",sans-serif);
+  font-size:18px;
+  font-weight:850;
+}
+
+.portal-coach .coach-today > p {
+  color:#8e9790;
+  font-size:11px;
+  line-height:1.7;
+}
+
+.portal-coach .coach-today-list,
+.portal-coach .coach-upcoming {
+  display:grid;
+  gap:8px;
+  margin:14px 0 0;
+  padding:0;
+  list-style:none;
+}
+
+.portal-coach .coach-today-list li,
+.portal-coach .coach-upcoming li {
+  min-height:48px;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:10px 12px;
+  border:1px solid rgba(212,175,55,.085);
+  border-radius:12px;
+  background:rgba(255,255,255,.02);
+  color:#d8d3c9;
+  font-size:10px;
+}
+
+.portal-coach .coach-upcoming li {
+  justify-content:space-between;
+}
+
+.portal-coach .coach-upcoming a {
+  min-height:30px;
+  display:inline-flex;
+  align-items:center;
+  padding:0 10px;
+  border-radius:999px;
+  border:1px solid rgba(212,175,55,.16);
+  background:rgba(212,175,55,.055);
+  color:var(--coach-gold-soft);
+  font-weight:800;
+  text-decoration:none;
+}
+
+.portal-coach .coach-desk-empty {
+  margin-top:14px;
+  min-height:84px;
+  display:grid;
+  place-items:center;
+  padding:14px;
+  border-radius:14px;
+  border:1px dashed rgba(212,175,55,.15);
+  background:rgba(212,175,55,.025);
+  color:#7f8981;
+  text-align:center;
+  font-size:10px;
+  line-height:1.65;
+}
+
+/* ---------- Athlete roster cards ---------- */
+.portal-coach .coach-athlete-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:16px;
+}
+
+.portal-coach .coach-athlete-card {
+  --coach-sport-accent:#d4af37;
+  position:relative;
+  overflow:hidden;
+  min-width:0;
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:17px;
+  border-radius:22px;
+  border:1px solid color-mix(in srgb,var(--coach-sport-accent) 29%,rgba(255,255,255,.08));
+  background:
+    radial-gradient(circle at 94% 0,color-mix(in srgb,var(--coach-sport-accent) 14%,transparent),transparent 38%),
+    linear-gradient(145deg,rgba(255,255,255,.038),rgba(255,255,255,.012)),
+    rgba(10,13,10,.95);
+  box-shadow:
+    0 26px 62px -44px rgba(0,0,0,.92),
+    0 0 46px -38px var(--coach-sport-accent);
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+
+.portal-coach .coach-athlete-card::before {
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:3px;
+  background:linear-gradient(180deg,var(--coach-sport-accent),transparent 90%);
+}
+
+html[dir="rtl"] .portal-coach .coach-athlete-card::before {
+  inset:0 0 0 auto;
+}
+
+.portal-coach .coach-athlete-card:hover {
+  transform:translateY(-3px);
+  border-color:color-mix(in srgb,var(--coach-sport-accent) 52%,rgba(255,255,255,.08));
+  box-shadow:
+    0 30px 68px -40px rgba(0,0,0,.94),
+    0 0 58px -38px var(--coach-sport-accent);
+}
+
+.portal-coach .coach-athlete-card__head {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+}
+
+.portal-coach .coach-athlete-card__avatar {
+  width:52px;
+  height:52px;
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  border-radius:16px;
+  color:var(--coach-sport-accent);
+  border:1px solid color-mix(in srgb,var(--coach-sport-accent) 34%,transparent);
+  background:color-mix(in srgb,var(--coach-sport-accent) 11%,rgba(255,255,255,.018));
+}
+
+.portal-coach .coach-athlete-card__identity {
+  flex:1;
+  min-width:0;
+}
+
+.portal-coach .coach-athlete-card__identity > strong {
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#f4f0e7;
+  font-family:var(--uos-athletic-font-en,"Outfit","Segoe UI",sans-serif);
+  font-size:16px;
+  font-weight:850;
+}
+
+.portal-coach .coach-athlete-card__identity > span {
+  display:block;
+  margin-top:2px;
+  color:color-mix(in srgb,var(--coach-sport-accent) 72%,#f1dfaa);
+  font-family:var(--uos-athletic-font-ar,"Tajawal","Cairo",sans-serif);
+  font-size:12px;
+  font-weight:800;
+}
+
+.portal-coach .coach-athlete-card__identity > small {
+  display:block;
+  margin-top:5px;
+  color:#8c968e;
+  font-size:9px;
+}
+
+.portal-coach .coach-athlete-signals {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+}
+
+.portal-coach .coach-athlete-signal {
+  min-width:0;
+  min-height:80px;
+  padding:10px 11px;
+  border-radius:13px;
+  border:1px solid rgba(255,255,255,.075);
+  background:rgba(255,255,255,.021);
+}
+
+.portal-coach .coach-athlete-signal > span {
+  display:block;
+  color:#87918a;
+  font-size:9px;
+}
+
+.portal-coach .coach-athlete-signal > strong {
+  display:block;
+  margin-top:9px;
+  color:#f0ece4;
+  font-family:var(--uos-athletic-font-en,"Outfit","Segoe UI",sans-serif);
+  font-size:12px;
+  font-weight:800;
+  overflow-wrap:anywhere;
+}
+
+.portal-coach .coach-athlete-signal.success > strong {
+  color:var(--coach-success);
+}
+
+.portal-coach .coach-athlete-signal.gold {
+  border-color:rgba(212,175,55,.15);
+  background:rgba(212,175,55,.04);
+}
+
+.portal-coach .coach-athlete-signal.gold > strong {
+  color:var(--coach-gold-soft);
+}
+
+.portal-coach .coach-athlete-signal .missing {
+  color:#68736b;
+  font-family:var(--uos-athletic-font-body,"Segoe UI",sans-serif);
+  font-size:10px;
+  font-weight:650;
+}
+
+.portal-coach .coach-athlete-card__action {
+  min-height:42px;
+  margin-top:auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 14px;
+  border-radius:12px;
+  border:1px solid color-mix(in srgb,var(--coach-sport-accent) 30%,transparent);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--coach-sport-accent) 13%,transparent),rgba(255,255,255,.018));
+  color:color-mix(in srgb,var(--coach-sport-accent) 74%,#f7e5a8);
+  font-size:11px;
+  font-weight:850;
+  text-decoration:none;
+}
+
+/* ---------- Existing portal surfaces ---------- */
+.portal-coach .portal-section,
+.portal-coach .portal-card,
+.portal-coach .portal-preview-card,
+.portal-coach .portal-profile-hero {
+  border-color:rgba(212,175,55,.13) !important;
+  background:
+    radial-gradient(circle at 94% 0,rgba(212,175,55,.07),transparent 35%),
+    linear-gradient(145deg,rgba(255,255,255,.033),rgba(255,255,255,.010)),
+    rgba(10,13,10,.93) !important;
+  box-shadow:0 24px 58px -44px rgba(0,0,0,.88) !important;
+}
+
+.portal-coach .portal-card {
+  min-height:160px;
+  border-radius:18px !important;
+}
+
+.portal-coach .portal-card:hover {
+  border-color:rgba(212,175,55,.28) !important;
+}
+
+.portal-coach .portal-card-icon {
+  width:46px;
+  height:46px;
+  display:grid;
+  place-items:center;
+  border-radius:14px;
+  border:1px solid rgba(212,175,55,.21);
+  background:rgba(212,175,55,.085);
+  color:var(--coach-gold-soft);
+}
+
+.portal-coach .portal-card h3,
+.portal-coach .portal-section h2,
+.portal-coach .portal-profile-hero h2 {
+  font-family:var(--uos-athletic-font-en,"Outfit","Segoe UI",sans-serif);
+  font-weight:830;
+  color:#f1ede3;
+}
+
+.portal-coach .portal-card p,
+.portal-coach .portal-section p {
+  color:#8e9790;
+  line-height:1.65;
+}
+
+/* ---------- Metrics ---------- */
+.portal-coach .portal-metric-grid,
+.portal-coach .enterprise-kpi-grid {
+  gap:12px;
+}
+
+.portal-coach .portal-metric,
+.portal-coach .enterprise-kpi {
+  position:relative;
+  overflow:hidden;
+  min-height:128px;
+  border-color:rgba(212,175,55,.12) !important;
+  background:
+    linear-gradient(145deg,rgba(212,175,55,.045),rgba(255,255,255,.012)),
+    rgba(10,13,10,.92) !important;
+}
+
+.portal-coach .portal-metric::after,
+.portal-coach .enterprise-kpi::after {
+  content:"";
+  position:absolute;
+  inset:auto 0 0;
+  height:2px;
+  background:linear-gradient(90deg,transparent,var(--coach-gold),transparent);
+  opacity:.52;
+}
+
+/* ---------- Filters / fields ---------- */
+.portal-coach .enterprise-toolbar,
+.portal-coach .schedule-toolbar {
+  border:1px solid rgba(212,175,55,.13);
+  border-radius:18px;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.028),rgba(255,255,255,.010)),
+    rgba(10,13,10,.93);
+  box-shadow:0 20px 48px -40px rgba(0,0,0,.88);
+}
+
+.portal-coach .enterprise-search,
+.portal-coach .enterprise-field,
+.portal-coach .group-selector label,
+.portal-coach .schedule-nav {
+  border-color:rgba(212,175,55,.12) !important;
+  background:rgba(255,255,255,.022) !important;
+}
+
+.portal-coach :where(.enterprise-search input,.enterprise-field select,.group-selector select) {
+  min-height:44px;
+  border-color:rgba(212,175,55,.11) !important;
+  background:#0b0f0c !important;
+  color:#eee9df !important;
+  font-family:var(--uos-athletic-font-body,"Segoe UI",sans-serif);
+}
+
+.portal-coach :where(.enterprise-search input,.enterprise-field select,.group-selector select):focus {
+  outline:none;
+  border-color:rgba(212,175,55,.48) !important;
+  box-shadow:0 0 0 3px rgba(212,175,55,.08);
+}
+
+/* ---------- Tables ---------- */
+.portal-coach :where(.enterprise-table-shell,.enterprise-table-wrap) {
+  border-color:rgba(212,175,55,.13) !important;
+  border-radius:18px !important;
+  background:rgba(8,11,9,.64) !important;
+}
+
+.portal-coach .enterprise-table {
+  background:transparent !important;
+}
+
+.portal-coach .enterprise-table th {
+  background:rgba(212,175,55,.04) !important;
+  color:#9c9587 !important;
+  border-bottom-color:rgba(212,175,55,.11) !important;
+  font-size:10px !important;
+}
+
+.portal-coach .enterprise-table td {
+  border-bottom-color:rgba(255,255,255,.045) !important;
+  color:#d3d7d0;
+}
+
+.portal-coach .enterprise-table tbody tr:hover td {
+  background:rgba(212,175,55,.025) !important;
+}
+
+/* ---------- Weekly schedule ---------- */
+.portal-coach .schedule-toolbar {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  padding:14px 16px;
+}
+
+.portal-coach .schedule-nav {
+  min-height:48px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:4px;
+  border:1px solid rgba(212,175,55,.12);
+  border-radius:14px;
+}
+
+.portal-coach .schedule-nav .nav-btn {
+  width:38px;
+  height:38px;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  border:1px solid rgba(212,175,55,.11);
+  background:rgba(212,175,55,.045);
+  color:var(--coach-gold-soft);
+}
+
+.portal-coach .week-range {
+  min-width:190px;
+  text-align:center;
+  color:#ddd7cb;
+  font-size:11px;
+  font-weight:750;
+}
+
+.portal-coach .schedule-week-view,
+.portal-coach .schedule-list-view {
+  overflow:hidden;
+  border:1px solid rgba(212,175,55,.13);
+  border-radius:20px;
+  background:
+    radial-gradient(circle at 96% 0,rgba(212,175,55,.05),transparent 34%),
+    rgba(8,11,9,.72);
+}
+
+.portal-coach .schedule-week-grid {
+  display:grid;
+  grid-template-columns:repeat(7,minmax(150px,1fr));
+  min-width:1050px;
+}
+
+.portal-coach .schedule-day-column {
+  min-height:430px;
+  border-inline-end:1px solid rgba(255,255,255,.045);
+  background:rgba(255,255,255,.008);
+}
+
+.portal-coach .schedule-day-column.today {
+  background:linear-gradient(180deg,rgba(212,175,55,.065),rgba(212,175,55,.015));
+}
+
+.portal-coach .schedule-day-column > header {
+  min-height:76px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:12px;
+  border-bottom:1px solid rgba(212,175,55,.09);
+}
+
+.portal-coach .schedule-day-column > header strong {
+  display:block;
+  color:#ddd8cd;
+  font-family:var(--uos-athletic-font-en,"Outfit","Segoe UI",sans-serif);
+  font-size:11px;
+}
+
+.portal-coach .schedule-day-column > header span {
+  color:#8d968f;
+}
+
+.portal-coach .today-badge {
+  padding:4px 7px;
+  border-radius:999px;
+  border:1px solid rgba(212,175,55,.18);
+  background:rgba(212,175,55,.08);
+  color:var(--coach-gold-soft) !important;
+  font-size:8px;
+  font-weight:800;
+}
+
+.portal-coach .day-sessions {
+  display:grid;
+  gap:8px;
+  padding:10px;
+}
+
+.portal-coach .schedule-session-card {
+  position:relative;
+  overflow:hidden;
+  padding:12px;
+  border:1px solid rgba(212,175,55,.11);
+  border-radius:14px;
+  background:
+    linear-gradient(145deg,rgba(212,175,55,.04),rgba(255,255,255,.013)),
+    rgba(10,13,10,.94);
+  box-shadow:0 14px 34px -28px rgba(0,0,0,.9);
+}
+
+.portal-coach .schedule-session-card::before {
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:2px;
+  background:linear-gradient(180deg,var(--coach-gold),transparent);
+}
+
+html[dir="rtl"] .portal-coach .schedule-session-card::before {
+  inset:0 0 0 auto;
+}
+
+.portal-coach .session-header,
+.portal-coach .session-meta,
+.portal-coach .list-session-details {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.portal-coach .session-header {
+  justify-content:space-between;
+}
+
+.portal-coach .session-time,
+.portal-coach .session-status,
+.portal-coach .session-meta span,
+.portal-coach .list-session-details span {
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  color:#939c95;
+  font-size:9px;
+}
+
+.portal-coach .session-status,
+.portal-coach .status-badge {
+  padding:4px 7px;
+  border-radius:999px;
+  border:1px solid rgba(212,175,55,.14);
+  background:rgba(212,175,55,.05);
+  color:var(--coach-gold-soft);
+}
+
+.portal-coach .schedule-session-card h4 {
+  margin:9px 0;
+  color:#eee9df;
+  font-family:var(--uos-athletic-font-en,"Outfit","Segoe UI",sans-serif);
+  font-size:13px;
+}
+
+.portal-coach .no-sessions {
+  min-height:90px;
+  display:grid;
+  place-items:center;
+  color:#68736b;
+  font-size:9px;
+  text-align:center;
+}
+
+.portal-coach .schedule-list {
+  display:grid;
+  gap:10px;
+  padding:14px;
+}
+
+.portal-coach .schedule-session-card.list-card {
+  display:grid;
+  grid-template-columns:minmax(120px,.4fr) 1fr auto;
+  gap:16px;
+  align-items:center;
+  min-height:92px;
+  padding:14px 16px;
+}
+
+.portal-coach .list-session-date {
+  display:flex;
+  align-items:center;
+  gap:7px;
+  color:var(--coach-gold-soft);
+  font-size:10px;
+  font-weight:750;
+}
+
+/* ---------- Bilingual field hierarchy ---------- */
+.portal-coach :where(
+  .coach-command-metric,
+  .coach-athlete-signal,
+  .portal-card,
+  .portal-metric,
+  .enterprise-table,
+  .schedule-session-card,
+  .enterprise-toolbar
+) .bi {
+  display:inline-flex;
+  flex-direction:column;
+  align-items:flex-start;
+  line-height:1.16;
+}
+
+html[dir="rtl"] .portal-coach :where(
+  .coach-command-metric,
+  .coach-athlete-signal,
+  .portal-card,
+  .portal-metric,
+  .enterprise-table,
+  .schedule-session-card,
+  .enterprise-toolbar
+) .bi {
+  align-items:flex-end;
+}
+
+.portal-coach :where(
+  .coach-command-metric,
+  .coach-athlete-signal,
+  .portal-card,
+  .portal-metric,
+  .enterprise-table,
+  .schedule-session-card,
+  .enterprise-toolbar
+) .bi-ar {
+  display:block;
+  margin-top:2px;
+  color:#c7b275;
+  font-family:var(--uos-athletic-font-ar,"Tajawal","Cairo",sans-serif);
+  font-size:.78em;
+  letter-spacing:0;
+}
+
+/* ---------- Light mode ---------- */
+html[data-theme='light'] .portal-coach {
+  --coach-bg:#f6f1e7;
+  --coach-panel:#fffdf8;
+  --coach-panel-2:#f8f1e5;
+  --coach-text:#172033;
+  --coach-muted:#716b61;
+  background:#f6f1e7;
+  color:#172033;
+}
+
+html[data-theme='light'] .portal-coach .coach-command-hero,
+html[data-theme='light'] .portal-coach .coach-athlete-card,
+html[data-theme='light'] .portal-coach .coach-today,
+html[data-theme='light'] .portal-coach .portal-card,
+html[data-theme='light'] .portal-coach .portal-section,
+html[data-theme='light'] .portal-coach .schedule-week-view,
+html[data-theme='light'] .portal-coach .schedule-list-view {
+  background:
+    radial-gradient(circle at 94% 0,rgba(185,149,78,.10),transparent 34%),
+    linear-gradient(145deg,#fffdf8,#f6efe2) !important;
+  color:#172033;
+  box-shadow:0 18px 48px rgba(63,52,30,.08);
+}
+
+html[data-theme='light'] .portal-coach .coach-command-hero h1,
+html[data-theme='light'] .portal-coach .coach-athlete-card__identity > strong,
+html[data-theme='light'] .portal-coach .coach-athlete-signal > strong,
+html[data-theme='light'] .portal-coach .coach-today h3,
+html[data-theme='light'] .portal-coach .portal-card h3,
+html[data-theme='light'] .portal-coach .schedule-session-card h4 {
+  color:#172033;
+}
+
+html[data-theme='light'] .portal-coach :where(
+  .coach-command-metric,
+  .coach-athlete-signal,
+  .schedule-session-card,
+  .enterprise-toolbar
+) {
+  background:rgba(15,23,42,.025);
+}
+
+/* ---------- Responsive ---------- */
+@media(max-width:1180px) {
+  .portal-coach .coach-command-metrics {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .portal-coach .coach-athlete-signals {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .portal-coach .schedule-week-view {
+    overflow-x:auto;
+  }
+}
+
+@media(max-width:900px) {
+  .portal-coach .coach-command-hero {
+    grid-template-columns:1fr;
+  }
+
+  .portal-coach .coach-command-hero__mark {
+    min-height:150px;
+  }
+
+  .portal-coach .coach-desk-grid,
+  .portal-coach .coach-athlete-grid {
+    grid-template-columns:1fr;
+  }
+
+  .portal-coach .schedule-session-card.list-card {
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:620px) {
+  .portal-coach .coach-command-hero {
+    min-height:0;
+    padding:20px 17px;
+    border-radius:21px;
+  }
+
+  .portal-coach .coach-command-hero h1 {
+    font-size:clamp(34px,11vw,48px);
+  }
+
+  .portal-coach .coach-command-hero__mark {
+    display:none;
+  }
+
+  .portal-coach .coach-command-metrics {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .portal-coach .coach-athlete-card {
+    padding:16px;
+    border-radius:18px;
+  }
+
+  .portal-coach .coach-athlete-signals {
+    grid-template-columns:1fr 1fr;
+  }
+
+  .portal-coach .schedule-toolbar {
+    align-items:stretch;
+    flex-direction:column;
+  }
+
+  .portal-coach .schedule-nav,
+  .portal-coach .group-selector,
+  .portal-coach .group-selector label {
+    width:100%;
+  }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  .portal-coach .coach-athlete-card {
+    transition:none;
+    transform:none !important;
+  }
+}
