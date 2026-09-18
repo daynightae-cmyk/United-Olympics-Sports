@@ -526,3 +526,26 @@
     animation: none !important;
   }
 }
+
+
+/* Final semantic splash closure */
+.olympic-splash-stage-icon {
+  position:absolute;
+  right:-6px;
+  bottom:4px;
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  color:#f5d77f;
+  background:#11140f;
+  border:1px solid rgba(245,215,127,.7);
+  box-shadow:0 10px 26px rgba(0,0,0,.45),0 0 18px rgba(185,149,78,.22);
+}
+.olympic-splash-stage-icon svg{width:20px;height:20px}
+@media(max-width:640px){
+  .olympic-splash-logo-container{width:180px;height:180px}
+  .olympic-splash-logo-container .official-logo{width:170px!important;height:170px!important}
+  .olympic-splash-skip-btn{right:16px;bottom:18px}
+}
