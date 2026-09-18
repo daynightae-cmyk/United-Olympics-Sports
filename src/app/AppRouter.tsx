@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { UnitedAssistant } from '../assistant/UnitedAssistant';
 import { UpdateToast } from '../platform/UpdateToast';
 import { OlympicRouteTransition } from '../components/navigation/OlympicRouteTransition';
@@ -7,7 +7,7 @@ import { OlympicLuxurySplash } from '../components/splash/OlympicLuxurySplash';
 import { AuthCallbackPage } from '../components/auth/AuthCallbackPage';
 import { PasskeySetupPage } from '../components/auth/PasskeySetupPage';
 import { PortalLoginRoute } from '../components/auth/PortalLoginRoute';
-import { previewModeAllowed } from '../lib/preview-guard';
+import { clientShowcaseMode, previewModeAllowed } from '../lib/preview-guard';
 
 const AdminLayout = lazy(() => import('../layouts/AdminLayout').then((module) => ({ default: module.AdminLayout })));
 const PlayerPortalRouter = lazy(() => import('../portals/PlayerPortalRouter').then((module) => ({ default: module.PlayerPortalRouter })));
@@ -42,6 +42,8 @@ const isBenchmarkEnabled = import.meta.env.DEV === true;
 const isSafeDemoEnabled = previewModeAllowed(import.meta.env.VITE_UOS_PORTAL_DEMO === 'true');
 
 export function AppRouter() {
+  const showcase = clientShowcaseMode();
+
   return (
     <BrowserRouter>
       <OlympicLuxurySplash />
@@ -52,7 +54,7 @@ export function AppRouter() {
           {isSafeDemoEnabled && <Route path="/demo/:portal" element={<PortalDemoPage />} />}
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/auth/passkeys" element={<PasskeySetupPage />} />
-          <Route path="/admin/login" element={<PortalLoginRoute portal="admin" />} />
+          <Route path="/admin/login" element={showcase ? <Navigate to="/admin" replace /> : <PortalLoginRoute portal="admin" />} />
           <Route path="/store/login" element={<PortalLoginRoute portal="store" />} />
           <Route path="/store/*" element={<StoreApp />} />
           <Route path="/admin/*" element={<AdminAccessGate><AdminLayout /></AdminAccessGate>} />
