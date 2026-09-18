@@ -24,8 +24,6 @@ import {
 } from 'lucide-react';
 import { Link, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import {
-  PUBLIC_BRANCHES,
-  PUBLIC_COACHES,
   PUBLIC_PROGRAMS,
   PUBLIC_SOCIAL_LINKS,
   PUBLIC_SPORTS,
@@ -43,6 +41,7 @@ import { PublicHeader } from '../../components/public/PublicHeader';
 import '../../styles/public-relaunch.css';
 import '../../styles/public-theme-unification.css';
 import '../../styles/public-rhythm-unification.css';
+import '../../styles/public-coaching-pathways.css';
 
 const LocaleContext = createContext<{ locale: PublicLocale; setLocale: (locale: PublicLocale) => void } | null>(null);
 
@@ -339,13 +338,98 @@ function ProgramDetailPage() {
 }
 
 function CoachingPage() {
-  usePageMeta({ ar: 'فلسفة التدريب', en: 'Coaching philosophy' }, { ar: 'الملاحظة والتقييم والتوجيه في دورة تدريبية واضحة.', en: 'Observation, evaluation and guidance in a clear training loop.' });
-  return <><PageHero asset={UOS_PUBLIC_MEDIA.home.progress} eyebrow={{ ar: 'فلسفة التدريب', en: 'Coaching philosophy' }} title={{ ar: 'نلاحظ. نوجّه. ثم نبني الخطوة التالية.', en: 'Observe. Guide. Build the next step.' }} body={{ ar: 'التدريب الجيد لا يملأ الوقت؛ بل يقرأ الحركة ويقدم ملاحظة واضحة تساعد اللاعب على التطور.', en: 'Good coaching does not fill time. It reads movement and offers clear feedback that helps an athlete progress.' }} /><section className="uos-section uos-coaching-loop"><SectionTitle eyebrow={{ ar: 'دورة التدريب', en: 'Training loop' }} title={{ ar: 'توجيه متصل بسياق اللاعب', en: 'Guidance connected to the athlete' }} /><div>{[
-    { icon: Eye, title: { ar: 'الملاحظة', en: 'Observation' }, body: { ar: 'فهم الحركة والاستجابة داخل التدريب.', en: 'Understand movement and response in training.' } },
-    { icon: Target, title: { ar: 'التقييم المنظم', en: 'Structured evaluation' }, body: { ar: 'تحديد ما يحتاج إلى تركيز أكبر.', en: 'Identify what needs greater focus.' } },
-    { icon: Check, title: { ar: 'الملاحظات', en: 'Feedback' }, body: { ar: 'توجيه واضح يمكن تطبيقه.', en: 'Clear guidance that can be applied.' } },
-    { icon: Compass, title: { ar: 'الخطوة التالية', en: 'Next step' }, body: { ar: 'هدف قريب يحافظ على التقدم.', en: 'A near-term focus that sustains progress.' } },
-  ].map(({ icon: Icon, title, body }, index) => <article className="uos-reveal" key={title.en}><span>0{index + 1}</span><Icon /><h3><Copy>{title}</Copy></h3><p><Copy>{body}</Copy></p></article>)}</div></section><section className="uos-section uos-coaching-reflection"><PublicImage asset={UOS_PUBLIC_MEDIA.about.reflection} /><div className="uos-reveal"><span><Copy>{{ ar: 'التأمل', en: 'Reflection' }}</Copy></span><h2><Copy>{{ ar: 'التطور يحتاج إلى اتساق، لا استعجال', en: 'Development needs consistency, not haste' }}</Copy></h2><p><Copy>{{ ar: 'الممارسة اليومية والملاحظة الصادقة والثقة المتدرجة تصنع أساسًا أقوى من الوعود السريعة.', en: 'Daily practice, honest observation and gradual confidence create a stronger foundation than quick promises.' }}</Copy></p></div></section>{PUBLIC_COACHES.length === 0 ? null : null}<ClosingCta crop="coaching" /></>;
+  usePageMeta(
+    { ar: 'فلسفة التدريب', en: 'Coaching philosophy' },
+    { ar: 'الملاحظة والتقييم والتوجيه في دورة تدريبية واضحة عبر الرياضات الست.', en: 'Observation, evaluation and guidance through a clear training loop across all six sports.' },
+  );
+
+  return <>
+    <PageHero
+      asset={UOS_PUBLIC_MEDIA.home.progress}
+      eyebrow={{ ar: 'فلسفة التدريب', en: 'Coaching philosophy' }}
+      title={{ ar: 'نلاحظ. نوجّه. ثم نبني الخطوة التالية.', en: 'Observe. Guide. Build the next step.' }}
+      body={{ ar: 'التدريب الجيد لا يملأ الوقت؛ بل يقرأ الحركة ويقدم ملاحظة واضحة تساعد اللاعب على التطور.', en: 'Good coaching does not fill time. It reads movement and offers clear feedback that helps an athlete progress.' }}
+    />
+
+    <section className="uos-section uos-coaching-loop">
+      <SectionTitle
+        eyebrow={{ ar: 'دورة التدريب', en: 'Training loop' }}
+        title={{ ar: 'توجيه متصل بسياق اللاعب', en: 'Guidance connected to the athlete' }}
+      />
+      <div>{[
+        { icon: Eye, title: { ar: 'الملاحظة', en: 'Observation' }, body: { ar: 'فهم الحركة والاستجابة داخل التدريب.', en: 'Understand movement and response in training.' } },
+        { icon: Target, title: { ar: 'التقييم المنظم', en: 'Structured evaluation' }, body: { ar: 'تحديد ما يحتاج إلى تركيز أكبر.', en: 'Identify what needs greater focus.' } },
+        { icon: Check, title: { ar: 'الملاحظات', en: 'Feedback' }, body: { ar: 'توجيه واضح يمكن تطبيقه.', en: 'Clear guidance that can be applied.' } },
+        { icon: Compass, title: { ar: 'الخطوة التالية', en: 'Next step' }, body: { ar: 'هدف قريب يحافظ على التقدم.', en: 'A near-term focus that sustains progress.' } },
+      ].map(({ icon: Icon, title, body }, index) => (
+        <article className="uos-reveal" key={title.en}>
+          <span>0{index + 1}</span>
+          <Icon />
+          <h3><Copy>{title}</Copy></h3>
+          <p><Copy>{body}</Copy></p>
+        </article>
+      ))}</div>
+    </section>
+
+    <section className="uos-section uos-coaching-pathways">
+      <SectionTitle
+        eyebrow={{ ar: 'كيف يتغير التوجيه حسب الرياضة؟', en: 'How coaching adapts by sport' }}
+        title={{ ar: 'منهج واحد في الوضوح، تطبيق مختلف لكل مسار', en: 'One standard of clarity, adapted to every pathway' }}
+        body={{ ar: 'كل رياضة لها إشاراتها وإيقاعها ونوع التغذية الراجعة المناسب لها، لذلك نعرض منهج التوجيه وتجربة الحصة لكل مسار تدريبي.', en: 'Each sport has its own cues, rhythm and feedback needs, so every pathway publishes its coaching approach and session experience.' }}
+      />
+      <div className="uos-coaching-pathway-grid">
+        {PUBLIC_PROGRAMS.map((program) => {
+          const sport = PUBLIC_SPORTS.find((item) => item.slug === program.sportId);
+          if (!sport) return null;
+          return (
+            <article className="uos-coaching-pathway-card uos-reveal" key={program.id} style={{ '--sport-accent': sport.accent } as CSSProperties}>
+              <div className="uos-coaching-pathway-head">
+                <span><Copy>{program.sport}</Copy></span>
+                <strong><Copy>{program.name}</Copy></strong>
+              </div>
+              <div className="uos-coaching-pathway-block">
+                <Eye />
+                <div>
+                  <small><Copy>{{ ar: 'منهج المدرب', en: 'Coach approach' }}</Copy></small>
+                  <p><Copy>{program.coachApproach}</Copy></p>
+                </div>
+              </div>
+              <div className="uos-coaching-pathway-block">
+                <RouteIcon />
+                <div>
+                  <small><Copy>{{ ar: 'تجربة الحصة', en: 'Session experience' }}</Copy></small>
+                  <p><Copy>{program.sessionExperience}</Copy></p>
+                </div>
+              </div>
+              <Link to={`/programs/${program.slug}`}>
+                <Copy>{{ ar: 'استكشف المسار', en: 'Explore pathway' }}</Copy>
+                <ArrowRight />
+              </Link>
+            </article>
+          );
+        })}
+      </div>
+
+      <div className="uos-coaching-roster-note">
+        <ShieldCheck />
+        <div>
+          <strong><Copy>{{ ar: 'أسماء المدربين والتكليفات التشغيلية تُنشر بعد الاعتماد فقط', en: 'Named coaches and assignments are published only after approval' }}</Copy></strong>
+          <p><Copy>{{ ar: 'لن نعرض أسماء أو صور أو فروع أو جداول لطاقم التدريب قبل وجود بيانات تشغيلية معتمدة.', en: 'Coach identities, photos, branches and schedules are not shown until approved operational staff data is available.' }}</Copy></p>
+        </div>
+      </div>
+    </section>
+
+    <section className="uos-section uos-coaching-reflection">
+      <PublicImage asset={UOS_PUBLIC_MEDIA.about.reflection} />
+      <div className="uos-reveal">
+        <span><Copy>{{ ar: 'التأمل', en: 'Reflection' }}</Copy></span>
+        <h2><Copy>{{ ar: 'التطور يحتاج إلى اتساق، لا استعجال', en: 'Development needs consistency, not haste' }}</Copy></h2>
+        <p><Copy>{{ ar: 'الممارسة اليومية والملاحظة الصادقة والثقة المتدرجة تصنع أساسًا أقوى من الوعود السريعة.', en: 'Daily practice, honest observation and gradual confidence create a stronger foundation than quick promises.' }}</Copy></p>
+      </div>
+    </section>
+
+    <ClosingCta crop="coaching" />
+  </>;
 }
 
 type EnquiryStatus = { state: 'idle' } | { state: 'sending' } | { state: 'sent'; reference: string } | { state: 'error'; message: { ar: string; en: string } };
@@ -380,7 +464,7 @@ function ContactPage() {
         setStatus({ state: 'error', message: { ar: 'تعذر إرسال استفسارك الآن. حاول مجددًا لاحقًا.', en: 'Your enquiry could not be sent right now. Please try again later.' } });
       });
   };
-  return <><PageHero asset={UOS_PUBLIC_MEDIA.home.closing} eyebrow={{ ar: 'تواصل معنا', en: 'Contact us' }} title={{ ar: 'لنبدأ بسؤالك', en: 'Let us begin with your question' }} body={{ ar: 'أخبرنا بالرياضة التي تهمك، وسيصل استفسارك مباشرة إلى فريقنا.', en: 'Tell us which sport interests you. Your enquiry reaches our team directly.' }} /><section className="uos-section uos-contact-layout"><div className="uos-contact-intro"><span><Copy>{{ ar: 'الاستفسارات', en: 'Enquiries' }}</Copy></span><h2><Copy>{{ ar: 'اكتب رسالتك بوضوح', en: 'Write your message clearly' }}</Copy></h2><p><Copy>{{ ar: 'لن نعرض رقم هاتف أو عنوانًا أو ساعات عمل قبل اعتمادها من إدارة يونايتد أوليمبيكس سبورت.', en: 'No phone number, address or opening hours will be shown before approval by United Olympics Sports.' }}</Copy></p><Mail aria-hidden="true" /></div><form className="uos-contact-form" onSubmit={submit}><label><Copy>{{ ar: 'الاسم', en: 'Name' }}</Copy><input name="name" autoComplete="name" required disabled={status.state !== 'idle' && status.state !== 'error'} /></label><label><Copy>{{ ar: 'البريد الإلكتروني', en: 'Email' }}</Copy><input name="email" type="email" autoComplete="email" required disabled={status.state !== 'idle' && status.state !== 'error'} /></label><label><Copy>{{ ar: 'الرياضة', en: 'Sport' }}</Copy><select name="sport" defaultValue="" disabled={status.state !== 'idle' && status.state !== 'error'}><option value=""><Copy>{{ ar: 'اختر الرياضة', en: 'Choose a sport' }}</Copy></option>{PUBLIC_SPORTS.map((sport) => <option key={sport.id} value={sport.slug}>{t(sport.name, locale)}</option>)}</select></label><label><Copy>{{ ar: 'الرسالة', en: 'Message' }}</Copy><textarea name="message" rows={5} required disabled={status.state !== 'idle' && status.state !== 'error'} /></label><input type="text" name="website" autoComplete="off" tabIndex={-1} aria-hidden="true" className="uos-honeypot" /><button className="uos-button is-primary" type="submit" disabled={status.state === 'sending' || status.state === 'sent'}><Copy>{{ ar: status.state === 'sending' ? 'جارٍ الإرسال…' : status.state === 'sent' ? 'تم الإرسال' : 'إرسال الاستفسار', en: status.state === 'sending' ? 'Sending…' : status.state === 'sent' ? 'Sent' : 'Send enquiry' }}</Copy><Send /></button>{status.state === 'sent' ? <p className="uos-form-notice is-success" role="status"><ShieldCheck /><Copy>{{ ar: `تم استلام استفسارك بنجاح${status.reference ? ` · المرجع ${status.reference}` : ''}.`, en: `Your enquiry was received${status.reference ? ` · Reference ${status.reference}` : ''}.` }}</Copy></p> : null}{status.state === 'error' ? <p className="uos-form-notice is-error" role="alert"><ShieldCheck /><Copy>{status.message}</Copy></p> : null}</form></section>{PUBLIC_BRANCHES.length === 0 ? null : null}<ClosingCta crop="contact" /></>;
+  return <><PageHero asset={UOS_PUBLIC_MEDIA.home.closing} eyebrow={{ ar: 'تواصل معنا', en: 'Contact us' }} title={{ ar: 'لنبدأ بسؤالك', en: 'Let us begin with your question' }} body={{ ar: 'أخبرنا بالرياضة التي تهمك، وسيصل استفسارك مباشرة إلى فريقنا.', en: 'Tell us which sport interests you. Your enquiry reaches our team directly.' }} /><section className="uos-section uos-contact-layout"><div className="uos-contact-intro"><span><Copy>{{ ar: 'الاستفسارات', en: 'Enquiries' }}</Copy></span><h2><Copy>{{ ar: 'اكتب رسالتك بوضوح', en: 'Write your message clearly' }}</Copy></h2><p><Copy>{{ ar: 'لن نعرض رقم هاتف أو عنوانًا أو ساعات عمل قبل اعتمادها من إدارة يونايتد أوليمبيكس سبورت.', en: 'No phone number, address or opening hours will be shown before approval by United Olympics Sports.' }}</Copy></p><Mail aria-hidden="true" /></div><form className="uos-contact-form" onSubmit={submit}><label><Copy>{{ ar: 'الاسم', en: 'Name' }}</Copy><input name="name" autoComplete="name" required disabled={status.state !== 'idle' && status.state !== 'error'} /></label><label><Copy>{{ ar: 'البريد الإلكتروني', en: 'Email' }}</Copy><input name="email" type="email" autoComplete="email" required disabled={status.state !== 'idle' && status.state !== 'error'} /></label><label><Copy>{{ ar: 'الرياضة', en: 'Sport' }}</Copy><select name="sport" defaultValue="" disabled={status.state !== 'idle' && status.state !== 'error'}><option value=""><Copy>{{ ar: 'اختر الرياضة', en: 'Choose a sport' }}</Copy></option>{PUBLIC_SPORTS.map((sport) => <option key={sport.id} value={sport.slug}>{t(sport.name, locale)}</option>)}</select></label><label><Copy>{{ ar: 'الرسالة', en: 'Message' }}</Copy><textarea name="message" rows={5} required disabled={status.state !== 'idle' && status.state !== 'error'} /></label><input type="text" name="website" autoComplete="off" tabIndex={-1} aria-hidden="true" className="uos-honeypot" /><button className="uos-button is-primary" type="submit" disabled={status.state === 'sending' || status.state === 'sent'}><Copy>{{ ar: status.state === 'sending' ? 'جارٍ الإرسال…' : status.state === 'sent' ? 'تم الإرسال' : 'إرسال الاستفسار', en: status.state === 'sending' ? 'Sending…' : status.state === 'sent' ? 'Sent' : 'Send enquiry' }}</Copy><Send /></button>{status.state === 'sent' ? <p className="uos-form-notice is-success" role="status"><ShieldCheck /><Copy>{{ ar: `تم استلام استفسارك بنجاح${status.reference ? ` · المرجع ${status.reference}` : ''}.`, en: `Your enquiry was received${status.reference ? ` · Reference ${status.reference}` : ''}.` }}</Copy></p> : null}{status.state === 'error' ? <p className="uos-form-notice is-error" role="alert"><ShieldCheck /><Copy>{status.message}</Copy></p> : null}</form></section><ClosingCta crop="contact" /></>;
 }
 
 function NotFoundPage() {
