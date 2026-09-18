@@ -4,9 +4,10 @@
 // local/visual-QA tools. They remain blocked on canonical production hosts.
 //
 // Client Showcase is a separate, temporary handoff mode requested by the owner.
-// It intentionally switches portal surfaces to synthetic preview data so a
-// customer can inspect the product without production authentication or data.
-// Disable it by setting VITE_UOS_CLIENT_SHOWCASE=false when real auth goes live.
+// By default it activates only on the canonical customer-facing production
+// domains, where portal surfaces are switched to synthetic preview data.
+// It can be forced on elsewhere with VITE_UOS_CLIENT_SHOWCASE=true or disabled
+// everywhere with VITE_UOS_CLIENT_SHOWCASE=false when real auth goes live.
 
 const CANONICAL_PRODUCTION_HOSTS = [
   'unitedolympicsports.store',
@@ -24,8 +25,10 @@ export function isCanonicalProductionHost(hostname?: string): boolean {
 }
 
 export function clientShowcaseMode(): boolean {
-  const raw = String(import.meta.env.VITE_UOS_CLIENT_SHOWCASE ?? 'true').trim().toLowerCase();
-  return !['0', 'false', 'off', 'no'].includes(raw);
+  const raw = String(import.meta.env.VITE_UOS_CLIENT_SHOWCASE ?? '').trim().toLowerCase();
+  if (['0', 'false', 'off', 'no'].includes(raw)) return false;
+  if (['1', 'true', 'on', 'yes'].includes(raw)) return true;
+  return isCanonicalProductionHost();
 }
 
 // Central standard-preview gate: call with the explicit VITE_UOS_* flag value.
