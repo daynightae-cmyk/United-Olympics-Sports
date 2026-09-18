@@ -1,0 +1,497 @@
+/* ==========================================================================
+   United Olympics Sports — Final Premium Portal System
+   Last visual authority for Admin / Player / Parent / Coach / Store / Auth.
+   ========================================================================== */
+
+:root {
+  --uos-premium-radius-sm: 10px;
+  --uos-premium-radius: 16px;
+  --uos-premium-radius-lg: 22px;
+  --uos-premium-control: 46px;
+  --uos-premium-sidebar: 286px;
+  --uos-premium-line: rgba(185,149,78,.16);
+  --uos-premium-line-strong: rgba(185,149,78,.34);
+  --uos-premium-shadow: 0 18px 48px rgba(0,0,0,.16);
+  --uos-premium-shadow-soft: 0 10px 30px rgba(0,0,0,.10);
+}
+
+:where(.admin-shell,.portal-shell,#player-portal-shell,.store-shell,.portal-auth) {
+  font-family: var(--uos-font-en,"DM Sans","Cairo",system-ui,sans-serif);
+  letter-spacing: -.01em;
+}
+
+html[dir="rtl"] :where(.admin-shell,.portal-shell,#player-portal-shell,.store-shell,.portal-auth) {
+  font-family: var(--uos-font-ar,"Cairo","Tajawal","DM Sans",system-ui,sans-serif);
+  letter-spacing: 0;
+}
+
+/* ---------- Shared workspace canvas ---------- */
+:where(.admin-shell,.portal-shell,#player-portal-shell) {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 82% -12%, rgba(185,149,78,.08), transparent 30%),
+    radial-gradient(circle at 10% 18%, rgba(221,199,137,.035), transparent 24%),
+    var(--color-canvas) !important;
+  color: var(--color-text-primary);
+}
+
+:where(.admin-main,.portal-main,.athlete-content-area) {
+  background: transparent !important;
+}
+
+:where(.admin-main,.portal-main,.athlete-content-area) {
+  padding: clamp(18px,2.4vw,34px) !important;
+}
+
+/* ---------- Sidebar family ---------- */
+:where(.admin-sidebar,.portal-sidebar,#player-portal-shell .athlete-sidebar) {
+  background:
+    linear-gradient(180deg, rgba(185,149,78,.065), transparent 22%),
+    #0b0b09 !important;
+  border-color: rgba(221,199,137,.13) !important;
+  box-shadow: 18px 0 50px rgba(0,0,0,.16);
+}
+
+:where(.admin-brand,.portal-brand,#player-portal-shell .athlete-sidebar-header) {
+  min-height: 88px;
+  padding: 18px 18px !important;
+  gap: 12px !important;
+  border-bottom: 1px solid rgba(221,199,137,.12) !important;
+}
+
+:where(.admin-brand,.portal-brand,#player-portal-shell .athlete-sidebar-header) img {
+  width: 52px !important;
+  height: 52px !important;
+  min-width: 52px !important;
+  object-fit: contain;
+  border-radius: 50% !important;
+}
+
+#player-portal-shell .athlete-sidebar-portal-emblem {
+  display:none !important;
+}
+
+:where(.admin-brand,.portal-brand,#player-portal-shell .athlete-sidebar-header) :where(strong,h1) {
+  color: #f5f0e4 !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  line-height: 1.2;
+  letter-spacing: -.02em;
+}
+
+:where(.admin-brand,.portal-brand,#player-portal-shell .athlete-sidebar-header) :where(small,span) {
+  color: #b7ad9b;
+  line-height: 1.35;
+}
+
+:where(.admin-nav,.portal-nav,#player-portal-shell .athlete-nav-scroller) {
+  padding: 14px 10px 20px !important;
+}
+
+:where(.admin-nav a,.portal-nav a,#player-portal-shell .athlete-nav-item) {
+  min-height: 44px;
+  border-radius: 11px !important;
+  padding: 10px 12px !important;
+  border: 1px solid transparent;
+  transition: background .18s ease,border-color .18s ease,color .18s ease,transform .18s ease;
+}
+
+:where(.admin-nav a,.portal-nav a,#player-portal-shell .athlete-nav-item):hover {
+  background: rgba(185,149,78,.075) !important;
+  border-color: rgba(185,149,78,.12) !important;
+}
+
+:where(.admin-nav a.active,.portal-nav a.active,#player-portal-shell .athlete-nav-item.active) {
+  color: #f3dfaa !important;
+  background: linear-gradient(90deg,rgba(185,149,78,.16),rgba(185,149,78,.055)) !important;
+  border-color: rgba(185,149,78,.30) !important;
+  box-shadow: inset 3px 0 #b9954e;
+}
+
+html[dir="rtl"] :where(.admin-nav a.active,.portal-nav a.active,#player-portal-shell .athlete-nav-item.active) {
+  box-shadow: inset -3px 0 #b9954e;
+}
+
+:where(.admin-nav-group-label,.athlete-nav-group-label,.portal-role small) {
+  color:#918878 !important;
+  font-size:9px !important;
+  font-weight:800 !important;
+  letter-spacing:.11em;
+  text-transform:uppercase;
+}
+
+/* ---------- Topbar family ---------- */
+:where(.admin-topbar,.portal-topbar,#player-portal-shell .athlete-topbar) {
+  min-height: 76px !important;
+  padding: 12px clamp(16px,2vw,28px) !important;
+  background: color-mix(in srgb,var(--color-surface-1) 92%,transparent) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--color-border) !important;
+  box-shadow: 0 8px 28px rgba(0,0,0,.08);
+}
+
+:where(.admin-topbar,.portal-topbar,#player-portal-shell .athlete-topbar) button {
+  min-height: 40px;
+  border-radius: 10px !important;
+}
+
+/* ---------- Page hierarchy ---------- */
+:where(.admin-shell,.portal-shell,#player-portal-shell) :where(
+  .admin-page-header,
+  .portal-page-header,
+  .athlete-page-header
+) {
+  padding: clamp(20px,2vw,28px) !important;
+  margin-bottom: 18px;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--uos-premium-radius-lg) !important;
+  background:
+    linear-gradient(135deg,rgba(185,149,78,.065),transparent 40%),
+    var(--color-surface-1) !important;
+  box-shadow: var(--uos-premium-shadow-soft) !important;
+}
+
+:where(.admin-shell,.portal-shell,#player-portal-shell) :where(
+  .admin-page-header h1,
+  .portal-page-header h1,
+  .athlete-page-title,
+  .athlete-hero-card h1
+) {
+  font-size: clamp(25px,2.5vw,38px) !important;
+  line-height: 1.1 !important;
+  margin: 0 0 7px !important;
+  font-weight: 850 !important;
+}
+
+/* ---------- Card family ---------- */
+:where(.admin-shell,.portal-shell,#player-portal-shell) :where(
+  .admin-panel,
+  .admin-stat-card,
+  .dashboard-hero,
+  .future-panel,
+  .sport-management-card,
+  .group-card,
+  .player-preview-card,
+  .admin-entity-grid > article,
+  .amp-card,
+  .branch-identity-card,
+  .country-identity-card,
+  .player-identity-card,
+  .player-mobile-card,
+  .performance-metric-card,
+  .feedback-card,
+  .readiness-card,
+  .portal-section,
+  .portal-card,
+  .portal-preview-card,
+  .portal-overview-hero > article,
+  .portal-overview-list,
+  .athlete-glass-card,
+  .athlete-hero-card,
+  .athlete-action-card,
+  .athlete-stat-pill
+) {
+  border-radius: var(--uos-premium-radius) !important;
+  border: 1px solid var(--color-border) !important;
+  background: var(--color-surface-1) !important;
+  box-shadow: var(--uos-premium-shadow-soft) !important;
+}
+
+:where(.admin-shell,.portal-shell,#player-portal-shell) :where(
+  .admin-panel,
+  .portal-section,
+  .portal-card,
+  .portal-preview-card,
+  .athlete-glass-card,
+  .athlete-hero-card
+) {
+  padding: clamp(17px,2vw,24px) !important;
+}
+
+:where(.admin-shell,.portal-shell,#player-portal-shell) :where(
+  .admin-panel,
+  .portal-section,
+  .portal-card,
+  .athlete-glass-card
+):hover {
+  border-color: var(--color-border-strong) !important;
+}
+
+/* ---------- Player portal refinement ---------- */
+#player-portal-shell .athlete-workspace {
+  background: transparent !important;
+}
+
+#player-portal-shell .athlete-sidebar-header {
+  display:flex;
+  align-items:center;
+}
+
+#player-portal-shell .athlete-sidebar-brand-title {
+  white-space: normal;
+}
+
+#player-portal-shell .athlete-mini-badge {
+  margin: 12px 10px 4px !important;
+  padding: 12px !important;
+  border-radius: 13px !important;
+  border: 1px solid rgba(185,149,78,.16) !important;
+  background: rgba(185,149,78,.055) !important;
+}
+
+#player-portal-shell .athlete-content-area {
+  max-width: 1640px;
+  width: 100%;
+  margin-inline: auto;
+}
+
+#player-portal-shell .athlete-mobile-bottom-bar {
+  border-top:1px solid rgba(185,149,78,.16) !important;
+  background:rgba(11,11,9,.95) !important;
+  backdrop-filter:blur(18px);
+}
+
+#player-portal-shell .athlete-mobile-tab {
+  min-height:56px;
+  border-radius:10px;
+}
+
+/* ---------- Forms ---------- */
+:where(.admin-shell,.portal-shell,#player-portal-shell,.portal-auth,.store-shell) :where(
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea
+) {
+  border-radius: var(--uos-premium-radius-sm) !important;
+  border: 1px solid var(--color-border,var(--store-border)) !important;
+  transition: border-color .18s ease,box-shadow .18s ease,background .18s ease;
+}
+
+:where(.admin-shell,.portal-shell,#player-portal-shell,.portal-auth,.store-shell) :where(
+  input:not([type="checkbox"]):not([type="radio"]),
+  select
+) {
+  min-height: var(--uos-premium-control) !important;
+}
+
+:where(.admin-shell,.portal-shell,#player-portal-shell,.portal-auth,.store-shell) :where(
+  input,select,textarea
+):focus {
+  border-color: rgba(185,149,78,.70) !important;
+  box-shadow: 0 0 0 3px rgba(185,149,78,.12) !important;
+  outline: none;
+}
+
+/* ---------- Shared buttons ---------- */
+:where(.admin-shell,.portal-shell,#player-portal-shell,.portal-auth,.store-shell) :where(
+  .admin-primary-button,
+  .admin-secondary-button,
+  .portal-primary-button,
+  .portal-secondary-button,
+  .portal-auth-submit,
+  .store-button
+) {
+  min-height: 44px !important;
+  border-radius: 11px !important;
+  font-weight: 750 !important;
+  letter-spacing: -.01em;
+}
+
+/* ---------- Auth / Store login ---------- */
+.portal-auth {
+  min-height: 100vh;
+  padding: 18px;
+  background:
+    radial-gradient(circle at 16% 10%,rgba(185,149,78,.10),transparent 28%),
+    #080806 !important;
+}
+
+.portal-auth-toolbar {
+  max-width: 1480px;
+  margin: 0 auto 14px;
+  border:1px solid rgba(221,199,137,.12);
+  border-radius: 15px;
+  background: rgba(12,12,10,.82);
+  backdrop-filter: blur(18px);
+}
+
+.portal-auth-layout {
+  max-width: 1480px !important;
+  margin-inline:auto !important;
+  gap: 16px !important;
+  align-items:stretch;
+}
+
+.portal-auth-visual,
+.portal-auth-panel {
+  border-radius: var(--uos-premium-radius-lg) !important;
+  overflow:hidden;
+  border:1px solid rgba(221,199,137,.15) !important;
+  box-shadow:0 28px 70px rgba(0,0,0,.26) !important;
+}
+
+.portal-auth-visual::after {
+  background:linear-gradient(90deg,rgba(6,6,5,.96),rgba(6,6,5,.64) 54%,rgba(6,6,5,.18)) !important;
+}
+
+.portal-auth-card {
+  border-radius: var(--uos-premium-radius-lg) !important;
+  padding: clamp(22px,2.4vw,34px) !important;
+  background:#101510 !important;
+  border:1px solid rgba(221,199,137,.16) !important;
+}
+
+.portal-auth-card h2 {
+  font-size:clamp(24px,2.3vw,34px) !important;
+  line-height:1.08;
+}
+
+.portal-auth-field {
+  min-height: 50px !important;
+  border-radius: 11px !important;
+  background:#0d120e !important;
+}
+
+.portal-auth-providers {
+  gap: 10px !important;
+}
+
+.portal-auth-providers > button {
+  min-height: 74px !important;
+  border-radius: 12px !important;
+  background:#0d120e !important;
+  border-color:rgba(221,199,137,.16) !important;
+}
+
+.portal-auth-providers > button:hover {
+  border-color:rgba(185,149,78,.46) !important;
+  background:rgba(185,149,78,.075) !important;
+}
+
+.portal-auth-entry-note {
+  border-radius: 12px !important;
+  background:#0d120e !important;
+  border-color:rgba(221,199,137,.14) !important;
+}
+
+.portal-auth-switcher {
+  max-width: 820px !important;
+  margin: 16px auto 0 !important;
+  border-radius: 14px !important;
+  overflow:hidden;
+  border:1px solid rgba(221,199,137,.16) !important;
+  background:#0b0f0c !important;
+}
+
+.portal-auth-switcher a {
+  min-height: 58px !important;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:10px 14px !important;
+  font-weight:750;
+}
+
+.portal-auth-switcher a.is-active {
+  background:linear-gradient(135deg,#ddc789,#b9954e) !important;
+  color:#15120c !important;
+}
+
+/* ---------- Store ---------- */
+.store-shell :where(
+  .store-product-card,
+  .store-cart-summary,
+  .store-checkout-panel,
+  .store-account-content,
+  .store-profile-card,
+  .store-state,
+  .store-search-results,
+  .store-filters,
+  .store-cart-list
+) {
+  border-radius: var(--uos-premium-radius) !important;
+  box-shadow: var(--uos-premium-shadow-soft);
+}
+
+.store-product-card {
+  transition: transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+
+.store-product-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--store-border-strong) !important;
+  box-shadow: 0 22px 52px rgba(0,0,0,.16);
+}
+
+.store-account-sidebar {
+  border-radius: var(--uos-premium-radius) !important;
+  box-shadow: var(--uos-premium-shadow) !important;
+}
+
+.store-checkout-stepper {
+  border-radius: 14px !important;
+}
+
+.store-checkout-form {
+  border-radius: var(--uos-premium-radius) !important;
+}
+
+/* ---------- Tables ---------- */
+.admin-shell :where(.player-table,.enterprise-table,.admin-table,.amp-table) {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.admin-shell :where(.player-table th,.enterprise-table th,.admin-table th,.amp-table th) {
+  background: var(--color-surface-2) !important;
+  color: var(--color-text-secondary) !important;
+  font-size: 10px !important;
+  text-transform: uppercase;
+  letter-spacing:.055em;
+}
+
+.admin-shell :where(.player-table td,.enterprise-table td,.admin-table td,.amp-table td) {
+  border-bottom:1px solid var(--color-border) !important;
+}
+
+.admin-shell :where(.player-table tbody tr,.enterprise-table tbody tr,.admin-table tbody tr,.amp-table tbody tr):hover td {
+  background:rgba(185,149,78,.04) !important;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+  .portal-auth-layout {
+    grid-template-columns: 1fr !important;
+  }
+  .portal-auth-visual {
+    min-height: 430px;
+  }
+}
+
+@media (max-width: 820px) {
+  :root { --uos-premium-control:44px; }
+  :where(.admin-main,.portal-main,.athlete-content-area) {
+    padding: 14px !important;
+  }
+  :where(.admin-page-header,.portal-page-header,.athlete-page-header) {
+    border-radius: 16px !important;
+  }
+  .portal-auth { padding:10px; }
+  .portal-auth-toolbar { border-radius:12px; }
+  .portal-auth-visual { min-height:340px; }
+  .portal-auth-card { padding:20px !important; }
+  .portal-auth-providers { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
+  .portal-auth-switcher { overflow-x:auto; justify-content:flex-start; }
+  .portal-auth-switcher a { min-width:120px; }
+}
+
+@media (max-width: 520px) {
+  .portal-auth-visual { min-height:300px; }
+  .portal-auth-providers { grid-template-columns:1fr 1fr !important; }
+  :where(.admin-shell,.portal-shell,#player-portal-shell) :where(
+    .admin-panel,.portal-section,.portal-card,.athlete-glass-card,.athlete-hero-card
+  ) {
+    padding:15px !important;
+  }
+}
