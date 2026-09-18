@@ -26,6 +26,7 @@ import {
 } from './account/StoreAccountRuntime';
 import '../styles/store-commerce.css';
 import '../styles/store-factory6-enhancements.css';
+import '../styles/store-theme-unification.css';
 
 export function StoreApp({ dataGateway }: { dataGateway?: StoreDataGateway }) {
   return <StoreDataProvider gateway={dataGateway}><StoreProvider><StoreLayout><Routes>
