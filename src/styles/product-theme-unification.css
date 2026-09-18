@@ -1,0 +1,209 @@
+/* ==========================================================================
+   United Olympics Sports — canonical product palette
+   Shared by Admin, Player, Parent, Coach and authentication surfaces.
+   ========================================================================== */
+
+:root,
+html[data-theme='light'] {
+  --color-canvas:#f5f0e4;
+  --color-canvas-soft:#eee7d9;
+  --color-surface-1:#fbf8f1;
+  --color-surface-2:#f1eadc;
+  --color-surface-3:#e7dece;
+  --color-text-primary:#171611;
+  --color-text-secondary:#4f493f;
+  --color-text-muted:#746d61;
+  --color-border:rgba(45,40,30,.14);
+  --color-border-strong:rgba(185,149,78,.34);
+  --color-brand:#b9954e;
+  --color-brand-soft:#eadfbf;
+  --color-brand-strong:#806126;
+  --color-overlay:rgba(8,8,6,.48);
+  --shadow-card:0 18px 46px rgba(17,17,15,.09);
+  --shadow-floating:0 26px 64px rgba(17,17,15,.15);
+  --shadow-focus:0 0 0 3px rgba(185,149,78,.22);
+
+  --gold:var(--color-brand);
+  --gold-bright:var(--color-brand-strong);
+  --ink:var(--color-canvas);
+  --surface:var(--color-surface-1);
+  --surface-2:var(--color-surface-2);
+  --line:var(--color-border);
+  --muted:var(--color-text-muted);
+  --white:var(--color-text-primary);
+
+  --uos-canvas:var(--color-canvas);
+  --uos-canvas-soft:var(--color-canvas-soft);
+  --uos-surface-1:var(--color-surface-1);
+  --uos-surface-2:var(--color-surface-2);
+  --uos-surface-3:var(--color-surface-3);
+  --uos-text-primary:var(--color-text-primary);
+  --uos-text-secondary:var(--color-text-secondary);
+  --uos-text-muted:var(--color-text-muted);
+  --uos-text:var(--color-text-primary);
+  --uos-border:var(--color-border);
+  --uos-border-strong:var(--color-border-strong);
+  --uos-brand:var(--color-brand);
+  --uos-brand-soft:var(--color-brand-soft);
+  --uos-brand-strong:var(--color-brand-strong);
+  --uos-gold:var(--color-brand);
+  --uos-gold-muted:#a27f3d;
+  --uos-gold-deep:var(--color-brand-strong);
+  --uos-gold-highlight:#ddc789;
+  --uos-bg-base:var(--color-canvas);
+  --uos-bg-elevated:var(--color-surface-1);
+  --uos-bg-soft:var(--color-surface-2);
+  --uos-shadow-soft:var(--shadow-card);
+  --uos-shadow-elevated:var(--shadow-floating);
+  --uos-shadow-floating:var(--shadow-floating);
+  --uos-shadow-focus:var(--shadow-focus);
+}
+
+html[data-theme='dark'],
+.dark {
+  --color-canvas:#080806;
+  --color-canvas-soft:#0d0d0b;
+  --color-surface-1:#12110e;
+  --color-surface-2:#191711;
+  --color-surface-3:#211f18;
+  --color-text-primary:#f5f0e4;
+  --color-text-secondary:#d8cfbd;
+  --color-text-muted:#a79e8d;
+  --color-border:rgba(221,199,137,.14);
+  --color-border-strong:rgba(185,149,78,.40);
+  --color-brand:#b9954e;
+  --color-brand-soft:#342b1b;
+  --color-brand-strong:#ddc789;
+  --color-overlay:rgba(8,8,6,.70);
+  --shadow-card:0 18px 48px rgba(0,0,0,.26);
+  --shadow-floating:0 28px 72px rgba(0,0,0,.40);
+  --shadow-focus:0 0 0 3px rgba(185,149,78,.28);
+
+  --gold:var(--color-brand);
+  --gold-bright:var(--color-brand-strong);
+  --ink:var(--color-canvas);
+  --surface:var(--color-surface-1);
+  --surface-2:var(--color-surface-2);
+  --line:var(--color-border);
+  --muted:var(--color-text-muted);
+  --white:var(--color-text-primary);
+
+  --uos-canvas:var(--color-canvas);
+  --uos-canvas-soft:var(--color-canvas-soft);
+  --uos-surface-1:var(--color-surface-1);
+  --uos-surface-2:var(--color-surface-2);
+  --uos-surface-3:var(--color-surface-3);
+  --uos-text-primary:var(--color-text-primary);
+  --uos-text-secondary:var(--color-text-secondary);
+  --uos-text-muted:var(--color-text-muted);
+  --uos-text:var(--color-text-primary);
+  --uos-border:var(--color-border);
+  --uos-border-strong:var(--color-border-strong);
+  --uos-brand:var(--color-brand);
+  --uos-brand-soft:var(--color-brand-soft);
+  --uos-brand-strong:var(--color-brand-strong);
+  --uos-gold:var(--color-brand);
+  --uos-gold-muted:#a27f3d;
+  --uos-gold-deep:#806126;
+  --uos-gold-highlight:#ddc789;
+  --uos-bg-base:var(--color-canvas);
+  --uos-bg-elevated:var(--color-surface-1);
+  --uos-bg-soft:var(--color-surface-2);
+  --uos-shadow-soft:var(--shadow-card);
+  --uos-shadow-elevated:var(--shadow-floating);
+  --uos-shadow-floating:var(--shadow-floating);
+  --uos-shadow-focus:var(--shadow-focus);
+}
+
+/* One navigation treatment across all operational portals. */
+.admin-sidebar,
+.portal-sidebar,
+#player-portal-shell .athlete-sidebar {
+  --admin-surface:#0c0c0a;
+  --admin-surface-2:#12110e;
+  --admin-surface-3:#191711;
+  --admin-text:#f5f0e4;
+  --admin-muted:#9e9687;
+  --admin-line:rgba(221,199,137,.14);
+  --admin-line-strong:rgba(185,149,78,.38);
+  --admin-gold:#b9954e;
+  --admin-gold-soft:#ddc789;
+
+  background:
+    linear-gradient(180deg,rgba(185,149,78,.055),transparent 28%),
+    #0c0c0a !important;
+  border-color:rgba(221,199,137,.14) !important;
+}
+
+/* Parent/coach and player shells consume the same semantic palette. */
+.portal-shell,
+#player-portal-shell,
+.admin-shell {
+  --portal-canvas:var(--color-canvas);
+  --portal-surface:var(--color-surface-1);
+  --portal-surface-soft:var(--color-surface-2);
+  --portal-surface-raised:var(--color-surface-3);
+  --portal-ink:var(--color-text-primary);
+  --portal-copy:var(--color-text-secondary);
+  --portal-muted:var(--color-text-muted);
+  --portal-line:var(--color-border);
+  --portal-line-strong:var(--color-border-strong);
+  --portal-gold:var(--color-brand);
+  --portal-gold-strong:var(--color-brand-strong);
+}
+
+#player-portal-shell {
+  --athlete-bg:var(--color-canvas);
+  --athlete-bg-subtle:var(--color-canvas-soft);
+  --athlete-surface-card:var(--color-surface-1);
+  --athlete-surface-elevated:var(--color-surface-2);
+  --athlete-border:var(--color-border);
+  --athlete-border-strong:var(--color-border-strong);
+  --athlete-gold:var(--color-brand);
+  --athlete-gold-bright:var(--color-brand-strong);
+  --athlete-text-primary:var(--color-text-primary);
+  --athlete-text-secondary:var(--color-text-secondary);
+  --athlete-text-muted:var(--color-text-muted);
+}
+
+/* Shared top bars, cards, dialogs and fields now read as one product family. */
+.admin-topbar,
+.portal-topbar,
+#player-portal-shell .athlete-topbar {
+  background:
+    linear-gradient(135deg,color-mix(in srgb,var(--color-brand) 4%,transparent),transparent 42%),
+    color-mix(in srgb,var(--color-surface-1) 92%,transparent) !important;
+  border-color:var(--color-border) !important;
+}
+
+:where(.admin-shell,.portal-shell,#player-portal-shell) :where(
+  .admin-page-header,.admin-panel,.admin-stat-card,.portal-section,.portal-card,
+  .portal-preview-card,.athlete-glass-card,.athlete-hero-card,.athlete-action-card,
+  .athlete-stat-pill,.ui-dialog,.admin-modal
+) {
+  border-color:var(--color-border) !important;
+  color:var(--color-text-primary);
+}
+
+:where(.admin-shell,.portal-shell,#player-portal-shell) :where(
+  input,select,textarea,.enterprise-field,.enterprise-search,.inline-select
+) {
+  background:var(--color-surface-1) !important;
+  color:var(--color-text-primary) !important;
+  border-color:var(--color-border) !important;
+}
+
+:where(.admin-shell,.portal-shell,#player-portal-shell) :where(
+  .admin-primary-button,.portal-primary-button
+) {
+  background:var(--color-brand) !important;
+  border-color:var(--color-brand) !important;
+  color:#15120c !important;
+}
+
+/* Auth surfaces use the same gold and surfaces as the portals they open. */
+:where(.auth-shell,.portal-auth-shell,.auth-card,.portal-login-card) {
+  --auth-gold:var(--color-brand);
+  --auth-surface:var(--color-surface-1);
+  --auth-border:var(--color-border);
+}
