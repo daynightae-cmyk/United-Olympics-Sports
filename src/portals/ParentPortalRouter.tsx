@@ -90,9 +90,11 @@ function ParentShellLayout() {
 function LazyLogin() { return <Suspense fallback={<PortalRouteLoader portal="parent" />}><ParentLoginPage /></Suspense>; }
 
 export function ParentPortalRouter() {
+  const showcase = clientShowcaseMode();
+
   return (
     <Routes>
-      <Route path="login" element={<LazyLogin />} />
+      <Route path="login" element={showcase ? <Navigate to="/parent" replace /> : <LazyLogin />} />
       <Route element={<ParentShellLayout />}>
         <Route index element={<ParentPortalOverviewPage />} />
         <Route path="children" element={<ParentPortalChildrenPage />} />
