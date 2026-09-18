@@ -5,6 +5,7 @@ import { useCreateParent, useParents, usePlayers } from '../../admin/data/adminH
 import { PageHeader, UserAvatar } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { EnterpriseEmpty, EnterpriseKpi, EnterpriseStatus, EnterpriseToolbar, PreviewNotice } from '../../components/enterprise/EnterpriseUI';
+import { UosEmailField, UosPhoneField, UosSelectField, UosTextField } from '../../components/fields/UosFields';
 
 const hasUsefulContact = (value?: string) => Boolean(value && value.trim() && value.trim() !== '-');
 const emptyDraft = { nameEn: '', nameAr: '', playerId: '', preferredLanguage: 'ar' as 'ar' | 'en', phone: '', email: '' };
@@ -68,14 +69,64 @@ export function AdminParentsPage() {
     {savedNotice && <div className="preview-warning" role="status"><BilingualText value={bi('Parent saved to the browser preview store.', 'تم حفظ ولي الأمر في مخزن المعاينة بالمتصفح.')} /></div>}
 
     {showCreate && <section className="admin-panel" aria-label="Create parent">
-      <div className="panel-heading"><BilingualText value={bi('Create Parent / Guardian', 'إنشاء ولي أمر')} /><button type="button" className="icon-button" onClick={() => !createLoading && setShowCreate(false)} aria-label="Close"><X size={16} /></button></div>
-      <div className="admin-form-grid">
-        <label><BilingualText value={bi('Name (English)', 'الاسم بالإنجليزية')} /><input value={draft.nameEn} onChange={e => setDraftField('nameEn', e.target.value)} /></label>
-        <label><BilingualText value={bi('Name (Arabic)', 'الاسم بالعربية')} /><input dir="rtl" value={draft.nameAr} onChange={e => setDraftField('nameAr', e.target.value)} /></label>
-        <label><BilingualText value={bi('Linked Player (optional)', 'اللاعب المرتبط (اختياري)')} /><select value={draft.playerId} onChange={e => setDraftField('playerId', e.target.value)}><option value="">No player | بدون لاعب</option>{players.map(player => <option key={player.id} value={player.id}>{player.nameEn} | {player.nameAr}</option>)}</select></label>
-        <label><BilingualText value={bi('Preferred Language', 'اللغة المفضلة')} /><select value={draft.preferredLanguage} onChange={e => setDraftField('preferredLanguage', e.target.value as 'ar' | 'en')}><option value="ar">العربية</option><option value="en">English</option></select></label>
-        <label><BilingualText value={bi('Phone', 'الهاتف')} /><input value={draft.phone} onChange={e => setDraftField('phone', e.target.value)} placeholder="+971…" /></label>
-        <label><BilingualText value={bi('Email', 'البريد الإلكتروني')} /><input type="email" value={draft.email} onChange={e => setDraftField('email', e.target.value)} /></label>
+      <div className="panel-heading"><BilingualText value={bi('Create Parent / Guardian', 'إنشاء ولي أمر')} /><button type="button" className="icon-button" onClick={() => !createLoading && setShowCreate(false)} aria-label="Close | إغلاق"><X size={16} /></button></div>
+      <div className="uos-form-grid">
+        <UosTextField
+          label={bi('Parent name (English)', 'اسم ولي الأمر (إنجليزي)')}
+          value={draft.nameEn}
+          onChange={e => setDraftField('nameEn', e.target.value)}
+          required
+          disabled={createLoading}
+          dir="ltr"
+          autoComplete="name"
+        />
+        <UosTextField
+          label={bi('Parent name (Arabic)', 'اسم ولي الأمر (عربي)')}
+          value={draft.nameAr}
+          onChange={e => setDraftField('nameAr', e.target.value)}
+          required
+          disabled={createLoading}
+          dir="rtl"
+          lang="ar"
+          autoComplete="off"
+        />
+        <UosSelectField
+          label={bi('Linked Player', 'اللاعب المرتبط')}
+          value={draft.playerId}
+          onChange={e => setDraftField('playerId', e.target.value)}
+          placeholder={bi('No player', 'بدون لاعب')}
+          options={players.map(player => ({ value: player.id, label: bi(player.nameEn, player.nameAr) }))}
+          optional
+          disabled={createLoading}
+        />
+        <UosSelectField
+          label={bi('Preferred Language', 'اللغة المفضلة')}
+          value={draft.preferredLanguage}
+          onChange={e => setDraftField('preferredLanguage', e.target.value as 'ar' | 'en')}
+          options={[
+            { value: 'ar', label: bi('Arabic', 'العربية') },
+            { value: 'en', label: bi('English', 'الإنجليزية') },
+          ]}
+          placeholder={undefined}
+          required
+          disabled={createLoading}
+        />
+        <UosPhoneField
+          label={bi('Phone', 'الهاتف')}
+          value={draft.phone}
+          onChange={e => setDraftField('phone', e.target.value)}
+          optional
+          disabled={createLoading}
+          dir="ltr"
+        />
+        <UosEmailField
+          label={bi('Email', 'البريد الإلكتروني')}
+          value={draft.email}
+          onChange={e => setDraftField('email', e.target.value)}
+          optional
+          disabled={createLoading}
+          dir="ltr"
+        />
       </div>
       {formError && <p className="form-error" role="alert">{formError}</p>}
       <div className="admin-form-actions"><button type="button" className="admin-primary-button" disabled={createLoading} onClick={() => void submit()}><BilingualText value={createLoading ? bi('Saving…', 'جارٍ الحفظ…') : bi('Save Parent', 'حفظ ولي الأمر')} /></button></div>
