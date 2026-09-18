@@ -24,8 +24,11 @@ export function PlayerPortalOverviewPage() {
 
   return (
     <div className="space-y-7" id="player-overview-page">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div><span className="text-[10px] font-black uppercase tracking-[.16em] text-amber-400"><BilingualText value={bi('Athlete workspace', 'مساحة اللاعب')} /></span><h1 className="mt-1 text-xl sm:text-2xl font-black text-white"><BilingualText value={bi('Your Player Portal', 'بوابة اللاعب الخاصة بك')} /></h1></div>
+      <div className="athlete-overview-head">
+        <div className="athlete-overview-copy">
+          <span className="athlete-overview-eyebrow"><BilingualText value={bi('Athlete workspace', 'مساحة اللاعب')} /></span>
+          <h1 className="athlete-overview-title"><BilingualText value={bi('Your Player Portal', 'بوابة اللاعب الخاصة بك')} /></h1>
+        </div>
         <span className="athlete-data-scope"><ShieldCheck size={13} /><BilingualText value={bi('Player-scoped provider records', 'سجلات مزود البيانات الخاصة باللاعب')} /></span>
       </div>
 
@@ -78,11 +81,11 @@ export function PlayerPortalOverviewPage() {
 }
 
 function Snapshot({ icon, label, value }: { icon?: React.ReactNode; label: { en: string; ar: string }; value?: string }) {
-  return <div className="rounded-2xl border border-white/9 bg-white/[.025] p-4"><div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.08em] text-slate-500">{icon}<BilingualText value={label} /></div><strong className={`mt-2 block text-base font-black ${value ? 'text-white' : 'text-slate-600'}`}>{value ?? <BilingualText value={bi('Not recorded', 'غير مسجل')} />}</strong></div>;
+  return <div className="athlete-snapshot-card"><div className="flex items-center gap-1.5 text-[10px] font-bold">{icon}<BilingualText value={label} /></div><strong className={`block ${value ? '' : 'athlete-unavailable'}`}>{value ?? <BilingualText value={bi('Not recorded', 'غير مسجل')} />}</strong></div>;
 }
 
 function QuickLink({ to, icon, title }: { to: string; icon: React.ReactNode; title: { en: string; ar: string } }) {
-  return <Link to={to} className="athlete-glass-card athlete-glass-card-interactive p-4 flex min-h-24 flex-col justify-between gap-3 text-slate-200 no-underline"><span className="text-amber-400">{icon}</span><strong className="text-xs"><BilingualText value={title} /></strong></Link>;
+  return <Link to={to} className="athlete-glass-card athlete-glass-card-interactive athlete-quick-link-card flex flex-col justify-between gap-3 text-slate-200 no-underline"><span>{icon}</span><strong><BilingualText value={title} /></strong></Link>;
 }
 
 function IdentityField({ label, value, mono = false }: { label: { en: string; ar: string }; value?: string; mono?: boolean }) {
