@@ -25,7 +25,6 @@ import {
 import { Link, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import {
   PUBLIC_BRANCHES,
-  PUBLIC_COACHES,
   PUBLIC_PROGRAMS,
   PUBLIC_SOCIAL_LINKS,
   PUBLIC_SPORTS,
