@@ -117,11 +117,12 @@ html[dir="rtl"] :where(#player-portal-shell,.portal-shell,.admin-shell,.store-sh
    The source image is a composite lockup. Square portal slots show only the
    leading emblem, while the brand name stays as real text beside it.
    -------------------------------------------------------------------------- */
-:where(
-  #player-portal-shell .athlete-sidebar-logo,
-  .portal-sidebar .portal-brand > img,
-  .admin-sidebar .admin-brand > img
-) {
+/* High-specificity selectors intentionally override the legacy global
+   .official-logo { object-fit: contain !important } contract in compact
+   sidebar slots only. The full brand asset remains unchanged elsewhere. */
+#player-portal-shell .athlete-sidebar-header img.official-logo.athlete-sidebar-logo,
+.portal-shell .portal-sidebar .portal-brand > img.official-logo,
+.admin-shell .admin-sidebar .admin-brand > img.official-logo {
   width: 52px !important;
   height: 52px !important;
   min-width: 52px !important;
@@ -751,11 +752,9 @@ html[dir="rtl"] .admin-shell .admin-stat-card::before {
     flex-direction:column;
   }
 
-  :where(
-    #player-portal-shell .athlete-sidebar-logo,
-    .portal-sidebar .portal-brand > img,
-    .admin-sidebar .admin-brand > img
-  ) {
+  #player-portal-shell .athlete-sidebar-header img.official-logo.athlete-sidebar-logo,
+  .portal-shell .portal-sidebar .portal-brand > img.official-logo,
+  .admin-shell .admin-sidebar .admin-brand > img.official-logo {
     width:46px !important;
     height:46px !important;
     min-width:46px !important;
