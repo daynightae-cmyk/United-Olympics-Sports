@@ -2,19 +2,18 @@
  *
  * Safety contract:
  * - Never cache authenticated, API, payment, or version-check traffic.
- * - Cache only the stable application shell and small same-origin brand assets.
- * - Vite build chunks and large portal artwork stay network-only because rapid
- *   route changes can cancel in-flight module/image requests in Firefox/WebKit.
+ * - Cache only the stable application shell and manifest.
+ * - Vite build chunks and portal/brand artwork stay network-only because rapid
+ *   route changes can cancel in-flight image/module requests in Firefox/WebKit.
  * - Navigation is network-first and falls back to the cached shell when offline.
  * - Runtime cache reads/writes are best-effort and can never break a network response.
  */
 
-const CACHE_NAME = 'uos-static-shell-v1';
+const CACHE_NAME = 'uos-static-shell-v2';
 const SHELL_URL = '/';
 const PRECACHE_URLS = [
   SHELL_URL,
   '/manifest.webmanifest',
-  '/brand/united-olympics-sports-logo.png',
 ];
 
 const NEVER_CACHE_PREFIXES = [
@@ -27,6 +26,10 @@ const NETWORK_ONLY_STATIC_PREFIXES = [
   '/assets',
   '/brand/portals',
 ];
+
+const NETWORK_ONLY_STATIC_EXACT = new Set([
+  '/brand/united-olympics-sports-logo.png',
+]);
 
 const NEVER_CACHE_EXACT = new Set([
   '/version.json',
@@ -42,7 +45,8 @@ function isSensitivePath(pathname) {
 }
 
 function isNetworkOnlyStaticPath(pathname) {
-  return NETWORK_ONLY_STATIC_PREFIXES.some((prefix) => hasPathPrefix(pathname, prefix));
+  return NETWORK_ONLY_STATIC_EXACT.has(pathname)
+    || NETWORK_ONLY_STATIC_PREFIXES.some((prefix) => hasPathPrefix(pathname, prefix));
 }
 
 function isStaticAsset(pathname) {
@@ -79,9 +83,9 @@ async function serveStaticAsset(request) {
     if (response.ok) await putBestEffort(request, response.clone());
     return response;
   } catch {
-    // Only stable brand/manifest resources reach this handler. Build chunks and
-    // portal artwork bypass the service worker so browser-driven cancellation
-    // cannot surface as a service-worker console failure.
+    // Only cache-safe static resources reach this handler. Build chunks and
+    // frequently reused brand/portal artwork bypass the service worker so
+    // browser-driven cancellation cannot surface as a console/runtime failure.
     return (await matchBestEffort(request)) || Response.error();
   }
 }
