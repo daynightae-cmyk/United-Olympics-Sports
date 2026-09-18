@@ -2,7 +2,7 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from 're
 import type { AdminDataGateway } from './AdminDataGateway';
 import { previewAdminGateway, resetPreviewData } from './previewAdminGateway';
 import { productionAdminGateway } from './productionAdminGateway';
-import { previewModeAllowed } from '../../lib/preview-guard';
+import { portalPreviewModeAllowed } from '../../lib/preview-guard';
 import type { AdminDataMode } from './queryTypes';
 
 interface AdminDataContextValue {
@@ -14,9 +14,7 @@ interface AdminDataContextValue {
 const AdminDataContext = createContext<AdminDataContextValue | null>(null);
 
 function defaultAdminMode(): AdminDataMode {
-  // Blocked on canonical production hosts even when the flag is set (see
-  // preview-guard); elsewhere the flag enables local/preview QA fixtures.
-  const previewEnabled = previewModeAllowed(import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true');
+  const previewEnabled = portalPreviewModeAllowed(import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true');
   return previewEnabled ? 'preview' : 'live';
 }
 
