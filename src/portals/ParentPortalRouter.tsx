@@ -4,8 +4,8 @@ import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { PortalLayout } from '../layouts/PortalLayout';
 import { PortalErrorBoundary, PortalNotFoundPage, PortalRouteLoader, PortalRuntimeError } from '../components/portal/PortalRouteState';
 import { fetchPortalIdentity, signOutEverywhere } from '../lib/auth-client';
-import { previewModeAllowed } from '../lib/preview-guard';
-import { clearParentSession, readParentSession, startParentProduction } from './parent/parentData';
+import { clientShowcaseMode, portalPreviewModeAllowed } from '../lib/preview-guard';
+import { clearParentSession, readParentSession, startParentPreview, startParentProduction } from './parent/parentData';
 
 const load = <T extends Record<string, ComponentType>>(factory: () => Promise<T>, key: keyof T) =>
   lazy(() => factory().then((module) => ({ default: module[key] })));
@@ -27,10 +27,10 @@ const ParentPortalNotificationsPage = load(() => import('../pages/portal/parent/
 const ParentPortalSettingsPage = load(() => import('../pages/portal/parent/ParentPortalSettingsPage'), 'ParentPortalSettingsPage');
 
 function ParentProtectedRoute({ children }: { children: React.ReactNode }) {
-  const session = readParentSession();
-  // Preview sessions are blocked on canonical production hosts even when the
-  // flag is set (see preview-guard); elsewhere they enable local/preview QA.
-  const previewRuntime = previewModeAllowed(import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true');
+  const showcase = clientShowcaseMode();
+  const [showcaseSession] = useState(() => showcase ? startParentPreview() : null);
+  const session = showcase ? showcaseSession : readParentSession();
+  const previewRuntime = portalPreviewModeAllowed(import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true');
   const [validated, setValidated] = useState<boolean | null>(null);
   const [validationError, setValidationError] = useState(false);
   const [revision, setRevision] = useState(0);
