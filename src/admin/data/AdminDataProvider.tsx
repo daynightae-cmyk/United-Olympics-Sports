@@ -2,7 +2,7 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from 're
 import type { AdminDataGateway } from './AdminDataGateway';
 import { previewAdminGateway, resetPreviewData } from './previewAdminGateway';
 import { productionAdminGateway } from './productionAdminGateway';
-import { portalPreviewModeAllowed } from '../../lib/preview-guard';
+import { clientShowcaseMode, previewModeAllowed } from '../../lib/preview-guard';
 import type { AdminDataMode } from './queryTypes';
 
 interface AdminDataContextValue {
@@ -14,7 +14,7 @@ interface AdminDataContextValue {
 const AdminDataContext = createContext<AdminDataContextValue | null>(null);
 
 function defaultAdminMode(): AdminDataMode {
-  const previewEnabled = portalPreviewModeAllowed(import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true');
+  const previewEnabled = clientShowcaseMode() || previewModeAllowed(import.meta.env.VITE_UOS_ADMIN_PREVIEW === 'true');
   return previewEnabled ? 'preview' : 'live';
 }
 
