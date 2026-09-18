@@ -192,6 +192,14 @@ async function assertRoute(page, runtimeErrors, route, checkOverflow = true) {
 }
 
 async function assertInternalPortalVisualAuthority(page, route, pathname) {
+  if (route === '/player/home') {
+    await page.waitForSelector('#player-overview-page .cgpt-athlete-id', { state: 'visible', timeout: 10_000 });
+    await page.waitForSelector('#player-overview-page .cgpt-player-stat', { state: 'visible', timeout: 10_000 });
+  }
+  if (route === '/parent' || route === '/coach') {
+    await page.waitForSelector('.portal-shell .bm-card', { state: 'visible', timeout: 10_000 });
+  }
+
   const proof = await page.evaluate(() => {
     const playerLogo = document.querySelector('#player-portal-shell .athlete-sidebar-logo');
     const athleteId = document.querySelector('#player-overview-page .cgpt-athlete-id');
@@ -229,7 +237,7 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     }
   }
 
-  if (pathname === '/player/home') {
+  if (route === '/player/home') {
     if (proof.athleteIdDisplay !== 'grid' || !(proof.athleteIdRadius >= 20)) {
       throw new Error(`${route}: athlete identity must render as a sports card grid with >=20px radius; display=${proof.athleteIdDisplay}, radius=${proof.athleteIdRadius}`);
     }
@@ -244,7 +252,7 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     }
   }
 
-  if ((pathname === '/parent' || pathname === '/coach') && proof.portalCardRadius !== null) {
+  if ((route === '/parent' || route === '/coach') && proof.portalCardRadius !== null) {
     if (proof.portalCardRadius < 16 || !proof.portalCardBackground || proof.portalCardBackground === 'none') {
       throw new Error(`${route}: portal overview cards must use the athletic card authority; radius=${proof.portalCardRadius}, background=${proof.portalCardBackground}`);
     }
