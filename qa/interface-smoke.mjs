@@ -56,7 +56,7 @@ const viewportMatrix = [
   { width: 1440, height: 900 },
   { width: 1920, height: 1080 },
 ];
-const responsiveRoutes = ['/', '/sports', '/programs', '/programs/football-foundations', '/auth/callback', '/admin/login', '/player/login', '/player/home', '/parent/login', '/parent', '/parent/children', '/parent/payments', '/coach', '/coach/players', '/admin', '/admin/branches', '/admin/players'];
+const responsiveRoutes = ['/', '/sports', '/programs', '/programs/football-foundations', '/coaches', '/auth/callback', '/admin/login', '/player/login', '/player/home', '/parent/login', '/parent', '/parent/children', '/parent/payments', '/coach', '/coach/players', '/admin', '/admin/branches', '/admin/players'];
 
 async function waitForServer() {
   let lastError;
