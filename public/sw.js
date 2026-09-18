@@ -9,7 +9,7 @@
  * - Runtime cache reads/writes are best-effort and can never break a network response.
  */
 
-const CACHE_NAME = 'uos-static-shell-v2';
+const CACHE_NAME = 'uos-static-shell-v3-final-portal-runtime';
 const SHELL_URL = '/';
 const PRECACHE_URLS = [
   SHELL_URL,
