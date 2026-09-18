@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
-import { ArrowRight, Dumbbell, Sparkles, Trophy, Waves } from "lucide-react";
+import { Activity, ArrowRight, Dumbbell, Shield, Sparkles, Trophy, Waves } from "lucide-react";
 import { Link } from "react-router-dom";
 import { BilingualText, bi } from "../../components/bilingual/BilingualText";
-import { PreviewBadge, SportConceptVisual } from "../../components/owner-demo/OwnerDemoVisuals";
-import { demoPrograms } from "../../data/demo/programs";
+import { SportConceptVisual } from "../../components/owner-demo/OwnerDemoVisuals";
+import { PUBLIC_PROGRAMS } from "../../data/public/publicContent";
 import { getSportPreviewMedia } from "../../data/media";
 import "../../styles/owner-demo.css";
 
@@ -13,6 +13,8 @@ const filters = [
   { id: "swimming", label: bi("Swimming", "السباحة"), icon: Waves },
   { id: "basketball", label: bi("Basketball", "كرة السلة"), icon: Trophy },
   { id: "tennis", label: bi("Tennis", "التنس"), icon: Sparkles },
+  { id: "gymnastics", label: bi("Gymnastics", "الجمباز"), icon: Activity },
+  { id: "martial-arts", label: bi("Martial Arts", "الفنون القتالية"), icon: Shield },
 ];
 
 export function ProgramsPage() {
@@ -20,11 +22,12 @@ export function ProgramsPage() {
   const filtered = useMemo(
     () =>
       filter === "all"
-        ? demoPrograms
-        : demoPrograms.filter((program) => program.sportId === filter),
+        ? PUBLIC_PROGRAMS
+        : PUBLIC_PROGRAMS.filter((program) => program.sportId === filter),
     [filter]
   );
   const heroMedia = ["football", "swimming", "basketball"].map((id) => getSportPreviewMedia(id));
+
   function MediaWithFallback({
     media,
     sportId,
@@ -35,8 +38,8 @@ export function ProgramsPage() {
     className?: string;
   }) {
     const [ok, setOk] = useState(true);
-    if (!media) return <SportConceptVisual sportId={sportId} compact={!!className} />;
-    if (!ok) return <SportConceptVisual sportId={sportId} compact={!!className} />;
+    if (!media || !ok) return <SportConceptVisual sportId={sportId} compact={!!className} />;
+
     return (
       <img
         className={className}
@@ -50,13 +53,13 @@ export function ProgramsPage() {
       />
     );
   }
+
   return (
     <div className="od-public-page od-programs-page">
       <section className="od-programs-hero">
         <div className="od-programs-hero-copy">
-          <PreviewBadge />
           <span className="od-kicker">
-            <BilingualText value={bi("Training Paths", "مسارات التدريب")} />
+            <BilingualText value={bi("Six Sports • Structured Development", "ست رياضات • تطوير منظم")} />
           </span>
           <h1>
             <BilingualText value={bi("Programs Built for Progress", "برامج مصممة للتطور")} />
@@ -64,8 +67,8 @@ export function ProgramsPage() {
           <p>
             <BilingualText
               value={bi(
-                "Structured training paths shaped around sport, development stage and performance focus.",
-                "مسارات تدريب منظمة حسب الرياضة ومرحلة التطور ومحور الأداء."
+                "Explore training pathways across all six United Olympics Sports disciplines. Each pathway explains its development focus without inventing schedules, prices or operational availability.",
+                "استكشف مسارات التدريب في الرياضات الست لدى يونايتد أوليمبيكس سبورت. يوضح كل مسار محاور التطور دون اختلاق جداول أو أسعار أو إتاحة تشغيلية."
               )}
             />
           </p>
@@ -100,8 +103,8 @@ export function ProgramsPage() {
           <h2>
             <BilingualText
               value={bi(
-                "A visual route into every training experience",
-                "مدخل بصري لكل تجربة تدريبية"
+                "A clear route into every training pathway",
+                "مدخل واضح إلى كل مسار تدريبي"
               )}
             />
           </h2>
