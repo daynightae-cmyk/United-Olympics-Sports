@@ -1,5 +1,5 @@
 # Database & Migrations — United Olympics Sports
-**Project:** Supabase `olmbezzzqavgjwydlfey.supabase.co` · **Migrations:** `src/db/migrations/0001–0008` · Runner: `npm run db:migrate` (checksum-tracked `schema_migrations`, idempotent, additive-only).
+**Project:** Supabase `olmbezzzqavgjwydlfey.supabase.co` · **Migrations:** `src/db/migrations/0001–0010` · Runner: `npm run db:migrate` (checksum-tracked `schema_migrations`, idempotent, additive-only).
 
 ## 1. Migration map
 | # | Content |
@@ -12,6 +12,8 @@
 | 0006 | Live RLS policy closure (scoped policies, server-only webhooks, public content scoping) |
 | 0007 | Covering FK indexes (`events.sport_id`, `payment_intents.subscription_id/player_id`) |
 | 0008 | Store catalog richness (`catalog_products`: description/ar, category, sport, product_type/ar, media_url, slug + domain checks/indexes; additive, honest NULL fallback) |
+| 0009 | Inventory anonymous-read scoping to active catalog products only |
+| 0010 | Verified six-sport reference catalog (`football`, `swimming`, `basketball`, `tennis`, `gymnastics`, `martial-arts`) |
 
 Fresh DB from migrations alone reaches the full schema (proven by `fresh-database-bootstrap.test.ts` on ephemeral PGlite).
 
@@ -25,3 +27,6 @@ Migrations seed structure + verified reference catalogs only. Players, guardians
 
 ## 4. Safety rules
 New DDL = new versioned migration, `IF NOT EXISTS` style, no drops of live data, rollback note in header. Never edit schema from the dashboard without committing the migration. Unused-index warnings are intentionally not acted on (traffic too immature for usage stats).
+
+### Live tracking reconciliation note — 2026-09-18
+The connected production Supabase project contains the application schema but does **not** currently expose the repository runner's expected `public.schema_migrations` table. Supabase-managed migration tables exist in internal schemas, but they are not a substitute for this repository runner's checksum ledger. Until that lifecycle is reconciled, do **not** blindly run the full migration chain against production. The verified sports catalog rows are already present in production, and migration `0010` codifies the same idempotent reference data for controlled future bootstrap/reconciliation.
