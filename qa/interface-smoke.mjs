@@ -187,7 +187,38 @@ async function assertRoute(page, runtimeErrors, route, checkOverflow = true) {
   if (route.startsWith('/player') && !route.includes('/login') && !intentionalPlayerLoginRedirects.has(route) && state.pathname === '/player/login') throw new Error(`${route}: unexpectedly redirected to player login`);
   if (runtimeErrors.length) throw new Error(`${route}: ${runtimeErrors.join(' | ')}`);
   if (route === '/admin') await assertAdminVisualAuthority(page);
+  if (/^\/(admin|player|parent|coach|store)(\/|$)/.test(route)) await assertInternalPortalVisualAuthority(page, route, state.pathname);
   return state;
+}
+
+async function assertInternalPortalVisualAuthority(page, route, pathname) {
+  const proof = await page.evaluate(() => ({
+    splashCount: document.querySelectorAll('#olympic-luxury-splash-root').length,
+    playerLogoCount: document.querySelectorAll('#player-portal-shell .athlete-sidebar-logo').length,
+    playerExtraEmblemCount: document.querySelectorAll('#player-portal-shell .athlete-sidebar-portal-emblem').length,
+    sharedPortalLogoCount: document.querySelectorAll('.portal-shell .portal-brand > img').length,
+    authLogoCount: document.querySelectorAll('.portal-auth .portal-auth-home > img').length,
+  }));
+
+  if (proof.splashCount !== 0) {
+    throw new Error(`${route}: internal product route must never be blocked by the public luxury splash`);
+  }
+
+  if (pathname.startsWith('/player') && !pathname.endsWith('/login')) {
+    if (proof.playerLogoCount !== 1 || proof.playerExtraEmblemCount !== 0) {
+      throw new Error(`${route}: player shell must render exactly one canonical logo; logo=${proof.playerLogoCount}, extraEmblem=${proof.playerExtraEmblemCount}`);
+    }
+  }
+
+  if ((pathname.startsWith('/parent') || pathname.startsWith('/coach')) && !pathname.endsWith('/login')) {
+    if (proof.sharedPortalLogoCount !== 1) {
+      throw new Error(`${route}: shared portal shell must render exactly one canonical logo; got ${proof.sharedPortalLogoCount}`);
+    }
+  }
+
+  if (pathname.endsWith('/login') && proof.authLogoCount > 1) {
+    throw new Error(`${route}: authentication header must not duplicate the canonical logo; got ${proof.authLogoCount}`);
+  }
 }
 
 async function assertAdminVisualAuthority(page) {
