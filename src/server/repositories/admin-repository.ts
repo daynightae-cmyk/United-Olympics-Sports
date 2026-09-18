@@ -68,8 +68,8 @@ export class AdminDomainRepository {
       id: row.id,
       name: { en: row.name, ar: row.name_ar || row.name },
       description: {
-        en: 'Premier Olympic Sports Training Organization across UAE and MENA.',
-        ar: 'المؤسسة الرائدة للتدريب الأولمبي الرياضي في الإمارات ومنطقة الشرق الأوسط.',
+        en: 'United Olympics Sports organization profile and operating structure.',
+        ar: 'ملف مؤسسة يونايتد أوليمبيكس سبورت وهيكلها التشغيلي.',
       },
       countryCount: parseInt(countriesCountRes.rows[0]?.count || '0', 10),
       status: row.status === 'active' ? 'active' : 'inactive',
