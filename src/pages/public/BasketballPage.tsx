@@ -165,14 +165,14 @@ export function BasketballPage() {
         <div className="basketball-interest-card">
           <BilingualText className="basketball-eyebrow" value={bi('Register Interest', 'سجل اهتمامك')} />
           <h2><BilingualText value={bi('Interested in the Basketball pathway?', 'مهتم بمسار كرة السلة؟')} /></h2>
-          <p><BilingualText value={bi('This Phase 1 form is an interface preview only. It does not send, store or register information.', 'هذا النموذج في المرحلة الأولى معاينة للواجهة فقط، ولا يرسل أو يحفظ أو يسجل المعلومات.')} /></p>
+          <p><BilingualText value={bi('Use the fields below to organise your basketball interest before continuing through the official contact channel.', 'استخدم الحقول أدناه لتنظيم اهتمامك بكرة السلة قبل استكمال التواصل عبر قناة التواصل الرسمية.')} /></p>
           <form onSubmit={submitInterest} className="basketball-interest-form">
             <label><BilingualText value={bi('Name', 'الاسم')} /><input required name="name" autoComplete="name" placeholder="Name | الاسم" /></label>
             <label><BilingualText value={bi('Email', 'البريد الإلكتروني')} /><input required name="email" type="email" autoComplete="email" placeholder="Email | البريد الإلكتروني" /></label>
             <label><BilingualText value={bi('Preferred Training Focus', 'محور التدريب المفضل')} /><select name="focus" defaultValue=""><option value="" disabled>Select focus | اختر المحور</option><option value="ball-handling">Ball Handling | التحكم بالكرة</option><option value="shooting">Shooting | التصويب</option><option value="team-play">Team Play | اللعب الجماعي</option><option value="general">General Development | تطوير عام</option></select></label>
-            <button className="button primary" type="submit"><BilingualText value={bi('Preview Registration', 'معاينة التسجيل')} /><ArrowRight size={16} /></button>
+            <button className="button primary" type="submit"><BilingualText value={bi('Prepare Interest', 'تجهيز الاهتمام')} /><ArrowRight size={16} /></button>
           </form>
-          {previewMessage && <p className="basketball-preview-note"><Check size={15} /><BilingualText value={bi('Preview only — no information was submitted or saved.', 'معاينة فقط — لم يتم إرسال أو حفظ أي معلومات.')} /></p>}
+          {previewMessage && <p className="basketball-preview-note"><Check size={15} /><BilingualText value={bi('Your details are prepared on this screen only. Nothing has been sent yet.', 'تم تجهيز بياناتك على هذه الشاشة فقط، ولم يتم إرسال أي معلومات بعد.')} /></p>}
         </div>
       </section>
 
