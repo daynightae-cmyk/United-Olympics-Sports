@@ -100,13 +100,13 @@ function CartSummary({ checkout = false }: { checkout?: boolean }) {
 
 function CartJourneyPanel() {
   const steps = [
-    { id: 1, en: 'Contact', ar: 'معلومات التواصل' },
-    { id: 2, en: 'Delivery Address', ar: 'عنوان التوصيل' },
-    { id: 3, en: 'Delivery Method', ar: 'طريقة التوصيل' },
-    { id: 4, en: 'Payment Method', ar: 'طريقة الدفع' },
-    { id: 5, en: 'Order Review', ar: 'مراجعة الطلب' },
+    { id: 1, label: { en: 'Contact', ar: 'معلومات التواصل' } },
+    { id: 2, label: { en: 'Delivery Address', ar: 'عنوان التوصيل' } },
+    { id: 3, label: { en: 'Delivery Method', ar: 'طريقة التوصيل' } },
+    { id: 4, label: { en: 'Payment Method', ar: 'طريقة الدفع' } },
+    { id: 5, label: { en: 'Order Review', ar: 'مراجعة الطلب' } },
   ];
-  return <aside className="store-cart-journey"><header><strong><StoreCopy value={{ en: 'CHECKOUT', ar: 'الدفع' }} /></strong><small><StoreCopy value={{ en: 'Secure 5-step flow', ar: 'مسار آمن من 5 خطوات' }} /></small></header>{steps.map((item) => <div key={item.id}><b>{item.id}</b><span><strong>{item.en}</strong><small>{item.ar}</small></span></div>)}<Link to="/store/checkout" className="store-button store-button-primary"><StoreCopy value={{ en: 'PROCEED TO CHECKOUT', ar: 'المتابعة للدفع' }} inline /></Link></aside>;
+  return <aside className="store-cart-journey"><header><strong><StoreCopy value={{ en: 'CHECKOUT', ar: 'الدفع' }} /></strong><small><StoreCopy value={{ en: 'Secure 5-step flow', ar: 'مسار آمن من 5 خطوات' }} /></small></header>{steps.map((item) => <div key={item.id}><b>{item.id}</b><StoreCopy value={item.label} /></div>)}<Link to="/store/checkout" className="store-button store-button-primary"><StoreCopy value={{ en: 'PROCEED TO CHECKOUT', ar: 'المتابعة للدفع' }} inline /></Link></aside>;
 }
 
 export function CartPage() {
