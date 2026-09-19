@@ -202,7 +202,20 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     await page.waitForSelector('#parent-overview-page .parent-athlete-signal', { state: 'visible', timeout: 10_000 });
   }
   if (route === '/coach') {
-    await page.waitForSelector('.portal-shell .bm-card', { state: 'visible', timeout: 10_000 });
+    await page.waitForSelector('#coach-overview-page .coach-command-hero', { state: 'visible', timeout: 10_000 });
+    await page.waitForSelector('#coach-overview-page .coach-athlete-card', { state: 'visible', timeout: 10_000 });
+    await page.waitForSelector('#coach-overview-page .coach-athlete-signal', { state: 'visible', timeout: 10_000 });
+  }
+  if (route === '/coach/schedule') {
+    await page.waitForSelector('.portal-coach .schedule-toolbar', { state: 'visible', timeout: 10_000 });
+    await page.waitForSelector('.portal-coach .schedule-week-view', { state: 'visible', timeout: 10_000 });
+  }
+  if (route === '/coach/players') {
+    await page.waitForSelector('.portal-coach .enterprise-toolbar', { state: 'visible', timeout: 10_000 });
+    await page.waitForSelector('.portal-coach .enterprise-table-shell', { state: 'visible', timeout: 10_000 });
+  }
+  if (route === '/coach/groups' || route === '/coach/evaluations' || route === '/coach/programs') {
+    await page.waitForSelector('.portal-coach .portal-card', { state: 'visible', timeout: 10_000 });
   }
   if (route === '/parent/children' || route === '/parent/attendance' || route.startsWith('/parent/children/')) {
     await page.waitForSelector('.portal-parent .parent-field', { state: 'visible', timeout: 10_000 });
@@ -220,6 +233,15 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     const parentAthleteAction = document.querySelector('#parent-overview-page .parent-athlete-card__action');
     const parentField = document.querySelector('.portal-parent .parent-field');
     const parentPanel = document.querySelector('.portal-parent .parent-panel');
+    const coachHero = document.querySelector('#coach-overview-page .coach-command-hero');
+    const coachAthleteCard = document.querySelector('#coach-overview-page .coach-athlete-card');
+    const coachAthleteAction = document.querySelector('#coach-overview-page .coach-athlete-card__action');
+    const coachDesk = document.querySelector('#coach-overview-page .coach-today');
+    const coachScheduleToolbar = document.querySelector('.portal-coach .schedule-toolbar');
+    const coachScheduleWeek = document.querySelector('.portal-coach .schedule-week-view');
+    const coachEnterpriseToolbar = document.querySelector('.portal-coach .enterprise-toolbar');
+    const coachTableShell = document.querySelector('.portal-coach .enterprise-table-shell');
+    const coachPortalCard = document.querySelector('.portal-coach .portal-card');
     return {
       splashCount: document.querySelectorAll('#olympic-luxury-splash-root').length,
       playerLogoCount: document.querySelectorAll('#player-portal-shell .athlete-sidebar-logo').length,
@@ -243,6 +265,21 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
       parentFieldMinHeight: parentField ? parseFloat(getComputedStyle(parentField).minHeight) : null,
       parentFieldBackground: parentField ? getComputedStyle(parentField).backgroundImage : null,
       parentPanelRadius: parentPanel ? parseFloat(getComputedStyle(parentPanel).borderTopLeftRadius) : null,
+      coachHeroRadius: coachHero ? parseFloat(getComputedStyle(coachHero).borderTopLeftRadius) : null,
+      coachHeroBackground: coachHero ? getComputedStyle(coachHero).backgroundImage : null,
+      coachAthleteCount: document.querySelectorAll('#coach-overview-page .coach-athlete-card').length,
+      coachAthleteBackground: coachAthleteCard ? getComputedStyle(coachAthleteCard).backgroundImage : null,
+      coachAthleteActionHeight: coachAthleteAction ? parseFloat(getComputedStyle(coachAthleteAction).minHeight) : null,
+      coachSignalCount: document.querySelectorAll('#coach-overview-page .coach-athlete-signal').length,
+      coachDeskRadius: coachDesk ? parseFloat(getComputedStyle(coachDesk).borderTopLeftRadius) : null,
+      coachDeskBackground: coachDesk ? getComputedStyle(coachDesk).backgroundImage : null,
+      coachScheduleToolbarRadius: coachScheduleToolbar ? parseFloat(getComputedStyle(coachScheduleToolbar).borderTopLeftRadius) : null,
+      coachScheduleWeekRadius: coachScheduleWeek ? parseFloat(getComputedStyle(coachScheduleWeek).borderTopLeftRadius) : null,
+      coachScheduleWeekBackground: coachScheduleWeek ? getComputedStyle(coachScheduleWeek).backgroundImage : null,
+      coachEnterpriseToolbarRadius: coachEnterpriseToolbar ? parseFloat(getComputedStyle(coachEnterpriseToolbar).borderTopLeftRadius) : null,
+      coachTableRadius: coachTableShell ? parseFloat(getComputedStyle(coachTableShell).borderTopLeftRadius) : null,
+      coachPortalCardRadius: coachPortalCard ? parseFloat(getComputedStyle(coachPortalCard).borderTopLeftRadius) : null,
+      coachPortalCardBackground: coachPortalCard ? getComputedStyle(coachPortalCard).backgroundImage : null,
     };
   });
 
@@ -295,9 +332,36 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     }
   }
 
-  if (route === '/coach' && proof.portalCardRadius !== null) {
-    if (proof.portalCardRadius < 16 || !proof.portalCardBackground || proof.portalCardBackground === 'none') {
-      throw new Error(`${route}: portal overview cards must use the athletic card authority; radius=${proof.portalCardRadius}, background=${proof.portalCardBackground}`);
+  if (route === '/coach') {
+    if (!(proof.coachHeroRadius >= 24) || !proof.coachHeroBackground || proof.coachHeroBackground === 'none') {
+      throw new Error(`${route}: Training Command hero must use the Coach athletic authority; radius=${proof.coachHeroRadius}, background=${proof.coachHeroBackground}`);
+    }
+    if (proof.coachAthleteCount < 1 || !proof.coachAthleteBackground || proof.coachAthleteBackground === 'none') {
+      throw new Error(`${route}: expected at least one Coach athlete roster card; count=${proof.coachAthleteCount}, background=${proof.coachAthleteBackground}`);
+    }
+    if (proof.coachSignalCount < 4 || !(proof.coachAthleteActionHeight >= 40)) {
+      throw new Error(`${route}: Coach athlete cards must expose four signals and a full action control; signals=${proof.coachSignalCount}, actionMinHeight=${proof.coachAthleteActionHeight}`);
+    }
+    if (!(proof.coachDeskRadius >= 18) || !proof.coachDeskBackground || proof.coachDeskBackground === 'none') {
+      throw new Error(`${route}: Coach Today Desk must use the athletic desk surface; radius=${proof.coachDeskRadius}, background=${proof.coachDeskBackground}`);
+    }
+  }
+
+  if (route === '/coach/schedule') {
+    if (!(proof.coachScheduleToolbarRadius >= 14) || !(proof.coachScheduleWeekRadius >= 18) || !proof.coachScheduleWeekBackground || proof.coachScheduleWeekBackground === 'none') {
+      throw new Error(`${route}: Coach schedule must use the athletic toolbar/week surface; toolbarRadius=${proof.coachScheduleToolbarRadius}, weekRadius=${proof.coachScheduleWeekRadius}, background=${proof.coachScheduleWeekBackground}`);
+    }
+  }
+
+  if (route === '/coach/players') {
+    if (!(proof.coachEnterpriseToolbarRadius >= 16) || !(proof.coachTableRadius >= 16)) {
+      throw new Error(`${route}: Coach roster filters/table must use the athletic hierarchy; toolbarRadius=${proof.coachEnterpriseToolbarRadius}, tableRadius=${proof.coachTableRadius}`);
+    }
+  }
+
+  if (route === '/coach/groups' || route === '/coach/evaluations' || route === '/coach/programs') {
+    if (!(proof.coachPortalCardRadius >= 16) || !proof.coachPortalCardBackground || proof.coachPortalCardBackground === 'none') {
+      throw new Error(`${route}: Coach portal cards must use the dedicated athletic surface; radius=${proof.coachPortalCardRadius}, background=${proof.coachPortalCardBackground}`);
     }
   }
 
