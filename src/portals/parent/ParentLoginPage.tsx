@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { PortalAuthPage, type PortalAuthNotice, type PortalAuthProvider } from '../../components/auth/PortalAuthPage';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { beginSupabaseGoogleOAuth, fetchPortalIdentity, getAccessToken, signOutEverywhere } from '../../lib/auth-client';
+import { resolvePortalPostSignInDestination } from '../../lib/store-auth-routing';
 import { clearParentSession, readParentSession, startParentProduction } from './parentData';
 import { previewModeAllowed } from '../../lib/preview-guard';
 
@@ -30,6 +31,8 @@ function SafeDemoLink() {
 
 export function ParentLoginPage() {
   const navigate = useNavigate();
+  const routerState = useLocation().state as { from?: unknown } | null;
+  const resolveTarget = () => resolvePortalPostSignInDestination('parent', routerState?.from, '/parent');
 
   useEffect(() => {
     let active = true;
@@ -43,7 +46,7 @@ export function ParentLoginPage() {
         if (!active) return;
         if (portal.bindings.guardianIds.length === 1 && portal.bindings.guardianIds[0] === persisted.parentId) {
           startParentProduction(portal.bindings.guardianIds[0], portal.bindings.guardianPlayerIds);
-          navigate('/parent', { replace: true });
+          navigate(resolveTarget(), { replace: true });
           return;
         }
         clearParentSession();
@@ -64,7 +67,7 @@ export function ParentLoginPage() {
     }
 
     try {
-      await beginSupabaseGoogleOAuth('/parent');
+      await beginSupabaseGoogleOAuth(resolveTarget());
       return null;
     } catch {
       return {

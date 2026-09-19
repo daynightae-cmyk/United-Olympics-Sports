@@ -11,7 +11,7 @@ import {
   signInWithSupabasePassword,
   signOutEverywhere,
 } from '../../lib/auth-client';
-import { resolveStorePostSignInDestination } from '../../lib/store-auth-routing';
+import { resolveStorePostSignInDestination, resolvePortalPostSignInDestination } from '../../lib/store-auth-routing';
 
 const destinations: Record<PortalAuthKind, string> = {
   admin: '/admin',
@@ -100,10 +100,13 @@ export function PortalLoginRoute({ portal }: { portal: PortalAuthKind }) {
 
   // Store sign-in must return to the protected account destination captured by
   // StoreAccountRuntime (e.g. /store/orders), validated against the allowlist.
+  // Admin sign-in honors the guarded destination captured by AdminAccessGate.
   // Every other portal keeps its fixed post-sign-in destination.
   const resolveTarget = () => portal === 'store'
     ? resolveStorePostSignInDestination(routerState?.from, destinations.store)
-    : destinations[portal];
+    : portal === 'admin'
+      ? resolvePortalPostSignInDestination('admin', routerState?.from, destinations.admin)
+      : destinations[portal];
 
   const handleCredentials = async ({ email, password }: { email: string; password: string; remember: boolean }): Promise<PortalAuthNotice | null> => {
     try {
