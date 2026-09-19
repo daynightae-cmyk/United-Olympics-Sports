@@ -32,6 +32,7 @@ import './styles/parent-portal-final.css';
 import './styles/coach-portal-final.css';
 import './styles/portal-athletic-cards-final.css';
 import './styles/admin-athletic-final.css';
+import './styles/portal-interior-delivery-final.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
