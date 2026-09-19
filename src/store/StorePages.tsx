@@ -144,6 +144,7 @@ export function CheckoutPage() {
   const [checkout, setCheckout] = useState<CheckoutState>({ status: 'idle' });
   const [paymentRuntime, setPaymentRuntime] = useState<PaymentRuntimeState>({ status: 'loading' });
   const [formSnapshot, setFormSnapshot] = useState<Record<string, string>>({});
+  const preparingRef = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -190,11 +191,13 @@ export function CheckoutPage() {
   };
 
   const prepareSecurePayment = async (snapshot: Record<string, string>) => {
+    if (preparingRef.current) return;
     if (paymentRuntime.status !== 'ready') {
       setCheckout({ status: 'failed', message: 'PAYMENT_PROVIDER_NOT_READY' });
       return;
     }
 
+    preparingRef.current = true;
     setCheckout({ status: 'preparing' });
     let token = '';
     let preparedOrder: PreparedOrder | null = null;
@@ -278,6 +281,8 @@ export function CheckoutPage() {
     } catch (error) {
       if (preparedOrder && token) await cancelPreparedOrder(token, preparedOrder.orderId);
       setCheckout({ status: 'failed', message: error instanceof Error ? error.message : 'CHECKOUT_PAYMENT_SETUP_FAILED' });
+    } finally {
+      preparingRef.current = false;
     }
   };
 
@@ -370,7 +375,9 @@ export function CheckoutPage() {
           </button>
         </footer>}
       </form>
-      <CartSummary checkout />
+      {checkout.status === 'paid' || checkout.status === 'awaiting-webhook'
+        ? <aside className="store-cart-summary store-confirmed-order-summary"><h2><StoreCopy value={{ en: 'Order Status', ar: 'حالة الطلب' }} /></h2><dl><div><dt><StoreCopy value={{ en: 'Order', ar: 'الطلب' }} inline /></dt><dd>{checkout.order.orderNumber}</dd></div><div><dt><StoreCopy value={{ en: 'Payment', ar: 'الدفع' }} inline /></dt><dd><StoreCopy value={checkout.status === 'paid' ? { en: 'Paid', ar: 'مدفوع' } : { en: 'Provider accepted · reconciling', ar: 'مقبول لدى المزود · جارٍ المطابقة' }} inline /></dd></div></dl><p><ShieldCheck /><StoreCopy value={{ en: 'The cart was cleared after provider acceptance to prevent duplicate checkout.', ar: 'تم تفريغ السلة بعد قبول مزود الدفع لمنع تكرار عملية الشراء.' }} /></p></aside>
+        : <CartSummary checkout />}
     </div>
   </div>;
 }
