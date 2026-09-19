@@ -9,7 +9,7 @@
 - Public website (home, about, 6 sports, programs, coaches philosophy, live contact enquiries, privacy/terms/shipping/returns, store entry) with bilingual EN/AR, RTL, dark/light, responsive, SEO (sitemap, robots, canonical, OpenGraph).
 - Admin workspace with First Setup bootstrap, live CRUD for countries/branches/players/performance, live read scope for catalog/operations/engagement/audit, and explicit Preview mode for demos.
 - Player / Parent / Coach portals with authenticated server bindings, guardian isolation, coach assignment isolation, plus explicit preview sessions.
-- Store with live catalog gateway, durable cart/wishlist, server-authoritative checkout (pending orders), honest admin states.
+- Store with live catalog gateway, durable cart/wishlist, server-authoritative checkout, Stripe Payment Element wiring, signed-webhook `pending→paid` reconciliation, and honest fail-closed states until merchant keys are activated.
 - Security: scoped RLS (migration 0006), server-only payment webhooks, tenant authorization on every request, rate limiting, security headers, secret-leak gates.
 - CI: staged Verify pipeline (static gates → build → production tests → browser QA → Store Golden Master).
 
