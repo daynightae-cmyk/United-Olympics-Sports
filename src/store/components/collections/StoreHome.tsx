@@ -21,7 +21,6 @@ export function StoreHomePage() {
   const football = productFor(products, 'football');
   const swimming = productFor(products, 'swimming');
   const apparel = productFor(products, 'apparel');
-  const accessories = productFor(products, 'accessories');
   const featured = products.filter((product) => product.badge === 'featured').slice(0, 4);
   const arrivals = products.filter((product) => product.badge === 'new').slice(0, 4);
   const best = [...products].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 4);
