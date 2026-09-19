@@ -83,6 +83,8 @@ async function visit(page, errors, route) {
       .filter((image) => image.complete && !image.naturalWidth && image.currentSrc)
       .map((image) => image.currentSrc),
     cardCount: document.querySelectorAll('.store-product-card').length,
+    brandLogoCount: document.querySelectorAll('.store-brand img').length,
+    extraPortalEmblemCount: document.querySelectorAll('.store-portal-emblem').length,
     search: document.querySelector('.store-search-wrap')?.getBoundingClientRect().toJSON(),
     cart: document
       .querySelector('.store-utilities>button[aria-label="Cart | السلة"]')
@@ -95,6 +97,8 @@ async function visit(page, errors, route) {
   assert(!forbidden.test(state.text), `${route}: unsupported commercial or brand text`);
   assert.deepEqual(state.broken, [], `${route}: broken images`);
   assert.deepEqual(errors, [], `${route}: runtime errors`);
+  assert.equal(state.brandLogoCount, 1, `${route}: store header must render exactly one official brand logo`);
+  assert.equal(state.extraPortalEmblemCount, 0, `${route}: store header must not render a second portal emblem`);
   const width = page.viewportSize().width;
   assert(state.cart?.width >= 32 && state.cart.x >= 0 && state.cart.right <= width + 1, `${route}: inaccessible cart`);
   if (width <= 820) assert(state.search?.width >= width - 32, `${route}: search is not full width (${state.search?.width})`);
