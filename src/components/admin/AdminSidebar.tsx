@@ -62,7 +62,7 @@ type Props = { open: boolean; collapsed: boolean; onClose: () => void; onCollaps
 export function AdminSidebar({ open, collapsed, onClose, onCollapse }: Props) {
   return <aside className={`admin-sidebar ${open ? 'is-open' : ''} ${collapsed ? 'is-collapsed' : ''}`} aria-label="Admin navigation | تنقل الإدارة">
     <div className="admin-brand">
-      <img src="/brand/united-olympics-sports-logo.png" alt="United Olympics Sports | يونايتد أوليمبيكس سبورت" />
+      <img className="official-logo admin-brand-logo" src="/brand/united-olympics-sports-logo.png" alt="United Olympics Sports | يونايتد أوليمبيكس سبورت" />
       <div className="admin-brand-copy"><strong>United Olympics Sports</strong><span lang="ar" dir="rtl">يونايتد أوليمبيكس سبورت</span><BilingualText value={bi('Super Admin', 'الإدارة الرئيسية')} /></div>
       <button type="button" className="admin-icon-button mobile-only" onClick={onClose} aria-label="Close navigation | إغلاق القائمة"><X aria-hidden="true" /></button>
     </div>

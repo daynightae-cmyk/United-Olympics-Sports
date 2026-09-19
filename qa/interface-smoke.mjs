@@ -56,7 +56,7 @@ const viewportMatrix = [
   { width: 1440, height: 900 },
   { width: 1920, height: 1080 },
 ];
-const responsiveRoutes = ['/', '/sports', '/programs', '/programs/football-foundations', '/auth/callback', '/admin/login', '/player/login', '/player/home', '/parent/login', '/parent', '/parent/children', '/parent/payments', '/coach', '/coach/players', '/admin', '/admin/branches', '/admin/players'];
+const responsiveRoutes = ['/', '/sports', '/programs', '/programs/football-foundations', '/auth/callback', '/admin/login', '/player/login', '/player/home', '/parent/login', '/parent', '/parent/children', '/parent/payments', '/coach', '/coach/players', '/admin', '/admin/branches', '/admin/players', '/admin/coaches', '/admin/sports'];
 
 async function waitForServer() {
   let lastError;
@@ -187,6 +187,7 @@ async function assertRoute(page, runtimeErrors, route, checkOverflow = true) {
   if (route.startsWith('/player') && !route.includes('/login') && !intentionalPlayerLoginRedirects.has(route) && state.pathname === '/player/login') throw new Error(`${route}: unexpectedly redirected to player login`);
   if (runtimeErrors.length) throw new Error(`${route}: ${runtimeErrors.join(' | ')}`);
   if (route === '/admin') await assertAdminVisualAuthority(page);
+  if (['/admin/players','/admin/parents','/admin/coaches','/admin/sports','/admin/programs'].includes(route)) await assertAdminWorkspaceAuthority(page, route);
   if (/^\/(admin|player|parent|coach|store)(\/|$)/.test(route)) await assertInternalPortalVisualAuthority(page, route, state.pathname);
   return state;
 }
@@ -223,6 +224,7 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
 
   const proof = await page.evaluate(() => {
     const playerLogo = document.querySelector('#player-portal-shell .athlete-sidebar-logo');
+    const sharedPortalLogo = document.querySelector('.portal-shell .portal-brand > img.official-logo.portal-brand-logo');
     const athleteId = document.querySelector('#player-overview-page .cgpt-athlete-id');
     const athleteStat = document.querySelector('#player-overview-page .cgpt-player-stat');
     const quickLinks = document.querySelectorAll('#player-overview-page .athlete-quick-link-card');
@@ -248,6 +250,7 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
       playerExtraEmblemCount: document.querySelectorAll('#player-portal-shell .athlete-sidebar-portal-emblem').length,
       playerLogoObjectFit: playerLogo ? getComputedStyle(playerLogo).objectFit : null,
       sharedPortalLogoCount: document.querySelectorAll('.portal-shell .portal-brand > img').length,
+      sharedPortalLogoObjectFit: sharedPortalLogo ? getComputedStyle(sharedPortalLogo).objectFit : null,
       authLogoCount: document.querySelectorAll('.portal-auth .portal-auth-home > img').length,
       athleteIdDisplay: athleteId ? getComputedStyle(athleteId).display : null,
       athleteIdRadius: athleteId ? parseFloat(getComputedStyle(athleteId).borderTopLeftRadius) : null,
@@ -369,6 +372,9 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     if (proof.sharedPortalLogoCount !== 1) {
       throw new Error(`${route}: shared portal shell must render exactly one canonical logo; got ${proof.sharedPortalLogoCount}`);
     }
+    if (proof.sharedPortalLogoObjectFit !== 'cover') {
+      throw new Error(`${route}: shared portal sidebar must crop the composite lockup to one visible emblem; object-fit=${proof.sharedPortalLogoObjectFit}`);
+    }
   }
 
   if (pathname.endsWith('/login') && proof.authLogoCount > 1) {
@@ -377,37 +383,151 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
 }
 
 async function assertAdminVisualAuthority(page) {
+  await page.waitForSelector('#admin-command-page .admin-command-hero', { state: 'visible', timeout: 10_000 });
+  await page.waitForSelector('#admin-command-page .admin-command-metric', { state: 'visible', timeout: 10_000 });
+  await page.waitForSelector('#admin-command-page .admin-operation-card', { state: 'visible', timeout: 10_000 });
+
   const proof = await page.evaluate(() => {
     const brand = document.querySelector('.admin-brand');
     const brandImages = brand ? [...brand.querySelectorAll(':scope > img')] : [];
     const canonicalLogoCount = brandImages.filter((image) =>
       (image.getAttribute('src') ?? '').includes('/brand/united-olympics-sports-logo.png')
     ).length;
-
-    const selectors = ['.dashboard-hero', '.admin-stat-card', '.admin-panel:not(.dashboard-hero)'];
-    const surfaces = selectors.map((selector) => {
-      const element = document.querySelector(selector);
-      return element ? getComputedStyle(element).backgroundColor : null;
-    });
+    const brandLogo = document.querySelector('.admin-brand > img.official-logo.admin-brand-logo');
+    const hero = document.querySelector('#admin-command-page .admin-command-hero');
+    const heroLogo = document.querySelector('#admin-command-page .admin-command-logo');
+    const stat = document.querySelector('#admin-command-page .admin-stat-card');
+    const operation = document.querySelector('#admin-command-page .admin-operation-card');
+    const activity = document.querySelector('#admin-command-page .admin-activity-command');
 
     return {
       totalBrandImages: brandImages.length,
       canonicalLogoCount,
-      surfaces,
+      brandLogoObjectFit: brandLogo ? getComputedStyle(brandLogo).objectFit : null,
+      heroRadius: hero ? parseFloat(getComputedStyle(hero).borderTopLeftRadius) : null,
+      heroBackground: hero ? getComputedStyle(hero).backgroundImage : null,
+      heroLogoObjectFit: heroLogo ? getComputedStyle(heroLogo).objectFit : null,
+      commandMetricCount: document.querySelectorAll('#admin-command-page .admin-command-metric').length,
+      operationCount: document.querySelectorAll('#admin-command-page .admin-operation-card').length,
+      statRadius: stat ? parseFloat(getComputedStyle(stat).borderTopLeftRadius) : null,
+      statBackground: stat ? getComputedStyle(stat).backgroundImage : null,
+      operationRadius: operation ? parseFloat(getComputedStyle(operation).borderTopLeftRadius) : null,
+      operationBackground: operation ? getComputedStyle(operation).backgroundImage : null,
+      activityRadius: activity ? parseFloat(getComputedStyle(activity).borderTopLeftRadius) : null,
+      activityBackground: activity ? getComputedStyle(activity).backgroundImage : null,
     };
   });
 
   if (proof.totalBrandImages !== 1 || proof.canonicalLogoCount !== 1) {
     throw new Error(`/admin: expected exactly one canonical sidebar logo, got ${proof.totalBrandImages} brand images / ${proof.canonicalLogoCount} canonical`);
   }
+  if (proof.brandLogoObjectFit !== 'cover') {
+    throw new Error(`/admin: sidebar must crop the composite brand lockup to one visible emblem; object-fit=${proof.brandLogoObjectFit}`);
+  }
+  if (!(proof.heroRadius >= 24) || !proof.heroBackground || proof.heroBackground === 'none') {
+    throw new Error(`/admin: Operations Command hero must use the athletic authority; radius=${proof.heroRadius}, background=${proof.heroBackground}`);
+  }
+  if (proof.heroLogoObjectFit !== 'cover') {
+    throw new Error(`/admin: command hero brand mark must use the single-emblem crop; object-fit=${proof.heroLogoObjectFit}`);
+  }
+  if (proof.commandMetricCount !== 4) {
+    throw new Error(`/admin: expected four command metrics; got ${proof.commandMetricCount}`);
+  }
+  if (proof.operationCount < 7) {
+    throw new Error(`/admin: expected at least seven operational action cards; got ${proof.operationCount}`);
+  }
+  if (!(proof.statRadius >= 18) || !proof.statBackground || proof.statBackground === 'none') {
+    throw new Error(`/admin: KPI cards must use the Admin athletic surface; radius=${proof.statRadius}, background=${proof.statBackground}`);
+  }
+  if (!(proof.operationRadius >= 14) || !proof.operationBackground || proof.operationBackground === 'none') {
+    throw new Error(`/admin: operation cards must use the Admin athletic surface; radius=${proof.operationRadius}, background=${proof.operationBackground}`);
+  }
+  if (!(proof.activityRadius >= 20) || !proof.activityBackground || proof.activityBackground === 'none') {
+    throw new Error(`/admin: recent activity must use the Admin command surface; radius=${proof.activityRadius}, background=${proof.activityBackground}`);
+  }
+}
 
-  if (proof.surfaces.some((surface) => !surface)) {
-    throw new Error(`/admin: missing dashboard visual proof surface: ${proof.surfaces.join(' | ')}`);
+
+async function assertAdminWorkspaceAuthority(page, route) {
+  const playerRoute = route === '/admin/players';
+  const directoryRoute = ['/admin/parents', '/admin/coaches'].includes(route);
+  const organizationRoute = ['/admin/sports', '/admin/programs'].includes(route);
+
+  if (playerRoute) {
+    await page.waitForSelector('.admin-shell .bm-filter-bar', { state: 'visible', timeout: 10_000 });
+    await page.waitForSelector('.admin-shell .bm-table-container', { state: 'attached', timeout: 10_000 });
+  } else {
+    await page.waitForSelector('.admin-shell .enterprise-toolbar', { state: 'visible', timeout: 10_000 });
   }
 
-  const uniqueSurfaces = new Set(proof.surfaces);
-  if (uniqueSurfaces.size !== 1) {
-    throw new Error(`/admin: dashboard blocks do not share one canonical background: ${proof.surfaces.join(' | ')}`);
+  if (directoryRoute) {
+    await page.waitForSelector('.admin-shell .directory-card', { state: 'visible', timeout: 10_000 });
+  }
+  if (organizationRoute) {
+    await page.waitForSelector('.admin-shell .organization-card', { state: 'visible', timeout: 10_000 });
+  }
+
+  const proof = await page.evaluate(({ playerRoute, directoryRoute, organizationRoute }) => {
+    const enterpriseToolbar = document.querySelector('.admin-shell .enterprise-toolbar');
+    const bmFilterBar = document.querySelector('.admin-shell .bm-filter-bar');
+    const bmTableContainer = document.querySelector('.admin-shell .bm-table-container');
+    const mobilePlayerCard = document.querySelector('.admin-shell .bm-mobile-card');
+    const directoryCard = directoryRoute ? document.querySelector('.admin-shell .directory-card') : null;
+    const organizationCard = organizationRoute ? document.querySelector('.admin-shell .organization-card') : null;
+    const tableStyle = bmTableContainer ? getComputedStyle(bmTableContainer) : null;
+    const mobileStyle = mobilePlayerCard ? getComputedStyle(mobilePlayerCard) : null;
+    return {
+      viewportWidth: window.innerWidth,
+      enterpriseToolbarRadius: enterpriseToolbar ? parseFloat(getComputedStyle(enterpriseToolbar).borderTopLeftRadius) : null,
+      enterpriseToolbarBackground: enterpriseToolbar ? getComputedStyle(enterpriseToolbar).backgroundImage : null,
+      bmFilterRadius: bmFilterBar ? parseFloat(getComputedStyle(bmFilterBar).borderTopLeftRadius) : null,
+      bmFilterBackground: bmFilterBar ? getComputedStyle(bmFilterBar).backgroundImage : null,
+      bmTableDisplay: tableStyle?.display ?? null,
+      bmTableVisibility: tableStyle?.visibility ?? null,
+      bmTableRadius: bmTableContainer ? parseFloat(tableStyle.borderTopLeftRadius) : null,
+      bmTableBackground: tableStyle?.backgroundImage ?? null,
+      mobileCardDisplay: mobileStyle?.display ?? null,
+      mobileCardVisibility: mobileStyle?.visibility ?? null,
+      mobileCardRadius: mobilePlayerCard ? parseFloat(mobileStyle.borderTopLeftRadius) : null,
+      mobileCardBackground: mobileStyle?.backgroundImage ?? null,
+      directoryRadius: directoryCard ? parseFloat(getComputedStyle(directoryCard).borderTopLeftRadius) : null,
+      directoryBackground: directoryCard ? getComputedStyle(directoryCard).backgroundImage : null,
+      organizationRadius: organizationCard ? parseFloat(getComputedStyle(organizationCard).borderTopLeftRadius) : null,
+      organizationBackground: organizationCard ? getComputedStyle(organizationCard).backgroundImage : null,
+      playerRoute,
+    };
+  }, { playerRoute, directoryRoute, organizationRoute });
+
+  if (playerRoute) {
+    if (!(proof.bmFilterRadius >= 16) || !proof.bmFilterBackground || proof.bmFilterBackground === 'none') {
+      throw new Error(`${route}: Player management filter bar must use the Admin athletic surface; radius=${proof.bmFilterRadius}, background=${proof.bmFilterBackground}`);
+    }
+
+    const mobileLayout = proof.viewportWidth <= 768;
+    if (mobileLayout) {
+      const mobileVisible = proof.mobileCardDisplay !== 'none' && proof.mobileCardVisibility !== 'hidden';
+      if (!mobileVisible || !(proof.mobileCardRadius >= 16) || !proof.mobileCardBackground || proof.mobileCardBackground === 'none') {
+        throw new Error(`${route}: mobile Player management must render athletic cards; width=${proof.viewportWidth}, display=${proof.mobileCardDisplay}, radius=${proof.mobileCardRadius}, background=${proof.mobileCardBackground}`);
+      }
+    } else {
+      const tableVisible = proof.bmTableDisplay !== 'none' && proof.bmTableVisibility !== 'hidden';
+      if (!tableVisible || !(proof.bmTableRadius >= 18) || !proof.bmTableBackground || proof.bmTableBackground === 'none') {
+        throw new Error(`${route}: desktop Player management table must use the Admin athletic surface; width=${proof.viewportWidth}, display=${proof.bmTableDisplay}, radius=${proof.bmTableRadius}, background=${proof.bmTableBackground}`);
+      }
+    }
+    return;
+  }
+
+  if (!(proof.enterpriseToolbarRadius >= 16) || !proof.enterpriseToolbarBackground || proof.enterpriseToolbarBackground === 'none') {
+    throw new Error(`${route}: Admin toolbar must use the athletic command surface; radius=${proof.enterpriseToolbarRadius}, background=${proof.enterpriseToolbarBackground}`);
+  }
+
+  if (directoryRoute && (!(proof.directoryRadius >= 18) || !proof.directoryBackground || proof.directoryBackground === 'none')) {
+    throw new Error(`${route}: Admin directory cards must use the athletic surface; radius=${proof.directoryRadius}, background=${proof.directoryBackground}`);
+  }
+
+  if (organizationRoute && (!(proof.organizationRadius >= 18) || !proof.organizationBackground || proof.organizationBackground === 'none')) {
+    throw new Error(`${route}: Admin organization cards must use the athletic surface; radius=${proof.organizationRadius}, background=${proof.organizationBackground}`);
   }
 }
 
