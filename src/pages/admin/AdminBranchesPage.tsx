@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { PageHeader } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { PreviewNotice, EnterpriseSelect } from '../../components/enterprise/EnterpriseUI';
-import { UosSelectField, UosTextField } from '../../components/fields/UosFields';
+import { UosFormSection, UosSelectField, UosTextField } from '../../components/fields/UosFields';
 import { useAdminData } from '../../admin/data/AdminDataProvider';
 import { useBranches, useCountries, useCreateBranch, useOrganization, useSports } from '../../admin/data/adminHooks';
 
@@ -176,15 +176,30 @@ export function AdminBranchesPage() {
           <div className="modal-head"><div><BilingualText value={bi('Add Branch', 'إضافة فرع')} /><small><BilingualText value={isPreview ? bi('Browser-persistent preview record', 'سجل معاينة محفوظ في المتصفح') : bi('Live organization record', 'سجل منظمة حي')} /></small></div><button type="button" className="admin-icon-button" onClick={closeCreate} aria-label="Close | إغلاق"><X /></button></div>
           {isPreview && <div className="preview-warning"><BilingualText value={bi('This creates a persistent Preview record in this browser. It does not write to a production backend.', 'ينشئ هذا سجل معاينة محفوظًا في هذا المتصفح. لا يكتب إلى نظام خلفي إنتاجي.')} /></div>}
           {formError && <p role="alert" className="form-error">{formError}</p>}
-          <div className="uos-form-grid">
-            <UosTextField label={bi('Branch name (English)', 'اسم الفرع (إنجليزي)')} value={draft.nameEn} onChange={(event) => setDraftField('nameEn', event.target.value)} placeholder="Abu Dhabi Branch" required disabled={createLoading} dir="ltr" autoComplete="off" />
-            <UosTextField label={bi('Branch name (Arabic)', 'اسم الفرع (عربي)')} value={draft.nameAr} onChange={(event) => setDraftField('nameAr', event.target.value)} placeholder="فرع أبوظبي" required disabled={createLoading} dir="rtl" lang="ar" autoComplete="off" />
-            <UosSelectField label={bi('Country', 'الدولة')} value={draft.countryId} onChange={(event) => setDraftField('countryId', event.target.value)} required disabled={createLoading} placeholder={bi('Select Country', 'اختر الدولة')} options={countries.map((country) => ({ value: country.id, label: country.name }))} />
-            <UosSelectField label={bi('Primary sport', 'الرياضة الأساسية')} value={draft.sportId} onChange={(event) => setDraftField('sportId', event.target.value)} required disabled={createLoading} placeholder={bi('Select Sport', 'اختر الرياضة')} options={sportsCatalog.map((sport) => ({ value: sport.id, label: sport.name }))} />
-            <UosTextField label={bi('Address (English)', 'العنوان (إنجليزي)')} value={draft.addressEn} onChange={(event) => setDraftField('addressEn', event.target.value)} placeholder="Branch address" optional disabled={createLoading} dir="ltr" />
-            <UosTextField label={bi('Address (Arabic)', 'العنوان (عربي)')} value={draft.addressAr} onChange={(event) => setDraftField('addressAr', event.target.value)} placeholder="عنوان الفرع" optional disabled={createLoading} dir="rtl" lang="ar" />
-            <UosTextField label={bi('Phone', 'الهاتف')} type="tel" value={draft.phone} onChange={(event) => setDraftField('phone', event.target.value)} placeholder="+971..." optional disabled={createLoading} dir="ltr" autoComplete="tel" />
-            <UosTextField label={bi('Email', 'البريد الإلكتروني')} type="email" value={draft.email} onChange={(event) => setDraftField('email', event.target.value)} placeholder="branch@example.com" optional disabled={createLoading} dir="ltr" autoComplete="email" />
+          <div className="uos-form-workflow">
+            <UosFormSection
+              title={bi('Branch Identity & Scope', 'هوية الفرع ونطاقه')}
+              icon={<Building2 size={17} />}
+              description={bi('Define the bilingual branch identity, country and primary sport.', 'حدد هوية الفرع باللغتين والدولة والرياضة الأساسية.')}
+              status={draft.nameEn.trim() && draft.nameAr.trim() && draft.countryId && draft.sportId ? 'complete' : 'in-progress'}
+            >
+              <UosTextField label={bi('Branch name (English)', 'اسم الفرع (إنجليزي)')} value={draft.nameEn} onChange={(event) => setDraftField('nameEn', event.target.value)} placeholder="Abu Dhabi Branch" required disabled={createLoading} dir="ltr" autoComplete="off" />
+              <UosTextField label={bi('Branch name (Arabic)', 'اسم الفرع (عربي)')} value={draft.nameAr} onChange={(event) => setDraftField('nameAr', event.target.value)} placeholder="فرع أبوظبي" required disabled={createLoading} dir="rtl" lang="ar" autoComplete="off" />
+              <UosSelectField label={bi('Country', 'الدولة')} value={draft.countryId} onChange={(event) => setDraftField('countryId', event.target.value)} required disabled={createLoading} placeholder={bi('Select Country', 'اختر الدولة')} options={countries.map((country) => ({ value: country.id, label: country.name }))} />
+              <UosSelectField label={bi('Primary sport', 'الرياضة الأساسية')} value={draft.sportId} onChange={(event) => setDraftField('sportId', event.target.value)} required disabled={createLoading} placeholder={bi('Select Sport', 'اختر الرياضة')} options={sportsCatalog.map((sport) => ({ value: sport.id, label: sport.name }))} />
+            </UosFormSection>
+
+            <UosFormSection
+              title={bi('Location & Contact', 'الموقع والتواصل')}
+              icon={<Flag size={17} />}
+              description={bi('Add bilingual address and official contact channels when available.', 'أضف العنوان باللغتين وقنوات التواصل الرسمية عند توفرها.')}
+              status="optional"
+            >
+              <UosTextField label={bi('Address (English)', 'العنوان (إنجليزي)')} value={draft.addressEn} onChange={(event) => setDraftField('addressEn', event.target.value)} placeholder="Branch address" optional disabled={createLoading} dir="ltr" />
+              <UosTextField label={bi('Address (Arabic)', 'العنوان (عربي)')} value={draft.addressAr} onChange={(event) => setDraftField('addressAr', event.target.value)} placeholder="عنوان الفرع" optional disabled={createLoading} dir="rtl" lang="ar" />
+              <UosTextField label={bi('Phone', 'الهاتف')} type="tel" value={draft.phone} onChange={(event) => setDraftField('phone', event.target.value)} placeholder="+971..." helper={bi('Use the complete international number including country code.', 'استخدم الرقم الدولي كاملًا متضمنًا رمز الدولة.')} optional disabled={createLoading} dir="ltr" autoComplete="tel" inputMode="tel" />
+              <UosTextField label={bi('Email', 'البريد الإلكتروني')} type="email" value={draft.email} onChange={(event) => setDraftField('email', event.target.value)} placeholder="branch@example.com" optional disabled={createLoading} dir="ltr" autoComplete="email" inputMode="email" />
+            </UosFormSection>
           </div>
           <div className="dialog-actions"><button type="button" className="admin-secondary-button" onClick={closeCreate} disabled={createLoading}><BilingualText value={bi('Cancel', 'إلغاء')} /></button><button type="button" className="admin-primary-button" onClick={() => void submitBranch()} disabled={createLoading}><BilingualText value={bi(createLoading ? 'Saving…' : 'Save Branch', createLoading ? 'جارٍ الحفظ…' : 'حفظ الفرع')} /></button></div>
         </section>

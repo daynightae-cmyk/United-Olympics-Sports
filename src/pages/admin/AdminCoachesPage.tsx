@@ -5,7 +5,7 @@ import { useBranches, useCoaches, useCreateCoach, useGroups, useSports } from '.
 import { PageHeader, UserAvatar } from '../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { EnterpriseEmpty, EnterpriseKpi, EnterpriseStatus, EnterpriseToolbar, PreviewNotice } from '../../components/enterprise/EnterpriseUI';
-import { UosSelectField, UosTextField } from '../../components/fields/UosFields';
+import { UosFormSection, UosSelectField, UosTextField } from '../../components/fields/UosFields';
 
 const emptyDraft = { nameEn: '', nameAr: '', sportId: '', branchId: '', groupId: '', specializationEn: '', specializationAr: '' };
 
@@ -66,72 +66,37 @@ export function AdminCoachesPage() {
 
     {showCreate && <section className="admin-panel" aria-label="Create coach">
       <div className="panel-heading"><BilingualText value={bi('Create Coach', 'إنشاء مدرب')} /><button type="button" className="icon-button" onClick={() => !createLoading && setShowCreate(false)} aria-label="Close | إغلاق"><X size={16} /></button></div>
-      <div className="uos-form-grid">
-        <UosTextField
-          label={bi('Coach name (English)', 'اسم المدرب (إنجليزي)')}
-          value={draft.nameEn}
-          onChange={event => setDraftField('nameEn', event.target.value)}
-          required
-          disabled={createLoading}
-          dir="ltr"
-          autoComplete="name"
-        />
-        <UosTextField
-          label={bi('Coach name (Arabic)', 'اسم المدرب (عربي)')}
-          value={draft.nameAr}
-          onChange={event => setDraftField('nameAr', event.target.value)}
-          required
-          disabled={createLoading}
-          dir="rtl"
-          lang="ar"
-          autoComplete="off"
-        />
-        <UosSelectField
-          label={bi('Sport', 'الرياضة')}
-          value={draft.sportId}
-          onChange={event => { setDraftField('sportId', event.target.value); setDraftField('groupId', ''); }}
-          placeholder={bi('Select sport', 'اختر الرياضة')}
-          options={sports.map(sport => ({ value: sport.id, label: sport.name }))}
-          required
-          disabled={createLoading}
-        />
-        <UosSelectField
-          label={bi('Branch', 'الفرع')}
-          value={draft.branchId}
-          onChange={event => setDraftField('branchId', event.target.value)}
-          placeholder={bi('No branch', 'بدون فرع')}
-          options={branches.map(branch => ({ value: branch.id, label: branch.name }))}
-          optional
-          disabled={createLoading}
-        />
-        <UosSelectField
-          label={bi('Group', 'المجموعة')}
-          value={draft.groupId}
-          onChange={event => setDraftField('groupId', event.target.value)}
-          placeholder={bi('No group', 'بدون مجموعة')}
-          options={groups.filter(group => !draft.sportId || group.sportId === draft.sportId).map(group => ({ value: group.id, label: group.name }))}
-          optional
-          disabled={createLoading}
-        />
-        <UosTextField
-          label={bi('Specialization (English)', 'التخصص (إنجليزي)')}
-          value={draft.specializationEn}
-          onChange={event => setDraftField('specializationEn', event.target.value)}
-          optional
-          disabled={createLoading}
-          dir="ltr"
-          autoComplete="off"
-        />
-        <UosTextField
-          label={bi('Specialization (Arabic)', 'التخصص (عربي)')}
-          value={draft.specializationAr}
-          onChange={event => setDraftField('specializationAr', event.target.value)}
-          optional
-          disabled={createLoading}
-          dir="rtl"
-          lang="ar"
-          autoComplete="off"
-        />
+      <div className="uos-form-workflow">
+        <UosFormSection
+          title={bi('Coach Identity', 'هوية المدرب')}
+          icon={<BriefcaseBusiness size={17} />}
+          description={bi('Capture the coach identity in English and Arabic.', 'سجل هوية المدرب بالإنجليزية والعربية.')}
+          status={draft.nameEn.trim() && draft.nameAr.trim() ? 'complete' : 'in-progress'}
+        >
+          <UosTextField label={bi('Coach name (English)', 'اسم المدرب (إنجليزي)')} value={draft.nameEn} onChange={event => setDraftField('nameEn', event.target.value)} required disabled={createLoading} dir="ltr" autoComplete="name" />
+          <UosTextField label={bi('Coach name (Arabic)', 'اسم المدرب (عربي)')} value={draft.nameAr} onChange={event => setDraftField('nameAr', event.target.value)} required disabled={createLoading} dir="rtl" lang="ar" autoComplete="off" />
+        </UosFormSection>
+
+        <UosFormSection
+          title={bi('Sports Assignment', 'التكليف الرياضي')}
+          icon={<Trophy size={17} />}
+          description={bi('Assign the sport first, then optionally bind branch and training group context.', 'حدد الرياضة أولًا ثم اربط الفرع والمجموعة التدريبية اختياريًا.')}
+          status={draft.sportId ? 'complete' : 'in-progress'}
+        >
+          <UosSelectField label={bi('Sport', 'الرياضة')} value={draft.sportId} onChange={event => { setDraftField('sportId', event.target.value); setDraftField('groupId', ''); }} placeholder={bi('Select sport', 'اختر الرياضة')} options={sports.map(sport => ({ value: sport.id, label: sport.name }))} required disabled={createLoading} />
+          <UosSelectField label={bi('Branch', 'الفرع')} value={draft.branchId} onChange={event => setDraftField('branchId', event.target.value)} placeholder={bi('No branch', 'بدون فرع')} options={branches.map(branch => ({ value: branch.id, label: branch.name }))} optional disabled={createLoading} />
+          <UosSelectField label={bi('Group', 'المجموعة')} value={draft.groupId} onChange={event => setDraftField('groupId', event.target.value)} placeholder={bi('No group', 'بدون مجموعة')} options={groups.filter(group => !draft.sportId || group.sportId === draft.sportId).map(group => ({ value: group.id, label: group.name }))} optional disabled={createLoading} />
+        </UosFormSection>
+
+        <UosFormSection
+          title={bi('Specialization', 'التخصص')}
+          icon={<Dumbbell size={17} />}
+          description={bi('Record the specialization bilingually when it is part of the coach record.', 'سجل التخصص باللغتين عندما يكون جزءًا من ملف المدرب.')}
+          status="optional"
+        >
+          <UosTextField label={bi('Specialization (English)', 'التخصص (إنجليزي)')} value={draft.specializationEn} onChange={event => setDraftField('specializationEn', event.target.value)} optional disabled={createLoading} dir="ltr" autoComplete="off" />
+          <UosTextField label={bi('Specialization (Arabic)', 'التخصص (عربي)')} value={draft.specializationAr} onChange={event => setDraftField('specializationAr', event.target.value)} optional disabled={createLoading} dir="rtl" lang="ar" autoComplete="off" />
+        </UosFormSection>
       </div>
       {formError && <p className="form-error" role="alert">{formError}</p>}
       <div className="admin-form-actions"><button type="button" className="admin-primary-button" disabled={createLoading} onClick={() => void submitCoach()}><BilingualText value={createLoading ? bi('Saving…', 'جارٍ الحفظ…') : bi('Save Coach', 'حفظ المدرب')} /></button></div>
