@@ -242,7 +242,9 @@ export function ProductCard({ product, compact = false }: { product: StoreProduc
             disabled={!ready}
             aria-describedby={!ready ? hintId : undefined}
             onClick={handleQuickAdd}
-            aria-label={`Quick add ${product.name.en} | إضافة ${product.name.ar}`}
+            aria-label={locale === 'ar'
+              ? `${added ? 'تمت الإضافة!' : 'أضف إلى السلة'} · ${product.name.ar}`
+              : `${added ? 'Added!' : 'Add to Cart'} · ${product.name.en}`}
           >
             {added ? <Check aria-hidden="true" /> : <ShoppingCart aria-hidden="true" />}
             <span>
