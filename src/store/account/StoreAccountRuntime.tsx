@@ -216,6 +216,14 @@ export function ConnectedAccountPage() {
 
 export function ConnectedOrdersPage() {
   const { account } = useStoreAccount();
+  const { locale } = useStore();
+  const formatLocale = locale === 'ar' ? 'ar-AE' : 'en-AE';
+  const statusLabels: Record<string, { en: string; ar: string }> = {
+    pending: { en: 'Pending', ar: 'قيد الانتظار' },
+    paid: { en: 'Paid', ar: 'مدفوع' },
+    cancelled: { en: 'Cancelled', ar: 'ملغي' },
+  };
+  const statusLabel = (status: string) => statusLabels[status]?.[locale] ?? status;
   const [status, setStatus] = useState('all');
   const tabs = [['all', 'All Orders', 'كل الطلبات'], ['pending', 'Pending', 'قيد الانتظار'], ['paid', 'Paid', 'مدفوع'], ['cancelled', 'Cancelled', 'ملغي']];
   const orders = account!.orders.filter((order) => status === 'all' || order.status === status);
@@ -239,20 +247,20 @@ export function ConnectedOrdersPage() {
       {orders.length ? <div className="store-reference-orders-workspace">
         <section className="store-reference-orders-list" aria-label="Orders | الطلبات">
           {orders.map((order) => {
-            const total = new Intl.NumberFormat('en-AE', { style: 'currency', currency: order.currency }).format(order.totalMinor / 100);
+            const total = new Intl.NumberFormat(formatLocale, { style: 'currency', currency: order.currency }).format(order.totalMinor / 100);
             return <button type="button" key={order.id} className={selected?.id === order.id ? 'is-active' : ''} onClick={() => setSelectedId(order.id)}>
               <span className="store-reference-order-icon"><Package /></span>
-              <span><strong>{order.orderNumber}</strong><small>{new Date(order.createdAt).toLocaleDateString()}</small></span>
-              <span className="store-reference-order-money"><b>{total}</b><small>{order.status}</small></span>
+              <span><strong>{order.orderNumber}</strong><small>{new Date(order.createdAt).toLocaleDateString(formatLocale)}</small></span>
+              <span className="store-reference-order-money"><b>{total}</b><small>{statusLabel(order.status)}</small></span>
             </button>;
           })}
         </section>
         {selected && <article className="store-reference-order-detail">
-          <header><div><small><StoreCopy value={{ en: 'ORDER DETAILS', ar: 'تفاصيل الطلب' }} /></small><h2>{selected.orderNumber}</h2></div><span data-status={selected.status}>{selected.status}</span></header>
+          <header><div><small><StoreCopy value={{ en: 'ORDER DETAILS', ar: 'تفاصيل الطلب' }} /></small><h2>{selected.orderNumber}</h2></div><span data-status={selected.status}>{statusLabel(selected.status)}</span></header>
           <dl className="store-reference-order-facts">
-            <div><dt><StoreCopy value={{ en: 'Order date', ar: 'تاريخ الطلب' }} /></dt><dd>{new Date(selected.createdAt).toLocaleString()}</dd></div>
-            <div><dt><StoreCopy value={{ en: 'Total', ar: 'الإجمالي' }} /></dt><dd>{new Intl.NumberFormat('en-AE', { style: 'currency', currency: selected.currency }).format(selected.totalMinor / 100)}</dd></div>
-            <div><dt><StoreCopy value={{ en: 'Status', ar: 'الحالة' }} /></dt><dd>{selected.status}</dd></div>
+            <div><dt><StoreCopy value={{ en: 'Order date', ar: 'تاريخ الطلب' }} /></dt><dd>{new Date(selected.createdAt).toLocaleString(formatLocale)}</dd></div>
+            <div><dt><StoreCopy value={{ en: 'Total', ar: 'الإجمالي' }} /></dt><dd>{new Intl.NumberFormat(formatLocale, { style: 'currency', currency: selected.currency }).format(selected.totalMinor / 100)}</dd></div>
+            <div><dt><StoreCopy value={{ en: 'Status', ar: 'الحالة' }} /></dt><dd>{statusLabel(selected.status)}</dd></div>
             <div><dt><StoreCopy value={{ en: 'Shipping address', ar: 'عنوان الشحن' }} /></dt><dd>{addressText(selected.shippingAddress) || '—'}</dd></div>
           </dl>
           <section className="store-reference-order-items">
