@@ -10,7 +10,7 @@ export function safeReturnTo(value: string | null | undefined, fallback = '/'): 
   if (value !== value.trim()) return fallback;
   if (!value.startsWith('/') || value.startsWith('//')) return fallback;
   if (value.includes('\\\\') || /%5c/i.test(value)) return fallback;
-  if (/[\u0000-\u001f\u007f]/.test(value)) return fallback;
+  if ([...value].some((char) => { const code = char.charCodeAt(0); return code <= 31 || code === 127; })) return fallback;
 
   try {
     const resolved = new URL(value, SAFE_RETURN_BASE);
