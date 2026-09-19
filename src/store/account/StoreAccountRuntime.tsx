@@ -182,7 +182,7 @@ function StoreAccountShell({ title, children }: { title: { en: string; ar: strin
   return (
     <div className="store-account-page">
       <aside className="store-account-sidebar">
-        <div><img src="/brand/united-olympics-sports-logo.png" alt="United Olympics Sports | يونايتد أوليمبيكس سبورت" /><h2><StoreCopy value={{ en: 'My Account', ar: 'حسابي' }} /></h2></div>
+        <div className="store-account-sidebar-title"><h2><StoreCopy value={{ en: 'My Account', ar: 'حسابي' }} /></h2><small><StoreCopy value={{ en: 'Customer center', ar: 'مركز العميل' }} /></small></div>
         <nav>
           {accountNav.map(({ to, end, icon: Icon, value }) => <NavLink key={to} to={to} end={end}><Icon /><StoreCopy value={value} /></NavLink>)}
           <button type="button" onClick={() => void logout()}><LogOut /><StoreCopy value={{ en: 'Logout', ar: 'تسجيل الخروج' }} /></button>
@@ -217,12 +217,51 @@ export function ConnectedAccountPage() {
 export function ConnectedOrdersPage() {
   const { account } = useStoreAccount();
   const [status, setStatus] = useState('all');
-  const tabs = [['all', 'All', 'الكل'], ['pending', 'Pending', 'قيد الانتظار'], ['paid', 'Paid', 'مدفوع'], ['cancelled', 'Cancelled', 'ملغي']];
+  const tabs = [['all', 'All Orders', 'كل الطلبات'], ['pending', 'Pending', 'قيد الانتظار'], ['paid', 'Paid', 'مدفوع'], ['cancelled', 'Cancelled', 'ملغي']];
   const orders = account!.orders.filter((order) => status === 'all' || order.status === status);
+  const [selectedId, setSelectedId] = useState<string | null>(account!.orders[0]?.id ?? null);
+  const selected = orders.find((order) => order.id === selectedId) ?? orders[0] ?? null;
+
+  const orderItems = (order: StoreOrder) => Array.isArray(order.items)
+    ? order.items.flatMap((item) => {
+        if (!item || typeof item !== 'object') return [];
+        const record = item as Record<string, unknown>;
+        const name = typeof record.name === 'string' ? record.name : typeof record.sku === 'string' ? record.sku : null;
+        const quantity = typeof record.quantity === 'number' ? record.quantity : 1;
+        const unitPriceMinor = typeof record.unitPriceMinor === 'number' ? record.unitPriceMinor : null;
+        return name ? [{ name, quantity, unitPriceMinor }] : [];
+      })
+    : [];
+
   return (
     <StoreAccountShell title={{ en: 'My Orders', ar: 'طلباتي' }}>
       <div className="store-order-tabs" role="tablist">{tabs.map(([id, en, ar]) => <button type="button" role="tab" aria-selected={status === id} className={status === id ? 'is-active' : ''} onClick={() => setStatus(id)} key={id}>{en} <small>{ar}</small></button>)}</div>
-      {orders.length ? <div className="store-order-list">{orders.map((order) => <article key={order.id} className="store-profile-card"><Package /><div><h2>{order.orderNumber}</h2><p>{order.status} · {new Intl.NumberFormat('en-AE', { style: 'currency', currency: order.currency }).format(order.totalMinor / 100)}</p><small>{new Date(order.createdAt).toLocaleString()}</small></div></article>)}</div> : <StoreState kind="empty" title={{ en: 'No orders in this status', ar: 'لا توجد طلبات بهذه الحالة' }} description={{ en: 'Only orders belonging to your authenticated account are shown.', ar: 'يتم عرض الطلبات الخاصة بحسابك الموثق فقط.' }} />}
+      {orders.length ? <div className="store-reference-orders-workspace">
+        <section className="store-reference-orders-list" aria-label="Orders | الطلبات">
+          {orders.map((order) => {
+            const total = new Intl.NumberFormat('en-AE', { style: 'currency', currency: order.currency }).format(order.totalMinor / 100);
+            return <button type="button" key={order.id} className={selected?.id === order.id ? 'is-active' : ''} onClick={() => setSelectedId(order.id)}>
+              <span className="store-reference-order-icon"><Package /></span>
+              <span><strong>{order.orderNumber}</strong><small>{new Date(order.createdAt).toLocaleDateString()}</small></span>
+              <span className="store-reference-order-money"><b>{total}</b><small>{order.status}</small></span>
+            </button>;
+          })}
+        </section>
+        {selected && <article className="store-reference-order-detail">
+          <header><div><small><StoreCopy value={{ en: 'ORDER DETAILS', ar: 'تفاصيل الطلب' }} /></small><h2>{selected.orderNumber}</h2></div><span data-status={selected.status}>{selected.status}</span></header>
+          <dl className="store-reference-order-facts">
+            <div><dt><StoreCopy value={{ en: 'Order date', ar: 'تاريخ الطلب' }} /></dt><dd>{new Date(selected.createdAt).toLocaleString()}</dd></div>
+            <div><dt><StoreCopy value={{ en: 'Total', ar: 'الإجمالي' }} /></dt><dd>{new Intl.NumberFormat('en-AE', { style: 'currency', currency: selected.currency }).format(selected.totalMinor / 100)}</dd></div>
+            <div><dt><StoreCopy value={{ en: 'Status', ar: 'الحالة' }} /></dt><dd>{selected.status}</dd></div>
+            <div><dt><StoreCopy value={{ en: 'Shipping address', ar: 'عنوان الشحن' }} /></dt><dd>{addressText(selected.shippingAddress) || '—'}</dd></div>
+          </dl>
+          <section className="store-reference-order-items">
+            <h3><StoreCopy value={{ en: 'Order Items', ar: 'عناصر الطلب' }} /></h3>
+            {orderItems(selected).length ? orderItems(selected).map((item, index) => <div key={`${item.name}-${index}`}><span><Package /></span><strong>{item.name}</strong><small>× {item.quantity}</small>{item.unitPriceMinor != null && <b>{new Intl.NumberFormat('en-AE', { style: 'currency', currency: selected.currency }).format(item.unitPriceMinor / 100)}</b>}</div>) : <p><StoreCopy value={{ en: 'Item details are not stored in a displayable format for this order.', ar: 'تفاصيل عناصر هذا الطلب غير مخزنة بصيغة قابلة للعرض.' }} /></p>}
+          </section>
+          <footer><Link className="store-button store-button-secondary" to={`/store/order/${selected.id}`}><StoreCopy value={{ en: 'Open full order', ar: 'فتح الطلب الكامل' }} inline /></Link></footer>
+        </article>}
+      </div> : <StoreState kind="empty" title={{ en: 'No orders in this status', ar: 'لا توجد طلبات بهذه الحالة' }} description={{ en: 'Only orders belonging to your authenticated account are shown.', ar: 'يتم عرض الطلبات الخاصة بحسابك الموثق فقط.' }} />}
     </StoreAccountShell>
   );
 }
