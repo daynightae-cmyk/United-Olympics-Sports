@@ -71,7 +71,7 @@ function loadStripeFactory(): Promise<StripeFactory> {
 }
 
 async function waitForPaidOrder(token: string, orderId: string): Promise<'paid' | 'cancelled' | 'pending'> {
-  for (let attempt = 0; attempt < 15; attempt += 1) {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
     const response = await fetch('/api/v1/store/account', {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -83,7 +83,7 @@ async function waitForPaidOrder(token: string, orderId: string): Promise<'paid' 
       if (order?.status === 'paid') return 'paid';
       if (order?.status === 'cancelled') return 'cancelled';
     }
-    await new Promise((resolve) => window.setTimeout(resolve, 1000));
+    await new Promise((resolve) => window.setTimeout(resolve, 1200));
   }
   return 'pending';
 }
