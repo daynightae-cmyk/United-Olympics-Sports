@@ -455,7 +455,7 @@ async function assertAdminWorkspaceAuthority(page, route) {
 
   if (playerRoute) {
     await page.waitForSelector('.admin-shell .bm-filter-bar', { state: 'visible', timeout: 10_000 });
-    await page.waitForSelector('.admin-shell .bm-table-container', { state: 'visible', timeout: 10_000 });
+    await page.waitForSelector('.admin-shell .bm-table-container', { state: 'attached', timeout: 10_000 });
   } else {
     await page.waitForSelector('.admin-shell .enterprise-toolbar', { state: 'visible', timeout: 10_000 });
   }
@@ -471,15 +471,25 @@ async function assertAdminWorkspaceAuthority(page, route) {
     const enterpriseToolbar = document.querySelector('.admin-shell .enterprise-toolbar');
     const bmFilterBar = document.querySelector('.admin-shell .bm-filter-bar');
     const bmTableContainer = document.querySelector('.admin-shell .bm-table-container');
+    const mobilePlayerCard = document.querySelector('.admin-shell .bm-mobile-card');
     const directoryCard = directoryRoute ? document.querySelector('.admin-shell .directory-card') : null;
     const organizationCard = organizationRoute ? document.querySelector('.admin-shell .organization-card') : null;
+    const tableStyle = bmTableContainer ? getComputedStyle(bmTableContainer) : null;
+    const mobileStyle = mobilePlayerCard ? getComputedStyle(mobilePlayerCard) : null;
     return {
+      viewportWidth: window.innerWidth,
       enterpriseToolbarRadius: enterpriseToolbar ? parseFloat(getComputedStyle(enterpriseToolbar).borderTopLeftRadius) : null,
       enterpriseToolbarBackground: enterpriseToolbar ? getComputedStyle(enterpriseToolbar).backgroundImage : null,
       bmFilterRadius: bmFilterBar ? parseFloat(getComputedStyle(bmFilterBar).borderTopLeftRadius) : null,
       bmFilterBackground: bmFilterBar ? getComputedStyle(bmFilterBar).backgroundImage : null,
-      bmTableRadius: bmTableContainer ? parseFloat(getComputedStyle(bmTableContainer).borderTopLeftRadius) : null,
-      bmTableBackground: bmTableContainer ? getComputedStyle(bmTableContainer).backgroundImage : null,
+      bmTableDisplay: tableStyle?.display ?? null,
+      bmTableVisibility: tableStyle?.visibility ?? null,
+      bmTableRadius: bmTableContainer ? parseFloat(tableStyle.borderTopLeftRadius) : null,
+      bmTableBackground: tableStyle?.backgroundImage ?? null,
+      mobileCardDisplay: mobileStyle?.display ?? null,
+      mobileCardVisibility: mobileStyle?.visibility ?? null,
+      mobileCardRadius: mobilePlayerCard ? parseFloat(mobileStyle.borderTopLeftRadius) : null,
+      mobileCardBackground: mobileStyle?.backgroundImage ?? null,
       directoryRadius: directoryCard ? parseFloat(getComputedStyle(directoryCard).borderTopLeftRadius) : null,
       directoryBackground: directoryCard ? getComputedStyle(directoryCard).backgroundImage : null,
       organizationRadius: organizationCard ? parseFloat(getComputedStyle(organizationCard).borderTopLeftRadius) : null,
@@ -492,8 +502,18 @@ async function assertAdminWorkspaceAuthority(page, route) {
     if (!(proof.bmFilterRadius >= 16) || !proof.bmFilterBackground || proof.bmFilterBackground === 'none') {
       throw new Error(`${route}: Player management filter bar must use the Admin athletic surface; radius=${proof.bmFilterRadius}, background=${proof.bmFilterBackground}`);
     }
-    if (!(proof.bmTableRadius >= 18) || !proof.bmTableBackground || proof.bmTableBackground === 'none') {
-      throw new Error(`${route}: Player management table must use the Admin athletic surface; radius=${proof.bmTableRadius}, background=${proof.bmTableBackground}`);
+
+    const mobileLayout = proof.viewportWidth <= 700;
+    if (mobileLayout) {
+      const mobileVisible = proof.mobileCardDisplay !== 'none' && proof.mobileCardVisibility !== 'hidden';
+      if (!mobileVisible || !(proof.mobileCardRadius >= 16) || !proof.mobileCardBackground || proof.mobileCardBackground === 'none') {
+        throw new Error(`${route}: mobile Player management must render athletic cards; width=${proof.viewportWidth}, display=${proof.mobileCardDisplay}, radius=${proof.mobileCardRadius}, background=${proof.mobileCardBackground}`);
+      }
+    } else {
+      const tableVisible = proof.bmTableDisplay !== 'none' && proof.bmTableVisibility !== 'hidden';
+      if (!tableVisible || !(proof.bmTableRadius >= 18) || !proof.bmTableBackground || proof.bmTableBackground === 'none') {
+        throw new Error(`${route}: desktop Player management table must use the Admin athletic surface; width=${proof.viewportWidth}, display=${proof.bmTableDisplay}, radius=${proof.bmTableRadius}, background=${proof.bmTableBackground}`);
+      }
     }
     return;
   }
