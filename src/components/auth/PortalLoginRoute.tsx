@@ -7,6 +7,7 @@ import {
   fetchServerSession,
   isPlatformAuthenticatorAvailable,
   signInWithSupabasePasskey,
+  signInWithSupabasePassword,
   signOutEverywhere,
 } from '../../lib/auth-client';
 
@@ -94,6 +95,24 @@ export function PortalLoginRoute({ portal }: { portal: PortalAuthKind }) {
     if (canonicalTarget) window.location.replace(canonicalTarget);
   }, [canonicalTarget]);
 
+  const handleCredentials = async ({ email, password }: { email: string; password: string; remember: boolean }): Promise<PortalAuthNotice | null> => {
+    try {
+      const accessToken = await signInWithSupabasePassword(email, password);
+      await fetchServerSession(accessToken);
+      window.location.assign(destinations[portal]);
+      return null;
+    } catch (error) {
+      await signOutEverywhere().catch(() => undefined);
+      const message = error instanceof Error ? error.message.toLowerCase() : '';
+      return {
+        tone: 'error',
+        message: message.includes('invalid') || message.includes('credentials')
+          ? bi('Email or password is incorrect.', 'البريد الإلكتروني أو كلمة المرور غير صحيحة.')
+          : bi('Email sign-in could not be completed. Use Google or Passkey, or try again.', 'تعذر إكمال تسجيل الدخول بالبريد. استخدم Google أو مفتاح المرور أو أعد المحاولة.'),
+      };
+    }
+  };
+
   const handleProvider = async (provider: PortalAuthProvider): Promise<PortalAuthNotice | null> => {
     if (provider === 'google') {
       try {
@@ -154,5 +173,5 @@ export function PortalLoginRoute({ portal }: { portal: PortalAuthKind }) {
     );
   }
 
-  return <PortalAuthPage portal={portal} onProvider={handleProvider} />;
+  return <PortalAuthPage portal={portal} onProvider={handleProvider} onCredentials={portal === 'store' ? handleCredentials : undefined} />;
 }
