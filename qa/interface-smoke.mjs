@@ -328,7 +328,9 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     throw new Error(`${route}: internal product route must never be blocked by the public luxury splash`);
   }
 
-  if (pathname.startsWith('/player') && !pathname.endsWith('/login')) {
+  // Login identity is trailing-slash insensitive: /player/login/ renders the
+  // same auth surface as /player/login (no portal shell either way).
+  if (pathname.startsWith('/player') && !pathname.replace(/\/+$/, '').endsWith('/login')) {
     if (proof.playerLogoCount !== 1 || proof.playerExtraEmblemCount !== 0) {
       throw new Error(`${route}: player shell must render exactly one canonical logo; logo=${proof.playerLogoCount}, extraEmblem=${proof.playerExtraEmblemCount}`);
     }
@@ -409,7 +411,7 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     }
   }
 
-  if ((pathname.startsWith('/parent') || pathname.startsWith('/coach')) && !pathname.endsWith('/login')) {
+  if ((pathname.startsWith('/parent') || pathname.startsWith('/coach')) && !pathname.replace(/\/+$/, '').endsWith('/login')) {
     if (proof.sharedPortalLogoCount !== 1) {
       throw new Error(`${route}: shared portal shell must render exactly one canonical logo; got ${proof.sharedPortalLogoCount}`);
     }
@@ -462,7 +464,7 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     }
   }
 
-  if (pathname.endsWith('/login') && proof.authLogoCount > 1) {
+  if (pathname.replace(/\/+$/, '').endsWith('/login') && proof.authLogoCount > 1) {
     throw new Error(`${route}: authentication header must not duplicate the canonical logo; got ${proof.authLogoCount}`);
   }
 }
