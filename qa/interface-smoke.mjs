@@ -404,8 +404,12 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     if (!(proof.sharedPortalSidebarWidth >= 280) || !proof.sharedPortalSidebarBackground || proof.sharedPortalSidebarBackground === 'none') {
       throw new Error(`${route}: shared sports portal sidebar must use the delivery authority; width=${proof.sharedPortalSidebarWidth}, background=${proof.sharedPortalSidebarBackground}`);
     }
-    if (proof.sharedPortalActiveNavCount !== 1 || !proof.sharedPortalActiveNavBackground || proof.sharedPortalActiveNavBackground === 'none') {
+    const intentionalPortalNotFound = route.endsWith('/route-that-must-404');
+    if (!intentionalPortalNotFound && (proof.sharedPortalActiveNavCount !== 1 || !proof.sharedPortalActiveNavBackground || proof.sharedPortalActiveNavBackground === 'none')) {
       throw new Error(`${route}: shared sports portal must expose one visual active navigation card; count=${proof.sharedPortalActiveNavCount}, background=${proof.sharedPortalActiveNavBackground}`);
+    }
+    if (intentionalPortalNotFound && proof.sharedPortalActiveNavCount !== 0) {
+      throw new Error(`${route}: intentional portal 404 must not highlight a false navigation destination; count=${proof.sharedPortalActiveNavCount}`);
     }
   }
 
