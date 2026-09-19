@@ -221,10 +221,21 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
   if (route === '/parent/children' || route === '/parent/attendance' || route.startsWith('/parent/children/')) {
     await page.waitForSelector('.portal-parent .parent-field', { state: 'visible', timeout: 10_000 });
   }
+  if (route === '/parent/settings') {
+    await page.waitForSelector('.portal-parent .parent-form-field select', { state: 'visible', timeout: 10_000 });
+  }
+  if (route === '/parent/payments' || route === '/parent/subscriptions') {
+    await page.waitForSelector('.portal-parent .enterprise-table-shell', { state: 'visible', timeout: 10_000 });
+  }
 
   const proof = await page.evaluate(() => {
     const playerLogo = document.querySelector('#player-portal-shell .athlete-sidebar-logo');
     const sharedPortalLogo = document.querySelector('.portal-shell .portal-brand > img.official-logo.portal-brand-logo');
+    const sharedPortalSidebar = document.querySelector('.portal-shell .portal-sidebar');
+    const sharedPortalTopbar = document.querySelector('.portal-shell .portal-topbar');
+    const sharedPortalActiveNav = document.querySelector('.portal-shell .portal-nav a.active');
+    const parentSettingsSelect = document.querySelector('.portal-parent .parent-form-field select');
+    const parentEnterpriseTable = document.querySelector('.portal-parent .enterprise-table-shell');
     const athleteId = document.querySelector('#player-overview-page .cgpt-athlete-id');
     const athleteStat = document.querySelector('#player-overview-page .cgpt-player-stat');
     const quickLinks = document.querySelectorAll('#player-overview-page .athlete-quick-link-card');
@@ -251,6 +262,14 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
       playerLogoObjectFit: playerLogo ? getComputedStyle(playerLogo).objectFit : null,
       sharedPortalLogoCount: document.querySelectorAll('.portal-shell .portal-brand > img').length,
       sharedPortalLogoObjectFit: sharedPortalLogo ? getComputedStyle(sharedPortalLogo).objectFit : null,
+      sharedPortalSidebarWidth: sharedPortalSidebar ? parseFloat(getComputedStyle(sharedPortalSidebar).width) : null,
+      sharedPortalSidebarBackground: sharedPortalSidebar ? getComputedStyle(sharedPortalSidebar).backgroundImage : null,
+      sharedPortalTopbarBackdrop: sharedPortalTopbar ? getComputedStyle(sharedPortalTopbar).backdropFilter : null,
+      sharedPortalActiveNavCount: document.querySelectorAll('.portal-shell .portal-nav a.active').length,
+      sharedPortalActiveNavBackground: sharedPortalActiveNav ? getComputedStyle(sharedPortalActiveNav).backgroundImage : null,
+      parentSettingsSelectHeight: parentSettingsSelect ? parseFloat(getComputedStyle(parentSettingsSelect).minHeight) : null,
+      parentSettingsSelectBackground: parentSettingsSelect ? getComputedStyle(parentSettingsSelect).backgroundImage : null,
+      parentEnterpriseTableRadius: parentEnterpriseTable ? parseFloat(getComputedStyle(parentEnterpriseTable).borderTopLeftRadius) : null,
       authLogoCount: document.querySelectorAll('.portal-auth .portal-auth-home > img').length,
       athleteIdDisplay: athleteId ? getComputedStyle(athleteId).display : null,
       athleteIdRadius: athleteId ? parseFloat(getComputedStyle(athleteId).borderTopLeftRadius) : null,
@@ -374,6 +393,24 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     }
     if (proof.sharedPortalLogoObjectFit !== 'cover') {
       throw new Error(`${route}: shared portal sidebar must crop the composite lockup to one visible emblem; object-fit=${proof.sharedPortalLogoObjectFit}`);
+    }
+    if (!(proof.sharedPortalSidebarWidth >= 280) || !proof.sharedPortalSidebarBackground || proof.sharedPortalSidebarBackground === 'none') {
+      throw new Error(`${route}: shared sports portal sidebar must use the delivery authority; width=${proof.sharedPortalSidebarWidth}, background=${proof.sharedPortalSidebarBackground}`);
+    }
+    if (proof.sharedPortalActiveNavCount !== 1 || !proof.sharedPortalActiveNavBackground || proof.sharedPortalActiveNavBackground === 'none') {
+      throw new Error(`${route}: shared sports portal must expose one visual active navigation card; count=${proof.sharedPortalActiveNavCount}, background=${proof.sharedPortalActiveNavBackground}`);
+    }
+  }
+
+  if (route === '/parent/settings') {
+    if (!(proof.parentSettingsSelectHeight >= 48) || !proof.parentSettingsSelectBackground || proof.parentSettingsSelectBackground === 'none') {
+      throw new Error(`${route}: Parent settings selects must use the premium delivery field surface; minHeight=${proof.parentSettingsSelectHeight}, background=${proof.parentSettingsSelectBackground}`);
+    }
+  }
+
+  if (route === '/parent/payments' || route === '/parent/subscriptions') {
+    if (!(proof.parentEnterpriseTableRadius >= 18)) {
+      throw new Error(`${route}: Parent financial tables must use the premium rounded delivery surface; radius=${proof.parentEnterpriseTableRadius}`);
     }
   }
 
