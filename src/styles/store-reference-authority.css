@@ -2026,6 +2026,21 @@ html[data-theme='dark'] .store-reference-ranked > a,
   }
 }
 
+@media (max-width:820px) {
+  /* Mobile search row must span the full header grid area so the reference
+     search field stays full width (store golden-master geometry contract:
+     search width >= viewport - 32). The 18px desktop padding leaves the
+     search 4px short; 14px restores the full-width row, and the desktop
+     760px cap must not apply once the search moves to its own row. */
+  .store-reference-mainbar {
+    padding-inline:14px;
+  }
+
+  .store-reference-search-wrap {
+    max-width:none;
+  }
+}
+
 @media (max-width:760px) {
   .store-reference-topbar {
     min-height:30px;

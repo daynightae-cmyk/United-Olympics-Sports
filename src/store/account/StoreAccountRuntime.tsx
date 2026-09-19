@@ -265,7 +265,7 @@ export function ConnectedOrdersPage() {
           </dl>
           <section className="store-reference-order-items">
             <h3><StoreCopy value={{ en: 'Order Items', ar: 'عناصر الطلب' }} /></h3>
-            {orderItems(selected).length ? orderItems(selected).map((item, index) => <div key={`${item.name}-${index}`}><span><Package /></span><strong>{item.name}</strong><small>× {item.quantity}</small>{item.unitPriceMinor != null && <b>{new Intl.NumberFormat('en-AE', { style: 'currency', currency: selected.currency }).format(item.unitPriceMinor / 100)}</b>}</div>) : <p><StoreCopy value={{ en: 'Item details are not stored in a displayable format for this order.', ar: 'تفاصيل عناصر هذا الطلب غير مخزنة بصيغة قابلة للعرض.' }} /></p>}
+            {orderItems(selected).length ? orderItems(selected).map((item, index) => <div key={`${item.name}-${index}`}><span><Package /></span><strong>{item.name}</strong><small>× {item.quantity}</small>{item.unitPriceMinor != null && <b>{new Intl.NumberFormat(formatLocale, { style: 'currency', currency: selected.currency }).format(item.unitPriceMinor / 100)}</b>}</div>) : <p><StoreCopy value={{ en: 'Item details are not stored in a displayable format for this order.', ar: 'تفاصيل عناصر هذا الطلب غير مخزنة بصيغة قابلة للعرض.' }} /></p>}
           </section>
           <footer><Link className="store-button store-button-secondary" to={`/store/order/${selected.id}`}><StoreCopy value={{ en: 'Open full order', ar: 'فتح الطلب الكامل' }} inline /></Link></footer>
         </article>}
