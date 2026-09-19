@@ -28,6 +28,7 @@ import '../styles/store-commerce.css';
 import '../styles/store-factory6-enhancements.css';
 import '../styles/store-theme-unification.css';
 import '../styles/store-rhythm-unification.css';
+import '../styles/store-reference-authority.css';
 
 export function StoreApp({ dataGateway }: { dataGateway?: StoreDataGateway }) {
   return <StoreDataProvider gateway={dataGateway}><StoreProvider><StoreLayout><Routes>
