@@ -75,11 +75,12 @@ export function StoreHeader() {
   }, []);
 
   const submitSearch = () => { if (query.trim()) { navigate(`/store/search?q=${encodeURIComponent(query.trim())}`); setSearchOpen(false); setMenuOpen(false); } };
+  const closeNavigation = () => { setMegaOpen(false); setMenuOpen(false); };
 
   return <header className="store-header store-reference-header" ref={headerRef}>
     <div className="store-announcement store-reference-topbar">
       <div className="store-topbar-language"><button type="button" onClick={() => setLocale(locale === 'en' ? 'ar' : 'en')}>{locale === 'en' ? 'English  /  العربية' : 'العربية  /  English'}</button></div>
-      <strong><StoreCopy value={{ en: 'FREE SHIPPING ON ORDERS OVER AED 150', ar: 'شحن مجاني للطلبات التي تزيد عن 150 د.إ' }} inline /></strong>
+      <strong><StoreCopy value={{ en: 'OFFICIAL UNITED OLYMPICS SPORTS STORE', ar: 'المتجر الرسمي ليونايتد أوليمبيكس سبورت' }} inline /></strong>
       <div className="store-topbar-links"><Link to="/store/orders"><StoreCopy value={{ en: 'Track Order', ar: 'تتبع الطلب' }} inline /></Link><Link to="/contact"><StoreCopy value={{ en: 'Help Center', ar: 'مركز المساعدة' }} inline /></Link></div>
     </div>
 
@@ -116,7 +117,7 @@ export function StoreHeader() {
       <NavLink to="/store/category/accessories" onClick={() => setMenuOpen(false)}><StoreCopy value={{ en: 'Accessories', ar: 'الإكسسوارات' }} /></NavLink>
       <NavLink to="/store/shop" onClick={() => setMenuOpen(false)}><StoreCopy value={{ en: 'Brands', ar: 'الماركات' }} /></NavLink>
       <NavLink to="/store/shop?collection=featured" className="store-offers-link" onClick={() => setMenuOpen(false)}><StoreCopy value={{ en: 'Offers', ar: 'العروض' }} /></NavLink>
-      {megaOpen && <div className="store-mega" role="dialog" aria-label="Product categories | فئات المنتجات"><section><h3><StoreCopy value={{ en: 'Sports', ar: 'الرياضات' }} /></h3>{categories.slice(0, 6).map((category) => <Link key={category.slug} to={`/store/category/${category.slug}`} onClick={() => setMegaOpen(false)}><StoreCopy value={category.name} inline /><ChevronRight /></Link>)}</section><section><h3><StoreCopy value={{ en: 'Shop', ar: 'تسوق' }} /></h3>{categories.slice(6).map((category) => <Link key={category.slug} to={`/store/category/${category.slug}`} onClick={() => setMegaOpen(false)}><StoreCopy value={category.name} inline /><ChevronRight /></Link>)}<Link to="/store/shop" onClick={() => setMegaOpen(false)}><StoreCopy value={{ en: 'All Products', ar: 'كل المنتجات' }} inline /><ChevronRight /></Link></section><aside><img src="/media/sports/swimming/swimming-02-performance.webp" alt="Swimming performance training | تدريب أداء السباحة" /><div><span>UNITED PERFORMANCE</span><strong><StoreCopy value={{ en: 'Gear for champions', ar: 'معدات للأبطال' }} /></strong></div></aside></div>}
+      {megaOpen && <div className="store-mega" role="dialog" aria-label="Product categories | فئات المنتجات"><section><h3><StoreCopy value={{ en: 'Sports', ar: 'الرياضات' }} /></h3>{categories.slice(0, 6).map((category) => <Link key={category.slug} to={`/store/category/${category.slug}`} onClick={closeNavigation}><StoreCopy value={category.name} inline /><ChevronRight /></Link>)}</section><section><h3><StoreCopy value={{ en: 'Shop', ar: 'تسوق' }} /></h3>{categories.slice(6).map((category) => <Link key={category.slug} to={`/store/category/${category.slug}`} onClick={closeNavigation}><StoreCopy value={category.name} inline /><ChevronRight /></Link>)}<Link to="/store/shop" onClick={closeNavigation}><StoreCopy value={{ en: 'All Products', ar: 'كل المنتجات' }} inline /><ChevronRight /></Link></section><aside><img src="/media/sports/swimming/swimming-02-performance.webp" alt="Swimming performance training | تدريب أداء السباحة" /><div><span>UNITED PERFORMANCE</span><strong><StoreCopy value={{ en: 'Gear for champions', ar: 'معدات للأبطال' }} /></strong></div></aside></div>}
     </nav>
   </header>;
 }
