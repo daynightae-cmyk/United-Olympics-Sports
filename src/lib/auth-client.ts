@@ -97,6 +97,23 @@ export async function beginSupabaseGoogleOAuth(returnTo = '/'): Promise<void> {
   window.location.assign(data.url);
 }
 
+export async function signInWithSupabasePassword(email: string, password: string): Promise<string> {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail || !password) throw new Error('PASSWORD_CREDENTIALS_REQUIRED');
+
+  const { data, error } = await withRuntimeTimeout(
+    'supabase-password-sign-in',
+    supabase.auth.signInWithPassword({ email: normalizedEmail, password }),
+    AUTH_RUNTIME_TIMEOUT_MS,
+  );
+
+  if (error || !data.session?.access_token) {
+    throw error ?? new Error('PASSWORD_SESSION_MISSING');
+  }
+
+  return data.session.access_token;
+}
+
 export async function signInWithSupabasePasskey(): Promise<string> {
   if (!isPasskeySupported()) throw new Error('PASSKEY_UNSUPPORTED');
 
