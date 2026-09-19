@@ -240,6 +240,8 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     const athleteStat = document.querySelector('#player-overview-page .cgpt-player-stat');
     const quickLinks = document.querySelectorAll('#player-overview-page .athlete-quick-link-card');
     const overviewTitle = document.querySelector('#player-overview-page .athlete-overview-title');
+    const playerTrainingInput = document.querySelector('#player-overview-page .athlete-glass-card form input');
+    const playerTrainingSelect = document.querySelector('#player-overview-page .athlete-glass-card form select');
     const portalCard = document.querySelector('.portal-shell .bm-card');
     const parentHero = document.querySelector('#parent-overview-page .parent-family-hero');
     const parentAthleteCard = document.querySelector('#parent-overview-page .parent-athlete-card');
@@ -276,6 +278,8 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
       athleteStatBackground: athleteStat ? getComputedStyle(athleteStat).backgroundImage : null,
       quickLinkCount: quickLinks.length,
       overviewTitleFont: overviewTitle ? getComputedStyle(overviewTitle).fontFamily : null,
+      playerTrainingInputHeight: playerTrainingInput ? parseFloat(getComputedStyle(playerTrainingInput).minHeight) : null,
+      playerTrainingSelectHeight: playerTrainingSelect ? parseFloat(getComputedStyle(playerTrainingSelect).minHeight) : null,
       portalCardRadius: portalCard ? parseFloat(getComputedStyle(portalCard).borderTopLeftRadius) : null,
       portalCardBackground: portalCard ? getComputedStyle(portalCard).backgroundImage : null,
       parentHeroRadius: parentHero ? parseFloat(getComputedStyle(parentHero).borderTopLeftRadius) : null,
@@ -330,6 +334,9 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     }
     if (!proof.overviewTitleFont || !/(Outfit|Segoe UI)/i.test(proof.overviewTitleFont)) {
       throw new Error(`${route}: athlete overview title must use the athletic display font stack; got ${proof.overviewTitleFont}`);
+    }
+    if (!(proof.playerTrainingInputHeight >= 48) || !(proof.playerTrainingSelectHeight >= 48)) {
+      throw new Error(`${route}: personal training inputs must remain touch-ready; input=${proof.playerTrainingInputHeight}, select=${proof.playerTrainingSelectHeight}`);
     }
   }
 
