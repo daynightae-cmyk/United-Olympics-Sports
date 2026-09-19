@@ -124,16 +124,17 @@ export function StripePaymentElement({
       .then((factory) => {
         if (!active || !mountRef.current) return;
         const stripe = factory(publishableKey);
+        const lightMode = document.documentElement.dataset.theme === 'light';
         const elements = stripe.elements({
           clientSecret,
           locale,
           appearance: {
-            theme: 'night',
+            theme: lightMode ? 'stripe' : 'night',
             variables: {
-              colorPrimary: '#d4af37',
-              colorBackground: '#12110e',
-              colorText: '#f5f0e4',
-              colorDanger: '#e57373',
+              colorPrimary: '#b9954e',
+              colorBackground: lightMode ? '#fffdf8' : '#12110e',
+              colorText: lightMode ? '#171611' : '#f5f0e4',
+              colorDanger: '#c24141',
               borderRadius: '12px',
               fontFamily: 'DM Sans, Cairo, system-ui, sans-serif',
             },
