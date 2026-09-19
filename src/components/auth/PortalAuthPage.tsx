@@ -254,13 +254,13 @@ export function PortalAuthPage({ portal, busy = false, extraContent, onProvider,
               </div>
 
               <div className="portal-auth-form-meta">
-                <label className="portal-auth-remember">
+                {portal !== 'store' ? <label className="portal-auth-remember">
                   <input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} />
                   <BilingualText value={bi('Remember me', 'تذكرني')} />
-                </label>
+                </label> : <span className="portal-auth-secure-note"><ShieldCheck aria-hidden="true" /><BilingualText value={bi('Protected retail session', 'جلسة متجر محمية')} /></span>}
                 {portal !== 'store' ? <button type="button" className="portal-auth-text-button" onClick={() => setNotice({ tone: 'info', message: bi('Password recovery is not configured in this environment.', 'استعادة كلمة المرور غير مهيأة في هذه البيئة.') })}>
                   <BilingualText value={bi('Forgot password?', 'نسيت كلمة المرور؟')} />
-                </button> : <span className="portal-auth-secure-note"><ShieldCheck aria-hidden="true" /><BilingualText value={bi('Secure account access', 'دخول آمن للحساب')} /></span>}
+                </button> : <span className="portal-auth-secure-note"><LockKeyhole aria-hidden="true" /><BilingualText value={bi('Encrypted sign-in', 'تسجيل دخول مشفّر')} /></span>}
               </div>
 
               <button className="portal-auth-submit" type="submit" disabled={isBusy}>
