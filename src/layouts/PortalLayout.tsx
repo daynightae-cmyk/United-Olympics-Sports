@@ -84,7 +84,7 @@ export function PortalLayout({ portal, children }: { portal: PortalKind; childre
   return <div className={`portal-shell portal-${portal}`} data-portal={portal}>
     <aside className={`portal-sidebar ${open ? 'is-open' : ''}`} aria-label={`${meta.title.en} navigation | تنقل ${meta.title.ar}`}>
       <div className="portal-brand">
-        <img src="/brand/united-olympics-sports-logo.png" alt="United Olympics Sports | يونايتد أوليمبيكس سبورت" />
+        <img className="official-logo portal-brand-logo" src="/brand/united-olympics-sports-logo.png" alt="United Olympics Sports | يونايتد أوليمبيكس سبورت" />
         <div><strong>United Olympics Sports</strong><span lang="ar" dir="rtl">يونايتد أوليمبيكس سبورت</span></div>
         <button type="button" onClick={() => setOpen(false)} className="portal-icon-button portal-mobile-only" aria-label="Close navigation | إغلاق القائمة"><X /></button>
       </div>
