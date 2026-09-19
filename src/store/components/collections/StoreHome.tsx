@@ -23,7 +23,7 @@ export function StoreHomePage() {
   const apparel = productFor(products, 'apparel');
   const featured = products.filter((product) => product.badge === 'featured').slice(0, 4);
   const arrivals = products.filter((product) => product.badge === 'new').slice(0, 4);
-  const best = [...products].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 4);
+  const topRated = [...products].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 4);
   const recent = recentlyViewed.flatMap((id) => {
     const item = products.find((product) => product.id === id);
     return item ? [item] : [];
@@ -87,15 +87,15 @@ export function StoreHomePage() {
         <ProductGrid products={(featured.length ? featured : products.slice(4, 8))} />
       </div>
       <aside className="store-reference-best">
-        <header><h2><StoreCopy value={{ en: 'BEST SELLERS', ar: 'الأكثر مبيعًا' }} /></h2><Link to="/store/shop"><StoreCopy value={{ en: 'VIEW ALL', ar: 'عرض الكل' }} /></Link></header>
-        <RankedProducts products={best} />
+        <header><h2><StoreCopy value={{ en: 'TOP RATED', ar: 'الأعلى تقييمًا' }} /></h2><Link to="/store/shop"><StoreCopy value={{ en: 'VIEW ALL', ar: 'عرض الكل' }} /></Link></header>
+        <RankedProducts products={topRated} />
       </aside>
     </section>
 
     {recent.length > 0 && <section className="store-section store-reference-recent"><header className="store-section-heading"><h2><StoreCopy value={{ en: 'Recently viewed', ar: 'شاهدت مؤخرًا' }} /></h2></header><ProductGrid products={recent} /></section>}
 
     <section className="store-reference-benefits">
-      <div><Truck /><span><strong><StoreCopy value={{ en: 'FREE SHIPPING', ar: 'شحن مجاني' }} /></strong><small><StoreCopy value={{ en: 'On qualifying orders', ar: 'للطلبات المؤهلة' }} /></small></span></div>
+      <div><Truck /><span><strong><StoreCopy value={{ en: 'DELIVERY OPTIONS', ar: 'خيارات التوصيل' }} /></strong><small><StoreCopy value={{ en: 'Shown when configured', ar: 'تظهر عند تهيئتها' }} /></small></span></div>
       <div><RotateCcw /><span><strong><StoreCopy value={{ en: 'EASY RETURNS', ar: 'إرجاع سهل' }} /></strong><small><StoreCopy value={{ en: 'Clear return policy', ar: 'سياسة إرجاع واضحة' }} /></small></span></div>
       <div><BadgeCheck /><span><strong><StoreCopy value={{ en: 'AUTHENTIC PRODUCTS', ar: 'منتجات أصلية' }} /></strong><small><StoreCopy value={{ en: 'Official catalog source', ar: 'مصدر كتالوج رسمي' }} /></small></span></div>
       <div><Headphones /><span><strong><StoreCopy value={{ en: 'CUSTOMER SUPPORT', ar: 'دعم العملاء' }} /></strong><small><StoreCopy value={{ en: 'Help when you need it', ar: 'مساعدة عند الحاجة' }} /></small></span></div>
