@@ -179,8 +179,8 @@ export function ProductVariants({
 
 export function ProductCard({ product, compact = false }: { product: StoreProduct; compact?: boolean }) {
   const { wishlist, toggleWishlist, addToCart, locale } = useStore();
-  const [size, setSize] = useState<string | undefined>(() => product.sizes?.[0]);
-  const [color, setColor] = useState<string | undefined>(() => product.colors?.[0]?.en);
+  const [size] = useState<string | undefined>(() => product.sizes?.[0]);
+  const [color] = useState<string | undefined>(() => product.colors?.[0]?.en);
   const [added, setAdded] = useState(false);
   const hintId = useId();
 
