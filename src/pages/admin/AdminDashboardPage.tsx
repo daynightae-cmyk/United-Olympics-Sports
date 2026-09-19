@@ -57,7 +57,7 @@ export function AdminDashboardPage() {
         )} /></p>
 
         <div className="admin-command-status-row">
-          <span className={`admin-command-status ${!coreLoading && !coreError ? 'is-live' : coreError ? 'is-error' : 'is-checking'}`}>
+          <span role="status" aria-live="polite" className={`admin-command-status ${!coreLoading && !coreError ? 'is-live' : coreError ? 'is-error' : 'is-checking'}`}>
             <Database size={13} />
             <span><BilingualText value={bi('Data API', 'واجهة البيانات')} /></span>
             <strong>{dataStatus}</strong>
@@ -123,11 +123,11 @@ export function AdminDashboardPage() {
 
       <div className="activity-list admin-activity-list">
         {audit.loading ? (
-          <p><BilingualText value={bi('Loading audit activity…', 'جارٍ تحميل نشاط التدقيق…')} /></p>
+          <p role="status" aria-live="polite"><BilingualText value={bi('Loading audit activity…', 'جارٍ تحميل نشاط التدقيق…')} /></p>
         ) : audit.error ? (
-          <p><BilingualText value={bi('Audit activity is unavailable right now.', 'نشاط التدقيق غير متاح حاليًا.')} /></p>
+          <p role="alert"><BilingualText value={bi('Audit activity is unavailable right now.', 'نشاط التدقيق غير متاح حاليًا.')} /></p>
         ) : audit.data.items.length === 0 ? (
-          <p><BilingualText value={bi('No activity recorded yet.', 'لم يتم تسجيل أي نشاط بعد.')} /></p>
+          <p role="status" aria-live="polite"><BilingualText value={bi('No activity recorded yet.', 'لم يتم تسجيل أي نشاط بعد.')} /></p>
         ) : (
           audit.data.items.map((item, index) => (
             <article key={item.id}>
