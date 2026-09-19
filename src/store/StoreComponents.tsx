@@ -125,7 +125,15 @@ export function StoreHeader() {
 export function MiniCart() {
   const { miniCartOpen, setMiniCartOpen, cart, subtotal, locale, updateQuantity, removeFromCart } = useStore();
   const panelRef = useRef<HTMLElement>(null);
-  useStoreDialog(miniCartOpen, panelRef, () => setMiniCartOpen(false));
+  // The opener lives in StoreHeader (sibling component); resolve it by its
+  // stable accessible name so focus returns to the cart button on close even
+  // where a mouse click never focused it (Safari/WebKit).
+  const cartTrigger = {
+    get current() {
+      return typeof document === 'undefined' ? null : document.querySelector<HTMLElement>('.store-utilities>button[aria-label="Cart | السلة"]');
+    },
+  };
+  useStoreDialog(miniCartOpen, panelRef, () => setMiniCartOpen(false), cartTrigger);
   if (!miniCartOpen) return null;
   return <div className="store-drawer-layer"><button type="button" className="store-drawer-backdrop" aria-label="Close cart | إغلاق السلة" onClick={() => setMiniCartOpen(false)} /><aside ref={panelRef} tabIndex={-1} className="store-mini-cart" role="dialog" aria-modal="true" aria-labelledby="mini-cart-title"><header><div><small>YOUR SELECTION</small><h2 id="mini-cart-title"><StoreCopy value={{ en: 'Shopping Cart', ar: 'سلة التسوق' }} /></h2></div><button type="button" onClick={() => setMiniCartOpen(false)} aria-label="Close cart | إغلاق السلة"><X /></button></header>{cart.length ? <><div className="store-mini-cart-lines">{cart.map((line) => <article key={cartLineKey(line)}><div className="store-mini-thumb"><ProductMedia product={line.product} source={line.product.variantMedia?.find((item) => item.color === line.color)?.image ?? line.product.image} /></div><div><h3><StoreCopy value={line.product.name} /></h3>{line.size && <small>{line.size}</small>}{line.color && <small>{line.product.colors?.find((item) => item.en === line.color)?.[locale] ?? line.color}</small>}<ProductPrice product={line.product} size="s" /><QuantityStepper value={line.quantity} onChange={(quantity) => updateQuantity(cartLineKey(line), quantity)} /></div><button type="button" className="store-remove" onClick={() => removeFromCart(cartLineKey(line))} aria-label="Remove item | إزالة المنتج"><Trash2 /></button></article>)}</div><footer><div><StoreCopy value={{ en: 'Subtotal', ar: 'المجموع الفرعي' }} inline /><strong>{new Intl.NumberFormat('en-AE', { style: 'currency', currency: cart[0]?.product.currency ?? 'AED' }).format(subtotal)}</strong></div><Link className="store-button store-button-secondary" to="/store/cart" onClick={() => setMiniCartOpen(false)}><StoreCopy value={{ en: 'View Cart', ar: 'عرض السلة' }} inline /></Link><Link className="store-button store-button-primary" to="/store/checkout" onClick={() => setMiniCartOpen(false)}><StoreCopy value={{ en: 'Checkout', ar: 'إتمام الطلب' }} inline /><ArrowRight /></Link></footer></> : <StoreState kind="empty" title={{ en: 'Your cart is empty', ar: 'سلتك فارغة' }} description={{ en: 'Explore the catalog to prepare an order.', ar: 'استكشف الكتالوج لتجهيز طلبك.' }} action={<Link className="store-button store-button-primary" to="/store/shop" onClick={() => setMiniCartOpen(false)}><StoreCopy value={{ en: 'Continue Shopping', ar: 'متابعة التسوق' }} inline /></Link>} />}</aside></div>;
 }

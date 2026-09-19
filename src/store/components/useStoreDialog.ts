@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, type RefObject } from 'react';
 
 /** One dialog lifecycle for cart, filters and gallery: focus, inert siblings and scroll. */
-export function useStoreDialog(open: boolean, panel: RefObject<HTMLElement | null>, close: () => void) {
+export function useStoreDialog(open: boolean, panel: RefObject<HTMLElement | null>, close: () => void, trigger?: { readonly current: HTMLElement | null }) {
   const closeRef = useRef(close);
   closeRef.current = close;
   useLayoutEffect(() => {
@@ -38,6 +38,15 @@ export function useStoreDialog(open: boolean, panel: RefObject<HTMLElement | nul
       else if (!event.shiftKey && (document.activeElement === last || document.activeElement === panel.current)) { event.preventDefault(); first.focus(); }
     };
     document.addEventListener('keydown', onKey);
-    return () => { cancelAnimationFrame(frame); document.removeEventListener('focusin', onFocusIn); document.removeEventListener('keydown', onKey); document.body.style.overflow = overflow; inertNodes.forEach(({ node, inert }) => { node.inert = inert; }); if (restore instanceof HTMLElement && restore.isConnected) restore.focus(); };
+    return () => { cancelAnimationFrame(frame); document.removeEventListener('focusin', onFocusIn); document.removeEventListener('keydown', onKey); document.body.style.overflow = overflow; inertNodes.forEach(({ node, inert }) => { node.inert = inert; });
+      // Return focus to the trigger that opened the dialog. Falling back to
+      // the previously focused element alone breaks in Safari/WebKit, where a
+      // mouse click does not move focus onto buttons, leaving body focused.
+      const explicit = trigger?.current;
+      const target = explicit instanceof HTMLElement && explicit.isConnected
+        ? explicit
+        : restore instanceof HTMLElement && restore.isConnected ? restore : null;
+      target?.focus();
+    };
   }, [open, panel]);
 }
