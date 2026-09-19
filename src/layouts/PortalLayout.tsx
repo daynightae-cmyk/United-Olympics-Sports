@@ -89,7 +89,7 @@ export function PortalLayout({ portal, children }: { portal: PortalKind; childre
         <button type="button" onClick={() => setOpen(false)} className="portal-icon-button portal-mobile-only" aria-label="Close navigation | إغلاق القائمة"><X /></button>
       </div>
       <div className="portal-role"><small><BilingualText value={bi('Portal Workspace', 'مساحة البوابة')} /></small><BilingualText value={meta.title} /><span><BilingualText value={meta.role} /></span></div>
-      <nav className="portal-nav">{meta.nav.map(({ path, label, icon: Icon }) => <NavLink key={path || 'overview'} to={path ? `${base}/${path}` : base} end={!path}><Icon /><BilingualText value={label} /><ChevronLeft /></NavLink>)}</nav>
+      <nav className="portal-nav">{meta.nav.map(({ path, label, icon: Icon }) => <NavLink key={path || 'overview'} to={path ? `${base}/${path}` : base} end={!path} className={({ isActive }) => isActive ? 'active' : undefined}><Icon /><BilingualText value={label} /><ChevronLeft /></NavLink>)}</nav>
       <Link className="portal-public-link" to="/"><ChevronLeft /><BilingualText value={bi('Public Website', 'الموقع العام')} /></Link>
     </aside>
     {open && <button type="button" className="portal-overlay" onClick={() => setOpen(false)} aria-label="Close navigation | إغلاق القائمة" />}
