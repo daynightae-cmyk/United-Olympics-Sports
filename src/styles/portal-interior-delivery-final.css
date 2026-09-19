@@ -636,6 +636,7 @@ html[data-theme='light'] .portal-shell.portal-parent,
 html[data-theme='light'] .portal-shell.portal-coach {
   --delivery-text:#172033;
   --delivery-muted:#665f55;
+
   background:#f5f0e6;
   color:#172033;
 }
@@ -645,6 +646,31 @@ html[data-theme='light'] .portal-coach .portal-sidebar,
 html[data-theme='light'] .portal-parent .portal-topbar,
 html[data-theme='light'] .portal-coach .portal-topbar {
   background:rgba(252,249,241,.96) !important;
+}
+
+html[data-theme='light'] :where(
+  .portal-parent,
+  .portal-coach
+) :where(
+  .portal-brand strong,
+  .portal-role > .bi,
+  .portal-topbar strong
+) {
+  color:#172033 !important;
+}
+
+html[data-theme='light'] :where(
+  .portal-parent,
+  .portal-coach
+) .portal-nav a {
+  color:#4f574f !important;
+}
+
+html[data-theme='light'] :where(
+  .portal-parent,
+  .portal-coach
+) .portal-nav a.active {
+  color:#6b5310 !important;
 }
 
 html[data-theme='light'] .portal-parent :where(
