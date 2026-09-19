@@ -18,13 +18,15 @@ export async function createApp(options: AppOptions = {}): Promise<Express> {
   // Security headers share the canonical policy in security-headers.ts so the
   // standalone server and the Vercel serverless handler cannot drift. Extras
   // below preserve this server's exact prior coverage: Firebase/Google auth
-  // handler sources, Supabase realtime, and 'unsafe-eval' for Vite dev only.
-  const isProduction = process.env.NODE_ENV === 'production';
+  // handler sources, Supabase realtime, and 'unsafe-eval' whenever Vite dev
+  // middleware is active. Unknown/unset NODE_ENV values keep production-safe
+  // defaults (HSTS on): only explicit development/test relax them.
+  const productionHeaders = !['development', 'test'].includes(process.env.NODE_ENV ?? '');
   app.use((_req, res, next) => {
     applySecurityHeaders(res, {
-      enableHsts: isProduction,
+      enableHsts: productionHeaders,
       cspScriptSrc: [
-        ...(isProduction ? [] : ["'unsafe-eval'"]),
+        ...(enableVite ? ["'unsafe-eval'"] : []),
         'https://*.firebaseapp.com',
         'https://*.googleapis.com',
       ],
