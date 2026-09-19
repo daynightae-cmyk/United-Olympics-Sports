@@ -16,7 +16,6 @@ import {
   Plus,
   Search,
   ShoppingBag,
-  SlidersHorizontal,
   Sparkles,
   Trash2,
   UserRound,
@@ -53,14 +52,6 @@ export function StoreState({ kind, title, description, action }: { kind: 'empty'
 export function CategoryRail({ categories, active }: { categories: StoreCategory[]; active?: string }) {
   return <nav className="store-category-rail" aria-label="Store categories | فئات المتجر">{categories.map((category) => <NavLink key={category.slug} className={active === category.slug ? 'is-active' : ''} to={`/store/category/${category.slug}`} style={{ '--sport-accent': category.accent } as React.CSSProperties}><span className="store-category-mark" aria-hidden="true" /><StoreCopy value={category.name} /></NavLink>)}</nav>;
 }
-
-const mainNav = [
-  { to: '/store', value: { en: 'Home', ar: 'الرئيسية' }, end: true },
-  { to: '/store/shop', value: { en: 'Shop', ar: 'المتجر' } },
-  { to: '/store/categories', value: { en: 'Categories', ar: 'الفئات' } },
-  { to: '/store/shop?collection=new', value: { en: 'New Arrivals', ar: 'وصل حديثًا' } },
-  { to: '/store#collections', value: { en: 'Collections', ar: 'المجموعات' } },
-];
 
 export function StoreHeader() {
   const { categories, products, locale, setLocale, cartCount, wishlist, setMiniCartOpen } = useStore();
