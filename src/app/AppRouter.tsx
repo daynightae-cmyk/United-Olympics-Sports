@@ -33,7 +33,8 @@ function RouteFallback() {
 function InternalProductUtilities() {
   const { pathname } = useLocation();
   const isInternalRoute = /^\/(admin|player|parent|coach|store)(\/|$)/.test(pathname);
-  return isInternalRoute ? <><UnitedAssistant /><UpdateToast /></> : null;
+  const isStoreAuthRoute = pathname === '/store/login';
+  return isInternalRoute && !isStoreAuthRoute ? <><UnitedAssistant /><UpdateToast /></> : null;
 }
 
 const isBenchmarkEnabled = import.meta.env.DEV === true;
