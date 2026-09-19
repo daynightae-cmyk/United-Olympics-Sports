@@ -2,6 +2,7 @@ import { auth, googleSignIn, logout as firebaseLogout } from './firebase';
 import { supabase } from './supabase';
 import { fetchJsonWithRuntimeTimeout, withRuntimeTimeout, withRuntimeTimeoutGuarded } from './runtime-timeout';
 import { createAsyncExclusiveRunner, shouldClearLateSession } from './late-session-guard';
+import { safeReturnTo } from './auth-routing';
 
 const RETURN_TO_KEY = 'uos:auth:return-to';
 const AUTH_RUNTIME_TIMEOUT_MS = 10_000;
@@ -39,10 +40,7 @@ export type PortalIdentity = {
   bindings: PortalBindings;
 };
 
-export function safeReturnTo(value: string | null | undefined, fallback = '/'): string {
-  if (!value || !value.startsWith('/') || value.startsWith('//')) return fallback;
-  return value;
-}
+export { safeReturnTo } from './auth-routing';
 
 /**
  * Supabase PKCE stores the code verifier in browser storage, which is scoped to
