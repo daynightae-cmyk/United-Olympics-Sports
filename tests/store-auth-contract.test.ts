@@ -15,7 +15,7 @@ assert.ok(appRouter.includes("pathname === '/store/login'"), 'store login must b
 assert.ok(appRouter.includes('!isStoreAuthRoute'), 'store login must not mount internal assistant/update overlays');
 assert.ok(authPage.includes("portal !== 'store' && <button type="button" onClick={() => handleProvider('phone')}"), 'unconfigured phone provider must be hidden from store login');
 assert.ok(authPage.includes("portal !== 'store' && <button type="button" onClick={() => handleProvider('apple')}"), 'unconfigured Apple provider must be hidden from store login');
-assert.ok(authPage.includes("portal !== 'store' && <nav className="portal-auth-switcher""), 'cross-portal switcher must stay off the retail login');
+assert.ok(authPage.includes(`portal !== 'store' && <nav className="portal-auth-switcher"`), 'cross-portal switcher must stay off the retail login');
 assert.ok(storeLoginCss.includes(".portal-auth[data-portal='store']"), 'store login must have isolated retail visual authority');
 assert.ok(main.includes("import './styles/store-login-reference.css';"), 'store login visual authority must load globally');
 
