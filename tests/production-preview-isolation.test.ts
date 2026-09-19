@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { isCanonicalProductionHost } from '../src/lib/preview-guard';
+import { clientShowcaseMode, isCanonicalProductionHost, parseClientShowcaseFlag } from '../src/lib/preview-guard';
 
 console.log('--- RUNNING PRODUCTION PREVIEW ISOLATION TEST ---');
 
@@ -99,6 +99,28 @@ const appRouter = await read('src/app/AppRouter.tsx');
 assert(
   appRouter.includes('import.meta.env.DEV === true'),
   'Benchmark route must remain strictly DEV-only',
+);
+
+// 7. Client Showcase is explicit opt-in only: canonical production hosts must
+// NEVER imply synthetic preview. Unset/false means real auth/data or a
+// truthful unavailable state; only an explicit true flag enables showcase.
+assert.equal(parseClientShowcaseFlag('true'), true, 'explicit true enables showcase');
+assert.equal(parseClientShowcaseFlag('1'), true, 'explicit 1 enables showcase');
+assert.equal(parseClientShowcaseFlag('on'), true, 'explicit on enables showcase');
+assert.equal(parseClientShowcaseFlag('yes'), true, 'explicit yes enables showcase');
+assert.equal(parseClientShowcaseFlag('TRUE'), true, 'flag parsing is case-insensitive');
+assert.equal(parseClientShowcaseFlag('false'), false, 'explicit false disables showcase');
+assert.equal(parseClientShowcaseFlag('0'), false, 'explicit 0 disables showcase');
+assert.equal(parseClientShowcaseFlag('off'), false, 'explicit off disables showcase');
+assert.equal(parseClientShowcaseFlag('no'), false, 'explicit no disables showcase');
+assert.equal(parseClientShowcaseFlag(undefined), false, 'unset flag disables showcase');
+assert.equal(parseClientShowcaseFlag(''), false, 'empty flag disables showcase');
+assert.equal(parseClientShowcaseFlag('maybe'), false, 'unknown flag value disables showcase');
+assert.equal(clientShowcaseMode(), false, 'showcase defaults to false without an explicit flag');
+assert.equal(
+  guard.includes('return isCanonicalProductionHost();'),
+  false,
+  'showcase must not fall back to the canonical production hostname',
 );
 
 console.log('PASS: Production preview isolation verified across 10 client gates.');
