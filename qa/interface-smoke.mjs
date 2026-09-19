@@ -234,6 +234,10 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     const sharedPortalSidebar = document.querySelector('.portal-shell .portal-sidebar');
     const sharedPortalTopbar = document.querySelector('.portal-shell .portal-topbar');
     const sharedPortalActiveNav = document.querySelector('.portal-shell .portal-nav a.active');
+    const sharedPortalShell = document.querySelector('.portal-shell');
+    const sharedPortalWorkspace = document.querySelector('.portal-shell > .portal-workspace');
+    const sharedPortalMain = document.querySelector('.portal-shell > .portal-workspace > .portal-main');
+    const sharedPortalMobileControl = document.querySelector('.portal-shell .portal-mobile-only');
     const parentSettingsSelect = document.querySelector('.portal-parent .parent-form-field select');
     const parentEnterpriseTable = document.querySelector('.portal-parent .enterprise-table-shell');
     const athleteId = document.querySelector('#player-overview-page .cgpt-athlete-id');
@@ -269,6 +273,15 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
       sharedPortalTopbarBackdrop: sharedPortalTopbar ? getComputedStyle(sharedPortalTopbar).backdropFilter : null,
       sharedPortalActiveNavCount: document.querySelectorAll('.portal-shell .portal-nav a.active').length,
       sharedPortalActiveNavBackground: sharedPortalActiveNav ? getComputedStyle(sharedPortalActiveNav).backgroundImage : null,
+      sharedPortalShellDisplay: sharedPortalShell ? getComputedStyle(sharedPortalShell).display : null,
+      sharedPortalSidebarPosition: sharedPortalSidebar ? getComputedStyle(sharedPortalSidebar).position : null,
+      sharedPortalSidebarTop: sharedPortalSidebar ? sharedPortalSidebar.getBoundingClientRect().top : null,
+      sharedPortalWorkspaceTop: sharedPortalWorkspace ? sharedPortalWorkspace.getBoundingClientRect().top : null,
+      sharedPortalTopbarTop: sharedPortalTopbar ? sharedPortalTopbar.getBoundingClientRect().top : null,
+      sharedPortalTopbarBottom: sharedPortalTopbar ? sharedPortalTopbar.getBoundingClientRect().bottom : null,
+      sharedPortalMainTop: sharedPortalMain ? sharedPortalMain.getBoundingClientRect().top : null,
+      sharedPortalMobileControlDisplay: sharedPortalMobileControl ? getComputedStyle(sharedPortalMobileControl).display : null,
+      viewportWidth: window.innerWidth,
       parentSettingsSelectHeight: parentSettingsSelect ? parseFloat(getComputedStyle(parentSettingsSelect).minHeight) : null,
       parentSettingsSelectBackground: parentSettingsSelect ? getComputedStyle(parentSettingsSelect).backgroundImage : null,
       parentEnterpriseTableRadius: parentEnterpriseTable ? parseFloat(getComputedStyle(parentEnterpriseTable).borderTopLeftRadius) : null,
@@ -410,6 +423,28 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     }
     if (intentionalPortalNotFound && proof.sharedPortalActiveNavCount !== 0) {
       throw new Error(`${route}: intentional portal 404 must not highlight a false navigation destination; count=${proof.sharedPortalActiveNavCount}`);
+    }
+    if (proof.viewportWidth > 1024) {
+      if (proof.sharedPortalShellDisplay !== 'grid') {
+        throw new Error(`${route}: desktop Parent/Coach shell must be a two-column grid; display=${proof.sharedPortalShellDisplay}`);
+      }
+      if (proof.sharedPortalSidebarPosition !== 'sticky') {
+        throw new Error(`${route}: desktop sidebar must stay in its own sticky grid column; position=${proof.sharedPortalSidebarPosition}`);
+      }
+      if (proof.sharedPortalSidebarTop === null || proof.sharedPortalWorkspaceTop === null || Math.abs(proof.sharedPortalSidebarTop - proof.sharedPortalWorkspaceTop) > 2) {
+        throw new Error(`${route}: sidebar and workspace must start on the same row; sidebarTop=${proof.sharedPortalSidebarTop}, workspaceTop=${proof.sharedPortalWorkspaceTop}`);
+      }
+      if (proof.sharedPortalTopbarTop === null || Math.abs(proof.sharedPortalTopbarTop) > 2) {
+        throw new Error(`${route}: portal topbar must begin at the viewport top; top=${proof.sharedPortalTopbarTop}`);
+      }
+      if (proof.sharedPortalMainTop === null || proof.sharedPortalTopbarBottom === null || proof.sharedPortalMainTop < proof.sharedPortalTopbarBottom - 2 || proof.sharedPortalMainTop > proof.sharedPortalTopbarBottom + 80) {
+        throw new Error(`${route}: portal main must begin directly below the topbar without a blank vertical void; mainTop=${proof.sharedPortalMainTop}, topbarBottom=${proof.sharedPortalTopbarBottom}`);
+      }
+      if (proof.sharedPortalMobileControlDisplay !== 'none') {
+        throw new Error(`${route}: mobile navigation controls must be hidden on desktop; display=${proof.sharedPortalMobileControlDisplay}`);
+      }
+    } else if (proof.sharedPortalSidebarPosition !== 'fixed') {
+      throw new Error(`${route}: mobile/tablet sidebar must be an off-canvas fixed panel; position=${proof.sharedPortalSidebarPosition}`);
     }
   }
 
