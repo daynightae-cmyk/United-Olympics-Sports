@@ -1090,6 +1090,31 @@ html[data-theme='light'] .admin-shell :where(
   background:rgba(15,23,42,.025) !important;
 }
 
+html[data-theme='light'] .admin-shell :where(
+  .admin-command-hero__copy > p,
+  .admin-command-status,
+  .admin-command-metric > span:nth-child(2),
+  .admin-stat-card .stat-note,
+  .admin-operation-copy small,
+  .admin-activity-list article small,
+  .admin-activity-list time,
+  .admin-page-header p
+) {
+  color:#5f5a51 !important;
+}
+
+html[data-theme='light'] .admin-shell .admin-command-status strong {
+  color:#4b463e !important;
+}
+
+html[data-theme='light'] .admin-shell .admin-command-status.is-live strong {
+  color:#276749 !important;
+}
+
+html[data-theme='light'] .admin-shell .admin-command-status.is-error strong {
+  color:#9b2c2c !important;
+}
+
 html[data-theme='light'] .admin-shell .admin-sidebar,
 html[data-theme='light'] .admin-shell .admin-topbar {
   background:rgba(252,249,241,.94) !important;
