@@ -2,6 +2,7 @@ import { PaymentDomainRepository } from './repositories/payment-repository';
 import { requireAuthorizationContext } from './auth';
 import {
   createStripeIntent,
+  getPaymentClientConfig,
   getPaymentProviderConfig,
   verifyStripeSignature,
 } from './payment-provider';
@@ -100,6 +101,11 @@ export async function resolvePayableAmount(
   const currency = normalizeString(body.currency, 3)?.toUpperCase() || 'AED';
   return { amountMinor, currency, ...(subscriptionId ? { subscriptionId } : {}) };
 }
+
+export const paymentConfigHandler = async (req: ApiRequest, res: ApiResponse): Promise<void> => {
+  assertMethod(req, ['GET']);
+  sendJson(res, 200, { ok: true, payment: getPaymentClientConfig() });
+};
 
 export const paymentIntentHandler = async (req: ApiRequest, res: ApiResponse): Promise<void> => {
   assertMethod(req, ['POST']);

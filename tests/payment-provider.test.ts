@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
 import {
   createStripeIntent,
+  getPaymentClientConfig,
   getPaymentProviderConfig,
   verifyStripeSignature,
 } from '../src/server/payment-provider.ts';
@@ -81,6 +82,32 @@ async function runPaymentProviderTests() {
   // 1. Unconfigured provider fails closed
   await withEnv({ PAYMENTS_PROVIDER: undefined, PAYMENTS_SECRET_KEY: undefined }, () => {
     assert.equal(getPaymentProviderConfig(), null);
+  });
+
+  // 1b. Browser-safe client configuration is fail-closed and never exposes secrets.
+  await withEnv({
+    PAYMENTS_PROVIDER: 'stripe',
+    PAYMENTS_PUBLISHABLE_KEY: 'pk_test_uos_public',
+    PAYMENTS_SECRET_KEY: 'sk_test_uos_secret',
+    PAYMENTS_WEBHOOK_SECRET: 'whsec_uos_secret',
+  }, () => {
+    const client = getPaymentClientConfig();
+    assert.equal(client.enabled, true);
+    assert.equal(client.provider, 'stripe');
+    assert.equal(client.publishableKey, 'pk_test_uos_public');
+    const serialized = JSON.stringify(client);
+    assert.equal(serialized.includes('sk_test_uos_secret'), false);
+    assert.equal(serialized.includes('whsec_uos_secret'), false);
+  });
+  await withEnv({
+    PAYMENTS_PROVIDER: 'stripe',
+    PAYMENTS_PUBLISHABLE_KEY: undefined,
+    PAYMENTS_SECRET_KEY: 'sk_test_uos_secret',
+    PAYMENTS_WEBHOOK_SECRET: 'whsec_uos_secret',
+  }, () => {
+    const client = getPaymentClientConfig();
+    assert.equal(client.enabled, false);
+    assert.equal(client.reason, 'incomplete_configuration');
   });
 
   // 2. Unknown provider is rejected

@@ -22,12 +22,12 @@ export function applySecurityHeaders(res: ApiResponse, config?: SecurityHeadersC
   const additionalConnect = config?.cspConnectSrc?.join(' ') || '';
   const cspDirectives = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com",
+    "script-src 'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com https://js.stripe.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' data: https: blob:",
-    `connect-src 'self' https://*.supabase.co https://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://accounts.google.com ${additionalConnect}`.trim(),
-    "frame-src 'self' https://accounts.google.com",
+    `connect-src 'self' https://*.supabase.co https://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://accounts.google.com https://api.stripe.com https://r.stripe.com https://m.stripe.network ${additionalConnect}`.trim(),
+    "frame-src 'self' https://accounts.google.com https://js.stripe.com https://hooks.stripe.com",
     "object-src 'none'",
     "base-uri 'self'",
     "frame-ancestors 'none'",

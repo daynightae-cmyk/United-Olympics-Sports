@@ -15,6 +15,33 @@ export interface RemoteIntentResult {
   status: string;
 }
 
+export interface PaymentClientConfig {
+  enabled: boolean;
+  provider: 'stripe' | null;
+  publishableKey?: string;
+  reason?: 'not_configured' | 'incomplete_configuration' | 'unsupported_provider';
+}
+
+/**
+ * Returns only browser-safe payment configuration. Charging is enabled in the
+ * client only when the server secret, webhook secret and Stripe publishable
+ * key are all present. No server secret is ever returned.
+ */
+export function getPaymentClientConfig(): PaymentClientConfig {
+  const provider = process.env.PAYMENTS_PROVIDER?.trim().toLowerCase();
+  if (!provider) return { enabled: false, provider: null, reason: 'not_configured' };
+  if (provider !== 'stripe') return { enabled: false, provider: null, reason: 'unsupported_provider' };
+
+  const secretKey = process.env.PAYMENTS_SECRET_KEY?.trim();
+  const webhookSecret = process.env.PAYMENTS_WEBHOOK_SECRET?.trim();
+  const publishableKey = process.env.PAYMENTS_PUBLISHABLE_KEY?.trim();
+  const validPublishableKey = Boolean(publishableKey && /^pk_(test|live)_/.test(publishableKey));
+  if (!secretKey || !webhookSecret || !validPublishableKey) {
+    return { enabled: false, provider: 'stripe', reason: 'incomplete_configuration' };
+  }
+  return { enabled: true, provider: 'stripe', publishableKey };
+}
+
 /**
  * Reads provider configuration from server-only environment.
  * Returns null when no provider is contracted — every caller must fail

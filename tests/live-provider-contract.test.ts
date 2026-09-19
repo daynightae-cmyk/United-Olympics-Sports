@@ -21,6 +21,7 @@ async function runLiveProviderContractTests() {
   assert.equal(resolveRouteKey(fakeReq('/public/enquiries')), 'public-enquiries');
   assert.equal(resolveRouteKey(fakeReq('/api/v1/auth/phone/request')), 'auth-phone-request');
   assert.equal(resolveRouteKey(fakeReq('/api/v1/auth/phone/verify')), 'auth-phone-verify');
+  assert.equal(resolveRouteKey(fakeReq('/api/v1/payments/config')), 'payment-config');
   assert.equal(resolveRouteKey(fakeReq('/api/v1/payments/intent')), 'payment-intent');
   assert.equal(resolveRouteKey(fakeReq('/api/v1/payments/webhook')), 'payment-webhook');
 

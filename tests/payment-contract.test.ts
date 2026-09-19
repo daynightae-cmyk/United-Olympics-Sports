@@ -268,6 +268,21 @@ async function runPaymentContractTests() {
   // Must persist only validated subscription via spread, not raw fallback
   assert.ok(paymentHandlerSource.includes('...(subscriptionId ? { subscriptionId } : {})'), 'handler must persist only validated subscriptionId');
 
+  // 6b. Store checkout must use Stripe Payment Element through the server-authoritative order flow.
+  const checkoutSource = await readFile(new URL('../src/store/StorePages.tsx', import.meta.url), 'utf8');
+  const stripeElementSource = await readFile(new URL('../src/store/components/payment/StripePaymentElement.tsx', import.meta.url), 'utf8');
+  assert.ok(checkoutSource.includes("fetch('/api/v1/payments/config')"), 'checkout must read browser-safe payment readiness from the server');
+  assert.ok(checkoutSource.includes("fetch('/api/v1/store/checkout'"), 'checkout must create the pending order on the server');
+  assert.ok(checkoutSource.includes("fetch('/api/v1/payments/intent'"), 'checkout must create the order-bound payment intent on the server');
+  assert.ok(checkoutSource.includes('charge: true'), 'checkout payment intent must explicitly request a provider charge');
+  assert.ok(checkoutSource.includes("fetch('/api/v1/store/orders/cancel'"), 'checkout must release a freshly prepared order when intent setup fails');
+  assert.ok(checkoutSource.includes('<StripePaymentElement'), 'checkout must render the provider-owned payment element');
+  assert.ok(stripeElementSource.includes("elements.create('payment'"), 'card collection must use Stripe Payment Element');
+  assert.ok(stripeElementSource.includes("stripe.confirmPayment"), 'payment element must confirm through Stripe.js');
+  assert.ok(stripeElementSource.includes("/api/v1/store/account"), 'provider success must be reconciled against server order status');
+  assert.equal(/PAYMENTS_SECRET_KEY|PAYMENTS_WEBHOOK_SECRET|sk_(?:live|test)_/.test(stripeElementSource), false, 'browser payment component must never contain server payment secrets');
+  assert.equal(/name=["'](?:card|cardNumber|cvc|expiry)/i.test(stripeElementSource), false, 'application must not collect raw card fields');
+
   // 7. Rate-limit header correctness: IP rejection must emit ipLimit Retry-After
   const rateSource = paymentHandlerSource;
   // Verify the IP-limit branch applies ipLimit headers, not stale userLimit
