@@ -65,11 +65,11 @@ const portalConfig: Record<PortalAuthKind, PortalAuthConfig> = {
     ],
   },
   store: {
-    title: bi('Store Portal', 'بوابة المتجر'),
-    eyebrow: bi('Premium sports retail', 'تسوق رياضي متميز'),
-    supporting: bi('Secure access to United Olympics Sports shopping.', 'دخول آمن إلى متجر يونايتد أوليمبيكس سبورت.'),
-    visualTitle: bi('Built for every athlete', 'مصمم لكل رياضي'),
-    visualCopy: bi('A focused account gateway for shopping, saved items and orders.', 'بوابة حساب واضحة للتسوق والعناصر المحفوظة والطلبات.'),
+    title: bi('Sign in to your account', 'تسجيل الدخول إلى حسابك'),
+    eyebrow: bi('United Olympics Store', 'متجر يونايتد أوليمبيكس'),
+    supporting: bi('Access orders, wishlist and secure checkout from one retail account.', 'ادخل إلى الطلبات والمفضلة والدفع الآمن من حساب متجر واحد.'),
+    visualTitle: bi('Gear for champions', 'معدات للأبطال'),
+    visualCopy: bi('Premium sports retail built around secure shopping, verified orders and athlete essentials.', 'تجربة تسوق رياضية فاخرة تجمع الدفع الآمن والطلبات الموثقة ومستلزمات الرياضيين.'),
     image: '/media/sports/football/football-03-brand.webp',
     destination: '/store/account',
     features: [
@@ -254,13 +254,13 @@ export function PortalAuthPage({ portal, busy = false, extraContent, onProvider,
               </div>
 
               <div className="portal-auth-form-meta">
-                <label className="portal-auth-remember">
+                {portal !== 'store' ? <label className="portal-auth-remember">
                   <input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} />
                   <BilingualText value={bi('Remember me', 'تذكرني')} />
-                </label>
-                <button type="button" className="portal-auth-text-button" onClick={() => setNotice({ tone: 'info', message: bi('Password recovery is not configured in this environment.', 'استعادة كلمة المرور غير مهيأة في هذه البيئة.') })}>
+                </label> : <span className="portal-auth-secure-note"><ShieldCheck aria-hidden="true" /><BilingualText value={bi('Protected retail session', 'جلسة متجر محمية')} /></span>}
+                {portal !== 'store' ? <button type="button" className="portal-auth-text-button" onClick={() => setNotice({ tone: 'info', message: bi('Password recovery is not configured in this environment.', 'استعادة كلمة المرور غير مهيأة في هذه البيئة.') })}>
                   <BilingualText value={bi('Forgot password?', 'نسيت كلمة المرور؟')} />
-                </button>
+                </button> : <span className="portal-auth-secure-note"><LockKeyhole aria-hidden="true" /><BilingualText value={bi('Encrypted sign-in', 'تسجيل دخول مشفّر')} /></span>}
               </div>
 
               <button className="portal-auth-submit" type="submit" disabled={isBusy}>
@@ -275,8 +275,8 @@ export function PortalAuthPage({ portal, busy = false, extraContent, onProvider,
               <button type="button" onClick={() => handleProvider('google')} disabled={isBusy} aria-label="Sign in with Google | تسجيل الدخول عبر Google"><span className="portal-auth-google" aria-hidden="true">G</span><BilingualText value={bi('Google', 'Google')} /></button>
               <button type="button" onClick={() => handleProvider('passkey')} disabled={isBusy} aria-label="Sign in with a passkey | تسجيل الدخول بمفتاح مرور"><KeyRound aria-hidden="true" /><BilingualText value={bi('Passkey', 'مفتاح مرور')} /></button>
               <button type="button" onClick={() => handleProvider('biometric')} disabled={isBusy} aria-label="Biometric sign in | تسجيل الدخول بالبصمة"><Fingerprint aria-hidden="true" /><BilingualText value={bi('Biometric', 'البصمة')} /></button>
-              <button type="button" onClick={() => handleProvider('phone')} disabled={isBusy} aria-label="Sign in with phone number | تسجيل الدخول برقم الهاتف"><Smartphone aria-hidden="true" /><BilingualText value={bi('Phone', 'الهاتف')} /></button>
-              <button type="button" onClick={() => handleProvider('apple')} disabled={isBusy} aria-label="Sign in with Apple | تسجيل الدخول عبر Apple"><Apple aria-hidden="true" /><BilingualText value={bi('Apple', 'Apple')} /></button>
+              {portal !== 'store' && <button type="button" onClick={() => handleProvider('phone')} disabled={isBusy} aria-label="Sign in with phone number | تسجيل الدخول برقم الهاتف"><Smartphone aria-hidden="true" /><BilingualText value={bi('Phone', 'الهاتف')} /></button>}
+              {portal !== 'store' && <button type="button" onClick={() => handleProvider('apple')} disabled={isBusy} aria-label="Sign in with Apple | تسجيل الدخول عبر Apple"><Apple aria-hidden="true" /><BilingualText value={bi('Apple', 'Apple')} /></button>}
             </div>
 
             {extraContent}
@@ -289,24 +289,24 @@ export function PortalAuthPage({ portal, busy = false, extraContent, onProvider,
               </div>
             </div>
 
-            <div className="portal-auth-entry-note">
+            {portal !== 'store' && <div className="portal-auth-entry-note">
               <ShieldCheck aria-hidden="true" />
               <div>
                 <BilingualText value={bi('Portal destination', 'وجهة البوابة')} />
                 <Link to={config.destination}><BilingualText value={bi('Open current portal preview', 'فتح معاينة البوابة الحالية')} /></Link>
               </div>
-            </div>
+            </div>}
           </div>
         </section>
       </div>
 
-      <nav className="portal-auth-switcher" aria-label="Portal login destinations | وجهات تسجيل الدخول">
+      {portal !== 'store' && <nav className="portal-auth-switcher" aria-label="Portal login destinations | وجهات تسجيل الدخول">
         {portalLinks.map((item) => (
           <Link key={item.kind} className={item.kind === portal ? 'is-active' : ''} aria-current={item.kind === portal ? 'page' : undefined} to={item.to}>
             <BilingualText value={item.label} />
           </Link>
         ))}
-      </nav>
+      </nav>}
     </main>
   );
 }
