@@ -2665,17 +2665,18 @@ html[data-theme='dark'] .store-reference-ranked > a,
   font-size:11px;
 }
 
-.store-cart-journey > div > span {
+.store-cart-journey > div > .store-copy {
   display:grid;
   gap:3px;
 }
 
-.store-cart-journey > div strong {
+.store-cart-journey > div > .store-copy > span {
   font-size:11px;
+  font-weight:800;
   text-transform:uppercase;
 }
 
-.store-cart-journey > div small {
+.store-cart-journey > div > .store-copy > small {
   color:var(--ref-muted);
   font-size:9px;
 }
