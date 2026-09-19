@@ -459,7 +459,7 @@ html[dir="rtl"] .portal-coach .portal-nav a.active::before {
   .group-selector select
 ) {
   width:100%;
-  min-height:50px;
+  min-height:52px !important;
   padding:0 14px;
   border:1px solid rgba(212,175,55,.13) !important;
   border-radius:13px !important;
