@@ -78,13 +78,28 @@ async function runStoreMediaGalleryTests() {
       productType: 'Aquatic Goggles',
       productTypeAr: 'نظارات سباحة',
       slug: 'elite-hydro-pro-goggles',
+    }, {
+      id: 'derived-goggles',
+      sku: 'elite-hydro-pro-goggles',
+      name: 'Elite Hydro Pro Goggles',
+      nameAr: 'نظارات السباحة المائية الاحترافية',
+      priceMinor: 16500,
+      currency: 'AED',
+      availableQuantity: 2,
+      status: 'active',
+      category: 'swimming',
+      productType: 'Aquatic Goggles',
+      productTypeAr: 'نظارات سباحة',
+      slug: null,
     }],
   }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   try {
     const catalog = await productionStoreGateway.loadCatalog();
-    assert.equal(catalog.products.length, 1);
+    assert.equal(catalog.products.length, 2);
     assert.equal(catalog.products[0].image, goggles.image, 'production gateway must apply approved media by exact slug');
     assert.equal(catalog.products[0].gallery?.length, 3);
+    assert.equal(catalog.products[1].slug, 'elite-hydro-pro-goggles', 'production gateway must retain a derived routing slug');
+    assert.equal(catalog.products[1].image, undefined, 'derived slugs must not authorize approved media assignment');
   } finally {
     globalThis.fetch = originalFetch;
   }

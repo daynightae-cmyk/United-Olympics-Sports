@@ -77,9 +77,10 @@ export const productionStoreGateway: StoreDataGateway = {
         // club-equipment label only when the database carries no real value.
         const typeEn = (item.productType ?? '').trim() || 'Club equipment';
         const typeAr = (item.productTypeAr ?? '').trim() || (typeEn === 'Club equipment' ? 'معدات النادي' : typeEn);
-        return applyVerifiedProductMedia({
+        const explicitSlug = (item.slug ?? '').trim();
+        const product = {
           id: item.id,
-          slug: (item.slug ?? '').trim() || slugify(item.sku || item.name),
+          slug: explicitSlug || slugify(item.sku || item.name),
           name: bi(item.name, nameAr),
           description: bi(descriptionEn, descriptionAr),
           category,
@@ -89,7 +90,8 @@ export const productionStoreGateway: StoreDataGateway = {
           sku: item.sku,
           availability: (item.availableQuantity > 0 ? 'available' : 'unavailable') as 'available' | 'unavailable',
           ...(item.mediaUrl ? { image: item.mediaUrl } : {}),
-        });
+        };
+        return explicitSlug ? applyVerifiedProductMedia(product) : product;
       }),
       categories: storeCategories,
     };

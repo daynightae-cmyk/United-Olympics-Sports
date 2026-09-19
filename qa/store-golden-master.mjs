@@ -343,12 +343,25 @@ async function interactions(browser, name, rtl) {
 
       await page.goto(base + '/store/shop', { waitUntil: 'domcontentloaded' });
       await page.locator('.store-product-card').first().waitFor();
+
+      await page.locator('.store-product-card h3 a[href="/store/product/official-match-ball-onyx-gold"]').click();
+      await page.waitForURL('**/store/product/official-match-ball-onyx-gold');
+      await page.locator('.store-product-info').waitFor();
+      assert.equal(await page.locator('.store-thumbnails button').count(), 0, 'single verified image rendered duplicate thumbnails');
+      assert.equal(await page.locator('.store-gallery-next').count(), 0, 'single verified image rendered a next control');
+
+      await page.goto(base + '/store/shop', { waitUntil: 'domcontentloaded' });
+      await page.locator('.store-product-card').first().waitFor();
       await page.locator('.store-product-card h3 a').filter({ hasText: 'Elite Hydro Pro Goggles' }).click();
       await page.waitForURL('**/store/product/elite-hydro-pro-goggles');
       await page.locator('.store-product-info').waitFor();
 
-      assert.equal(await page.locator('.store-thumbnails button').count(), 0, 'single verified image rendered duplicate thumbnails');
-      assert.equal(await page.locator('.store-gallery-next').count(), 0, 'single verified image rendered a next control');
+      const gogglesThumbs = page.locator('.store-thumbnails button img');
+      const gogglesSources = await gogglesThumbs.evaluateAll((images) => images.map((image) => image.getAttribute('src')));
+      assert.equal(gogglesSources.length, 4, 'approved goggles gallery is incomplete');
+      assert.equal(new Set(gogglesSources).size, 4, 'approved goggles gallery rendered duplicate thumbnails');
+      assert(gogglesSources.every((source) => source?.startsWith('/media/products/approved/')), 'goggles gallery used non-owned runtime media');
+      assert.equal(await page.locator('.store-gallery-next').count(), 1, 'multi-image goggles gallery omitted its next control');
       await modalChecks(
         page,
         '.store-lightbox',
