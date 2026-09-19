@@ -1,0 +1,428 @@
+/* ==========================================================================
+   United Olympics Sports Store login — retail visual authority
+   Applies only to /store/login via data-portal="store".
+   ========================================================================== */
+
+.portal-auth[data-portal='store'] {
+  --portal-auth-gold:#b9861d;
+  --portal-auth-gold-strong:#e0b64f;
+  --portal-auth-text:#f7f2e7;
+  --portal-auth-muted:#9c978c;
+  --portal-auth-line:rgba(217,168,59,.24);
+  --portal-auth-card:#0b0c09;
+  min-height:100svh;
+  padding:0;
+  overflow:auto;
+  background:#050604;
+}
+
+.portal-auth[data-portal='store']::before {
+  background-image:
+    linear-gradient(90deg,rgba(5,6,4,.18) 0%,rgba(5,6,4,.46) 43%,rgba(5,6,4,.92) 70%,#050604 100%),
+    var(--portal-auth-image);
+  background-position:center;
+  background-size:cover;
+  filter:saturate(.62) contrast(1.08) brightness(.82);
+  transform:none;
+}
+
+.portal-auth[data-portal='store']::after {
+  background:
+    radial-gradient(circle at 24% 54%,rgba(198,148,32,.17),transparent 32%),
+    linear-gradient(180deg,rgba(0,0,0,.04),rgba(0,0,0,.34));
+}
+
+.portal-auth[data-portal='store'] .portal-auth-atmosphere {
+  opacity:.12;
+  background-size:90px 90px;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-toolbar {
+  width:100%;
+  max-width:none;
+  min-height:92px;
+  margin:0;
+  padding:12px clamp(22px,4vw,70px);
+  border-bottom:1px solid rgba(217,168,59,.20);
+  background:rgba(5,6,4,.88);
+  backdrop-filter:blur(18px);
+}
+
+.portal-auth[data-portal='store'] .portal-auth-home {
+  gap:14px;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-home img {
+  width:66px;
+  height:66px;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-home strong {
+  font-size:15px;
+  text-transform:uppercase;
+  letter-spacing:.035em;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-home small {
+  margin-top:5px;
+  color:#d9a72d;
+  font-size:10px;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-tools .language-order-toggle,
+.portal-auth[data-portal='store'] .portal-auth-tools .theme-menu-trigger {
+  width:46px;
+  height:46px;
+  border:1px solid rgba(217,168,59,.24);
+  border-radius:10px;
+  background:#0a0b09;
+  color:#f4efe4;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-layout {
+  width:min(1480px,100%);
+  min-height:calc(100svh - 92px);
+  margin-inline:auto;
+  padding:34px clamp(22px,4vw,66px) 48px;
+  grid-template-columns:minmax(0,1.18fr) minmax(430px,.82fr);
+  gap:clamp(34px,5vw,84px);
+  align-items:center;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-visual {
+  align-self:center;
+  padding:clamp(18px,3vw,38px);
+  padding-inline-start:0;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-eyebrow {
+  padding:7px 11px;
+  border:1px solid rgba(217,168,59,.34);
+  border-radius:4px;
+  background:rgba(11,12,9,.44);
+  color:#e2b544;
+  font-size:10px;
+  letter-spacing:.16em;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-visual h1 {
+  max-width:700px;
+  margin:16px 0 14px;
+  font-size:clamp(56px,6vw,90px);
+  line-height:.88;
+  letter-spacing:-.045em;
+  text-transform:uppercase;
+  color:#fff7e8;
+  text-shadow:0 3px 18px rgba(0,0,0,.30);
+}
+
+.portal-auth[data-portal='store'] .portal-auth-visual h1 .bi-ar {
+  margin-top:14px;
+  color:#e0b64f;
+  font-size:.42em;
+  line-height:1.25;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-visual-copy > p {
+  max-width:560px;
+  color:#d5d0c4;
+  font-size:13px;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-feature-grid {
+  max-width:540px;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-top:24px;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-feature {
+  min-height:72px;
+  padding:12px 14px;
+  border:1px solid rgba(217,168,59,.24);
+  border-radius:8px;
+  background:rgba(8,9,7,.70);
+  backdrop-filter:blur(12px);
+}
+
+.portal-auth[data-portal='store'] .portal-auth-feature > svg {
+  width:18px;
+  height:18px;
+  color:#dfaF37;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-feature .bi {
+  font-size:10px;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-panel {
+  width:min(100%,500px);
+  justify-self:end;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-card {
+  padding:30px;
+  border:1px solid rgba(217,168,59,.28);
+  border-radius:12px;
+  background:
+    linear-gradient(145deg,rgba(14,15,12,.97),rgba(8,9,7,.97));
+  box-shadow:0 26px 70px rgba(0,0,0,.42);
+  backdrop-filter:blur(20px);
+}
+
+.portal-auth[data-portal='store'] .portal-auth-card::before {
+  border-radius:12px;
+  background:
+    linear-gradient(135deg,rgba(217,168,59,.10),transparent 28%,transparent 72%,rgba(217,168,59,.04));
+}
+
+.portal-auth[data-portal='store'] .portal-auth-identity {
+  margin-bottom:18px;
+  text-align:start;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-identity h2 {
+  margin:0 0 8px;
+  font-size:28px;
+  letter-spacing:-.035em;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-identity h2 .bi-ar {
+  margin-top:5px;
+  color:#e0b64f;
+  font-size:.60em;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-supporting {
+  color:#aaa497;
+  font-size:11px;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-provider-state {
+  margin-bottom:14px;
+  padding:8px 10px;
+  border-inline-start:2px solid #c99625;
+  background:rgba(198,148,32,.06);
+  text-align:start;
+  font-size:9px;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-form > label {
+  margin-bottom:6px;
+  color:#c8c1b4;
+  font-size:9px;
+  font-weight:800;
+  text-transform:uppercase;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-field {
+  min-height:50px;
+  border:1px solid rgba(217,168,59,.24);
+  border-radius:7px;
+  background:#0a0b09;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-field input {
+  height:48px;
+  color:#f7f2e8;
+  font-size:12px;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-field:focus-within {
+  border-color:#d5a531;
+  box-shadow:0 0 0 3px rgba(197,145,28,.14);
+}
+
+.portal-auth[data-portal='store'] .portal-auth-form-meta {
+  min-height:38px;
+  margin-top:8px;
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-secure-note {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  color:#918b80;
+  font-size:9px;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-secure-note svg {
+  width:14px;
+  height:14px;
+  color:#d7a52d;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-submit {
+  min-height:50px;
+  border-radius:6px;
+  border-color:#d8aa3d;
+  background:linear-gradient(120deg,#9c6b11,#d9ad43 54%,#a57418);
+  color:#120e06;
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.035em;
+  box-shadow:0 10px 24px rgba(163,112,18,.20);
+}
+
+.portal-auth[data-portal='store'] .portal-auth-divider {
+  margin:16px 0 11px;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-divider > span {
+  background:#0b0c09;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-providers {
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-providers button {
+  min-height:64px;
+  border:1px solid rgba(217,168,59,.23);
+  border-radius:7px;
+  background:#0a0b09;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-providers button:hover:not(:disabled) {
+  border-color:#d4a32d;
+  background:rgba(205,151,33,.08);
+  transform:translateY(-1px);
+}
+
+.portal-auth[data-portal='store'] .portal-auth-entry-note {
+  margin-top:12px;
+  padding:9px 10px;
+  border-radius:7px;
+  background:rgba(205,151,33,.05);
+  font-size:8px;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-entry-note a {
+  color:#e0b64f;
+}
+
+.portal-auth[data-portal='store'] .portal-auth-switcher {
+  display:none !important;
+}
+
+@media(max-width:920px) {
+  .portal-auth[data-portal='store']::before {
+    background-image:
+      linear-gradient(180deg,rgba(5,6,4,.18),rgba(5,6,4,.58) 34%,#050604 60%),
+      var(--portal-auth-image);
+    background-position:center top;
+  }
+
+  .portal-auth[data-portal='store'] .portal-auth-layout {
+    min-height:auto;
+    grid-template-columns:1fr;
+    gap:18px;
+    padding-top:18px;
+  }
+
+  .portal-auth[data-portal='store'] .portal-auth-visual {
+    min-height:260px;
+    padding:26px 6px 18px;
+    text-align:start;
+  }
+
+  .portal-auth[data-portal='store'] .portal-auth-visual h1 {
+    font-size:clamp(44px,10vw,64px);
+  }
+
+  .portal-auth[data-portal='store'] .portal-auth-visual-copy > p {
+    margin-inline:0;
+  }
+
+  .portal-auth[data-portal='store'] .portal-auth-feature-grid {
+    margin-inline:0;
+  }
+
+  .portal-auth[data-portal='store'] .portal-auth-panel {
+    width:min(100%,620px);
+    justify-self:center;
+  }
+}
+
+@media(max-width:560px) {
+  .portal-auth[data-portal='store'] .portal-auth-toolbar {
+    min-height:72px;
+    padding:10px 14px;
+  }
+
+  .portal-auth[data-portal='store'] .portal-auth-home img {
+    width:50px;
+    height:50px;
+  }
+
+  .portal-auth[data-portal='store'] .portal-auth-home strong {
+    max-width:170px;
+    font-size:11px;
+  }
+
+  .portal-auth[data-portal='store'] .portal-auth-home small {
+    font-size:8px;
+  }
+
+  .portal-auth[data-portal='store'] .portal-auth-layout {
+    padding-inline:14px;
+  }
+
+  .portal-auth[data-portal='store'] .portal-auth-visual {
+    min-height:210px;
+  }
+
+  .portal-auth[data-portal='store'] .portal-auth-visual h1 {
+    font-size:42px;
+  }
+
+  .portal-auth[data-portal='store'] .portal-auth-feature-grid {
+    grid-template-columns:1fr 1fr 1fr;
+    gap:5px;
+  }
+
+  .portal-auth[data-portal='store'] .portal-auth-feature {
+    min-height:58px;
+    padding:7px;
+  }
+
+  .portal-auth[data-portal='store'] .portal-auth-feature .bi {
+    font-size:8px;
+  }
+
+  .portal-auth[data-portal='store'] .portal-auth-card {
+    padding:20px 14px;
+  }
+
+  .portal-auth[data-portal='store'] .portal-auth-identity h2 {
+    font-size:24px;
+  }
+
+  .portal-auth[data-portal='store'] .portal-auth-providers {
+    grid-template-columns:1fr;
+  }
+
+  .portal-auth[data-portal='store'] .portal-auth-providers button {
+    min-height:52px;
+    flex-direction:row;
+  }
+
+  .portal-auth[data-portal='store'] .portal-auth-form-meta {
+    align-items:flex-start;
+    flex-direction:column;
+    gap:5px;
+  }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  .portal-auth[data-portal='store'] *,
+  .portal-auth[data-portal='store'] *::before,
+  .portal-auth[data-portal='store'] *::after {
+    transition-duration:.01ms !important;
+    animation-duration:.01ms !important;
+  }
+}
