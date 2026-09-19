@@ -231,15 +231,9 @@ export function ProductCard({ product, compact = false }: { product: StoreProduc
             <StoreCopy value={product.name} />
           </Link>
         </h3>
-        <ProductFacts product={product} />
-        <ProductVariants
-          product={product}
-          size={size}
-          color={color}
-          onSize={setSize}
-          onColor={setColor}
-          compact
-        />
+        <div className="store-card-meta-row">
+          <ProductFacts product={product} />
+        </div>
         <div className="store-product-card-bottom">
           <ProductPrice product={product} />
           <button
@@ -252,15 +246,15 @@ export function ProductCard({ product, compact = false }: { product: StoreProduc
           >
             {added ? <Check aria-hidden="true" /> : <ShoppingCart aria-hidden="true" />}
             <span>
-              {locale === 'ar' ? (added ? 'تمت الإضافة!' : 'إضافة سريعة') : (added ? 'Added!' : 'Quick add')}
+              {locale === 'ar' ? (added ? 'تمت الإضافة!' : 'أضف إلى السلة') : (added ? 'Added!' : 'Add to Cart')}
             </span>
           </button>
         </div>
         <small className="store-selection-hint" id={hintId}>
           {!ready
             ? locale === 'ar'
-              ? 'اختر الخيارات المتاحة للمتابعة'
-              : 'Select available options to continue'
+              ? 'هذا المنتج غير متاح حاليًا'
+              : 'This product is currently unavailable'
             : '\u00a0'}
         </small>
         <span className="sr-only" role="status">
