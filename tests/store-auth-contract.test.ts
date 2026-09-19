@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { isStoreAuthPath, resolvePortalPostSignInDestination, resolveStorePostSignInDestination } from '../src/lib/store-auth-routing.ts';
 import { RuntimeTimeoutError, withRuntimeTimeoutGuarded } from '../src/lib/runtime-timeout.ts';
-import { shouldClearLateSession } from '../src/lib/late-session-guard.ts';
+import { createAsyncExclusiveRunner, shouldClearLateSession } from '../src/lib/late-session-guard.ts';
 
 const authClient = await readFile(new URL('../src/lib/auth-client.ts', import.meta.url), 'utf8');
 const loginRoute = await readFile(new URL('../src/components/auth/PortalLoginRoute.tsx', import.meta.url), 'utf8');
@@ -125,5 +125,53 @@ assert.equal(shouldClearLateSession(3, 3, 'late-token', 'retry-token'), false, '
 assert.equal(shouldClearLateSession(3, 3, 'late-token', null), false, 'missing current session must not sign out');
 assert.equal(shouldClearLateSession(3, 3, null, 'late-token'), false, 'missing late token must not sign out');
 assert.equal(shouldClearLateSession(3, 3, '', ''), false, 'empty tokens must not sign out');
+
+// Executable behavior: Supabase session mutation critical section is FIFO and
+// prevents a late cleanup from interleaving with a newer session write.
+{
+  const runExclusive = createAsyncExclusiveRunner();
+  const order: string[] = [];
+  let releaseFirst!: () => void;
+  const firstGate = new Promise<void>((resolve) => { releaseFirst = resolve; });
+
+  const first = runExclusive(async () => {
+    order.push('first:start');
+    await firstGate;
+    order.push('first:end');
+  });
+  const second = runExclusive(async () => {
+    order.push('second');
+  });
+
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.deepEqual(order, ['first:start'], 'second session mutation must wait for the active owner');
+  releaseFirst();
+  await Promise.all([first, second]);
+  assert.deepEqual(order, ['first:start', 'first:end', 'second'], 'session mutations must remain FIFO');
+}
+{
+  const runExclusive = createAsyncExclusiveRunner();
+  let currentToken: string | null = 'initial';
+  let releaseLate!: () => void;
+  const lateGate = new Promise<void>((resolve) => { releaseLate = resolve; });
+
+  const lateAttempt = runExclusive(async () => {
+    await lateGate;
+    currentToken = 'late-token';
+  });
+  const newerAttempt = runExclusive(async () => {
+    currentToken = 'newer-token';
+  });
+
+  releaseLate();
+  await lateAttempt;
+  await newerAttempt;
+
+  await runExclusive(async () => {
+    if (shouldClearLateSession(3, 4, 'late-token', currentToken)) currentToken = null;
+  });
+
+  assert.equal(currentToken, 'newer-token', 'late cleanup must preserve a newer serialized session');
+}
 
 console.log('Store auth contract: PASS');

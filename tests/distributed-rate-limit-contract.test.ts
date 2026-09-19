@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   DistributedRateLimitStore,
+  isDistributedRateLimitOperational,
   isSharedStoreConfigured,
 } from '../src/server/rate-limiter.ts';
 
@@ -12,6 +13,11 @@ async function runDistributedRateLimitTests() {
   // 1. Check truthful configuration state
   const isConfigured = isSharedStoreConfigured();
   console.log(`  Distributed shared store configured: ${isConfigured}`);
+  assert.equal(
+    isDistributedRateLimitOperational(),
+    false,
+    'environment configuration alone must not be reported as operational distributed enforcement',
+  );
 
   // 2. Multi-request consumption
   const key = 'distributed-test-ip:10.0.0.1';

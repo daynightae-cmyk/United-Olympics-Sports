@@ -1,7 +1,8 @@
 import { auth, googleSignIn, logout as firebaseLogout } from './firebase';
 import { supabase } from './supabase';
 import { fetchJsonWithRuntimeTimeout, withRuntimeTimeout, withRuntimeTimeoutGuarded } from './runtime-timeout';
-import { shouldClearLateSession } from './late-session-guard';
+import { createAsyncExclusiveRunner, shouldClearLateSession } from './late-session-guard';
+import { safeReturnTo } from './auth-routing';
 
 const RETURN_TO_KEY = 'uos:auth:return-to';
 const AUTH_RUNTIME_TIMEOUT_MS = 10_000;
@@ -39,10 +40,7 @@ export type PortalIdentity = {
   bindings: PortalBindings;
 };
 
-export function safeReturnTo(value: string | null | undefined, fallback = '/'): string {
-  if (!value || !value.startsWith('/') || value.startsWith('//')) return fallback;
-  return value;
-}
+export { safeReturnTo } from './auth-routing';
 
 /**
  * Supabase PKCE stores the code verifier in browser storage, which is scoped to
@@ -99,6 +97,7 @@ export async function beginSupabaseGoogleOAuth(returnTo = '/'): Promise<void> {
 }
 
 let supabasePasswordAttemptSeq = 0;
+const withSupabaseSessionMutation = createAsyncExclusiveRunner();
 
 export async function signInWithSupabasePassword(email: string, password: string): Promise<string> {
   const normalizedEmail = email.trim().toLowerCase();
@@ -112,7 +111,7 @@ export async function signInWithSupabasePassword(email: string, password: string
   // so cleanup proceeds only while this attempt is still the latest one and
   // the persisted token is the late response's own token.
   const attemptId = ++supabasePasswordAttemptSeq;
-  const attempt = supabase.auth.signInWithPassword({ email: normalizedEmail, password });
+  const attempt = withSupabaseSessionMutation(() => supabase.auth.signInWithPassword({ email: normalizedEmail, password }));
   const { data, error } = await withRuntimeTimeoutGuarded(
     'supabase-password-sign-in',
     attempt,
@@ -120,9 +119,10 @@ export async function signInWithSupabasePassword(email: string, password: string
     (result) => {
       if (result.status !== 'fulfilled' || result.value.error || !result.value.data.session) return;
       const lateAccessToken = result.value.data.session.access_token;
-      void supabase.auth.getSession().then(({ data: current }) => {
+      void withSupabaseSessionMutation(async () => {
+        const { data: current } = await supabase.auth.getSession();
         if (shouldClearLateSession(attemptId, supabasePasswordAttemptSeq, lateAccessToken, current.session?.access_token)) {
-          void supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+          await supabase.auth.signOut({ scope: 'local' });
         }
       }).catch(() => undefined);
     },
@@ -140,7 +140,7 @@ export async function signInWithSupabasePasskey(): Promise<string> {
 
   const { data, error } = await withRuntimeTimeout(
     'supabase-passkey-sign-in',
-    supabase.auth.signInWithPasskey(),
+    withSupabaseSessionMutation(() => supabase.auth.signInWithPasskey()),
     PASSKEY_RUNTIME_TIMEOUT_MS,
   );
   if (error || !data.session?.access_token) {
@@ -194,7 +194,7 @@ export function consumeAuthReturnTo(fallback = '/'): string {
 export async function exchangeSupabaseAuthCode(code: string): Promise<string> {
   const { data, error } = await withRuntimeTimeout(
     'supabase-auth-code-exchange',
-    supabase.auth.exchangeCodeForSession(code),
+    withSupabaseSessionMutation(() => supabase.auth.exchangeCodeForSession(code)),
     AUTH_RUNTIME_TIMEOUT_MS,
   );
   if (error || !data.session?.access_token) {

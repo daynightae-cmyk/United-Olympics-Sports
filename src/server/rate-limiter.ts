@@ -114,7 +114,6 @@ export class RateLimiter {
   }
 }
 
-export const defaultRateLimiter = new RateLimiter();
 
 /**
  * Extracts a client IP safely from request headers or socket.
@@ -177,6 +176,15 @@ export function isSharedStoreConfigured(): boolean {
   return Boolean(process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_URL);
 }
 
+/**
+ * Current runtime truth: a shared Redis/Upstash adapter has not yet been
+ * implemented in this repository. Environment strings alone must never be
+ * reported as distributed enforcement.
+ */
+export function isDistributedRateLimitOperational(): boolean {
+  return false;
+}
+
 export class DistributedRateLimitStore implements RateLimitStore {
   private fallbackStore: MemoryRateLimitStore;
 
@@ -191,7 +199,9 @@ export class DistributedRateLimitStore implements RateLimitStore {
       return this.fallbackStore.consume(key, limit, windowMs);
     }
 
-    // When Redis / Upstash is configured, external distributed store operates here
+    // Shared Redis / Upstash transport is not implemented yet. Stay fail-safe
+    // with per-instance memory limiting and let readiness report PARTIAL rather
+    // than pretending configuration strings provide distributed enforcement.
     return this.fallbackStore.consume(key, limit, windowMs);
   }
 
@@ -199,3 +209,11 @@ export class DistributedRateLimitStore implements RateLimitStore {
     this.fallbackStore.reset(key);
   }
 }
+
+
+/**
+ * All production handlers use the distributed-aware wrapper. Today it
+ * intentionally falls back to memory because no shared adapter is implemented;
+ * readiness exposes that limitation explicitly.
+ */
+export const defaultRateLimiter = new RateLimiter(new DistributedRateLimitStore());
