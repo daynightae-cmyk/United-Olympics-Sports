@@ -503,7 +503,7 @@ async function assertAdminWorkspaceAuthority(page, route) {
       throw new Error(`${route}: Player management filter bar must use the Admin athletic surface; radius=${proof.bmFilterRadius}, background=${proof.bmFilterBackground}`);
     }
 
-    const mobileLayout = proof.viewportWidth <= 700;
+    const mobileLayout = proof.viewportWidth <= 768;
     if (mobileLayout) {
       const mobileVisible = proof.mobileCardDisplay !== 'none' && proof.mobileCardVisibility !== 'hidden';
       if (!mobileVisible || !(proof.mobileCardRadius >= 16) || !proof.mobileCardBackground || proof.mobileCardBackground === 'none') {
