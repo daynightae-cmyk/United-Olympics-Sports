@@ -89,6 +89,8 @@ assert(adminClosure.includes('Admin Athletic Command Authority'), 'Admin athleti
 assert(adminClosure.includes('.enterprise-table-shell'), 'Admin athletic authority must cover enterprise tables');
 assert(adminClosure.includes('.uos-form-grid'), 'Admin athletic authority must cover bilingual forms');
 assert(adminClosure.includes('.directory-card'), 'Admin athletic authority must cover People directory cards');
+assert(adminClosure.includes('.bm-filter-bar'), 'Admin athletic authority must cover Benchmark player filters');
+assert(adminClosure.includes('.bm-table-container'), 'Admin athletic authority must cover Benchmark player tables');
 assert(adminClosure.includes('object-fit:cover !important'), 'Admin athletic authority must crop the composite logo to a single emblem');
 assert(visualClosure.includes('.dashboard-hero'), 'visual proof closure must normalize the dashboard hero');
 assert(visualClosure.includes('.admin-stat-card'), 'visual proof closure must normalize admin stat cards');
