@@ -56,7 +56,7 @@ const viewportMatrix = [
   { width: 1440, height: 900 },
   { width: 1920, height: 1080 },
 ];
-const responsiveRoutes = ['/', '/sports', '/programs', '/programs/football-foundations', '/auth/callback', '/admin/login', '/player/login', '/player/home', '/parent/login', '/parent', '/parent/children', '/parent/payments', '/coach', '/coach/players', '/admin', '/admin/branches', '/admin/players'];
+const responsiveRoutes = ['/', '/sports', '/programs', '/programs/football-foundations', '/auth/callback', '/admin/login', '/player/login', '/player/home', '/parent/login', '/parent', '/parent/children', '/parent/payments', '/coach', '/coach/players', '/admin', '/admin/branches', '/admin/players', '/admin/coaches', '/admin/sports'];
 
 async function waitForServer() {
   let lastError;
@@ -187,6 +187,7 @@ async function assertRoute(page, runtimeErrors, route, checkOverflow = true) {
   if (route.startsWith('/player') && !route.includes('/login') && !intentionalPlayerLoginRedirects.has(route) && state.pathname === '/player/login') throw new Error(`${route}: unexpectedly redirected to player login`);
   if (runtimeErrors.length) throw new Error(`${route}: ${runtimeErrors.join(' | ')}`);
   if (route === '/admin') await assertAdminVisualAuthority(page);
+  if (['/admin/players','/admin/parents','/admin/coaches','/admin/sports','/admin/programs'].includes(route)) await assertAdminWorkspaceAuthority(page, route);
   if (/^\/(admin|player|parent|coach|store)(\/|$)/.test(route)) await assertInternalPortalVisualAuthority(page, route, state.pathname);
   return state;
 }
@@ -443,6 +444,46 @@ async function assertAdminVisualAuthority(page) {
   }
   if (!(proof.activityRadius >= 20) || !proof.activityBackground || proof.activityBackground === 'none') {
     throw new Error(`/admin: recent activity must use the Admin command surface; radius=${proof.activityRadius}, background=${proof.activityBackground}`);
+  }
+}
+
+
+async function assertAdminWorkspaceAuthority(page, route) {
+  const directoryRoute = ['/admin/players', '/admin/parents', '/admin/coaches'].includes(route);
+  const organizationRoute = ['/admin/sports', '/admin/programs'].includes(route);
+
+  await page.waitForSelector('.admin-shell .enterprise-toolbar', { state: 'visible', timeout: 10_000 });
+  if (directoryRoute) {
+    await page.waitForSelector('.admin-shell .directory-card', { state: 'visible', timeout: 10_000 });
+  }
+  if (organizationRoute) {
+    await page.waitForSelector('.admin-shell .organization-card', { state: 'visible', timeout: 10_000 });
+  }
+
+  const proof = await page.evaluate(({ directoryRoute, organizationRoute }) => {
+    const toolbar = document.querySelector('.admin-shell .enterprise-toolbar');
+    const directoryCard = directoryRoute ? document.querySelector('.admin-shell .directory-card') : null;
+    const organizationCard = organizationRoute ? document.querySelector('.admin-shell .organization-card') : null;
+    return {
+      toolbarRadius: toolbar ? parseFloat(getComputedStyle(toolbar).borderTopLeftRadius) : null,
+      toolbarBackground: toolbar ? getComputedStyle(toolbar).backgroundImage : null,
+      directoryRadius: directoryCard ? parseFloat(getComputedStyle(directoryCard).borderTopLeftRadius) : null,
+      directoryBackground: directoryCard ? getComputedStyle(directoryCard).backgroundImage : null,
+      organizationRadius: organizationCard ? parseFloat(getComputedStyle(organizationCard).borderTopLeftRadius) : null,
+      organizationBackground: organizationCard ? getComputedStyle(organizationCard).backgroundImage : null,
+    };
+  }, { directoryRoute, organizationRoute });
+
+  if (!(proof.toolbarRadius >= 16) || !proof.toolbarBackground || proof.toolbarBackground === 'none') {
+    throw new Error(`${route}: Admin toolbar must use the athletic command surface; radius=${proof.toolbarRadius}, background=${proof.toolbarBackground}`);
+  }
+
+  if (directoryRoute && (!(proof.directoryRadius >= 18) || !proof.directoryBackground || proof.directoryBackground === 'none')) {
+    throw new Error(`${route}: Admin directory cards must use the athletic surface; radius=${proof.directoryRadius}, background=${proof.directoryBackground}`);
+  }
+
+  if (organizationRoute && (!(proof.organizationRadius >= 18) || !proof.organizationBackground || proof.organizationBackground === 'none')) {
+    throw new Error(`${route}: Admin organization cards must use the athletic surface; radius=${proof.organizationRadius}, background=${proof.organizationBackground}`);
   }
 }
 
