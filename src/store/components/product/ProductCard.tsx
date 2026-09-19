@@ -179,8 +179,8 @@ export function ProductVariants({
 
 export function ProductCard({ product, compact = false }: { product: StoreProduct; compact?: boolean }) {
   const { wishlist, toggleWishlist, addToCart, locale } = useStore();
-  const [size, setSize] = useState<string | undefined>(() => product.sizes?.[0]);
-  const [color, setColor] = useState<string | undefined>(() => product.colors?.[0]?.en);
+  const [size] = useState<string | undefined>(() => product.sizes?.[0]);
+  const [color] = useState<string | undefined>(() => product.colors?.[0]?.en);
   const [added, setAdded] = useState(false);
   const hintId = useId();
 
@@ -231,15 +231,9 @@ export function ProductCard({ product, compact = false }: { product: StoreProduc
             <StoreCopy value={product.name} />
           </Link>
         </h3>
-        <ProductFacts product={product} />
-        <ProductVariants
-          product={product}
-          size={size}
-          color={color}
-          onSize={setSize}
-          onColor={setColor}
-          compact
-        />
+        <div className="store-card-meta-row">
+          <ProductFacts product={product} />
+        </div>
         <div className="store-product-card-bottom">
           <ProductPrice product={product} />
           <button
@@ -248,19 +242,21 @@ export function ProductCard({ product, compact = false }: { product: StoreProduc
             disabled={!ready}
             aria-describedby={!ready ? hintId : undefined}
             onClick={handleQuickAdd}
-            aria-label={`Quick add ${product.name.en} | إضافة ${product.name.ar}`}
+            aria-label={locale === 'ar'
+              ? `${added ? 'تمت الإضافة!' : 'أضف إلى السلة'} · ${product.name.ar}`
+              : `${added ? 'Added!' : 'Add to Cart'} · ${product.name.en}`}
           >
             {added ? <Check aria-hidden="true" /> : <ShoppingCart aria-hidden="true" />}
             <span>
-              {locale === 'ar' ? (added ? 'تمت الإضافة!' : 'إضافة سريعة') : (added ? 'Added!' : 'Quick add')}
+              {locale === 'ar' ? (added ? 'تمت الإضافة!' : 'أضف إلى السلة') : (added ? 'Added!' : 'Add to Cart')}
             </span>
           </button>
         </div>
         <small className="store-selection-hint" id={hintId}>
           {!ready
             ? locale === 'ar'
-              ? 'اختر الخيارات المتاحة للمتابعة'
-              : 'Select available options to continue'
+              ? 'هذا المنتج غير متاح حاليًا'
+              : 'This product is currently unavailable'
             : '\u00a0'}
         </small>
         <span className="sr-only" role="status">
