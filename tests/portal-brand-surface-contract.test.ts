@@ -21,6 +21,7 @@ const [adminSidebar, portalLayout, portalAuth, playerPortalShell, playerOverview
   read('src/styles/portal-visual-proof-closure.css'),
   read('src/styles/portal-athletic-cards-final.css'),
 ]);
+const interiorDelivery = await read('src/styles/portal-interior-delivery-final.css');
 
 for (const [name, source] of [
   ['AdminSidebar', adminSidebar],
@@ -45,6 +46,7 @@ assert(entry.includes("import './styles/parent-portal-final.css';"), 'Parent fin
 assert(entry.includes("import './styles/coach-portal-final.css';"), 'Coach final visual authority must be loaded');
 assert(entry.includes("import './styles/portal-athletic-cards-final.css';"), 'Shared athletic portal card authority must be loaded');
 assert(entry.includes("import './styles/admin-athletic-final.css';"), 'Admin athletic command authority must be loaded');
+assert(entry.includes("import './styles/portal-interior-delivery-final.css';"), 'Client-delivery portal interior authority must be loaded');
 assert(
   entry.indexOf("portal-athletic-cards-final.css") > entry.indexOf("player-portal-final.css"),
   'Athletic portal card authority must load after Player final closure',
@@ -60,6 +62,10 @@ assert(
 assert(
   entry.indexOf("admin-athletic-final.css") > entry.indexOf("portal-athletic-cards-final.css"),
   'Admin athletic command authority must load after the shared athletic closure',
+);
+assert(
+  entry.indexOf("portal-interior-delivery-final.css") > entry.indexOf("admin-athletic-final.css"),
+  'Client-delivery portal interior authority must load last',
 );
 assert(playerOverview.includes('athlete-snapshot-card'), 'Player overview snapshots must use semantic athletic cards');
 assert(playerOverview.includes('athlete-quick-link-card'), 'Player overview quick links must use semantic athletic cards');
@@ -97,5 +103,11 @@ assert(visualClosure.includes('.dashboard-hero'), 'visual proof closure must nor
 assert(visualClosure.includes('.admin-stat-card'), 'visual proof closure must normalize admin stat cards');
 assert(visualClosure.includes('.portal-card'), 'visual proof closure must normalize portal cards');
 assert(visualClosure.includes('.athlete-glass-card'), 'visual proof closure must normalize player portal cards');
+assert(portalLayout.includes("className={({ isActive }) => isActive ? 'active' : undefined}"), 'Parent/Coach navigation must expose an explicit active visual state');
+assert(interiorDelivery.includes('.portal-parent .portal-nav a.active'), 'Parent portal must have an athletic active navigation state');
+assert(interiorDelivery.includes('.portal-coach .portal-nav a.active'), 'Coach portal must have an athletic active navigation state');
+assert(interiorDelivery.includes('.parent-form-field input'), 'Parent fields must receive the delivery field authority');
+assert(interiorDelivery.includes('.enterprise-table th'), 'Portal enterprise tables must receive the delivery table authority');
+assert(interiorDelivery.includes('.player-shell-container .athlete-glass-card-interactive'), 'Player interactive cards must receive final delivery polish');
 
 console.log('PORTAL BRAND + SURFACE CONTRACT: PASS');
