@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { isCanonicalProductionHost } from '../src/lib/preview-guard';
+import { isCanonicalProductionHost, resolveClientShowcaseMode } from '../src/lib/preview-guard';
 
 console.log('--- RUNNING PRODUCTION PREVIEW ISOLATION TEST ---');
 
@@ -38,7 +38,28 @@ for (const host of [
   assert.equal(isCanonicalProductionHost(host), expected, `${host || '(empty)'} must not match canonical production hosts`);
 }
 
-// 3. Every client gate that consults a preview/demo flag must route through
+
+// 3. Client Showcase is explicit opt-in only. Canonical production host status
+// must never imply synthetic preview data when the deployment flag is unset.
+assert.equal(resolveClientShowcaseMode(undefined), false, 'unset showcase flag must default to false');
+assert.equal(resolveClientShowcaseMode(''), false, 'empty showcase flag must default to false');
+assert.equal(resolveClientShowcaseMode('false'), false, 'explicit false must stay false');
+assert.equal(resolveClientShowcaseMode('0'), false, 'explicit zero must stay false');
+assert.equal(resolveClientShowcaseMode('true'), true, 'explicit true must enable temporary showcase');
+assert.equal(resolveClientShowcaseMode('1'), true, 'explicit one must enable temporary showcase');
+assert.equal(resolveClientShowcaseMode('yes'), true, 'explicit yes must enable temporary showcase');
+assert.equal(
+  isCanonicalProductionHost('unitedolympicsports.store') && resolveClientShowcaseMode(undefined),
+  false,
+  'canonical production + unset showcase must not activate synthetic preview',
+);
+assert.equal(
+  isCanonicalProductionHost('unitedolympicsports.store') && resolveClientShowcaseMode('true'),
+  true,
+  'canonical production may enter showcase only when explicitly opted in',
+);
+
+// 4. Every client gate that consults a preview/demo flag must route through
 // the shared preview-guard, so a misconfigured VITE_UOS_* flag in the
 // deployment environment can never enable preview data, preview auth bypass,
 // demo routes, or demo links on canonical production hosts — while the
@@ -68,14 +89,14 @@ for (const [path, label] of prodStrictGates) {
   );
 }
 
-// 4. The guard itself: production hosts blocked regardless of flags,
+// 5. The guard itself: production hosts blocked regardless of flags,
 // development/flag builds allowed elsewhere.
 const guard = await read('src/lib/preview-guard.ts');
 assert(guard.includes('unitedolympicsports.store'), 'Guard must list the canonical production domain');
 assert(guard.includes('isCanonicalProductionHost'), 'Guard must expose host matching');
 assert(guard.includes('import.meta.env.DEV'), 'Guard must preserve dev-mode behavior');
 
-// 5. Fail-closed defaults: production data providers must resolve to live
+// 6. Fail-closed defaults: production data providers must resolve to live
 // gateways unless explicitly overridden, never to preview fixtures.
 const adminProvider = await read('src/admin/data/AdminDataProvider.tsx');
 assert(
@@ -94,11 +115,11 @@ assert.equal(
   'StoreDataProvider must only select the preview gateway behind the preview flag',
 );
 
-// 6. Benchmark showcase stays DEV-only and is never reachable in any deployed build.
+// 7. Benchmark showcase stays DEV-only and is never reachable in any deployed build.
 const appRouter = await read('src/app/AppRouter.tsx');
 assert(
   appRouter.includes('import.meta.env.DEV === true'),
   'Benchmark route must remain strictly DEV-only',
 );
 
-console.log('PASS: Production preview isolation verified across 10 client gates.');
+console.log('PASS: Production preview isolation + explicit showcase opt-in verified across 10 client gates.');

@@ -1,5 +1,6 @@
 import { getPool, databaseConfigured } from '../db/index';
 import { supabaseAuthConfigured, firebaseAuthConfigured, authAdministrativeActionsConfigured } from './runtime';
+import { isDistributedRateLimitOperational, isSharedStoreConfigured } from './rate-limiter';
 
 export type DependencyStage = 'not_configured' | 'configured' | 'reachable' | 'verified' | 'operational';
 export type DependencyStatus = 'PASS' | 'PARTIAL' | 'BLOCKED' | 'FAIL' | 'NOT_CONFIGURED';
@@ -26,6 +27,7 @@ export interface SystemReadinessReport {
     payments: DependencyEvidence;
     paymentWebhook: DependencyEvidence;
     sms: DependencyEvidence;
+    rateLimiting: DependencyEvidence;
   };
 }
 
@@ -252,6 +254,39 @@ export function checkSmsReadiness(): DependencyEvidence {
   };
 }
 
+export function checkRateLimitReadiness(): DependencyEvidence {
+  const checkedAt = new Date().toISOString();
+  const configured = isSharedStoreConfigured();
+  const operational = isDistributedRateLimitOperational();
+
+  if (operational) {
+    return {
+      stage: 'operational',
+      status: 'PASS',
+      checkedAt,
+      metadata: { distributed: true, configured },
+    };
+  }
+
+  if (configured) {
+    return {
+      stage: 'configured',
+      status: 'PARTIAL',
+      checkedAt,
+      reason: 'Redis/Upstash configuration is present, but this runtime still enforces rate limits per instance; distributed enforcement is not implemented/verified.',
+      metadata: { distributed: false, configured: true, fallback: 'memory' },
+    };
+  }
+
+  return {
+    stage: 'not_configured',
+    status: 'PARTIAL',
+    checkedAt,
+    reason: 'Distributed rate limiting is not configured; the runtime uses a per-instance memory limiter.',
+    metadata: { distributed: false, configured: false, fallback: 'memory' },
+  };
+}
+
 export async function evaluateSystemReadiness(fetchImpl: typeof fetch = fetch): Promise<SystemReadinessReport> {
   const checkedAt = new Date().toISOString();
 
@@ -264,6 +299,7 @@ export async function evaluateSystemReadiness(fetchImpl: typeof fetch = fetch): 
   const payments = checkPaymentsReadiness();
   const paymentWebhook = checkPaymentWebhookReadiness();
   const sms = checkSmsReadiness();
+  const rateLimiting = checkRateLimitReadiness();
 
   // productionReady MUST NOT become true merely from environment variable presence!
   // Requires explicit operational stages for core dependencies.
@@ -287,6 +323,7 @@ export async function evaluateSystemReadiness(fetchImpl: typeof fetch = fetch): 
       payments,
       paymentWebhook,
       sms,
+      rateLimiting,
     },
   };
 }

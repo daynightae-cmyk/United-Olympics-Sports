@@ -4,6 +4,7 @@ import {
   checkDatabaseReadiness,
   checkPaymentsReadiness,
   checkAuthVerificationReadiness,
+  checkRateLimitReadiness,
 } from '../src/server/readiness.ts';
 
 // Test 1: ProductionReady MUST NOT become true merely from environment strings
@@ -59,7 +60,17 @@ try {
   assert.equal(typeof authEvidence.latencyMs, 'number');
   assert.equal(probeCalled, true, 'Auth readiness probe must actually invoke the fetch boundary');
 
-  // Test 7: Database unconfigured stage
+  // Test 7: Distributed rate-limit truth must never infer operational
+  // enforcement from environment strings alone.
+  process.env.REDIS_URL = 'redis://configured-but-not-implemented.example';
+  const rateLimitEvidence = checkRateLimitReadiness();
+  assert.equal(rateLimitEvidence.stage, 'configured');
+  assert.equal(rateLimitEvidence.status, 'PARTIAL');
+  assert.equal(rateLimitEvidence.metadata?.distributed, false);
+  assert.match(rateLimitEvidence.reason || '', /per instance|not implemented|not verified/i);
+  delete process.env.REDIS_URL;
+
+  // Test 8: Database unconfigured stage
   delete process.env.DATABASE_URL;
   delete process.env.SQL_HOST;
   const dbEvidence = await checkDatabaseReadiness();
