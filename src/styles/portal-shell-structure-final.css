@@ -1,0 +1,181 @@
+/* ==========================================================================
+   United Olympics Sports — Parent / Coach structural shell closure
+   Restores the two-column desktop shell and explicit mobile off-canvas nav.
+   Loaded after all portal visual layers so later cosmetic CSS cannot collapse
+   the layout back into normal document flow.
+   ========================================================================== */
+
+.portal-shell.portal-parent,
+.portal-shell.portal-coach {
+  display:grid !important;
+  grid-template-columns:292px minmax(0,1fr) !important;
+  align-items:start;
+  min-height:100dvh !important;
+  overflow:visible;
+}
+
+/* Desktop navigation is a real viewport-height grid column, not a block that
+   pushes the workspace below its full content height. */
+.portal-parent > .portal-sidebar,
+.portal-coach > .portal-sidebar {
+  position:sticky !important;
+  top:0 !important;
+  bottom:auto !important;
+  inset-inline:auto !important;
+  align-self:start;
+  width:292px !important;
+  height:100dvh !important;
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
+  overflow-x:hidden;
+  overflow-y:auto;
+  z-index:60;
+  transform:none !important;
+}
+
+.portal-parent > .portal-sidebar .portal-nav,
+.portal-coach > .portal-sidebar .portal-nav {
+  flex:0 0 auto;
+}
+
+.portal-parent > .portal-sidebar .portal-public-link,
+.portal-coach > .portal-sidebar .portal-public-link {
+  margin-top:auto;
+  flex:0 0 auto;
+}
+
+/* Workspace always occupies the second grid track on desktop. Earlier RTL
+   margin rules are intentionally neutralized because the grid owns placement. */
+.portal-parent > .portal-workspace,
+.portal-coach > .portal-workspace {
+  min-width:0;
+  width:100%;
+  min-height:100dvh;
+  margin:0 !important;
+  display:flex;
+  flex-direction:column;
+  align-self:stretch;
+}
+
+.portal-parent > .portal-workspace > .portal-topbar,
+.portal-coach > .portal-workspace > .portal-topbar {
+  position:sticky;
+  top:0;
+  z-index:50;
+  width:100%;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) auto auto auto !important;
+  align-items:center;
+  gap:10px;
+}
+
+.portal-parent > .portal-workspace > .portal-main,
+.portal-coach > .portal-workspace > .portal-main {
+  flex:1 0 auto;
+  width:min(100%,1560px) !important;
+  max-width:1560px !important;
+  margin:0 auto !important;
+  padding:clamp(18px,2.4vw,34px) !important;
+}
+
+/* Desktop must never show mobile navigation controls. */
+.portal-parent .portal-mobile-only,
+.portal-coach .portal-mobile-only {
+  display:none !important;
+}
+
+/* Overlay only exists while React reports the mobile navigation as open. */
+.portal-parent > .portal-overlay,
+.portal-coach > .portal-overlay {
+  position:fixed;
+  inset:0;
+  z-index:180;
+  border:0;
+  background:rgba(0,0,0,.62);
+  backdrop-filter:blur(3px);
+  -webkit-backdrop-filter:blur(3px);
+}
+
+/* Mobile / tablet: one-column workspace with an off-canvas sidebar. */
+@media (max-width:1024px) {
+  .portal-shell.portal-parent,
+  .portal-shell.portal-coach {
+    display:block !important;
+    min-height:100dvh !important;
+  }
+
+  .portal-parent > .portal-sidebar,
+  .portal-coach > .portal-sidebar {
+    position:fixed !important;
+    inset:0 auto 0 0 !important;
+    width:min(88vw,310px) !important;
+    height:100dvh !important;
+    min-height:100dvh;
+    z-index:200;
+    transform:translateX(-105%) !important;
+    transition:transform .22s ease;
+    box-shadow:28px 0 74px rgba(0,0,0,.44);
+  }
+
+  html[dir="rtl"] .portal-parent > .portal-sidebar,
+  html[dir="rtl"] .portal-coach > .portal-sidebar {
+    inset:0 0 0 auto !important;
+    transform:translateX(105%) !important;
+    box-shadow:-28px 0 74px rgba(0,0,0,.44);
+  }
+
+  .portal-parent > .portal-sidebar.is-open,
+  .portal-coach > .portal-sidebar.is-open,
+  html[dir="rtl"] .portal-parent > .portal-sidebar.is-open,
+  html[dir="rtl"] .portal-coach > .portal-sidebar.is-open {
+    transform:translateX(0) !important;
+  }
+
+  .portal-parent > .portal-workspace,
+  .portal-coach > .portal-workspace,
+  html[dir="rtl"] .portal-parent > .portal-workspace,
+  html[dir="rtl"] .portal-coach > .portal-workspace {
+    width:100%;
+    min-height:100dvh;
+    margin:0 !important;
+  }
+
+  .portal-parent > .portal-workspace > .portal-topbar,
+  .portal-coach > .portal-workspace > .portal-topbar {
+    grid-template-columns:auto minmax(0,1fr) auto auto auto !important;
+  }
+
+  .portal-parent .portal-mobile-only,
+  .portal-coach .portal-mobile-only {
+    display:grid !important;
+    place-items:center;
+  }
+
+  .portal-parent > .portal-workspace > .portal-main,
+  .portal-coach > .portal-workspace > .portal-main {
+    width:100% !important;
+    max-width:none !important;
+    padding:18px 16px calc(22px + env(safe-area-inset-bottom,0px)) !important;
+  }
+}
+
+@media (max-width:640px) {
+  .portal-parent > .portal-workspace > .portal-topbar,
+  .portal-coach > .portal-workspace > .portal-topbar {
+    grid-template-columns:auto minmax(0,1fr) auto auto !important;
+    gap:8px;
+  }
+
+  .portal-parent > .portal-workspace > .portal-topbar .portal-preview-badge,
+  .portal-coach > .portal-workspace > .portal-topbar .portal-preview-badge {
+    display:none !important;
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .portal-parent > .portal-sidebar,
+  .portal-coach > .portal-sidebar {
+    transition:none !important;
+  }
+}
