@@ -449,10 +449,17 @@ async function assertAdminVisualAuthority(page) {
 
 
 async function assertAdminWorkspaceAuthority(page, route) {
-  const directoryRoute = ['/admin/players', '/admin/parents', '/admin/coaches'].includes(route);
+  const playerRoute = route === '/admin/players';
+  const directoryRoute = ['/admin/parents', '/admin/coaches'].includes(route);
   const organizationRoute = ['/admin/sports', '/admin/programs'].includes(route);
 
-  await page.waitForSelector('.admin-shell .enterprise-toolbar', { state: 'visible', timeout: 10_000 });
+  if (playerRoute) {
+    await page.waitForSelector('.admin-shell .bm-filter-bar', { state: 'visible', timeout: 10_000 });
+    await page.waitForSelector('.admin-shell .bm-table-container', { state: 'visible', timeout: 10_000 });
+  } else {
+    await page.waitForSelector('.admin-shell .enterprise-toolbar', { state: 'visible', timeout: 10_000 });
+  }
+
   if (directoryRoute) {
     await page.waitForSelector('.admin-shell .directory-card', { state: 'visible', timeout: 10_000 });
   }
@@ -460,22 +467,39 @@ async function assertAdminWorkspaceAuthority(page, route) {
     await page.waitForSelector('.admin-shell .organization-card', { state: 'visible', timeout: 10_000 });
   }
 
-  const proof = await page.evaluate(({ directoryRoute, organizationRoute }) => {
-    const toolbar = document.querySelector('.admin-shell .enterprise-toolbar');
+  const proof = await page.evaluate(({ playerRoute, directoryRoute, organizationRoute }) => {
+    const enterpriseToolbar = document.querySelector('.admin-shell .enterprise-toolbar');
+    const bmFilterBar = document.querySelector('.admin-shell .bm-filter-bar');
+    const bmTableContainer = document.querySelector('.admin-shell .bm-table-container');
     const directoryCard = directoryRoute ? document.querySelector('.admin-shell .directory-card') : null;
     const organizationCard = organizationRoute ? document.querySelector('.admin-shell .organization-card') : null;
     return {
-      toolbarRadius: toolbar ? parseFloat(getComputedStyle(toolbar).borderTopLeftRadius) : null,
-      toolbarBackground: toolbar ? getComputedStyle(toolbar).backgroundImage : null,
+      enterpriseToolbarRadius: enterpriseToolbar ? parseFloat(getComputedStyle(enterpriseToolbar).borderTopLeftRadius) : null,
+      enterpriseToolbarBackground: enterpriseToolbar ? getComputedStyle(enterpriseToolbar).backgroundImage : null,
+      bmFilterRadius: bmFilterBar ? parseFloat(getComputedStyle(bmFilterBar).borderTopLeftRadius) : null,
+      bmFilterBackground: bmFilterBar ? getComputedStyle(bmFilterBar).backgroundImage : null,
+      bmTableRadius: bmTableContainer ? parseFloat(getComputedStyle(bmTableContainer).borderTopLeftRadius) : null,
+      bmTableBackground: bmTableContainer ? getComputedStyle(bmTableContainer).backgroundImage : null,
       directoryRadius: directoryCard ? parseFloat(getComputedStyle(directoryCard).borderTopLeftRadius) : null,
       directoryBackground: directoryCard ? getComputedStyle(directoryCard).backgroundImage : null,
       organizationRadius: organizationCard ? parseFloat(getComputedStyle(organizationCard).borderTopLeftRadius) : null,
       organizationBackground: organizationCard ? getComputedStyle(organizationCard).backgroundImage : null,
+      playerRoute,
     };
-  }, { directoryRoute, organizationRoute });
+  }, { playerRoute, directoryRoute, organizationRoute });
 
-  if (!(proof.toolbarRadius >= 16) || !proof.toolbarBackground || proof.toolbarBackground === 'none') {
-    throw new Error(`${route}: Admin toolbar must use the athletic command surface; radius=${proof.toolbarRadius}, background=${proof.toolbarBackground}`);
+  if (playerRoute) {
+    if (!(proof.bmFilterRadius >= 16) || !proof.bmFilterBackground || proof.bmFilterBackground === 'none') {
+      throw new Error(`${route}: Player management filter bar must use the Admin athletic surface; radius=${proof.bmFilterRadius}, background=${proof.bmFilterBackground}`);
+    }
+    if (!(proof.bmTableRadius >= 18) || !proof.bmTableBackground || proof.bmTableBackground === 'none') {
+      throw new Error(`${route}: Player management table must use the Admin athletic surface; radius=${proof.bmTableRadius}, background=${proof.bmTableBackground}`);
+    }
+    return;
+  }
+
+  if (!(proof.enterpriseToolbarRadius >= 16) || !proof.enterpriseToolbarBackground || proof.enterpriseToolbarBackground === 'none') {
+    throw new Error(`${route}: Admin toolbar must use the athletic command surface; radius=${proof.enterpriseToolbarRadius}, background=${proof.enterpriseToolbarBackground}`);
   }
 
   if (directoryRoute && (!(proof.directoryRadius >= 18) || !proof.directoryBackground || proof.directoryBackground === 'none')) {
