@@ -785,6 +785,124 @@ html[dir="rtl"] .admin-shell .admin-operation-card > svg {
   color:#dec879 !important;
 }
 
+/* ---------- Benchmark player management surfaces ---------- */
+.admin-shell .bm-hero {
+  position:relative;
+  overflow:hidden;
+  padding:clamp(22px,2.8vw,32px) !important;
+  border:1px solid rgba(212,175,55,.14) !important;
+  border-radius:24px !important;
+  background:
+    radial-gradient(circle at 8% 4%,rgba(212,175,55,.11),transparent 34%),
+    linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.010)),
+    rgba(10,13,10,.94) !important;
+  box-shadow:0 24px 60px -44px rgba(0,0,0,.9) !important;
+}
+
+.admin-shell .bm-hero h1 {
+  color:#f3eee4 !important;
+  font-family:var(--uos-athletic-font-en,"Outfit","Segoe UI",sans-serif) !important;
+  font-weight:900 !important;
+  letter-spacing:-.035em !important;
+}
+
+.admin-shell .bm-hero p {
+  color:#8f9991 !important;
+  line-height:1.75 !important;
+}
+
+.admin-shell .bm-filter-bar {
+  min-height:68px;
+  padding:12px 14px !important;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  border:1px solid rgba(212,175,55,.13) !important;
+  border-radius:17px !important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.025),rgba(255,255,255,.009)),
+    rgba(10,13,10,.93) !important;
+  box-shadow:0 20px 48px -42px rgba(0,0,0,.84) !important;
+}
+
+.admin-shell .bm-table-search,
+.admin-shell .bm-filter-select {
+  min-height:46px;
+  border-color:rgba(212,175,55,.11) !important;
+  border-radius:12px !important;
+  background:rgba(255,255,255,.018) !important;
+}
+
+.admin-shell .bm-table-search input,
+.admin-shell .bm-filter-select select {
+  color:#eee9df !important;
+  font-family:var(--uos-athletic-font-body,"DM Sans","Segoe UI",sans-serif) !important;
+}
+
+.admin-shell .bm-table-search:focus-within,
+.admin-shell .bm-filter-select:focus-within {
+  border-color:rgba(212,175,55,.48) !important;
+  box-shadow:0 0 0 3px rgba(212,175,55,.08) !important;
+}
+
+.admin-shell .bm-table-container {
+  overflow:hidden;
+  border:1px solid rgba(212,175,55,.13) !important;
+  border-radius:19px !important;
+  background:
+    radial-gradient(circle at 96% 0,rgba(212,175,55,.045),transparent 35%),
+    rgba(8,11,9,.68) !important;
+  box-shadow:0 22px 52px -44px rgba(0,0,0,.9) !important;
+}
+
+.admin-shell .bm-table-wrap {
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+}
+
+.admin-shell .bm-table {
+  background:transparent !important;
+}
+
+.admin-shell .bm-table th {
+  padding:12px !important;
+  border-bottom-color:rgba(212,175,55,.12) !important;
+  background:rgba(212,175,55,.045) !important;
+  color:#a59d8d !important;
+  font-size:9px !important;
+  font-weight:800 !important;
+}
+
+.admin-shell .bm-table td {
+  padding:12px !important;
+  border-bottom-color:rgba(255,255,255,.045) !important;
+  color:#d2d6d0 !important;
+  font-size:10px !important;
+}
+
+.admin-shell .bm-table tbody tr:hover td {
+  background:rgba(212,175,55,.024) !important;
+}
+
+.admin-shell .bm-mobile-card {
+  border-color:rgba(212,175,55,.12) !important;
+  border-radius:17px !important;
+  background:
+    linear-gradient(145deg,rgba(212,175,55,.035),rgba(255,255,255,.012)),
+    rgba(10,13,10,.94) !important;
+  box-shadow:0 18px 42px -36px rgba(0,0,0,.86) !important;
+}
+
+.admin-shell .bm-modal,
+.admin-shell .bm-drawer {
+  border-color:rgba(212,175,55,.18) !important;
+  background:
+    radial-gradient(circle at 95% 0,rgba(212,175,55,.08),transparent 34%),
+    linear-gradient(145deg,#10140f,#090c09) !important;
+}
+
 /* ---------- Tables ---------- */
 .admin-shell .enterprise-table-shell,
 .admin-shell .admin-table-wrap,
