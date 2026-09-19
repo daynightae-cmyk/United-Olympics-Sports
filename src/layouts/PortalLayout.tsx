@@ -50,7 +50,7 @@ const portalMeta: Record<PortalKind, { title: BilingualValue; role: BilingualVal
   coach: {
     title: bi('Coach Portal', 'بوابة المدرب'), role: bi('Training Workspace', 'مساحة التدريب'),
     nav: [
-      { path: '', label: bi('Overview', 'نظرة عامة'), icon: Home },
+      { path: 'home', label: bi('Overview', 'نظرة عامة'), icon: Home },
       { path: 'schedule', label: bi('Schedule', 'الجدول'), icon: CalendarDays },
       { path: 'groups', label: bi('Groups', 'المجموعات'), icon: UsersRound },
       { path: 'players', label: bi('Players', 'اللاعبون'), icon: UserRound },
