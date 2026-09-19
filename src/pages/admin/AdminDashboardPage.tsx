@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Activity, ArrowRight, CalendarDays, Cloud, Database, Network, Server, ShieldCheck, Trophy, UserRound, UsersRound, Webhook } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { StatCard } from '../../components/admin/AdminUI';
@@ -141,7 +142,7 @@ export function AdminDashboardPage() {
   </div>;
 }
 
-function CommandMetric({ icon, label, value }: { icon: React.ReactNode; label: { en: string; ar: string }; value: string | number }) {
+function CommandMetric({ icon, label, value }: { icon: ReactNode; label: { en: string; ar: string }; value: string | number }) {
   return <div className="admin-command-metric">
     <span className="admin-command-metric__icon">{icon}</span>
     <span><BilingualText value={label} /></span>
@@ -149,7 +150,7 @@ function CommandMetric({ icon, label, value }: { icon: React.ReactNode; label: {
   </div>;
 }
 
-function OperationLink({ to, icon, title, detail }: { to: string; icon: React.ReactNode; title: { en: string; ar: string }; detail: { en: string; ar: string } }) {
+function OperationLink({ to, icon, title, detail }: { to: string; icon: ReactNode; title: { en: string; ar: string }; detail: { en: string; ar: string } }) {
   return <Link to={to} className="admin-operation-card">
     <span className="admin-operation-icon">{icon}</span>
     <span className="admin-operation-copy"><strong><BilingualText value={title} /></strong><small><BilingualText value={detail} /></small></span>
