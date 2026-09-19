@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { isStoreAuthPath, resolveStorePostSignInDestination } from '../src/lib/store-auth-routing.ts';
 import { RuntimeTimeoutError, withRuntimeTimeoutGuarded } from '../src/lib/runtime-timeout.ts';
+import { shouldClearLateSession } from '../src/lib/late-session-guard.ts';
 
 const authClient = await readFile(new URL('../src/lib/auth-client.ts', import.meta.url), 'utf8');
 const loginRoute = await readFile(new URL('../src/components/auth/PortalLoginRoute.tsx', import.meta.url), 'utf8');
@@ -16,6 +17,7 @@ assert.ok(loginRoute.includes('fetchServerSession(accessToken)'), 'credential si
 assert.ok(loginRoute.includes('resolveStorePostSignInDestination'), 'store login must honor the protected return destination');
 assert.ok(authClient.includes('withRuntimeTimeoutGuarded'), 'password sign-in must guard against late success after timeout');
 assert.ok(authClient.includes("signOut({ scope: 'local' })"), 'late password success must clear the stray local session');
+assert.ok(authClient.includes('shouldClearLateSession'), 'late cleanup must not clear a session created by a newer attempt');
 assert.ok(appRouter.includes('isStoreAuthPath(pathname)'), 'store login must be identifiable as an auth route');
 assert.ok(appRouter.includes('!isStoreAuthRoute'), 'store login must not mount internal assistant/update overlays');
 assert.ok(authPage.includes(`portal !== 'store' && <button type="button" onClick={() => handleProvider('phone')}`), 'unconfigured phone provider must be hidden from store login');
@@ -95,5 +97,14 @@ assert.equal(resolveStorePostSignInDestination({ from: '/store/orders' }), '/sto
     'late failure must be reported without throwing',
   );
 }
+
+// Executable behavior: a late password response may clear only its own stray
+// session, never a session created by a newer attempt (retry, passkey, OAuth).
+assert.equal(shouldClearLateSession(3, 3, 'late-token', 'late-token'), true, 'own stray session must be cleared');
+assert.equal(shouldClearLateSession(3, 4, 'late-token', 'late-token'), false, 'retry attempt owns the current session');
+assert.equal(shouldClearLateSession(3, 3, 'late-token', 'retry-token'), false, 'newer session token must be preserved');
+assert.equal(shouldClearLateSession(3, 3, 'late-token', null), false, 'missing current session must not sign out');
+assert.equal(shouldClearLateSession(3, 3, null, 'late-token'), false, 'missing late token must not sign out');
+assert.equal(shouldClearLateSession(3, 3, '', ''), false, 'empty tokens must not sign out');
 
 console.log('Store auth contract: PASS');
