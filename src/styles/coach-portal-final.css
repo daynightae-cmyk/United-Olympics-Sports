@@ -1020,7 +1020,7 @@ html[data-theme='light'] .portal-coach :where(
   .portal-coach .coach-command-hero {
     min-height:0;
     padding:20px 17px;
-    border-radius:21px;
+    border-radius:24px;
   }
 
   .portal-coach .coach-command-hero h1 {
