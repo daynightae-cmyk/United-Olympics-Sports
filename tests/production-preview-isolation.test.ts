@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { isCanonicalProductionHost, resolveClientShowcaseMode } from '../src/lib/preview-guard';
+import { clientShowcaseMode, isCanonicalProductionHost, resolveClientShowcaseMode } from '../src/lib/preview-guard';
 
 console.log('--- RUNNING PRODUCTION PREVIEW ISOLATION TEST ---');
 
@@ -120,6 +120,16 @@ const appRouter = await read('src/app/AppRouter.tsx');
 assert(
   appRouter.includes('import.meta.env.DEV === true'),
   'Benchmark route must remain strictly DEV-only',
+);
+
+// 7. Showcase entry point itself defaults closed outside Vite and never
+// consults the hostname: node-safe, case-insensitive, explicit opt-in only.
+assert.equal(resolveClientShowcaseMode('TRUE'), true, 'flag parsing is case-insensitive');
+assert.equal(clientShowcaseMode(), false, 'showcase defaults to false without an explicit flag');
+assert.equal(
+  guard.includes('return isCanonicalProductionHost();'),
+  false,
+  'showcase must not fall back to the canonical production hostname',
 );
 
 console.log('PASS: Production preview isolation + explicit showcase opt-in verified across 10 client gates.');

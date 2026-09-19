@@ -33,7 +33,10 @@ export function resolveClientShowcaseMode(rawFlag: unknown): boolean {
 }
 
 export function clientShowcaseMode(): boolean {
-  return resolveClientShowcaseMode(import.meta.env.VITE_UOS_CLIENT_SHOWCASE);
+  // Optional chaining keeps this callable outside Vite (node tests), where
+  // import.meta.env is undefined: unset flag means showcase off.
+  const viteEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
+  return resolveClientShowcaseMode(viteEnv?.VITE_UOS_CLIENT_SHOWCASE);
 }
 
 // Central standard-preview gate: call with the explicit VITE_UOS_* flag value.

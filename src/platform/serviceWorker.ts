@@ -8,7 +8,7 @@ export function registerServiceWorker(): void {
 
   window.addEventListener('load', () => {
     void navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' })
-      .then((registration) => registration.update())
+      .then((registration) => registration.update().catch(() => undefined))
       .catch(() => {
         // PWA enhancement only. Never block application startup on registration.
       });

@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { PortalAuthPage, type PortalAuthNotice, type PortalAuthProvider } from '../../../components/auth/PortalAuthPage';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
 import { beginSupabaseGoogleOAuth, fetchPortalIdentity, getAccessToken, signOutEverywhere } from '../../../lib/auth-client';
+import { resolvePortalPostSignInDestination } from '../../../lib/store-auth-routing';
 import { productionAuthGateway } from './PlayerAuthGateway';
 import { previewModeAllowed } from '../../../lib/preview-guard';
 
@@ -55,6 +56,8 @@ function SafeDemoLink() {
 
 export function PlayerLoginPage() {
   const navigate = useNavigate();
+  const routerState = useLocation().state as { from?: unknown } | null;
+  const resolveTarget = () => resolvePortalPostSignInDestination('player', routerState?.from, '/player/home');
 
   useEffect(() => {
     let active = true;
@@ -67,7 +70,7 @@ export function PlayerLoginPage() {
         const portal = await fetchPortalIdentity(token);
         if (!active) return;
         if (portal.bindings.playerIds.length === 1 && portal.bindings.playerIds[0] === persisted.playerId) {
-          navigate('/player/home', { replace: true });
+          navigate(resolveTarget(), { replace: true });
           return;
         }
         clearPlayerProductionSession();
@@ -82,7 +85,7 @@ export function PlayerLoginPage() {
   const handleProvider = async (provider: PortalAuthProvider): Promise<PortalAuthNotice | null> => {
     if (provider === 'google') {
       try {
-        await beginSupabaseGoogleOAuth('/player/home');
+        await beginSupabaseGoogleOAuth(resolveTarget());
         return null;
       } catch {
         return {
@@ -101,7 +104,7 @@ export function PlayerLoginPage() {
 
     const result = await productionAuthGateway.signInWithApple();
     if (result.success && result.data?.playerId) {
-      navigate('/player/home');
+      navigate(resolveTarget());
       return null;
     }
 

@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { PortalAuthPage, type PortalAuthNotice, type PortalAuthProvider } from '../../components/auth/PortalAuthPage';
 import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { beginSupabaseGoogleOAuth, fetchPortalIdentity, getAccessToken, signOutEverywhere } from '../../lib/auth-client';
+import { resolvePortalPostSignInDestination } from '../../lib/store-auth-routing';
 import { previewModeAllowed } from '../../lib/preview-guard';
 
 const COACH_PRODUCTION_SESSION_KEY = 'uos:coach-portal:session:v1';
@@ -47,6 +48,8 @@ function SafeDemoLink() {
 
 export function CoachLoginPage() {
   const navigate = useNavigate();
+  const routerState = useLocation().state as { from?: unknown } | null;
+  const resolveTarget = () => resolvePortalPostSignInDestination('coach', routerState?.from, '/coach/home');
 
   useEffect(() => {
     let active = true;
@@ -59,7 +62,7 @@ export function CoachLoginPage() {
         const portal = await fetchPortalIdentity(token);
         if (!active) return;
         if (portal.bindings.coachIds.length === 1 && portal.bindings.coachIds[0] === persisted.coachId) {
-          navigate('/coach/home', { replace: true });
+          navigate(resolveTarget(), { replace: true });
           return;
         }
         clearCoachProductionSession();
@@ -80,7 +83,7 @@ export function CoachLoginPage() {
     }
 
     try {
-      await beginSupabaseGoogleOAuth('/coach/home');
+      await beginSupabaseGoogleOAuth(resolveTarget());
       return null;
     } catch {
       return {

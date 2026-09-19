@@ -39,3 +39,21 @@ export function resolveStorePostSignInDestination(from: unknown, fallback = STOR
   if (STORE_ORDER_DETAIL_PATTERN.test(from)) return from;
   return fallback;
 }
+
+export type PortalLoginKind = 'admin' | 'player' | 'parent' | 'coach';
+
+/**
+ * Resolves where a portal sign-in should land. Accepts only same-portal
+ * destinations previously stored in router state by the portal guards;
+ * the portal's own login route, external/protocol-relative URLs and
+ * non-strings fall back to the portal home.
+ */
+export function resolvePortalPostSignInDestination(portal: PortalLoginKind, from: unknown, fallback: string): string {
+  const prefix = `/${portal}`;
+  if (typeof from !== 'string') return fallback;
+  if (from !== prefix && !from.startsWith(`${prefix}/`)) return fallback;
+  const rest = from.slice(prefix.length);
+  if (rest === '/login' || rest.startsWith('/login/')) return fallback;
+  if (rest.includes('//') || from.includes('\\')) return fallback;
+  return from;
+}

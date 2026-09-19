@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createServer as createViteServer } from 'vite';
 import { dispatchApi } from './src/server/routes.ts';
+import { applySecurityHeaders } from './src/server/security-headers.ts';
 
 export interface AppOptions {
   enableVite?: boolean;
@@ -14,23 +15,24 @@ export async function createApp(options: AppOptions = {}): Promise<Express> {
 
   app.disable('x-powered-by');
 
-  // Security Headers (P1 / Section 22)
+  // Security headers share the canonical policy in security-headers.ts so the
+  // standalone server and the Vercel serverless handler cannot drift. Extras
+  // below preserve this server's exact prior coverage: Firebase/Google auth
+  // handler sources, Supabase realtime, and 'unsafe-eval' whenever Vite dev
+  // middleware is active. Unknown/unset NODE_ENV values keep production-safe
+  // defaults (HSTS on): only explicit development/test relax them.
+  const productionHeaders = !['development', 'test'].includes(process.env.NODE_ENV ?? '');
   app.use((_req, res, next) => {
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-    const csp = [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseapp.com https://*.googleapis.com https://js.stripe.com",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' https://fonts.gstatic.com data:",
-      "img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com https://*.googleusercontent.com",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.stripe.com https://r.stripe.com https://m.stripe.network",
-      "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
-      "frame-ancestors 'none'",
-    ].join('; ');
-    res.setHeader('Content-Security-Policy', csp);
+    applySecurityHeaders(res, {
+      enableHsts: productionHeaders,
+      cspScriptSrc: [
+        ...(enableVite ? ["'unsafe-eval'"] : []),
+        'https://*.firebaseapp.com',
+        'https://*.googleapis.com',
+      ],
+      cspFrameSrc: ['https://*.firebaseapp.com'],
+      cspConnectSrc: ['wss://*.supabase.co', 'https://*.googleapis.com'],
+    });
     next();
   });
 

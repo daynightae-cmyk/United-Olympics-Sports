@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { isStoreAuthPath, resolveStorePostSignInDestination } from '../src/lib/store-auth-routing.ts';
+import { isStoreAuthPath, resolvePortalPostSignInDestination, resolveStorePostSignInDestination } from '../src/lib/store-auth-routing.ts';
 import { RuntimeTimeoutError, withRuntimeTimeoutGuarded } from '../src/lib/runtime-timeout.ts';
 import { createAsyncExclusiveRunner, shouldClearLateSession } from '../src/lib/late-session-guard.ts';
 
@@ -51,6 +51,25 @@ assert.equal(resolveStorePostSignInDestination('/store/orders?status=paid'), '/s
 assert.equal(resolveStorePostSignInDestination(undefined), '/store/account', 'missing destination must fall back');
 assert.equal(resolveStorePostSignInDestination(null), '/store/account', 'null destination must fall back');
 assert.equal(resolveStorePostSignInDestination({ from: '/store/orders' }), '/store/account', 'non-string destination must fall back');
+
+// Executable behavior: portal sign-in preserves guarded deep links within
+// the same portal and falls back safely for everything else.
+assert.equal(resolvePortalPostSignInDestination('coach', '/coach/schedule', '/coach/home'), '/coach/schedule', 'coach deep link preserved');
+assert.equal(resolvePortalPostSignInDestination('coach', '/coach/players/p1', '/coach/home'), '/coach/players/p1', 'coach detail preserved');
+assert.equal(resolvePortalPostSignInDestination('coach', '/coach', '/coach/home'), '/coach', 'coach root preserved');
+assert.equal(resolvePortalPostSignInDestination('parent', '/parent/payments', '/parent'), '/parent/payments', 'parent deep link preserved');
+assert.equal(resolvePortalPostSignInDestination('player', '/player/schedule', '/player/home'), '/player/schedule', 'player deep link preserved');
+assert.equal(resolvePortalPostSignInDestination('admin', '/admin/users', '/admin'), '/admin/users', 'admin deep link preserved');
+assert.equal(resolvePortalPostSignInDestination('coach', '/coach/login', '/coach/home'), '/coach/home', 'login route must not become a target');
+assert.equal(resolvePortalPostSignInDestination('coach', '/coach/login/', '/coach/home'), '/coach/home', 'login slash variant must not become a target');
+assert.equal(resolvePortalPostSignInDestination('coach', '/player/home', '/coach/home'), '/coach/home', 'cross-portal path must fall back');
+assert.equal(resolvePortalPostSignInDestination('coach', '/store/orders', '/coach/home'), '/coach/home', 'store path must fall back');
+assert.equal(resolvePortalPostSignInDestination('coach', 'https://evil.example/coach/schedule', '/coach/home'), '/coach/home', 'external URL must fall back');
+assert.equal(resolvePortalPostSignInDestination('coach', '//evil.example/coach/schedule', '/coach/home'), '/coach/home', 'protocol-relative URL must fall back');
+assert.equal(resolvePortalPostSignInDestination('coach', '/coach2/schedule', '/coach/home'), '/coach/home', 'prefix-sibling path must fall back');
+assert.equal(resolvePortalPostSignInDestination('coach', '/coach//schedule', '/coach/home'), '/coach/home', 'doubled slash must fall back');
+assert.equal(resolvePortalPostSignInDestination('coach', undefined, '/coach/home'), '/coach/home', 'missing destination must fall back');
+assert.equal(resolvePortalPostSignInDestination('coach', null, '/coach/home'), '/coach/home', 'null destination must fall back');
 
 // Executable behavior: timeout guard keeps working promises intact,
 // rejects on deadline, and reports late settlements for cleanup.

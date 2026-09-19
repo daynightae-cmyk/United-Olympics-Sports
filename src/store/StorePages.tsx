@@ -52,7 +52,7 @@ export function CatalogPage({ categoriesOnly = false, fixedCategory }: { categor
   const filtered = useMemo(() => products.filter((product) => (!selected || product.category === selected) && (!collection || (collection === 'new' ? product.badge === 'new' : collection === 'featured' ? product.badge === 'featured' : product.collectionIds?.includes(collection)))).sort((a, b) => sort === 'price-low' ? a.price - b.price : sort === 'price-high' ? b.price - a.price : 0), [products, selected, sort, collection]);
   const navigate = useNavigate();
   const selectCategory = (category: string) => { if (fixedCategory) { navigate(category ? `/store/category/${category}` : '/store/shop'); return; } const next = new URLSearchParams(params); if (category) next.set('category', category); else next.delete('category'); setParams(next); };
-  useStoreDialog(filtersOpen, filterRef, () => setFiltersOpen(false));
+  useStoreDialog(filtersOpen, filterRef, () => setFiltersOpen(false), filterTriggerRef);
   return <div className="store-catalog-page">
     <div className="store-page-heading">
       <nav><Link to="/store"><StoreCopy value={{ en: 'Store', ar: 'المتجر' }} inline /></Link><ChevronRight /><span>{locale === 'ar' ? (categoriesOnly ? 'الفئات' : 'تسوق') : (categoriesOnly ? 'Categories' : 'Shop')}</span></nav>

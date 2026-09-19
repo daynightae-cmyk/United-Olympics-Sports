@@ -6,10 +6,10 @@ const previewPlayerId = 'player-demo-001';
 const previewParentId = 'parent-preview-01';
 const previewCoachId = 'coach-preview-01';
 
-const publicRoutes = ['/', '/about', '/sports', '/sports/football', '/sports/swimming', '/sports/basketball', '/sports/tennis', '/sports/gymnastics', '/sports/martial-arts', '/programs', '/programs/football-foundations', '/coaches', '/coaches', '/contact', '/auth/callback', '/admin/login', '/store/login', '/route-that-must-404'];
-const playerRoutes = ['/player', '/player/login', '/player/auth/phone', '/player/auth/verify', '/player/phone', '/player/otp', '/player/home', '/player/schedule', '/player/schedule/session-demo-001', '/player/session/session-demo-001', '/player/attendance', '/player/performance', '/player/achievements', '/player/feedback', '/player/subscription', '/player/payments', '/player/documents', '/player/messages', '/player/notifications', '/player/profile', '/player/settings', '/player/route-that-must-404'];
-const parentRoutes = ['/parent', '/parent/login', '/parent/children', '/parent/children/player-demo-001', '/parent/schedule', '/parent/attendance', '/parent/performance', '/parent/feedback', '/parent/subscriptions', '/parent/payments', '/parent/documents', '/parent/messages', '/parent/notifications', '/parent/profile', '/parent/settings', '/parent/route-that-must-404'];
-const coachRoutes = ['/coach', '/coach/login', '/coach/schedule', '/coach/groups', '/coach/groups/football-demo-u12', '/coach/evaluations', '/coach/players', '/coach/players/player-demo-001', '/coach/attendance', '/coach/programs', '/coach/messages', '/coach/profile', '/coach/route-that-must-404'];
+const publicRoutes = ['/', '/about', '/sports', '/sports/football', '/sports/swimming', '/sports/basketball', '/sports/tennis', '/sports/gymnastics', '/sports/martial-arts', '/programs', '/programs/football-foundations', '/coaches', '/coaches/', '/contact', '/auth/callback', '/admin/login', '/admin/login/', '/store/login', '/store/login/', '/route-that-must-404'];
+const playerRoutes = ['/player', '/player/login', '/player/login/', '/player/auth/phone', '/player/auth/verify', '/player/phone', '/player/otp', '/player/home', '/player/schedule', '/player/schedule/session-demo-001', '/player/session/session-demo-001', '/player/attendance', '/player/performance', '/player/achievements', '/player/feedback', '/player/subscription', '/player/payments', '/player/documents', '/player/messages', '/player/notifications', '/player/profile', '/player/settings', '/player/route-that-must-404'];
+const parentRoutes = ['/parent', '/parent/login', '/parent/login/', '/parent/children', '/parent/children/player-demo-001', '/parent/schedule', '/parent/attendance', '/parent/performance', '/parent/feedback', '/parent/subscriptions', '/parent/payments', '/parent/documents', '/parent/messages', '/parent/notifications', '/parent/profile', '/parent/settings', '/parent/route-that-must-404'];
+const coachRoutes = ['/coach', '/coach/login', '/coach/login/', '/coach/schedule', '/coach/groups', '/coach/groups/football-demo-u12', '/coach/evaluations', '/coach/players', '/coach/players/player-demo-001', '/coach/attendance', '/coach/programs', '/coach/messages', '/coach/profile', '/coach/route-that-must-404'];
 const adminRoutes = [
   '/admin',
   '/admin/countries', '/admin/countries/country-workspace-01',
@@ -33,6 +33,8 @@ const adminRoutes = [
   '/admin/messages', '/admin/messages/message-preview-001',
   '/admin/content', '/admin/content/content-preview-001',
   '/admin/users',
+  '/admin/integrations',
+  '/admin/store',
   '/admin/settings',
   '/admin/audit-activity',
 ];
@@ -326,7 +328,9 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     throw new Error(`${route}: internal product route must never be blocked by the public luxury splash`);
   }
 
-  if (pathname.startsWith('/player') && !pathname.endsWith('/login')) {
+  // Login identity is trailing-slash insensitive: /player/login/ renders the
+  // same auth surface as /player/login (no portal shell either way).
+  if (pathname.startsWith('/player') && !pathname.replace(/\/+$/, '').endsWith('/login')) {
     if (proof.playerLogoCount !== 1 || proof.playerExtraEmblemCount !== 0) {
       throw new Error(`${route}: player shell must render exactly one canonical logo; logo=${proof.playerLogoCount}, extraEmblem=${proof.playerExtraEmblemCount}`);
     }
@@ -407,7 +411,7 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     }
   }
 
-  if ((pathname.startsWith('/parent') || pathname.startsWith('/coach')) && !pathname.endsWith('/login')) {
+  if ((pathname.startsWith('/parent') || pathname.startsWith('/coach')) && !pathname.replace(/\/+$/, '').endsWith('/login')) {
     if (proof.sharedPortalLogoCount !== 1) {
       throw new Error(`${route}: shared portal shell must render exactly one canonical logo; got ${proof.sharedPortalLogoCount}`);
     }
@@ -460,7 +464,7 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     }
   }
 
-  if (pathname.endsWith('/login') && proof.authLogoCount > 1) {
+  if (pathname.replace(/\/+$/, '').endsWith('/login') && proof.authLogoCount > 1) {
     throw new Error(`${route}: authentication header must not duplicate the canonical logo; got ${proof.authLogoCount}`);
   }
 }
