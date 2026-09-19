@@ -395,7 +395,10 @@ async function interactions(browser, name, rtl) {
       assert.equal(await page.locator('script[data-uos-stripe="true"]').count(), 0, 'preview must not load Stripe.js');
       assert.equal(await page.locator('.store-inline-success').count(), 0, 'preview must never declare an order/payment success');
 
-      await page.locator('.store-nav a[href="/store"]').click();
+      // The reference-authority header rebuild replaced the generic nav Home
+      // link with the category nav; the single official brand mark remains the
+      // header control that returns to /store.
+      await page.locator('.store-header a.store-brand[href="/store"]').click();
       await page.waitForURL('**/store');
       await page.locator('.store-reference-hero-grid').waitFor();
       const historyTitle = rtl ? 'شاهدت مؤخرًا' : 'Recently viewed';
