@@ -20,7 +20,6 @@ const forbiddenTerms = [
 // Server or build-only files that may reference admin keys safely (must NOT be in client bundle)
 const allowedServerPaths = [
   path.normalize('src/db/migrate.ts'),
-  path.normalize('src/lib/supabase-admin.ts'),
   path.normalize('server.ts')
 ];
 
