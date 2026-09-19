@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path: string) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [adminSidebar, portalLayout, portalAuth, playerPortalShell, playerOverview, parentOverview, parentClosure, coachOverview, coachClosure, splash, serviceWorker, entry, visualClosure, athleticClosure] = await Promise.all([
+const [adminSidebar, portalLayout, portalAuth, playerPortalShell, playerOverview, parentOverview, parentClosure, coachOverview, coachClosure, adminDashboard, adminClosure, splash, serviceWorker, entry, visualClosure, athleticClosure] = await Promise.all([
   read('src/components/admin/AdminSidebar.tsx'),
   read('src/layouts/PortalLayout.tsx'),
   read('src/components/auth/PortalAuthPage.tsx'),
@@ -13,6 +13,8 @@ const [adminSidebar, portalLayout, portalAuth, playerPortalShell, playerOverview
   read('src/styles/parent-portal-final.css'),
   read('src/pages/portal/coach/CoachPortalOverviewPage.tsx'),
   read('src/styles/coach-portal-final.css'),
+  read('src/pages/admin/AdminDashboardPage.tsx'),
+  read('src/styles/admin-athletic-final.css'),
   read('src/components/splash/OlympicLuxurySplash.tsx'),
   read('src/platform/serviceWorker.ts'),
   read('src/main.tsx'),
@@ -41,7 +43,8 @@ assert(entry.includes("import './styles/player-portal-chatgpt-black-gold.css';")
 assert(entry.includes("import './styles/player-portal-final.css';"), 'Player final closure layer must be loaded');
 assert(entry.includes("import './styles/parent-portal-final.css';"), 'Parent final visual authority must be loaded');
 assert(entry.includes("import './styles/coach-portal-final.css';"), 'Coach final visual authority must be loaded');
-assert(entry.includes("import './styles/portal-athletic-cards-final.css';"), 'Athletic portal card authority must be loaded last');
+assert(entry.includes("import './styles/portal-athletic-cards-final.css';"), 'Shared athletic portal card authority must be loaded');
+assert(entry.includes("import './styles/admin-athletic-final.css';"), 'Admin athletic command authority must be loaded');
 assert(
   entry.indexOf("portal-athletic-cards-final.css") > entry.indexOf("player-portal-final.css"),
   'Athletic portal card authority must load after Player final closure',
@@ -53,6 +56,10 @@ assert(
 assert(
   entry.indexOf("portal-athletic-cards-final.css") > entry.indexOf("coach-portal-final.css"),
   'Athletic shared authority must load after Coach final closure',
+);
+assert(
+  entry.indexOf("admin-athletic-final.css") > entry.indexOf("portal-athletic-cards-final.css"),
+  'Admin athletic command authority must load after the shared athletic closure',
 );
 assert(playerOverview.includes('athlete-snapshot-card'), 'Player overview snapshots must use semantic athletic cards');
 assert(playerOverview.includes('athlete-quick-link-card'), 'Player overview quick links must use semantic athletic cards');
@@ -73,6 +80,16 @@ assert(coachClosure.includes('Coach Portal Athletic Authority'), 'Coach athletic
 assert(coachClosure.includes('.schedule-week-view'), 'Coach athletic authority must cover the weekly schedule');
 assert(coachClosure.includes('.enterprise-table'), 'Coach athletic authority must cover roster and attendance tables');
 assert(coachClosure.includes('.enterprise-toolbar'), 'Coach athletic authority must cover coach filters and search');
+assert(adminSidebar.includes('official-logo admin-brand-logo'), 'Admin sidebar must expose the crop-safe canonical logo class');
+assert(portalLayout.includes('official-logo portal-brand-logo'), 'Parent/Coach shared shell must expose the crop-safe canonical logo class');
+assert(adminDashboard.includes('admin-command-hero'), 'Admin dashboard must expose the operations command hero');
+assert(adminDashboard.includes('admin-command-metric'), 'Admin dashboard must expose semantic command metrics');
+assert(adminDashboard.includes('admin-operation-card'), 'Admin dashboard must expose sports operation cards');
+assert(adminClosure.includes('Admin Athletic Command Authority'), 'Admin athletic authority must remain present');
+assert(adminClosure.includes('.enterprise-table-shell'), 'Admin athletic authority must cover enterprise tables');
+assert(adminClosure.includes('.uos-form-grid'), 'Admin athletic authority must cover bilingual forms');
+assert(adminClosure.includes('.directory-card'), 'Admin athletic authority must cover People directory cards');
+assert(adminClosure.includes('object-fit:cover !important'), 'Admin athletic authority must crop the composite logo to a single emblem');
 assert(visualClosure.includes('.dashboard-hero'), 'visual proof closure must normalize the dashboard hero');
 assert(visualClosure.includes('.admin-stat-card'), 'visual proof closure must normalize admin stat cards');
 assert(visualClosure.includes('.portal-card'), 'visual proof closure must normalize portal cards');
