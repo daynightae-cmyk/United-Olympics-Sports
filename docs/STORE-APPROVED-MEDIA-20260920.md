@@ -29,4 +29,3 @@ All sources 06–23 were visually inspected before assignment. Page references 0
 - The registry creates no SKU, stock, price, rating, review, size, color, or availability claim.
 - Loose training-shorts media is not assigned to `athletic-compression-performance-shorts`.
 - All runtime images are optimized project-owned WebP files; Postimg remains provenance only.
-
