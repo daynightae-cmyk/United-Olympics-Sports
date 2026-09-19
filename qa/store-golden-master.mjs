@@ -349,9 +349,22 @@ async function interactions(browser, name, rtl) {
       assert((await page.locator('.store-checkout-form').textContent())?.includes('Shipping configuration pending'));
       assert.equal(await page.locator('.store-delivery-slot').count(), 0, 'fake delivery slots');
       await page.locator('.store-checkout-form button[type=submit]').click();
-      await page.locator('.store-checkout-form button[type=submit]').click();
-      await page.locator('.store-checkout-form button[type=submit]').click();
-      await page.locator('.store-inline-error').waitFor();
+
+      // Preview checkout is intentionally non-charging. Reaching the payment
+      // step must fail closed before any pending order or Stripe element exists.
+      const paymentStepText = await page.locator('.store-checkout-form').textContent();
+      assert(
+        paymentStepText?.includes(rtl ? 'الدفع معطل في وضع المعاينة' : 'Payment is disabled in Preview'),
+        'preview payment fail-closed state missing',
+      );
+      assert.equal(
+        await page.locator('.store-checkout-form button[type=submit]').isDisabled(),
+        true,
+        'preview checkout must not advance into order creation/payment',
+      );
+      assert.equal(await page.locator('.store-stripe-payment').count(), 0, 'preview must not mount Stripe Payment Element');
+      assert.equal(await page.locator('script[data-uos-stripe="true"]').count(), 0, 'preview must not load Stripe.js');
+      assert.equal(await page.locator('.store-inline-success').count(), 0, 'preview must never declare an order/payment success');
 
       await page.locator('.store-nav a[href="/store"]').click();
       await page.waitForURL('**/store');
