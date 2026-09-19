@@ -273,30 +273,36 @@ async function interactions(browser, name, rtl) {
       });
       await card.waitFor();
       const quick = card.locator('.store-quick-cart');
-      const black = card.getByRole('button', { name: 'Black / Gold | أسود / ذهبي', exact: true });
-      const ivory = card.getByRole('button', { name: 'Ivory / Gold | عاجي / ذهبي', exact: true });
-      const sizeS = card.getByRole('button', { name: 'S', exact: true });
-      const sizeM = card.getByRole('button', { name: 'M', exact: true });
 
-      assert.equal(await quick.isDisabled(), false, 'default card variants should be ready');
-      assert.equal(await black.getAttribute('aria-pressed'), 'true', 'default color selection missing');
-      assert.equal(await sizeS.getAttribute('aria-pressed'), 'true', 'default size selection missing');
+      // Reference-authority retail cards intentionally keep variant controls
+      // out of the grid. Quick add uses the first verified variant; alternate
+      // variants are selected on the product detail page.
+      assert.equal(await quick.isDisabled(), false, 'default card variant should be ready');
+      assert.equal(await card.getByRole('button', { name: 'Black / Gold | أسود / ذهبي', exact: true }).count(), 0, 'catalog card leaked color controls');
+      assert.equal(await card.getByRole('button', { name: 'S', exact: true }).count(), 0, 'catalog card leaked size controls');
 
-      await sizeM.click();
-      assert.equal(await sizeM.getAttribute('aria-pressed'), 'true', 'size selection did not update');
       await card.locator('.store-card-heart').click();
       await quick.click();
       await page.locator('.store-mini-cart').waitFor();
+      assert.equal(await page.locator('.store-mini-cart-lines article').count(), 1, 'default variant quick add missing');
       await page.keyboard.press('Escape');
       await page.locator('.store-mini-cart').waitFor({ state: 'hidden' });
 
+      await card.locator('h3 a').click();
+      await page.waitForURL('**/store/product/pitch-dominance-training-jersey');
+      await page.locator('.store-product-info').waitFor();
+      const productInfo = page.locator('.store-product-info');
+      const ivory = productInfo.getByRole('button', { name: 'Ivory / Gold | عاجي / ذهبي', exact: true });
+      const sizeM = productInfo.getByRole('button', { name: 'M', exact: true });
       await ivory.click();
-      assert.equal(await ivory.getAttribute('aria-pressed'), 'true', 'color selection did not update');
-      await quick.click();
+      await sizeM.click();
+      assert.equal(await ivory.getAttribute('aria-pressed'), 'true', 'detail color selection did not update');
+      assert.equal(await sizeM.getAttribute('aria-pressed'), 'true', 'detail size selection did not update');
+      await productInfo.locator('.store-buy-row .store-button-primary').click();
       await page.locator('.store-mini-cart').waitFor();
 
       const miniLines = page.locator('.store-mini-cart-lines article');
-      assert.equal(await miniLines.count(), 2, 'distinct color variants merged');
+      assert.equal(await miniLines.count(), 2, 'distinct product variants merged');
       await miniLines.first().getByRole('button', { name: 'Increase quantity | زيادة الكمية', exact: true }).click();
       assert.deepEqual(await page.locator('.store-mini-cart-lines output').allTextContents(), ['2', '1'], 'quantity affected sibling variant');
       await miniLines.first().locator('.store-remove').click();
@@ -304,6 +310,8 @@ async function interactions(browser, name, rtl) {
       await page.keyboard.press('Escape');
       await page.locator('.store-mini-cart').waitFor({ state: 'hidden' });
 
+      await page.goto(base + '/store/shop', { waitUntil: 'domcontentloaded' });
+      await page.locator('.store-product-card').first().waitFor();
       await page.locator('.store-product-card h3 a').filter({ hasText: 'Elite Hydro Pro Goggles' }).click();
       await page.waitForURL('**/store/product/elite-hydro-pro-goggles');
       await page.locator('.store-product-info').waitFor();
@@ -368,7 +376,7 @@ async function interactions(browser, name, rtl) {
 
       await page.locator('.store-nav a[href="/store"]').click();
       await page.waitForURL('**/store');
-      await page.locator('.store-retail-hero').waitFor();
+      await page.locator('.store-reference-hero-grid').waitFor();
       const historyTitle = rtl ? 'شاهدت مؤخرًا' : 'Recently viewed';
       assert((await page.locator('.store-main').textContent())?.includes(historyTitle), 'legitimate history missing');
     }
