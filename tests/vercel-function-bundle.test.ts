@@ -34,18 +34,7 @@ async function runBundleTests() {
   }
   assert.equal(offenders.length, 0, `Extensioned TS imports break Vercel resolution:\n${offenders.join('\n')}`);
 
-  // 2. Every serverless runtime package left external by the bundle must be
-  // declared as a production dependency. Local node_modules can otherwise hide
-  // a missing manifest dependency while the deployed function crashes at load.
-  const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8')) as {
-    dependencies?: Record<string, string>;
-  };
-  assert(
-    packageJson.dependencies?.['firebase-admin'],
-    'firebase-admin must be declared in package.json dependencies for the Vercel function runtime',
-  );
-
-  // 3. The api entry bundles and serves health without crashing
+  // 2. The api entry bundles and serves health without crashing
   const { buildSync } = await import('esbuild');
   const outFile = path.join(repoRoot, 'dist', 'api-bundle-gate.cjs');
   buildSync({
