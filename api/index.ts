@@ -3,6 +3,8 @@ import type { ApiRequest, ApiResponse } from '../src/server/http';
 import { applySecurityHeaders } from '../src/server/security-headers';
 
 export default async function handler(req: ApiRequest, res: ApiResponse): Promise<void> {
-  applySecurityHeaders(res);
+  // Vercel serves this handler over HTTPS: enable HSTS alongside the
+  // canonical policy so serverless API responses match the standalone server.
+  applySecurityHeaders(res, { enableHsts: true });
   await dispatchApi(req, res);
 }
