@@ -1,6 +1,6 @@
 import { auth, googleSignIn, logout as firebaseLogout } from './firebase';
 import { supabase } from './supabase';
-import { fetchJsonWithRuntimeTimeout, withRuntimeTimeout } from './runtime-timeout';
+import { fetchJsonWithRuntimeTimeout, withRuntimeTimeout, withRuntimeTimeoutGuarded } from './runtime-timeout';
 
 const RETURN_TO_KEY = 'uos:auth:return-to';
 const AUTH_RUNTIME_TIMEOUT_MS = 10_000;
@@ -101,10 +101,20 @@ export async function signInWithSupabasePassword(email: string, password: string
   const normalizedEmail = email.trim().toLowerCase();
   if (!normalizedEmail || !password) throw new Error('PASSWORD_CREDENTIALS_REQUIRED');
 
-  const { data, error } = await withRuntimeTimeout(
+  // supabase-js password sign-in is not cancellable: a response that arrives
+  // after the deadline would persist a session via internal storage while the
+  // UI already reported failure. The late-settlement guard removes that stray
+  // local session so a timeout can never leave the browser signed in.
+  const attempt = supabase.auth.signInWithPassword({ email: normalizedEmail, password });
+  const { data, error } = await withRuntimeTimeoutGuarded(
     'supabase-password-sign-in',
-    supabase.auth.signInWithPassword({ email: normalizedEmail, password }),
+    attempt,
     AUTH_RUNTIME_TIMEOUT_MS,
+    (result) => {
+      if (result.status === 'fulfilled' && !result.value.error && result.value.data.session) {
+        void supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+      }
+    },
   );
 
   if (error || !data.session?.access_token) {

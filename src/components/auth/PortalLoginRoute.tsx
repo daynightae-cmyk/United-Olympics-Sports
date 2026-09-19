@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { PortalAuthPage, type PortalAuthKind, type PortalAuthNotice, type PortalAuthProvider } from './PortalAuthPage';
 import { bi } from '../bilingual/BilingualText';
 import {
@@ -10,6 +11,7 @@ import {
   signInWithSupabasePassword,
   signOutEverywhere,
 } from '../../lib/auth-client';
+import { resolveStorePostSignInDestination } from '../../lib/store-auth-routing';
 
 const destinations: Record<PortalAuthKind, string> = {
   admin: '/admin',
@@ -90,16 +92,24 @@ function passkeyFailureNotice(error: unknown, biometric: boolean): PortalAuthNot
 
 export function PortalLoginRoute({ portal }: { portal: PortalAuthKind }) {
   const canonicalTarget = typeof window === 'undefined' ? null : canonicalAuthPageUrl(window.location.href);
+  const routerState = useLocation().state as { from?: unknown } | null;
 
   useEffect(() => {
     if (canonicalTarget) window.location.replace(canonicalTarget);
   }, [canonicalTarget]);
 
+  // Store sign-in must return to the protected account destination captured by
+  // StoreAccountRuntime (e.g. /store/orders), validated against the allowlist.
+  // Every other portal keeps its fixed post-sign-in destination.
+  const resolveTarget = () => portal === 'store'
+    ? resolveStorePostSignInDestination(routerState?.from, destinations.store)
+    : destinations[portal];
+
   const handleCredentials = async ({ email, password }: { email: string; password: string; remember: boolean }): Promise<PortalAuthNotice | null> => {
     try {
       const accessToken = await signInWithSupabasePassword(email, password);
       await fetchServerSession(accessToken);
-      window.location.assign(destinations[portal]);
+      window.location.assign(resolveTarget());
       return null;
     } catch (error) {
       await signOutEverywhere().catch(() => undefined);
@@ -116,7 +126,7 @@ export function PortalLoginRoute({ portal }: { portal: PortalAuthKind }) {
   const handleProvider = async (provider: PortalAuthProvider): Promise<PortalAuthNotice | null> => {
     if (provider === 'google') {
       try {
-        await beginSupabaseGoogleOAuth(destinations[portal]);
+        await beginSupabaseGoogleOAuth(resolveTarget());
         return null;
       } catch {
         return {
@@ -144,7 +154,7 @@ export function PortalLoginRoute({ portal }: { portal: PortalAuthKind }) {
       try {
         const accessToken = await signInWithSupabasePasskey();
         await fetchServerSession(accessToken);
-        window.location.assign(destinations[portal]);
+        window.location.assign(resolveTarget());
         return null;
       } catch (error) {
         await signOutEverywhere().catch(() => undefined);

@@ -23,6 +23,44 @@ export async function withRuntimeTimeout<T>(
   }
 }
 
+export type LateSettledResult<T> = { status: 'fulfilled'; value: T } | { status: 'rejected'; reason?: unknown };
+
+/**
+ * Races work against a deadline like withRuntimeTimeout, but keeps cleanup
+ * attached to the original request: when the deadline wins, a late settlement
+ * of the still-running work is reported to onLateSettle instead of being
+ * silently dropped. Used by password sign-in so a delayed successful response
+ * cannot leave a persisted session behind after the UI reported failure.
+ */
+export async function withRuntimeTimeoutGuarded<T>(
+  operation: string,
+  work: Promise<T>,
+  timeoutMs = 10_000,
+  onLateSettle?: (result: LateSettledResult<T>) => void,
+): Promise<T> {
+  let timedOut = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  if (onLateSettle) {
+    void work.then(
+      (value) => { if (timedOut) onLateSettle({ status: 'fulfilled', value }); },
+      (reason) => { if (timedOut) onLateSettle({ status: 'rejected', reason }); },
+    );
+  }
+  try {
+    return await Promise.race([
+      work,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => {
+          timedOut = true;
+          reject(new RuntimeTimeoutError(operation, timeoutMs));
+        }, timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 function operationName(input: RequestInfo | URL): string {
   return typeof input === 'string' ? input : input instanceof URL ? input.toString() : 'fetch';
 }
