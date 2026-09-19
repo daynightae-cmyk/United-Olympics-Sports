@@ -14,5 +14,150 @@
     "public/media": "3b9e5806219b389953ddc52fc42eee0ea4169e5e",
     "public/brand": "4bc38926cdf368684cf8a8b27005699550dddd8e"
   },
-  "assets": {}
+  "assets": {
+  "public/media/products/approved/06-swim-cap-black-studio.webp": {
+    "status": "approved",
+    "rightsBasis": "owner-supplied",
+    "source": "https://i.postimg.cc/hGRwLrS6/Chat-GPT-Image-Sep-5-2026-01-42-33-PM-(1).png",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/STORE-APPROVED-MEDIA-20260920.md — source 06"
+  },
+  "public/media/products/approved/07-swim-cap-white-studio.webp": {
+    "status": "approved",
+    "rightsBasis": "owner-supplied",
+    "source": "https://i.postimg.cc/DzQNBXZB/Chat-GPT-Image-Sep-5-2026-01-42-33-PM-(2).png",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/STORE-APPROVED-MEDIA-20260920.md — source 07"
+  },
+  "public/media/products/approved/08-goggles-black-studio.webp": {
+    "status": "approved",
+    "rightsBasis": "owner-supplied",
+    "source": "https://i.postimg.cc/Pqb72wxy/Chat-GPT-Image-Sep-5-2026-01-42-33-PM-(3).png",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/STORE-APPROVED-MEDIA-20260920.md — source 08"
+  },
+  "public/media/products/approved/09-goggles-white-studio.webp": {
+    "status": "approved",
+    "rightsBasis": "owner-supplied",
+    "source": "https://i.postimg.cc/43v0B9dw/Chat-GPT-Image-Sep-5-2026-01-42-34-PM-(4).png",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/STORE-APPROVED-MEDIA-20260920.md — source 09"
+  },
+  "public/media/products/approved/10-jersey-black-studio.webp": {
+    "status": "approved",
+    "rightsBasis": "owner-supplied",
+    "source": "https://i.postimg.cc/7L1Rm26s/Chat-GPT-Image-Sep-5-2026-01-42-35-PM-(5).png",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/STORE-APPROVED-MEDIA-20260920.md — source 10"
+  },
+  "public/media/products/approved/11-jersey-white-studio.webp": {
+    "status": "approved",
+    "rightsBasis": "owner-supplied",
+    "source": "https://i.postimg.cc/fb7PB9LF/Chat-GPT-Image-Sep-5-2026-01-42-35-PM-(6).png",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/STORE-APPROVED-MEDIA-20260920.md — source 11"
+  },
+  "public/media/products/approved/12-shorts-black-studio.webp": {
+    "status": "approved",
+    "rightsBasis": "owner-supplied",
+    "source": "https://i.postimg.cc/yNhGvZdt/Chat-GPT-Image-Sep-5-2026-01-42-36-PM-(7).png",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/STORE-APPROVED-MEDIA-20260920.md — source 12"
+  },
+  "public/media/products/approved/13-shorts-white-studio.webp": {
+    "status": "approved",
+    "rightsBasis": "owner-supplied",
+    "source": "https://i.postimg.cc/HL0NByxf/Chat-GPT-Image-Sep-5-2026-01-46-18-PM.png",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/STORE-APPROVED-MEDIA-20260920.md — source 13"
+  },
+  "public/media/products/approved/14-goggles-black-poster.webp": {
+    "status": "approved",
+    "rightsBasis": "owner-supplied",
+    "source": "https://i.postimg.cc/QMgz0TCr/Chat-GPT-Image-Sep-5-2026-01-53-29-PM.png",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/STORE-APPROVED-MEDIA-20260920.md — source 14"
+  },
+  "public/media/products/approved/15-goggles-white-poster.webp": {
+    "status": "approved",
+    "rightsBasis": "owner-supplied",
+    "source": "https://i.postimg.cc/s2PLwhxr/Chat-GPT-Image-Sep-5-2026-01-53-36-PM.png",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/STORE-APPROVED-MEDIA-20260920.md — source 15"
+  },
+  "public/media/products/approved/16-match-ball-white-poster.webp": {
+    "status": "approved",
+    "rightsBasis": "owner-supplied",
+    "source": "https://i.postimg.cc/fb7PB9yZ/Chat-GPT-Image-Sep-5-2026-01-53-40-PM.png",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/STORE-APPROVED-MEDIA-20260920.md — source 16"
+  },
+  "public/media/products/approved/17-swim-cap-white-poster.webp": {
+    "status": "approved",
+    "rightsBasis": "owner-supplied",
+    "source": "https://i.postimg.cc/7L1Rm2hP/Chat-GPT-Image-Sep-5-2026-01-53-45-PM.png",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/STORE-APPROVED-MEDIA-20260920.md — source 17"
+  },
+  "public/media/products/approved/18-jersey-white-poster.webp": {
+    "status": "approved",
+    "rightsBasis": "owner-supplied",
+    "source": "https://i.postimg.cc/vm7K3VTB/Chat-GPT-Image-Sep-5-2026-01-53-48-PM-(1).png",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/STORE-APPROVED-MEDIA-20260920.md — source 18"
+  },
+  "public/media/products/approved/19-shorts-white-poster.webp": {
+    "status": "approved",
+    "rightsBasis": "owner-supplied",
+    "source": "https://i.postimg.cc/Jn12gzH8/Chat-GPT-Image-Sep-5-2026-01-53-50-PM.png",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/STORE-APPROVED-MEDIA-20260920.md — source 19"
+  },
+  "public/media/products/approved/20-jersey-black-poster.webp": {
+    "status": "approved",
+    "rightsBasis": "owner-supplied",
+    "source": "https://i.postimg.cc/QtXyPdK8/Chat-GPT-Image-Sep-5-2026-01-53-51-PM.png",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/STORE-APPROVED-MEDIA-20260920.md — source 20"
+  },
+  "public/media/products/approved/21-shorts-black-poster.webp": {
+    "status": "approved",
+    "rightsBasis": "owner-supplied",
+    "source": "https://i.postimg.cc/cHsbjLtJ/Chat-GPT-Image-Sep-5-2026-01-53-55-PM.png",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/STORE-APPROVED-MEDIA-20260920.md — source 21"
+  },
+  "public/media/products/approved/22-match-ball-black-poster.webp": {
+    "status": "approved",
+    "rightsBasis": "owner-supplied",
+    "source": "https://i.postimg.cc/3RKc6x0W/Chat-GPT-Image-Sep-5-2026-01-53-58-PM.png",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/STORE-APPROVED-MEDIA-20260920.md — source 22"
+  },
+  "public/media/products/approved/23-swim-cap-black-poster.webp": {
+    "status": "approved",
+    "rightsBasis": "owner-supplied",
+    "source": "https://i.postimg.cc/639mSp48/Chat-GPT-Image-Sep-5-2026-01-54-00-PM.png",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/STORE-APPROVED-MEDIA-20260920.md — source 23"
+  }
+  }
 }

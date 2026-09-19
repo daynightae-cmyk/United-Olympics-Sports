@@ -1,5 +1,6 @@
 import { bi } from '../../components/bilingual/BilingualText';
 import { storeCategories } from '../storeCategories';
+import { applyVerifiedProductMedia } from '../storeMediaProvenance';
 import type { StoreCategorySlug } from '../storeTypes';
 import type { StoreDataGateway } from './StoreDataGateway';
 
@@ -76,7 +77,7 @@ export const productionStoreGateway: StoreDataGateway = {
         // club-equipment label only when the database carries no real value.
         const typeEn = (item.productType ?? '').trim() || 'Club equipment';
         const typeAr = (item.productTypeAr ?? '').trim() || (typeEn === 'Club equipment' ? 'معدات النادي' : typeEn);
-        return {
+        return applyVerifiedProductMedia({
           id: item.id,
           slug: (item.slug ?? '').trim() || slugify(item.sku || item.name),
           name: bi(item.name, nameAr),
@@ -88,7 +89,7 @@ export const productionStoreGateway: StoreDataGateway = {
           sku: item.sku,
           availability: (item.availableQuantity > 0 ? 'available' : 'unavailable') as 'available' | 'unavailable',
           ...(item.mediaUrl ? { image: item.mediaUrl } : {}),
-        };
+        });
       }),
       categories: storeCategories,
     };
