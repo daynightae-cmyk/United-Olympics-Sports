@@ -3,12 +3,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-// Guards the production serverless failure mode (FUNCTION_INVOCATION_FAILED):
-// the api/ closure must use extensionless relative imports so the Vercel
-// function bundler can resolve sibling modules at runtime.
+// Guards the proven production serverless failure mode (FUNCTION_INVOCATION_FAILED
+// with ERR_MODULE_NOT_FOUND for '/var/task/src/server/routes' from
+// '/var/task/api/index.js'): Vercel compiles api/*.ts file-by-file, so the api
+// closure must use extension-safe relative imports (explicit `.js` suffixes)
+// that plain Node ESM can resolve without a bundler. Extensionless imports
+// crash every serverless route at boot.
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
-const closureDirs = ['api', 'src/server', 'src/db', 'src/lib'];
+const closureDirs = ['api', 'src/server', 'src/db', 'src/lib', 'src/admin/data'];
 
 function listTsFiles(dir: string): string[] {
   const out: string[] = [];
@@ -23,18 +26,46 @@ function listTsFiles(dir: string): string[] {
 async function runBundleTests() {
   console.log('=== RUNNING VERCEL FUNCTION BUNDLE TESTS ===');
 
-  // 1. No explicit .ts relative imports in the serverless closure
+  // 1. No extensionless (or .ts-suffixed) relative imports in the serverless
+  // closure: every relative specifier must carry an explicit extension so the
+  // file-by-file compiled output resolves under Node ESM.
   const offenders: string[] = [];
+  const specifierPattern = /(?:from\s*|import\s*\(\s*|import\s+)(['"])(\.[^'"]+)\1/g;
   for (const dir of closureDirs) {
     for (const file of listTsFiles(path.join(repoRoot, dir))) {
       const content = fs.readFileSync(file, 'utf8');
-      const matches = content.match(/(from|import)\s*\(?\s*['"]\.{1,2}\/[^'"]*\.ts['"]/g);
-      if (matches) offenders.push(`${path.relative(repoRoot, file)}: ${matches.join(', ')}`);
+      for (const match of content.matchAll(specifierPattern)) {
+        const specifier = match[2];
+        if (/\.[A-Za-z0-9]+$/.test(specifier)) {
+          if (specifier.endsWith('.ts') || specifier.endsWith('.tsx')) {
+            offenders.push(`${path.relative(repoRoot, file)}: TS-suffixed import ${specifier}`);
+          }
+          continue;
+        }
+        offenders.push(`${path.relative(repoRoot, file)}: extensionless import ${specifier}`);
+      }
     }
   }
-  assert.equal(offenders.length, 0, `Extensioned TS imports break Vercel resolution:\n${offenders.join('\n')}`);
+  assert.equal(offenders.length, 0, `Extension-unsafe imports crash Vercel serverless boot:\n${offenders.join('\n')}`);
 
-  // 2. The api entry bundles and serves health without crashing
+  // 2. JSON imports in the closure must declare an import attribute, otherwise
+  // plain Node ESM rejects them at boot (ERR_IMPORT_ATTRIBUTE_MISSING).
+  const jsonOffenders: string[] = [];
+  const jsonPattern = /import\s+[^'"]*?from\s*['"]([^'"]+\.json)['"]/g;
+  for (const dir of closureDirs) {
+    for (const file of listTsFiles(path.join(repoRoot, dir))) {
+      const content = fs.readFileSync(file, 'utf8');
+      for (const match of content.matchAll(jsonPattern)) {
+        const statement = content.slice(Math.max(0, (match.index ?? 0) - 200), (match.index ?? 0) + match[0].length + 60);
+        if (!/with\s*\{\s*type\s*:\s*['"]json['"]\s*\}/.test(statement)) {
+          jsonOffenders.push(`${path.relative(repoRoot, file)}: ${match[0].trim()}`);
+        }
+      }
+    }
+  }
+  assert.equal(jsonOffenders.length, 0, `JSON imports without import attributes crash Node ESM boot:\n${jsonOffenders.join('\n')}`);
+
+  // 3. The api entry bundles and serves health without crashing
   const { buildSync } = await import('esbuild');
   const outFile = path.join(repoRoot, 'dist', 'api-bundle-gate.cjs');
   buildSync({
