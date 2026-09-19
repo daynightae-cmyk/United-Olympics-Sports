@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { adminAuth } from '../lib/firebase-admin';
-import { databaseConfigured, getPool } from '../db/index';
-import { assertPlayerRelationship, requireAnyRole, requireIdentity } from './auth';
-import { authAdministrativeActionsConfigured } from './runtime';
-import { evaluateSystemReadiness } from './readiness';
+import { adminAuth } from '../lib/firebase-admin.js';
+import { databaseConfigured, getPool } from '../db/index.js';
+import { assertPlayerRelationship, requireAnyRole, requireIdentity } from './auth.js';
+import { authAdministrativeActionsConfigured } from './runtime.js';
+import { evaluateSystemReadiness } from './readiness.js';
 
 import {
   ApiError,
@@ -14,18 +14,18 @@ import {
   sendJson,
   type ApiRequest,
   type ApiResponse,
-} from './http';
+} from './http.js';
 import {
   applyRateLimitHeaders,
   defaultRateLimiter,
   getClientIp,
   validateHoneypot,
-} from './rate-limiter';
+} from './rate-limiter.js';
 import {
   type AttendanceStatus,
   executeAttendanceVerticalSlice,
-} from './vertical-slice';
-import { requireAuthorizationContext } from './auth';
+} from './vertical-slice.js';
+import { requireAuthorizationContext } from './auth.js';
 
 export type RouteHandler = (req: ApiRequest, res: ApiResponse) => Promise<void>;
 

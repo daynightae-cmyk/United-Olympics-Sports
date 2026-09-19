@@ -1,14 +1,14 @@
 import { randomUUID } from 'node:crypto';
-import { databaseConfigured, getPool } from '../db/index';
-import { ApiError, isUuid, normalizeString } from './http';
+import { databaseConfigured, getPool } from '../db/index.js';
+import { ApiError, isUuid, normalizeString } from './http.js';
 import {
   type AuthorizationContext,
   assertCanAccessBranch,
   assertCanAccessCountry,
   assertCanAccessOrganization,
   assertCanRecordAttendance,
-} from './authorization-context';
-import { recordAudit, type AuditLogEntry } from './audit';
+} from './authorization-context.js';
+import { recordAudit, type AuditLogEntry } from './audit.js';
 
 export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
 

@@ -1,6 +1,6 @@
-import { getPool, databaseConfigured } from '../db/index';
-import { supabaseAuthConfigured, firebaseAuthConfigured, authAdministrativeActionsConfigured } from './runtime';
-import { isDistributedRateLimitOperational, isSharedStoreConfigured } from './rate-limiter';
+import { getPool, databaseConfigured } from '../db/index.js';
+import { supabaseAuthConfigured, firebaseAuthConfigured, authAdministrativeActionsConfigured } from './runtime.js';
+import { isDistributedRateLimitOperational, isSharedStoreConfigured } from './rate-limiter.js';
 
 export type DependencyStage = 'not_configured' | 'configured' | 'reachable' | 'verified' | 'operational';
 export type DependencyStatus = 'PASS' | 'PARTIAL' | 'BLOCKED' | 'FAIL' | 'NOT_CONFIGURED';

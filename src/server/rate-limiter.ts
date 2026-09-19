@@ -1,4 +1,4 @@
-import { ApiError, getHeader, type ApiRequest, type ApiResponse } from './http';
+import { ApiError, getHeader, type ApiRequest, type ApiResponse } from './http.js';
 
 export interface RateLimitResult {
   allowed: boolean;

@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import type { PoolClient } from 'pg';
-import { databaseConfigured, getPool } from './index';
+import { databaseConfigured, getPool } from './index.js';
 
 export interface MigrationResult {
   version: string;

@@ -1,6 +1,6 @@
-import { normalizePhoneNumber } from './identity-strategy';
-import { recordAudit } from './audit';
-import type { AuthorizationContext } from './authorization-context';
+import { normalizePhoneNumber } from './identity-strategy.js';
+import { recordAudit } from './audit.js';
+import type { AuthorizationContext } from './authorization-context.js';
 import {
   ApiError,
   assertMethod,
@@ -9,13 +9,13 @@ import {
   sendJson,
   type ApiRequest,
   type ApiResponse,
-} from './http';
+} from './http.js';
 import {
   applyRateLimitHeaders,
   defaultRateLimiter,
   getClientIp,
   validateHoneypot,
-} from './rate-limiter';
+} from './rate-limiter.js';
 
 const DEFAULT_SUPABASE_URL = 'https://olmbezzzqavgjwydlfey.supabase.co';
 const DEFAULT_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_BU7Yk24M8ClMH_w1XL8Wgw_zSMbaXEA';

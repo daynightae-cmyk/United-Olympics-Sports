@@ -1,4 +1,4 @@
-import type { AdminDataGateway } from './AdminDataGateway';
+import type { AdminDataGateway } from './AdminDataGateway.js';
 import type {
   OrganizationViewModel,
   CountryViewModel,
@@ -26,17 +26,17 @@ import type {
   CreateResult,
   UpdateResult,
   DeleteResult,
-} from './viewModels';
-import { demoOrganization, demoCountries, demoBranches } from '../../data/demo/business';
-import { demoCoaches } from '../../data/demo/coaches';
-import { demoParents } from '../../data/demo/parents';
-import { demoPlayers } from '../../data/demo/players';
-import { demoSessions } from '../../data/demo/sessions';
-import { demoSports } from '../../data/demo/sports';
-import { demoPrograms } from '../../data/demo/programs';
-import { demoTrainingGroups } from '../../data/demo/trainingGroups';
-import { getPlayerOverall } from '../../data/demo/selectors';
-import { previewAchievements, previewAnnouncements, previewAuditActivity, previewContent, previewEvents, previewMessages, previewPayments, previewRegistrations, previewReports, previewSubscriptions, previewUsers } from '../../data/demo/adminRecords';
+} from './viewModels.js';
+import { demoOrganization, demoCountries, demoBranches } from '../../data/demo/business.js';
+import { demoCoaches } from '../../data/demo/coaches.js';
+import { demoParents } from '../../data/demo/parents.js';
+import { demoPlayers } from '../../data/demo/players.js';
+import { demoSessions } from '../../data/demo/sessions.js';
+import { demoSports } from '../../data/demo/sports.js';
+import { demoPrograms } from '../../data/demo/programs.js';
+import { demoTrainingGroups } from '../../data/demo/trainingGroups.js';
+import { getPlayerOverall } from '../../data/demo/selectors.js';
+import { previewAchievements, previewAnnouncements, previewAuditActivity, previewContent, previewEvents, previewMessages, previewPayments, previewRegistrations, previewReports, previewSubscriptions, previewUsers } from '../../data/demo/adminRecords.js';
 
 const PREVIEW_STORAGE_KEY = 'uos-admin-preview-data-v1';
 function persistPreviewData() {

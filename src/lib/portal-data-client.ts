@@ -1,5 +1,5 @@
-import { getAccessToken } from './auth-client';
-import { fetchJsonWithRuntimeTimeout } from './runtime-timeout';
+import { getAccessToken } from './auth-client.js';
+import { fetchJsonWithRuntimeTimeout } from './runtime-timeout.js';
 
 const PORTAL_DATA_TIMEOUT_MS = 10_000;
 const COACH_PRODUCTION_SESSION_KEY = 'uos:coach-portal:session:v1';

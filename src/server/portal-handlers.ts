@@ -1,6 +1,6 @@
-import { PortalDomainRepository } from './repositories/portal-repository';
-import { requireAuthorizationContext } from './auth';
-import { assertMethod, sendJson, type ApiRequest, type ApiResponse } from './http';
+import { PortalDomainRepository } from './repositories/portal-repository.js';
+import { requireAuthorizationContext } from './auth.js';
+import { assertMethod, sendJson, type ApiRequest, type ApiResponse } from './http.js';
 
 const portalRepo = new PortalDomainRepository();
 

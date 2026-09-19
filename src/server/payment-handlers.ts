@@ -1,18 +1,18 @@
-import { PaymentDomainRepository } from './repositories/payment-repository';
-import { requireAuthorizationContext } from './auth';
+import { PaymentDomainRepository } from './repositories/payment-repository.js';
+import { requireAuthorizationContext } from './auth.js';
 import {
   createStripeIntent,
   getPaymentClientConfig,
   getPaymentProviderConfig,
   verifyStripeSignature,
-} from './payment-provider';
+} from './payment-provider.js';
 import {
   claimOrderPayment,
   completeOrderPaymentClaim,
   expireAbandonedOrderPaymentClaim,
   failOrderPaymentClaim,
   type OrderPaymentClaim,
-} from './order-payment-claim';
+} from './order-payment-claim.js';
 import {
   ApiError,
   assertMethod,
@@ -23,8 +23,8 @@ import {
   sendJson,
   type ApiRequest,
   type ApiResponse,
-} from './http';
-import { applyRateLimitHeaders, defaultRateLimiter, getClientIp } from './rate-limiter';
+} from './http.js';
+import { applyRateLimitHeaders, defaultRateLimiter, getClientIp } from './rate-limiter.js';
 
 const paymentRepo = new PaymentDomainRepository();
 

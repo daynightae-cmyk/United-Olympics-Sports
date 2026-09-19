@@ -1,7 +1,7 @@
-import { databaseConfigured, getPool } from '../../db/index';
-import type { AuthorizationContext } from '../authorization-context';
-import { ApiError } from '../http';
-import type { DbQueryClient } from '../vertical-slice';
+import { databaseConfigured, getPool } from '../../db/index.js';
+import type { AuthorizationContext } from '../authorization-context.js';
+import { ApiError } from '../http.js';
+import type { DbQueryClient } from '../vertical-slice.js';
 
 export type StoreAccountOrder = {
   id: string;

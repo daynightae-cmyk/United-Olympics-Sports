@@ -1,6 +1,6 @@
-import { AdminDomainRepository } from './repositories/admin-repository';
-import { requireAuthorizationContext, requireIdentity } from './auth';
-import { assertMethod, readJsonBody, sendJson, ApiError, type ApiRequest, type ApiResponse } from './http';
+import { AdminDomainRepository } from './repositories/admin-repository.js';
+import { requireAuthorizationContext, requireIdentity } from './auth.js';
+import { assertMethod, readJsonBody, sendJson, ApiError, type ApiRequest, type ApiResponse } from './http.js';
 
 const adminRepo = new AdminDomainRepository();
 

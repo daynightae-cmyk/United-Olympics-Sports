@@ -1,10 +1,10 @@
 import { randomUUID, createHmac } from 'node:crypto';
-import { databaseConfigured, getPool } from '../../db/index';
-import type { AuthorizationContext } from '../authorization-context';
-import { assertCanManagePlayer } from '../authorization-context';
-import { recordAudit } from '../audit';
-import { ApiError, normalizeString, isUuid } from '../http';
-import type { DbQueryClient } from '../vertical-slice';
+import { databaseConfigured, getPool } from '../../db/index.js';
+import type { AuthorizationContext } from '../authorization-context.js';
+import { assertCanManagePlayer } from '../authorization-context.js';
+import { recordAudit } from '../audit.js';
+import { ApiError, normalizeString, isUuid } from '../http.js';
+import type { DbQueryClient } from '../vertical-slice.js';
 
 export interface DocumentRecord {
   id: string;

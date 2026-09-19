@@ -1,10 +1,10 @@
 import { randomUUID } from 'node:crypto';
-import { databaseConfigured, getPool } from '../../db/index';
-import type { AuthorizationContext } from '../authorization-context';
-import { recordAudit } from '../audit';
-import { ApiError } from '../http';
-import { assertOrderPaymentNotClaimed } from '../order-payment-claim';
-import type { DbQueryClient } from '../vertical-slice';
+import { databaseConfigured, getPool } from '../../db/index.js';
+import type { AuthorizationContext } from '../authorization-context.js';
+import { recordAudit } from '../audit.js';
+import { ApiError } from '../http.js';
+import { assertOrderPaymentNotClaimed } from '../order-payment-claim.js';
+import type { DbQueryClient } from '../vertical-slice.js';
 
 export interface StoreProductItem {
   id: string;
