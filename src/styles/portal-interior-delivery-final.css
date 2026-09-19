@@ -610,6 +610,27 @@ html[dir="rtl"] .portal-coach .portal-nav a.active::before {
   box-shadow:0 0 0 3px rgba(212,175,55,.12);
 }
 
+/* ---------- Player real input workflows ---------- */
+.player-shell-container .athlete-glass-card form :where(input,select,textarea) {
+  min-height:50px;
+  border-radius:13px !important;
+  border-color:rgba(212,175,55,.15) !important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.028),rgba(255,255,255,.01)),
+    rgba(5,7,6,.72) !important;
+  color:#f2ede4 !important;
+}
+
+.player-shell-container .athlete-glass-card form :where(input,select,textarea):focus-visible {
+  outline:none;
+  border-color:rgba(240,215,123,.58) !important;
+  box-shadow:0 0 0 3px rgba(212,175,55,.09);
+}
+
+.player-shell-container .athlete-glass-card form button {
+  min-height:44px;
+}
+
 /* ---------- Light mode ---------- */
 html[data-theme='light'] .portal-shell.portal-parent,
 html[data-theme='light'] .portal-shell.portal-coach {
