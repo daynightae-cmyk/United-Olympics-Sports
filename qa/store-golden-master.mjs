@@ -99,6 +99,26 @@ async function visit(page, errors, route) {
   assert.deepEqual(errors, [], `${route}: runtime errors`);
   assert.equal(state.brandLogoCount, 1, `${route}: store header must render exactly one official brand logo`);
   assert.equal(state.extraPortalEmblemCount, 0, `${route}: store header must not render a second portal emblem`);
+
+  if (route === '/store') {
+    assert.equal(await page.locator('.store-reference-header').count(), 1, 'reference retail header missing');
+    assert.equal(await page.locator('.store-reference-hero-grid').count(), 1, 'reference hero composition missing');
+    assert.equal(await page.locator('.store-reference-category-strip').count(), 1, 'reference category strip missing');
+    assert.equal(await page.locator('.store-reference-shelf-grid').count(), 1, 'reference product shelf grid missing');
+    assert.equal(await page.locator('.store-reference-benefits').count(), 1, 'reference assurance strip missing');
+  }
+
+  if (route === '/store/shop' && preview) {
+    assert.equal(await page.locator('.store-catalog-layout .store-filters').count(), 1, 'reference catalog filters missing');
+    assert.equal(await page.locator('.store-product-card .store-variant-picker').count(), 0, 'reference retail cards must not embed variant controls');
+  }
+
+  if (route === '/store/product/elite-hydro-pro-goggles' && preview) {
+    assert.equal(await page.locator('.store-product-gallery').count(), 1, 'reference product gallery missing');
+    assert.equal(await page.locator('.store-product-info').count(), 1, 'reference product information panel missing');
+    assert.equal(await page.locator('.store-product-trust-row').count(), 1, 'reference product assurance row missing');
+  }
+
   const width = page.viewportSize().width;
   assert(state.cart?.width >= 32 && state.cart.x >= 0 && state.cart.right <= width + 1, `${route}: inaccessible cart`);
   if (width <= 820) assert(state.search?.width >= width - 32, `${route}: search is not full width (${state.search?.width})`);
@@ -342,6 +362,7 @@ async function interactions(browser, name, rtl) {
       await page.waitForURL('**/store/cart');
       await page.locator('.store-cart-list article').first().waitFor();
       assert.equal(await page.locator('.store-cart-list article').count(), 2, 'cart lost an existing variant or new product');
+      assert.equal(await page.locator('.store-cart-journey').count(), 1, 'reference checkout journey panel missing from cart');
       await screenshot(page, `${name}-${rtl ? 'rtl' : 'ltr'}-cart`);
 
       await page.locator('.store-cart-summary a').click();
