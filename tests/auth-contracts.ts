@@ -1,11 +1,21 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { safeReturnTo } from '../src/lib/auth-routing.ts';
 import {
   identityFromFirebaseDecoded,
   identityFromSupabaseUser,
   resolveAuthorization,
   type VerifiedIdentity,
 } from '../src/server/auth.ts';
+
+assert.equal(safeReturnTo('/player/home'), '/player/home');
+assert.equal(safeReturnTo('/store/orders?status=paid#latest'), '/store/orders?status=paid#latest');
+assert.equal(safeReturnTo('https://evil.example'), '/');
+assert.equal(safeReturnTo('//evil.example/path'), '/');
+assert.equal(safeReturnTo('/\\\\evil.example'), '/');
+assert.equal(safeReturnTo('/%5C%5Cevil.example'), '/');
+assert.equal(safeReturnTo(' /admin'), '/');
+assert.equal(safeReturnTo('/admin\n/evil'), '/');
 
 const firebaseIdentity = identityFromFirebaseDecoded({
   uid: 'firebase-user-1',
