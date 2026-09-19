@@ -3,11 +3,10 @@
 // Standard preview data, preview auth bypass, demo routes, and demo links are
 // local/visual-QA tools. They remain blocked on canonical production hosts.
 //
-// Client Showcase is a separate, temporary handoff mode requested by the owner.
-// By default it activates only on the canonical customer-facing production
-// domains, where portal surfaces are switched to synthetic preview data.
-// It can be forced on elsewhere with VITE_UOS_CLIENT_SHOWCASE=true or disabled
-// everywhere with VITE_UOS_CLIENT_SHOWCASE=false when real auth goes live.
+// Client Showcase is a separate, temporary handoff mode. It is NEVER inferred
+// from the production hostname: production defaults to real auth/data (or a
+// truthful unavailable state) unless the deployment explicitly opts in with
+// VITE_UOS_CLIENT_SHOWCASE=true.
 
 const CANONICAL_PRODUCTION_HOSTS = [
   'unitedolympicsports.store',
@@ -24,11 +23,17 @@ export function isCanonicalProductionHost(hostname?: string): boolean {
   return (CANONICAL_PRODUCTION_HOSTS as readonly string[]).includes(host);
 }
 
+/**
+ * Pure Client Showcase resolver used by executable production-isolation tests.
+ * Hostname is deliberately irrelevant: showcase is explicit opt-in only.
+ */
+export function resolveClientShowcaseMode(rawFlag: unknown): boolean {
+  const raw = String(rawFlag ?? '').trim().toLowerCase();
+  return ['1', 'true', 'on', 'yes'].includes(raw);
+}
+
 export function clientShowcaseMode(): boolean {
-  const raw = String(import.meta.env.VITE_UOS_CLIENT_SHOWCASE ?? '').trim().toLowerCase();
-  if (['0', 'false', 'off', 'no'].includes(raw)) return false;
-  if (['1', 'true', 'on', 'yes'].includes(raw)) return true;
-  return isCanonicalProductionHost();
+  return resolveClientShowcaseMode(import.meta.env.VITE_UOS_CLIENT_SHOWCASE);
 }
 
 // Central standard-preview gate: call with the explicit VITE_UOS_* flag value.
