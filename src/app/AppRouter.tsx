@@ -8,7 +8,6 @@ import { AuthCallbackPage } from '../components/auth/AuthCallbackPage';
 import { PasskeySetupPage } from '../components/auth/PasskeySetupPage';
 import { PortalLoginRoute } from '../components/auth/PortalLoginRoute';
 import { clientShowcaseMode, previewModeAllowed } from '../lib/preview-guard';
-import { isStoreAuthPath } from '../lib/store-auth-routing';
 
 const AdminLayout = lazy(() => import('../layouts/AdminLayout').then((module) => ({ default: module.AdminLayout })));
 const PlayerPortalRouter = lazy(() => import('../portals/PlayerPortalRouter').then((module) => ({ default: module.PlayerPortalRouter })));
@@ -34,8 +33,8 @@ function RouteFallback() {
 function InternalProductUtilities() {
   const { pathname } = useLocation();
   const isInternalRoute = /^\/(admin|player|parent|coach|store)(\/|$)/.test(pathname);
-  const isStoreAuthRoute = isStoreAuthPath(pathname);
-  return isInternalRoute && !isStoreAuthRoute ? <><UnitedAssistant /><UpdateToast /></> : null;
+  const isPortalAuthRoute = /^\/(admin|player|parent|coach|store)\/login\/?$/.test(pathname);
+  return isInternalRoute && !isPortalAuthRoute ? <><UnitedAssistant /><UpdateToast /></> : null;
 }
 
 const isBenchmarkEnabled = import.meta.env.DEV === true;

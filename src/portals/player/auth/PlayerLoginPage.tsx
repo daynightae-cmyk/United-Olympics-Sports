@@ -5,8 +5,8 @@ import { PortalAuthPage, type PortalAuthNotice, type PortalAuthProvider } from '
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
 import { beginSupabaseGoogleOAuth, fetchPortalIdentity, getAccessToken, signOutEverywhere } from '../../../lib/auth-client';
 import { resolvePortalPostSignInDestination } from '../../../lib/store-auth-routing';
-import { productionAuthGateway } from './PlayerAuthGateway';
 import { previewModeAllowed } from '../../../lib/preview-guard';
+import { portalAuthProviders } from '../../../components/auth/portalAuthPolicy';
 
 const PLAYER_SESSION_KEY = 'uos:player-portal:session';
 const PLAYER_ACTIVE_ID_KEY = 'uos:player-portal:active-id';
@@ -83,38 +83,23 @@ export function PlayerLoginPage() {
   }, [navigate]);
 
   const handleProvider = async (provider: PortalAuthProvider): Promise<PortalAuthNotice | null> => {
-    if (provider === 'google') {
-      try {
-        await beginSupabaseGoogleOAuth(resolveTarget());
-        return null;
-      } catch {
-        return {
-          tone: 'error',
-          message: bi('Google sign-in could not start. Please try again.', 'تعذر بدء تسجيل الدخول عبر Google. يرجى المحاولة مرة أخرى.'),
-        };
-      }
-    }
-
-    if (provider !== 'apple') {
+    if (provider !== 'google') {
       return {
         tone: 'info',
         message: bi('This sign-in method is not available yet.', 'طريقة تسجيل الدخول هذه غير متاحة بعد.'),
       };
     }
 
-    const result = await productionAuthGateway.signInWithApple();
-    if (result.success && result.data?.playerId) {
-      navigate(resolveTarget());
+    try {
+      await beginSupabaseGoogleOAuth(resolveTarget());
       return null;
+    } catch {
+      return {
+        tone: 'error',
+        message: bi('Google sign-in could not start. Please try again.', 'تعذر بدء تسجيل الدخول عبر Google. يرجى المحاولة مرة أخرى.'),
+      };
     }
-
-    return {
-      tone: 'info',
-      message: result.error
-        ? { en: result.error.messageEn, ar: result.error.messageAr }
-        : bi('Apple sign-in is not available yet.', 'تسجيل الدخول عبر Apple غير متاح بعد.'),
-    };
   };
 
-  return <PortalAuthPage portal="player" providers={['google', 'apple']} extraContent={<SafeDemoLink />} onProvider={handleProvider} />;
+  return <PortalAuthPage portal="player" providers={portalAuthProviders('player')} extraContent={<SafeDemoLink />} onProvider={handleProvider} />;
 }

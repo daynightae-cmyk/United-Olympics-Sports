@@ -6,6 +6,7 @@ import { BilingualText, bi } from '../../components/bilingual/BilingualText';
 import { beginSupabaseGoogleOAuth, fetchPortalIdentity, getAccessToken, signOutEverywhere } from '../../lib/auth-client';
 import { resolvePortalPostSignInDestination } from '../../lib/store-auth-routing';
 import { previewModeAllowed } from '../../lib/preview-guard';
+import { portalAuthProviders } from '../../components/auth/portalAuthPolicy';
 
 const COACH_PRODUCTION_SESSION_KEY = 'uos:coach-portal:session:v1';
 // Safe demo links are blocked on canonical production hosts even when the
@@ -93,5 +94,5 @@ export function CoachLoginPage() {
     }
   };
 
-  return <PortalAuthPage portal="coach" providers={['google']} extraContent={<SafeDemoLink />} onProvider={handleProvider} />;
+  return <PortalAuthPage portal="coach" providers={portalAuthProviders('coach')} extraContent={<SafeDemoLink />} onProvider={handleProvider} />;
 }
