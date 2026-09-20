@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { adminAuth } from '../lib/firebase-admin.js';
+import { getAdminAuth } from '../lib/firebase-admin.js';
 import { databaseConfigured, getPool } from '../db/index.js';
 import { assertPlayerRelationship, requireAnyRole, requireIdentity } from './auth.js';
 import { authAdministrativeActionsConfigured } from './runtime.js';
@@ -72,6 +72,7 @@ export const revokeHandler: RouteHandler = async (req, res) => {
     throw new ApiError(503, 'AUTH_ADMIN_NOT_CONFIGURED', 'Session revocation is not configured in this environment.');
   }
   try {
+    const adminAuth = await getAdminAuth();
     await adminAuth.revokeRefreshTokens(identity.subject);
   } catch {
     throw new ApiError(503, 'AUTH_ADMIN_UNAVAILABLE', 'Session revocation is temporarily unavailable.');

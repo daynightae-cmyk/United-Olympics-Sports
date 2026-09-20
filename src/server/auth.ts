@@ -1,4 +1,4 @@
-import { adminAuth } from '../lib/firebase-admin.js';
+import { getAdminAuth } from '../lib/firebase-admin.js';
 import { getPool, databaseConfigured } from '../db/index.js';
 import { ApiError, getHeader, type ApiRequest } from './http.js';
 import { getSupabaseAuthConfig } from './supabase-auth-config.js';
@@ -79,6 +79,7 @@ export async function verifySupabaseAccessToken(
 
 export async function verifyFirebaseAccessToken(token: string): Promise<ProviderIdentity | null> {
   try {
+    const adminAuth = await getAdminAuth();
     const decoded = await adminAuth.verifyIdToken(token);
     return identityFromFirebaseDecoded(decoded);
   } catch {
