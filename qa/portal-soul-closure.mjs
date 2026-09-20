@@ -18,7 +18,7 @@ const internalCases = [
   { portal: 'admin', route: '/admin' },
   { portal: 'player', route: '/player/home' },
   { portal: 'parent', route: '/parent' },
-  { portal: 'coach', route: '/coach' },
+  { portal: 'coach', route: '/coach', expectedRoute: '/coach/home' },
   { portal: 'store', route: '/store' },
 ];
 
@@ -170,7 +170,8 @@ try {
       const response = await page.goto(`${baseURL}${entry.route}`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
       assert.ok(!response || response.status() < 400, `${entry.route}: HTTP ${response?.status()}`);
       await waitForApp(page);
-      assert.equal(new URL(page.url()).pathname.replace(/\/$/, '') || '/', entry.route.replace(/\/$/, '') || '/', `${entry.route}: authenticated preview navigation changed unexpectedly`);
+      const expectedRoute = entry.expectedRoute ?? entry.route;
+      assert.equal(new URL(page.url()).pathname.replace(/\/$/, '') || '/', expectedRoute.replace(/\/$/, '') || '/', `${entry.route}: authenticated preview navigation changed unexpectedly`);
       const internalProof = await page.evaluate((portal) => {
         const overflow = document.documentElement.scrollWidth - document.documentElement.clientWidth;
         if (portal !== 'player') return { overflow };
