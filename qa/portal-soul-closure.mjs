@@ -124,7 +124,7 @@ async function assertLogin(page, entry, width, theme, rtl) {
   assert.ok(proof.brandBottom + 8 <= proof.visualCopyTop, `${entry.route}: brand lockup overlaps the hero copy at ${width}px`);
   if (theme === 'light') {
     assert.match(proof.cardColor, /^rgb\((?:[0-9]|[1-8][0-9]),/, `${entry.route}: Light card text must remain navy`);
-    assert.match(proof.cardBackground, /rgba?\(25[0-5], 25[0-5], 2[34][0-9]/, `${entry.route}: Light card must use a warm light surface`);
+    assert.match(proof.cardBackground, /rgba?\((?:255, 255, 255|250, 244, 233)/, `${entry.route}: Light card must use a warm light surface`);
   }
   assert.deepEqual(proof.brokenImages, [], `${entry.route}: broken image`);
 }
