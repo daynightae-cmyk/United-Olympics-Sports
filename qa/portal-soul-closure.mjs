@@ -5,6 +5,7 @@ import { chromium } from 'playwright';
 
 const baseURL = process.env.UOS_BASE_URL ?? 'http://127.0.0.1:4173';
 const outputDir = process.env.UOS_SOUL_SCREENSHOTS ?? 'test-results/portal-soul-closure';
+const mode = process.env.UOS_SOUL_MODE ?? 'all';
 const settingsKey = 'uos:ui-settings:v1';
 const loginCases = [
   { portal: 'admin', route: '/admin/login', widths: [390, 768, 1440] },
@@ -17,7 +18,7 @@ const internalCases = [
   { portal: 'admin', route: '/admin' },
   { portal: 'player', route: '/player/home' },
   { portal: 'parent', route: '/parent' },
-  { portal: 'coach', route: '/coach' },
+  { portal: 'coach', route: '/coach', expectedRoute: '/coach/home' },
   { portal: 'store', route: '/store' },
 ];
 
@@ -82,12 +83,18 @@ async function assertLogin(page, entry, width, theme, rtl) {
     const button = document.querySelector('[data-auth-provider]');
     const card = document.querySelector('.portal-auth-card');
     const rect = card?.getBoundingClientRect();
+    const brand = document.querySelector('.portal-auth-brand-lockup');
+    const visualCopy = document.querySelector('.portal-auth-visual-copy');
+    const brandRect = brand?.getBoundingClientRect();
+    const visualCopyRect = visualCopy?.getBoundingClientRect();
+    const switcher = document.querySelector('.portal-auth-switcher');
     return {
       theme: document.documentElement.dataset.theme,
       dir: document.documentElement.dir,
       logoCount: document.querySelectorAll('.portal-auth img[src="/brand/united-olympics-sports-logo.png"]').length,
       providerNames: [...document.querySelectorAll('[data-auth-provider]')].map((node) => node.getAttribute('data-auth-provider')),
       switcherCount: document.querySelectorAll('.portal-auth-switcher a').length,
+      switcherVisible: switcher ? getComputedStyle(switcher).display !== 'none' : false,
       assistantCount: document.querySelectorAll('.uos-assistant-orb,.uos-assistant-panel,.uos-assistant-invite').length,
       overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
       buttonHeight: button ? button.getBoundingClientRect().height : 0,
@@ -96,6 +103,10 @@ async function assertLogin(page, entry, width, theme, rtl) {
       cardRight: rect?.right ?? -1,
       cardWidth: rect?.width ?? 0,
       viewportWidth: window.innerWidth,
+      cardColor: card ? getComputedStyle(card).color : '',
+      cardBackground: card ? getComputedStyle(card).backgroundImage : '',
+      brandBottom: brandRect?.bottom ?? 0,
+      visualCopyTop: visualCopyRect?.top ?? 0,
       brokenImages: [...document.images].filter((image) => image.complete && image.naturalWidth === 0).map((image) => image.src),
     };
   });
@@ -105,18 +116,31 @@ async function assertLogin(page, entry, width, theme, rtl) {
   assert.equal(proof.logoCount, 1, `${entry.route}: expected one canonical logo`);
   assert.deepEqual(proof.providerNames, ['google'], `${entry.route}: provider policy drift`);
   assert.equal(proof.switcherCount, 5, `${entry.route}: shared portal switcher missing`);
+  assert.equal(proof.switcherVisible, true, `${entry.route}: shared portal switcher is hidden`);
   assert.equal(proof.assistantCount, 0, `${entry.route}: product overlays must not cover authentication`);
   assert.ok(proof.overflow <= 2, `${entry.route}: ${proof.overflow}px horizontal overflow at ${width}px`);
   assert.ok(proof.buttonVisible && proof.buttonHeight >= 44, `${entry.route}: Google control is not touch-ready`);
   assert.ok(proof.cardWidth > 0 && proof.cardLeft >= -1 && proof.cardRight <= proof.viewportWidth + 1, `${entry.route}: auth card is clipped at ${width}px`);
+  assert.ok(
+    proof.brandBottom + 8 <= proof.visualCopyTop,
+    `${entry.route}: brand lockup overlaps the hero copy at ${width}px (brand bottom ${proof.brandBottom}, copy top ${proof.visualCopyTop})`,
+  );
+  if (theme === 'light') {
+    assert.match(proof.cardColor, /^rgb\((?:[0-9]|[1-8][0-9]),/, `${entry.route}: Light card text must remain navy`);
+    assert.match(
+      proof.cardBackground,
+      /rgba?\((?:255, 255, 255|250, 244, 233|255, 253, 248|247, 239, 224)/,
+      `${entry.route}: Light card must use a warm light surface`,
+    );
+  }
   assert.deepEqual(proof.brokenImages, [], `${entry.route}: broken image`);
 }
 
-await fs.rm(outputDir, { recursive: true, force: true });
+if (mode !== 'internal') await fs.rm(outputDir, { recursive: true, force: true });
 await fs.mkdir(outputDir, { recursive: true });
 const browser = await chromium.launch();
 try {
-  for (const entry of loginCases) {
+  if (mode !== 'internal') for (const entry of loginCases) {
     for (const theme of ['light', 'dark']) {
       for (const width of entry.widths) {
         const context = await openContext(browser, { width, theme });
@@ -138,7 +162,7 @@ try {
     await rtlContext.close();
   }
 
-  for (const entry of internalCases) {
+  if (mode !== 'auth') for (const entry of internalCases) {
     for (const theme of ['light', 'dark']) {
       const context = await openContext(browser, { width: 1440, theme, preview: true });
       const page = await context.newPage();
@@ -146,8 +170,31 @@ try {
       const response = await page.goto(`${baseURL}${entry.route}`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
       assert.ok(!response || response.status() < 400, `${entry.route}: HTTP ${response?.status()}`);
       await waitForApp(page);
-      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-      assert.ok(overflow <= 2, `${entry.route}: ${overflow}px horizontal overflow`);
+      const expectedRoute = entry.expectedRoute ?? entry.route;
+      assert.equal(new URL(page.url()).pathname.replace(/\/$/, '') || '/', expectedRoute.replace(/\/$/, '') || '/', `${entry.route}: authenticated preview navigation changed unexpectedly`);
+      const internalProof = await page.evaluate((portal) => {
+        const overflow = document.documentElement.scrollWidth - document.documentElement.clientWidth;
+        if (portal !== 'player') return { overflow };
+        const shell = document.querySelector('#player-portal-shell');
+        const card = document.querySelector('#player-portal-shell .athlete-glass-card');
+        const title = document.querySelector('#player-portal-shell .athlete-overview-title');
+        return {
+          overflow,
+          shellBackground: shell ? getComputedStyle(shell).backgroundColor : '',
+          cardBackground: card ? getComputedStyle(card).backgroundColor : '',
+          titleColor: title ? getComputedStyle(title).color : '',
+        };
+      }, entry.portal);
+      assert.ok(internalProof.overflow <= 2, `${entry.route}: ${internalProof.overflow}px horizontal overflow`);
+      if (entry.portal === 'player') {
+        assert.ok(internalProof.shellBackground, 'Player workspace shell missing');
+        assert.ok(internalProof.cardBackground, 'Player workspace card missing');
+        if (theme === 'light') {
+          assert.match(internalProof.shellBackground, /rgb\((?:246, 247, 249|251, 250, 247|243, 241, 235)\)/, 'Player Light shell must be a genuinely light surface');
+          assert.match(internalProof.cardBackground, /rgb\((?:255, 253, 249|255, 255, 255)\)/, 'Player Light cards must remain light');
+          assert.match(internalProof.titleColor, /rgb\((?:23, 32, 51|15, 23, 42)\)/, 'Player Light title must use dark readable ink');
+        }
+      }
       assert.deepEqual(runtimeErrors, [], `${entry.route}: runtime errors`);
       await page.screenshot({ path: path.join(outputDir, `${entry.portal}-home-1440-${theme}.png`), fullPage: true });
       await context.close();
@@ -159,16 +206,18 @@ try {
 
 // Keep this direct-load check independent of preview sessions: Store account
 // correctly resolves to the shared login when no customer session exists.
-const directBrowser = await chromium.launch();
-try {
-  const context = await openContext(directBrowser, { width: 390, theme: 'dark' });
-  const page = await context.newPage();
-  await page.goto(`${baseURL}/store/account`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
-  await waitForApp(page);
-  await page.waitForURL(/\/store\/login$/, { timeout: 15_000 });
-  await context.close();
-} finally {
-  await directBrowser.close();
+if (mode !== 'internal') {
+  const directBrowser = await chromium.launch();
+  try {
+    const context = await openContext(directBrowser, { width: 390, theme: 'dark' });
+    const page = await context.newPage();
+    await page.goto(`${baseURL}/store/account`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    await waitForApp(page);
+    await page.waitForURL(/\/store\/login$/, { timeout: 15_000 });
+    await context.close();
+  } finally {
+    await directBrowser.close();
+  }
 }
 
-console.log(`Portal Soul closure QA PASS; screenshots: ${outputDir}`);
+console.log(`Portal Soul closure QA PASS (${mode}); screenshots: ${outputDir}`);
