@@ -4,23 +4,17 @@ import path from 'node:path';
 
 const baseUrl = process.env.UOS_BASE_URL ?? 'http://127.0.0.1:4173';
 const outputDir = process.env.UOS_PORTAL_SCREENSHOTS ?? 'test-results/portal-emblems';
-const expectedPath = {
-  player: { light: '/brand/portals/player/player-portal-light.png', dark: '/brand/portals/player/player-portal-dark.png' },
-  parent: { light: '/brand/portals/parent/parent-portal-light.png', dark: '/brand/portals/parent/parent-portal-dark.png' },
-  coach: { light: '/brand/portals/coach/coach-portal-light.png', dark: '/brand/portals/coach/coach-portal-dark.png' },
-  admin: { light: '/brand/portals/admin/admin-portal-light.png', dark: '/brand/portals/admin/admin-portal-dark.png' },
-  store: { light: '/brand/portals/store/store-light.png', dark: '/brand/portals/store/store-dark.png' },
-};
+const canonicalLogoPath = '/brand/united-olympics-sports-logo.png';
 const cases = [
-  { portal: 'player', route: '/player/login' },
-  { portal: 'parent', route: '/parent/login' },
-  { portal: 'coach', route: '/coach/login' },
-  { portal: 'admin', route: '/admin/login' },
-  { portal: 'store', route: '/store/login' },
-  { portal: 'parent', route: '/parent' },
-  { portal: 'coach', route: '/coach' },
-  { portal: 'admin', route: '/admin' },
-  { portal: 'store', route: '/store' },
+  { portal: 'player', route: '/player/login', primarySelector: '.portal-auth-brand-lockup img' },
+  { portal: 'parent', route: '/parent/login', primarySelector: '.portal-auth-brand-lockup img' },
+  { portal: 'coach', route: '/coach/login', primarySelector: '.portal-auth-brand-lockup img' },
+  { portal: 'admin', route: '/admin/login', primarySelector: '.portal-auth-brand-lockup img' },
+  { portal: 'store', route: '/store/login', primarySelector: '.portal-auth-brand-lockup img' },
+  { portal: 'parent', route: '/parent', primarySelector: '.portal-sidebar .portal-brand > img.official-logo' },
+  { portal: 'coach', route: '/coach', primarySelector: '.portal-sidebar .portal-brand > img.official-logo' },
+  { portal: 'admin', route: '/admin', primarySelector: '.admin-sidebar .admin-brand > img.official-logo' },
+  { portal: 'store', route: '/store', primarySelector: '.store-main-header .store-brand > img' },
 ];
 const screenshotCases = [cases[0], cases[5], cases[6], cases[7], cases[8]];
 const viewports = [
@@ -55,15 +49,17 @@ try {
           if (message.type() === 'error' && !externalFontFailure) consoleErrors.push(text);
         });
         await page.goto(`${baseUrl}${entry.route}`, { waitUntil: 'networkidle' });
-        const primary = page.locator('[data-portal-emblem-role="primary"]');
-        if (await primary.count() < 1) errors.push(`${entry.route} ${theme.name} ${bilingualOrder}: missing primary emblem`);
-        const primaryPortals = await primary.evaluateAll((nodes) => [...new Set(nodes.map((node) => node.getAttribute('data-portal-emblem')))]);
-        if (primaryPortals.some((portal) => portal !== entry.portal)) errors.push(`${entry.route} ${theme.name} ${bilingualOrder}: wrong primary emblem(s) ${primaryPortals.join(',')}`);
-        const expected = expectedPath[entry.portal][theme.effective];
-        const sources = await primary.locator('img').evaluateAll((nodes) => nodes.map((node) => node.getAttribute('src')));
-        if (!sources.some((src) => src?.endsWith(expected))) errors.push(`${entry.route} ${theme.name} ${bilingualOrder}: expected ${expected}, got ${sources.join(',')}`);
-        const resolvedThemes = await primary.evaluateAll((nodes) => [...new Set(nodes.map((node) => node.getAttribute('data-portal-theme')))]);
-        if (resolvedThemes.some((resolved) => resolved !== theme.effective)) errors.push(`${entry.route} ${theme.name}: resolved theme ${resolvedThemes.join(',')} expected ${theme.effective}`);
+        const primary = page.locator(entry.primarySelector);
+        const primaryCount = await primary.count();
+        if (primaryCount !== 1) errors.push(`${entry.route} ${theme.name} ${bilingualOrder}: expected one canonical primary logo, got ${primaryCount}`);
+        const primarySrc = primaryCount ? await primary.first().getAttribute('src') : null;
+        if (!primarySrc?.endsWith(canonicalLogoPath)) errors.push(`${entry.route} ${theme.name} ${bilingualOrder}: expected canonical logo ${canonicalLogoPath}, got ${primarySrc ?? ''}`);
+        const primaryBroken = primaryCount ? await primary.first().evaluate((node) => node instanceof HTMLImageElement && node.complete && node.naturalWidth === 0) : true;
+        if (primaryBroken) errors.push(`${entry.route} ${theme.name} ${bilingualOrder}: canonical primary logo failed to load`);
+        const resolvedTheme = await page.locator('html').getAttribute('data-theme');
+        if (resolvedTheme !== theme.effective) errors.push(`${entry.route} ${theme.name}: resolved theme ${resolvedTheme ?? ''} expected ${theme.effective}`);
+        const portalIdentity = await page.locator('[data-portal]').first().getAttribute('data-portal').catch(() => null);
+        if (entry.route.endsWith('/login') && portalIdentity !== entry.portal) errors.push(`${entry.route} ${theme.name} ${bilingualOrder}: portal identity ${portalIdentity ?? ''} expected ${entry.portal}`);
         const dir = await page.locator('html').getAttribute('dir');
         const expectedDir = bilingualOrder === 'ar-first' ? 'rtl' : 'ltr';
         if (dir !== expectedDir) errors.push(`${entry.route} ${theme.name} ${bilingualOrder}: dir=${dir}, expected ${expectedDir}`);
@@ -95,4 +91,4 @@ if (errors.length) {
   console.error(errors.join(String.fromCharCode(10)));
   process.exit(1);
 }
-console.log(`Portal emblem QA PASS; screenshots: ${outputDir}`);
+console.log(`Portal canonical-logo QA PASS; screenshots: ${outputDir}`);
