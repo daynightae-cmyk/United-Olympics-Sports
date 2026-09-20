@@ -11,10 +11,10 @@ const cases = [
   { portal: 'coach', route: '/coach/login', primarySelector: '.portal-auth-brand-lockup img' },
   { portal: 'admin', route: '/admin/login', primarySelector: '.portal-auth-brand-lockup img' },
   { portal: 'store', route: '/store/login', primarySelector: '.portal-auth-brand-lockup img' },
-  { portal: 'parent', route: '/parent', primarySelector: '.portal-sidebar .portal-brand > img.official-logo' },
-  { portal: 'coach', route: '/coach', primarySelector: '.portal-sidebar .portal-brand > img.official-logo' },
-  { portal: 'admin', route: '/admin', primarySelector: '.admin-sidebar .admin-brand > img.official-logo' },
-  { portal: 'store', route: '/store', primarySelector: '.store-main-header .store-brand > img' },
+  { portal: 'parent', route: '/parent', expectedRoute: '/parent', preview: true, primarySelector: '.portal-sidebar .portal-brand > img.official-logo' },
+  { portal: 'coach', route: '/coach', expectedRoute: '/coach/home', preview: true, primarySelector: '.portal-sidebar .portal-brand > img.official-logo' },
+  { portal: 'admin', route: '/admin', expectedRoute: '/admin', preview: true, primarySelector: '.admin-sidebar .admin-brand > img.official-logo' },
+  { portal: 'store', route: '/store', expectedRoute: '/store', preview: true, primarySelector: '.store-main-header .store-brand > img' },
 ];
 const screenshotCases = [cases[0], cases[5], cases[6], cases[7], cases[8]];
 const viewports = [
@@ -29,6 +29,32 @@ const themeScenarios = [
 ];
 const settings = (appearance, bilingualOrder) => ({ appearance, bilingualOrder, density: 'comfortable', motion: 'system', fontScale: 'default', sidebarDefault: 'expanded' });
 
+async function installUiState(context, payload, preview = false) {
+  await context.addInitScript(({ settingsPayload, previewMode }) => {
+    localStorage.setItem('uos:ui-settings:v1', JSON.stringify(settingsPayload));
+    if (previewMode) {
+      localStorage.setItem('uos:player-portal:session', JSON.stringify({
+        userId: 'preview-user-player-demo-001',
+        playerId: 'player-demo-001',
+        provider: 'preview',
+        createdAt: new Date().toISOString(),
+      }));
+      localStorage.setItem('uos:player-portal:active-id', 'player-demo-001');
+      localStorage.setItem('uos:player-portal:auth', 'true');
+      localStorage.setItem('uos:parent-portal:session:v1', JSON.stringify({
+        parentId: 'parent-preview-01',
+        provider: 'preview',
+        createdAt: new Date().toISOString(),
+      }));
+      sessionStorage.setItem('uos:coach-portal:preview-session:v1', 'coach-preview-01');
+      sessionStorage.setItem('uos:luxury-splash-seen', 'true');
+      sessionStorage.setItem('uos:splash-seen', 'true');
+    }
+  }, { settingsPayload: payload, previewMode: preview });
+}
+
+const normalizePath = (value) => value.replace(/\/$/, '') || '/';
+
 await fs.mkdir(outputDir, { recursive: true });
 const browser = await chromium.launch();
 const errors = [];
@@ -36,8 +62,8 @@ try {
   for (const entry of cases) {
     for (const theme of themeScenarios) {
       for (const bilingualOrder of ['en-first', 'ar-first']) {
-        const context = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: theme.colorScheme });
-        await context.addInitScript(({ payload }) => localStorage.setItem('uos:ui-settings:v1', JSON.stringify(payload)), { payload: settings(theme.appearance, bilingualOrder) });
+        const context = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: theme.colorScheme, reducedMotion: 'reduce' });
+        await installUiState(context, settings(theme.appearance, bilingualOrder), entry.preview === true);
         const page = await context.newPage();
         const consoleErrors = [];
         page.on('console', (message) => {
@@ -49,6 +75,13 @@ try {
           if (message.type() === 'error' && !externalFontFailure) consoleErrors.push(text);
         });
         await page.goto(`${baseUrl}${entry.route}`, { waitUntil: 'domcontentloaded', timeout: 15_000 });
+        await page.locator('#root').waitFor({ state: 'attached', timeout: 5_000 });
+        await page.waitForFunction(() => (document.querySelector('#root')?.textContent?.trim().length ?? 0) > 12, undefined, { timeout: 5_000 }).catch(() => undefined);
+        if (entry.expectedRoute) {
+          await page.waitForURL((url) => normalizePath(url.pathname) === entry.expectedRoute, { timeout: 5_000 }).catch(() => undefined);
+          const actualPath = normalizePath(new URL(page.url()).pathname);
+          if (actualPath !== entry.expectedRoute) errors.push(`${entry.route} ${theme.name} ${bilingualOrder}: expected internal preview route ${entry.expectedRoute}, got ${actualPath}`);
+        }
         const primary = page.locator(entry.primarySelector);
         await primary.first().waitFor({ state: 'attached', timeout: 5_000 }).catch(() => undefined);
         const primaryCount = await primary.count();
@@ -76,12 +109,16 @@ try {
   for (const entry of screenshotCases) {
     for (const appearance of ['light', 'dark']) {
       for (const viewport of viewports) {
-        const context = await browser.newContext({ viewport, colorScheme: appearance });
-        await context.addInitScript(({ payload }) => localStorage.setItem('uos:ui-settings:v1', JSON.stringify(payload)), { payload: settings(appearance, 'en-first') });
+        const context = await browser.newContext({ viewport, colorScheme: appearance, reducedMotion: 'reduce' });
+        await installUiState(context, settings(appearance, 'en-first'), entry.preview === true);
         const page = await context.newPage();
         await page.goto(`${baseUrl}${entry.route}`, { waitUntil: 'domcontentloaded', timeout: 15_000 });
+        await page.locator('#root').waitFor({ state: 'attached', timeout: 5_000 });
+        if (entry.expectedRoute) {
+          await page.waitForURL((url) => normalizePath(url.pathname) === entry.expectedRoute, { timeout: 5_000 });
+        }
         const primary = page.locator(entry.primarySelector);
-        await primary.first().waitFor({ state: 'visible', timeout: 5_000 });
+        await primary.first().waitFor({ state: 'attached', timeout: 5_000 });
         await page.waitForTimeout(120);
         await page.screenshot({ path: path.join(outputDir, `${entry.portal}-${viewport.name}-${appearance}.png`), fullPage: true });
         await context.close();
