@@ -59,7 +59,7 @@ const portalConfig: Record<PortalAuthKind, PortalAuthConfig> = {
     supporting: bi('Secure access to manage teams, programs, facilities and operations.', 'وصول آمن لإدارة الفرق والبرامج والمرافق والعمليات.'),
     visualTitle: bi('Lead. Organize. Develop.', 'قيادة. تنظيم. تطوير.'),
     visualCopy: bi('A disciplined sports command surface built for confident daily operations.', 'مساحة قيادة رياضية منضبطة لإدارة العمل اليومي بثقة.'),
-    image: '/media/sports/football/football-05-teamwork.webp',
+    image: '/media/portal-auth/admin.webp',
     destination: '/admin',
     icon: UserRoundCog,
     features: [
@@ -74,7 +74,7 @@ const portalConfig: Record<PortalAuthKind, PortalAuthConfig> = {
     supporting: bi('Secure shopping access to your sports products, orders and account.', 'تسوق آمن لمنتجاتك الرياضية وطلباتك وحسابك.'),
     visualTitle: bi('Gear your passion', 'جهّز شغفك'),
     visualCopy: bi('A premium retail experience for United Olympics Sports members and supporters.', 'تجربة تسوق فاخرة لأعضاء ومتابعي يونايتد أوليمبيكس سبورت.'),
-    image: '/media/sports/football/football-03-brand.webp',
+    image: '/media/portal-auth/store.webp',
     destination: '/store/account',
     icon: ShoppingBag,
     features: [
@@ -89,7 +89,7 @@ const portalConfig: Record<PortalAuthKind, PortalAuthConfig> = {
     supporting: bi('Secure access to your training, attendance, progress and achievements.', 'وصول آمن إلى تدريباتك وحضورك وتقدمك وإنجازاتك.'),
     visualTitle: bi('Play. Train. Improve.', 'العب. تدرّب. تطوّر.'),
     visualCopy: bi('Your training journey, feedback and achievements in one focused athlete space.', 'رحلتك التدريبية وملاحظاتك وإنجازاتك في مساحة رياضية واحدة.'),
-    image: '/media/sports/football/football-02-training.webp',
+    image: '/media/portal-auth/player.webp',
     destination: '/player/home',
     icon: Trophy,
     features: [
@@ -104,7 +104,7 @@ const portalConfig: Record<PortalAuthKind, PortalAuthConfig> = {
     supporting: bi("Your family's secure access to your child's progress, activities and important updates.", 'وصول عائلتك الآمن لمتابعة تقدم طفلك وأنشطته والتنبيهات المهمة.'),
     visualTitle: bi('Their journey. Our support.', 'رحلتهم. دعمنا.'),
     visualCopy: bi('A reassuring place to follow schedules, progress, attendance and communication.', 'مساحة مطمئنة لمتابعة الجداول والتقدم والحضور والتواصل.'),
-    image: '/media/sports/football/football-06-coach-child.webp',
+    image: '/media/portal-auth/parent.webp',
     destination: '/parent',
     icon: HeartHandshake,
     features: [
@@ -119,7 +119,7 @@ const portalConfig: Record<PortalAuthKind, PortalAuthConfig> = {
     supporting: bi('Secure coaching access to sessions, players, schedules and training control.', 'وصول آمن للمدربين إلى الحصص واللاعبين والجداول والتحكم في التدريب.'),
     visualTitle: bi('Prepare. Lead. Develop.', 'خطط. قد. طوّر.'),
     visualCopy: bi('A tactical workspace for sessions, teams and athlete development.', 'مساحة تكتيكية للحصص والفرق وتطوير الرياضيين.'),
-    image: '/media/sports/football/football-10-coaching.webp',
+    image: '/media/portal-auth/coach.webp',
     destination: '/coach',
     icon: Target,
     features: [
@@ -162,7 +162,7 @@ type PortalAuthPageProps = {
   portal: PortalAuthKind;
   busy?: boolean;
   extraContent?: ReactNode;
-  providers?: PortalAuthProvider[];
+  providers?: readonly PortalAuthProvider[];
   onProvider?: (provider: PortalAuthProvider) => Promise<PortalAuthNotice | null>;
   onCredentials?: (credentials: { email: string; password: string; remember: boolean }) => Promise<PortalAuthNotice | null>;
 };
@@ -315,6 +315,7 @@ export function PortalAuthPage({
                   <button
                     key={provider}
                     type="button"
+                    data-auth-provider={provider}
                     onClick={providerActions[provider]}
                     disabled={isBusy}
                     aria-label={providerLabels[provider].en + ' | ' + providerLabels[provider].ar}
@@ -323,11 +324,11 @@ export function PortalAuthPage({
                     <BilingualText value={providerLabels[provider]} />
                   </button>
                 ))}
-                {providers.includes('phone') && portal !== 'store' && <button type="button" onClick={() => handleProvider('phone')} disabled={isBusy} aria-label="Phone Number | رقم الهاتف">
+                {providers.includes('phone') && <button type="button" data-auth-provider="phone" onClick={() => handleProvider('phone')} disabled={isBusy} aria-label="Phone Number | رقم الهاتف">
                   <ProviderGlyph provider="phone" />
                   <BilingualText value={providerLabels.phone} />
                 </button>}
-                {providers.includes('apple') && portal !== 'store' && <button type="button" onClick={() => handleProvider('apple')} disabled={isBusy} aria-label="Apple / iPhone | Apple / آيفون">
+                {providers.includes('apple') && <button type="button" data-auth-provider="apple" onClick={() => handleProvider('apple')} disabled={isBusy} aria-label="Apple / iPhone | Apple / آيفون">
                   <ProviderGlyph provider="apple" />
                   <BilingualText value={providerLabels.apple} />
                 </button>}
@@ -375,13 +376,13 @@ export function PortalAuthPage({
         </section>
       </div>
 
-      {portal !== 'store' && <nav className="portal-auth-switcher" aria-label="Portal login destinations | وجهات تسجيل الدخول">
+      <nav className="portal-auth-switcher" aria-label="Portal login destinations | وجهات تسجيل الدخول">
         {portalLinks.map((item) => (
           <Link key={item.kind} className={item.kind === portal ? 'is-active' : ''} aria-current={item.kind === portal ? 'page' : undefined} to={item.to}>
             <BilingualText value={item.label} />
           </Link>
         ))}
-      </nav>}
+      </nav>
     </main>
   );
 }

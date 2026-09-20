@@ -7,6 +7,7 @@ import { beginSupabaseGoogleOAuth, fetchPortalIdentity, getAccessToken, signOutE
 import { resolvePortalPostSignInDestination } from '../../lib/store-auth-routing';
 import { clearParentSession, readParentSession, startParentProduction } from './parentData';
 import { previewModeAllowed } from '../../lib/preview-guard';
+import { portalAuthProviders } from '../../components/auth/portalAuthPolicy';
 
 // Safe demo links are blocked on canonical production hosts even when the
 // flag is set (see preview-guard); elsewhere they enable local/preview QA.
@@ -77,5 +78,5 @@ export function ParentLoginPage() {
     }
   };
 
-  return <PortalAuthPage portal="parent" providers={['google']} extraContent={<SafeDemoLink />} onProvider={handleProvider} />;
+  return <PortalAuthPage portal="parent" providers={portalAuthProviders('parent')} extraContent={<SafeDemoLink />} onProvider={handleProvider} />;
 }

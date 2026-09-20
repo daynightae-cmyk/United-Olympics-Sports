@@ -240,6 +240,11 @@ jobs:
           UOS_BASE_URL: http://127.0.0.1:4173
         run: node qa/interface-smoke.mjs
 
+      - name: Portal Soul auth and visual closure
+        env:
+          UOS_BASE_URL: http://127.0.0.1:4173
+        run: node qa/portal-soul-closure.mjs
+
       - name: Stop QA production preview
         if: always()
         shell: bash
@@ -259,6 +264,14 @@ jobs:
           path: |
             /tmp/uos-production-preview.log
             /tmp/uos-vite-preview.log
+          if-no-files-found: ignore
+
+      - name: Upload Portal Soul visual proof
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: portal-soul-visual-proof
+          path: test-results/portal-soul-closure
           if-no-files-found: ignore
 
   store-golden-master:

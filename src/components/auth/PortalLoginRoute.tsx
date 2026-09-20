@@ -8,10 +8,10 @@ import {
   fetchServerSession,
   isPlatformAuthenticatorAvailable,
   signInWithSupabasePasskey,
-  signInWithSupabasePassword,
   signOutEverywhere,
 } from '../../lib/auth-client';
 import { resolveStorePostSignInDestination, resolvePortalPostSignInDestination } from '../../lib/store-auth-routing';
+import { portalAuthProviders } from './portalAuthPolicy';
 
 const destinations: Record<PortalAuthKind, string> = {
   admin: '/admin',
@@ -108,24 +108,6 @@ export function PortalLoginRoute({ portal }: { portal: PortalAuthKind }) {
       ? resolvePortalPostSignInDestination('admin', routerState?.from, destinations.admin)
       : destinations[portal];
 
-  const handleCredentials = async ({ email, password }: { email: string; password: string; remember: boolean }): Promise<PortalAuthNotice | null> => {
-    try {
-      const accessToken = await signInWithSupabasePassword(email, password);
-      await fetchServerSession(accessToken);
-      window.location.assign(resolveTarget());
-      return null;
-    } catch (error) {
-      await signOutEverywhere().catch(() => undefined);
-      const message = error instanceof Error ? error.message.toLowerCase() : '';
-      return {
-        tone: 'error',
-        message: message.includes('invalid') || message.includes('credentials')
-          ? bi('Email or password is incorrect.', 'البريد الإلكتروني أو كلمة المرور غير صحيحة.')
-          : bi('Email sign-in could not be completed. Use Google or Passkey, or try again.', 'تعذر إكمال تسجيل الدخول بالبريد. استخدم Google أو مفتاح المرور أو أعد المحاولة.'),
-      };
-    }
-  };
-
   const handleProvider = async (provider: PortalAuthProvider): Promise<PortalAuthNotice | null> => {
     if (provider === 'google') {
       try {
@@ -135,8 +117,8 @@ export function PortalLoginRoute({ portal }: { portal: PortalAuthKind }) {
         return {
           tone: 'error',
           message: bi(
-            'Supabase Google sign-in could not start. The callback page can use the Firebase fallback when needed.',
-            'تعذر بدء تسجيل Google عبر Supabase. يمكن لصفحة العودة استخدام Firebase الاحتياطي عند الحاجة.',
+            'Google sign-in could not start. Please try again.',
+            'تعذر بدء تسجيل الدخول عبر Google. يرجى المحاولة مرة أخرى.',
           ),
         };
       }
@@ -188,8 +170,7 @@ export function PortalLoginRoute({ portal }: { portal: PortalAuthKind }) {
 
   return <PortalAuthPage
     portal={portal}
-    providers={['google', 'passkey', 'biometric']}
+    providers={portalAuthProviders(portal)}
     onProvider={handleProvider}
-    onCredentials={portal === 'store' ? handleCredentials : undefined}
   />;
 }

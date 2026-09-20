@@ -10,19 +10,23 @@ const authPage = await readFile(new URL('../src/components/auth/PortalAuthPage.t
 const appRouter = await readFile(new URL('../src/app/AppRouter.tsx', import.meta.url), 'utf8');
 const storeLoginCss = await readFile(new URL('../src/styles/store-login-reference.css', import.meta.url), 'utf8');
 const main = await readFile(new URL('../src/main.tsx', import.meta.url), 'utf8');
+const providerPolicy = await readFile(new URL('../src/components/auth/portalAuthPolicy.ts', import.meta.url), 'utf8');
 
-assert.ok(authClient.includes('supabase.auth.signInWithPassword'), 'store email/password must use Supabase password auth');
-assert.ok(loginRoute.includes("onCredentials={portal === 'store' ? handleCredentials : undefined}"), 'store login must wire real credential handler');
-assert.ok(loginRoute.includes('fetchServerSession(accessToken)'), 'credential sign-in must establish the server session');
+assert.ok(authClient.includes('supabase.auth.signInWithPassword'), 'existing Supabase password capability must remain available to authenticated account workflows');
+assert.equal(loginRoute.includes('onCredentials='), false, 'store login must use the same public provider policy as every portal');
+assert.ok(loginRoute.includes('fetchServerSession(accessToken)'), 'session-establishing provider flows must establish the server session');
 assert.ok(loginRoute.includes('resolveStorePostSignInDestination'), 'store login must honor the protected return destination');
 assert.ok(authClient.includes('withRuntimeTimeoutGuarded'), 'password sign-in must guard against late success after timeout');
 assert.ok(authClient.includes("signOut({ scope: 'local' })"), 'late password success must clear the stray local session');
 assert.ok(authClient.includes('shouldClearLateSession'), 'late cleanup must not clear a session created by a newer attempt');
-assert.ok(appRouter.includes('isStoreAuthPath(pathname)'), 'store login must be identifiable as an auth route');
-assert.ok(appRouter.includes('!isStoreAuthRoute'), 'store login must not mount internal assistant/update overlays');
-assert.ok(authPage.includes(`portal !== 'store' && <button type="button" onClick={() => handleProvider('phone')}`), 'unconfigured phone provider must be hidden from store login');
-assert.ok(authPage.includes(`portal !== 'store' && <button type="button" onClick={() => handleProvider('apple')}`), 'unconfigured Apple provider must be hidden from store login');
-assert.ok(authPage.includes(`portal !== 'store' && <nav className="portal-auth-switcher"`), 'cross-portal switcher must stay off the retail login');
+assert.ok(appRouter.includes('(admin|player|parent|coach|store)'), 'all portal login routes must share one overlay boundary');
+assert.ok(appRouter.includes('!isPortalAuthRoute'), 'store login must not mount internal assistant/update overlays');
+assert.match(providerPolicy, /'google'/, 'Google must be the shared production provider');
+assert.equal(providerPolicy.includes("'passkey',"), false, 'unverified passkey must not be exposed by production policy');
+assert.equal(providerPolicy.includes("'biometric',"), false, 'unverified biometric must not be exposed by production policy');
+assert.equal(providerPolicy.includes("'apple',"), false, 'Apple must not be exposed inconsistently');
+assert.equal(providerPolicy.includes("'phone',"), false, 'Phone must not be exposed inconsistently');
+assert.ok(authPage.includes('<nav className="portal-auth-switcher"'), 'every portal must expose the shared portal destination switcher');
 assert.ok(storeLoginCss.includes(".portal-auth[data-portal='store']"), 'store login must have isolated retail visual authority');
 assert.ok(main.includes("import './styles/store-login-reference.css';"), 'store login visual authority must load globally');
 
