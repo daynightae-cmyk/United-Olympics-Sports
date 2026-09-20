@@ -5,19 +5,19 @@
    ========================================================================== */
 
 .admin-shell {
-  --admin-athletic-gold:#d4af37;
-  --admin-athletic-gold-soft:#f0d77b;
-  --admin-athletic-bg:#070907;
-  --admin-athletic-panel:#0d100d;
-  --admin-athletic-panel-2:#121611;
-  --admin-athletic-line:rgba(212,175,55,.14);
-  --admin-athletic-line-strong:rgba(212,175,55,.34);
-  --admin-athletic-muted:#8f9991;
-  --admin-athletic-text:#f3efe6;
+  --admin-athletic-gold:var(--uos-brand, #d4af37);
+  --admin-athletic-gold-soft:var(--uos-brand-soft, #f0d77b);
+  --admin-athletic-bg:var(--uos-canvas, #070907);
+  --admin-athletic-panel:var(--uos-surface-1, #0d100d);
+  --admin-athletic-panel-2:var(--uos-surface-2, #121611);
+  --admin-athletic-line:var(--uos-border, rgba(212,175,55,.14));
+  --admin-athletic-line-strong:var(--uos-border-strong, rgba(212,175,55,.34));
+  --admin-athletic-muted:var(--uos-text-muted, #8f9991);
+  --admin-athletic-text:var(--uos-text-primary, #f3efe6);
   background:
-    radial-gradient(circle at 82% -12%,rgba(212,175,55,.09),transparent 34rem),
+    radial-gradient(circle at 82% -12%,color-mix(in srgb, var(--uos-brand, #d4af37) 9%, transparent),transparent 34rem),
     radial-gradient(circle at 8% 110%,rgba(75,122,255,.045),transparent 30rem),
-    linear-gradient(180deg,#070907,#090c09 64%,#070907);
+    var(--admin-athletic-bg);
 }
 
 /* ---------- Single-emblem brand treatment ---------- */
@@ -28,12 +28,12 @@
   object-fit:cover !important;
   object-position:left center !important;
   border-radius:50% !important;
-  border:1px solid rgba(212,175,55,.25) !important;
-  background:#0b0c0a !important;
+  border:1px solid var(--admin-athletic-line, rgba(212,175,55,.25)) !important;
+  background:var(--admin-athletic-panel, #0b0c0a) !important;
   box-shadow:
-    0 0 0 5px rgba(212,175,55,.035),
-    0 10px 26px rgba(0,0,0,.28),
-    0 0 22px rgba(212,175,55,.10) !important;
+    0 0 0 5px color-mix(in srgb, var(--admin-athletic-gold) 4%, transparent),
+    0 10px 26px rgba(0,0,0,.18),
+    0 0 22px color-mix(in srgb, var(--admin-athletic-gold) 10%, transparent) !important;
 }
 
 .portal-shell .portal-sidebar .portal-brand > img.official-logo.portal-brand-logo {

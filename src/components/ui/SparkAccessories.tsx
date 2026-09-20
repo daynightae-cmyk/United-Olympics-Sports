@@ -32,6 +32,7 @@ import {
   useRef,
   useCallback,
 } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   ChevronLeft,
   X,
@@ -130,6 +131,7 @@ export function SparkBreadcrumbs({ items, className = '' }: SparkBreadcrumbsProp
       {items.map((item, idx) => {
         const isLast = idx === items.length - 1;
         const key = `bc-${idx}`;
+        const isExternal = item.href ? /^https?:\/\//.test(item.href) : false;
         return (
           <span key={key} style={{ display: 'contents' }}>
             {idx > 0 && (
@@ -140,9 +142,15 @@ export function SparkBreadcrumbs({ items, className = '' }: SparkBreadcrumbsProp
                 <BilingualText value={item.label} />
               </span>
             ) : item.href ? (
-              <a href={item.href}>
-                <BilingualText value={item.label} />
-              </a>
+              isExternal ? (
+                <a href={item.href} target="_blank" rel="noopener noreferrer">
+                  <BilingualText value={item.label} />
+                </a>
+              ) : (
+                <Link to={item.href}>
+                  <BilingualText value={item.label} />
+                </Link>
+              )
             ) : (
               <button type="button" onClick={item.onClick}>
                 <BilingualText value={item.label} />
@@ -170,16 +178,37 @@ export function SparkBack({
   href,
   className = '',
 }: SparkBackProps) {
-  const Tag = href ? 'a' : 'button';
+  const navigate = useNavigate();
+  const isExternal = href ? /^https?:\/\//.test(href) : false;
+  const ariaText = typeof label === 'object' ? `${label.en} | ${label.ar}` : label;
+
+  if (href) {
+    if (isExternal) {
+      return (
+        <a href={href} className={`spark-back ${className}`.trim()} aria-label={ariaText}>
+          <ChevronLeft size={16} aria-hidden="true" />
+          <BilingualText value={label} />
+        </a>
+      );
+    }
+    return (
+      <Link to={href} className={`spark-back ${className}`.trim()} aria-label={ariaText}>
+        <ChevronLeft size={16} aria-hidden="true" />
+        <BilingualText value={label} />
+      </Link>
+    );
+  }
+
   return (
-    <Tag
-      {...(href ? { href } : { type: 'button' as const, onClick })}
+    <button
+      type="button"
+      onClick={onClick ?? (() => navigate(-1))}
       className={`spark-back ${className}`.trim()}
-      aria-label={`${typeof label === 'object' ? label.en : label} | ${typeof label === 'object' ? label.ar : label}`}
+      aria-label={ariaText}
     >
       <ChevronLeft size={16} aria-hidden="true" />
       <BilingualText value={label} />
-    </Tag>
+    </button>
   );
 }
 
@@ -332,26 +361,26 @@ export interface SparkFilterPillProps {
 }
 export function SparkFilterPill({ label, active, onRemove, onClick, className = '' }: SparkFilterPillProps) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`spark-filter-pill ${active ? 'active' : ''} ${className}`.trim()}
-      aria-pressed={active}
-    >
-      <BilingualText value={label} />
+    <span className={`spark-filter-pill-wrap ${active ? 'active' : ''} ${className}`.trim()}>
+      <button
+        type="button"
+        onClick={onClick}
+        className={`spark-filter-pill ${active ? 'active' : ''}`}
+        aria-pressed={active}
+      >
+        <BilingualText value={label} />
+      </button>
       {onRemove && (
-        <span
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
           className="spark-filter-pill-remove"
           onClick={(e) => { e.stopPropagation(); onRemove(); }}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); onRemove(); } }}
           aria-label={`Remove filter: ${typeof label === 'object' ? label.en : label} | إزالة الفلتر`}
         >
-          <X size={10} />
-        </span>
+          <X size={11} aria-hidden="true" />
+        </button>
       )}
-    </button>
+    </span>
   );
 }
 
@@ -369,7 +398,7 @@ export function SparkFilterBar({ onReset, children, className = '' }: SparkFilte
       {children}
       {onReset && (
         <button type="button" className="spark-filter-reset" onClick={onReset}>
-          <X size={13} />
+          <X size={13} aria-hidden="true" />
           <BilingualText value={bi('Clear', 'مسح')} />
         </button>
       )}
@@ -485,21 +514,18 @@ export function SparkPageHero({ title, description, actions, meta, className = '
   return (
     <div className={`spark-page-hero ${className}`.trim()}>
       <h1 className="spark-page-hero-title">
-        {typeof title === 'object' ? title.en : title}
+        <BilingualText value={title} />
       </h1>
-      {typeof title === 'object' && title.ar && (
-        <p className="spark-page-hero-ar" dir="rtl" lang="ar">{title.ar}</p>
-      )}
       {description && (
         <p className="spark-page-hero-description">
-          {typeof description === 'object' ? description.en : description}
+          <BilingualText value={description} />
         </p>
       )}
       {meta && meta.length > 0 && (
         <div className="spark-page-hero-meta">
           {meta.map(({ icon: Icon, label, value }, idx) => (
             <span key={idx} className="spark-page-hero-meta-item">
-              {Icon && <Icon size={14} />}
+              {Icon && <Icon size={14} aria-hidden="true" />}
               <BilingualText value={label} />
               <strong><BilingualText value={value} /></strong>
             </span>
@@ -560,7 +586,7 @@ export function SparkMetricCard({ value, label, delta, icon: Icon, className = '
           </span>
         )}
       </div>
-      <div className="spark-metric-value" aria-label={typeof label === 'object' ? label.en : label}>
+      <div className="spark-metric-value" aria-label={typeof label === 'object' ? `${label.en} | ${label.ar}` : label}>
         {value}
       </div>
       <div className="spark-metric-label">
@@ -574,6 +600,7 @@ export function SparkMetricCard({ value, label, delta, icon: Icon, className = '
 //  Form Section Card
 // ─────────────────────────────────────────────────────────────────────────────
 export interface SparkFormSectionProps {
+  id?: string;
   icon?: ComponentType<{ size?: number }>;
   title: BilingualValue;
   helper?: BilingualValue;
@@ -581,23 +608,29 @@ export interface SparkFormSectionProps {
   actions?: ReactNode;
   className?: string;
 }
-export function SparkFormSection({ icon: Icon, title, helper, children, actions, className = '' }: SparkFormSectionProps) {
+export function SparkFormSection({ id, icon: Icon, title, helper, children, actions, className = '' }: SparkFormSectionProps) {
+  const headingId = id ? `${id}-heading` : undefined;
   return (
-    <fieldset className={`spark-form-section ${className}`.trim()} style={{ border: 'none', padding: 0, margin: 0 }}>
-      <legend style={{ display: 'contents' }}>
-        <div className="spark-form-section-header">
-          {Icon && <SparkIconCapsule icon={Icon} size="md" />}
-          <div className="spark-form-section-title">
-            <strong><BilingualText value={title} /></strong>
-            {helper && (
-              <small><BilingualText value={helper} /></small>
-            )}
-          </div>
-          {actions && <div style={{ marginInlineStart: 'auto' }}>{actions}</div>}
+    <section
+      className={`spark-form-section ${className}`.trim()}
+      aria-labelledby={headingId}
+    >
+      <div className="spark-form-section-header">
+        {Icon && <SparkIconCapsule icon={Icon} size="md" />}
+        <div className="spark-form-section-title">
+          <h2 id={headingId} style={{ margin: 0, fontSize: 'inherit', fontWeight: 800 }}>
+            <BilingualText value={title} />
+          </h2>
+          {helper && (
+            <p style={{ margin: '4px 0 0', fontSize: '11px', color: 'var(--color-text-muted)' }}>
+              <BilingualText value={helper} />
+            </p>
+          )}
         </div>
-      </legend>
+        {actions && <div style={{ marginInlineStart: 'auto' }}>{actions}</div>}
+      </div>
       <div className="spark-form-section-body">{children}</div>
-    </fieldset>
+    </section>
   );
 }
 
@@ -665,10 +698,12 @@ export function SparkSkeletonTableRow() {
 // ─────────────────────────────────────────────────────────────────────────────
 //  Notification Badge
 // ─────────────────────────────────────────────────────────────────────────────
-export function SparkNotifBadge({ count }: { count: number }) {
+export function SparkNotifBadge({ count, label }: { count: number; label?: BilingualValue }) {
   if (count <= 0) return null;
+  const defaultLabel = bi(`${count} unread notifications`, `${count} إشعارات غير مقروءة`);
+  const ariaText = typeof label === 'object' ? `${label.en} | ${label.ar}` : label ?? `${defaultLabel.en} | ${defaultLabel.ar}`;
   return (
-    <span className="spark-notif-badge" aria-label={`${count} unread notifications`}>
+    <span className="spark-notif-badge" aria-label={ariaText}>
       {count > 99 ? '99+' : count}
     </span>
   );
@@ -683,35 +718,80 @@ export interface SparkCardProps {
   className?: string;
   children: ReactNode;
   onClick?: () => void;
+  to?: string;
 }
-export function SparkCard({ interactive = false, hoverLight = false, className = '', children, onClick }: SparkCardProps) {
+export function SparkCard({
+  interactive = false,
+  hoverLight = false,
+  className = '',
+  children,
+  onClick,
+  to,
+}: SparkCardProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const rafId = useRef<number | null>(null);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!hoverLight || !ref.current) return;
-    const rect = ref.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    ref.current.style.setProperty('--spark-mx', `${x}%`);
-    ref.current.style.setProperty('--spark-my', `${y}%`);
+    if (typeof window !== 'undefined') {
+      if (!window.matchMedia('(pointer: fine)').matches) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    }
+    const clientX = e.clientX;
+    const clientY = e.clientY;
+    if (rafId.current) cancelAnimationFrame(rafId.current);
+    rafId.current = requestAnimationFrame(() => {
+      if (!ref.current) return;
+      const rect = ref.current.getBoundingClientRect();
+      const x = ((clientX - rect.left) / rect.width) * 100;
+      const y = ((clientY - rect.top) / rect.height) * 100;
+      ref.current.style.setProperty('--spark-mx', `${x}%`);
+      ref.current.style.setProperty('--spark-my', `${y}%`);
+    });
   }, [hoverLight]);
 
   const handleMouseLeave = useCallback(() => {
     if (!hoverLight || !ref.current) return;
+    if (rafId.current) cancelAnimationFrame(rafId.current);
     ref.current.style.setProperty('--spark-mx', '50%');
     ref.current.style.setProperty('--spark-my', '50%');
   }, [hoverLight]);
 
+  const isClickable = Boolean(onClick || to);
+  const isInteractive = interactive || isClickable;
+  const cardClasses = `spark-card ${isInteractive ? 'spark-card-interactive' : ''} ${hoverLight ? 'spark-card-light' : ''} ${className}`.trim();
+
+  if (to) {
+    return (
+      <Link
+        to={to}
+        className={cardClasses}
+        style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}
+      >
+        {children}
+      </Link>
+    );
+  }
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        className={cardClasses}
+        onClick={onClick}
+        style={{ width: '100%', textAlign: 'start', font: 'inherit', color: 'inherit', background: 'var(--color-surface-1)' }}
+      >
+        {children}
+      </button>
+    );
+  }
+
   return (
     <div
       ref={ref}
-      className={`spark-card ${interactive ? 'spark-card-interactive' : ''} ${hoverLight ? 'spark-card-light' : ''} ${className}`.trim()}
-      onClick={onClick}
+      className={cardClasses}
       onMouseMove={hoverLight ? handleMouseMove : undefined}
       onMouseLeave={hoverLight ? handleMouseLeave : undefined}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') onClick(); } : undefined}
     >
       {children}
     </div>
@@ -740,11 +820,20 @@ export interface SparkActionProps {
 export function SparkAction({ label, onClick, href, icon: Icon, variant = 'secondary', disabled, type = 'button' }: SparkActionProps) {
   const cls = `spark-action-${variant}`;
   if (href) {
+    const isExternal = /^https?:\/\//.test(href);
+    if (isExternal) {
+      return (
+        <a href={href} className={cls} target="_blank" rel="noopener noreferrer">
+          {Icon && <Icon size={15} />}
+          <BilingualText value={label} />
+        </a>
+      );
+    }
     return (
-      <a href={href} className={cls}>
+      <Link to={href} className={cls}>
         {Icon && <Icon size={15} />}
         <BilingualText value={label} />
-      </a>
+      </Link>
     );
   }
   return (

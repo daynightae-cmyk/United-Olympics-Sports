@@ -37,9 +37,6 @@ import './styles/passkey-auth.css';
 import './styles/store-login-reference.css';
 import './styles/portal-shell-structure-final.css';
 import './styles/spark-accessories.css';
-import './styles/spark-day-mode-elevations.css';
-import './styles/spark-portal-day-mode.css';
-import './styles/spark-athlete-day-mode.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -3,19 +3,19 @@
    standardising spacing, cards, forms, dialogs, responsive behaviour and RTL. */
 
 #player-portal-shell {
-  --player-panel: rgba(255,255,255,.045);
-  --player-panel-strong: rgba(255,255,255,.072);
-  --player-line: rgba(255,255,255,.10);
-  --player-line-gold: rgba(212,175,55,.30);
-  --player-gold: #d4af37;
-  --player-gold-soft: #f2d675;
-  --player-muted: #8f9bad;
+  --player-panel: var(--uos-surface-1, rgba(255,255,255,.045));
+  --player-panel-strong: var(--uos-surface-2, rgba(255,255,255,.072));
+  --player-line: var(--uos-border, rgba(255,255,255,.10));
+  --player-line-gold: color-mix(in srgb, var(--uos-brand, #d4af37) 30%, transparent);
+  --player-gold: var(--uos-brand, #d4af37);
+  --player-gold-soft: var(--uos-brand-soft, #f2d675);
+  --player-muted: var(--uos-text-muted, #8f9bad);
   --player-radius: 22px;
   min-height: 100dvh;
   background:
-    radial-gradient(circle at 78% 3%, rgba(212,175,55,.07), transparent 34rem),
+    radial-gradient(circle at 78% 3%, color-mix(in srgb, var(--uos-brand, #d4af37) 7%, transparent), transparent 34rem),
     radial-gradient(circle at 10% 90%, rgba(37,99,235,.055), transparent 30rem),
-    #07090e;
+    var(--uos-canvas, #07090e);
 }
 
 #athlete-content-area > [id^="player-"] {

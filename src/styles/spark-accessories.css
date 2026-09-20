@@ -421,6 +421,29 @@
   gap: 8px;
   flex-wrap: wrap;
 }
+.spark-filter-pill-wrap {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-1);
+  transition: all var(--uos-motion-fast, 140ms) ease;
+}
+.spark-filter-pill-wrap:hover {
+  border-color: var(--color-brand);
+}
+.spark-filter-pill-wrap.active {
+  background: var(--spark-pill-active);
+  border-color: var(--spark-pill-active-border);
+}
+.spark-filter-pill-wrap .spark-filter-pill {
+  border: none;
+  background: transparent;
+  padding: 6px 8px 6px 12px;
+}
+.spark-filter-pill-wrap .spark-filter-pill-remove {
+  margin-inline-end: 6px;
+}
 .spark-filter-pill {
   display: inline-flex;
   align-items: center;
@@ -1344,19 +1367,6 @@
 }
 
 /* ==========================================================================
-   AUTOFILL OVERRIDE — keeps form fills readable in both modes
-   ========================================================================== */
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active {
-  -webkit-text-fill-color: var(--color-text-primary) !important;
-  -webkit-box-shadow: 0 0 0 1000px var(--color-surface-1) inset !important;
-  caret-color: var(--color-text-primary);
-  transition: background-color 9999s ease-in-out 0s !important;
-}
-
-/* ==========================================================================
    DRAWER HANDLE (mobile)
    ========================================================================== */
 .spark-drawer-handle {
@@ -1384,29 +1394,6 @@ input:-webkit-autofill:active {
   text-transform: uppercase;
   letter-spacing: 0.10em;
   padding: 2px 7px;
-}
-
-/* ==========================================================================
-   SCROLLBAR STYLING (subtle)
-   ========================================================================== */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--color-text-muted) 35%, transparent);
-  border-radius: 999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--color-text-muted) 55%, transparent);
-}
-/* Firefox */
-* { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--color-text-muted) 35%, transparent) transparent; }
-
-/* ==========================================================================
-   FOCUS VISIBLE global override — themed gold ring
-   ========================================================================== */
-:where(a, button, input, textarea, select, [tabindex]):focus-visible {
-  outline: 2px solid var(--color-brand-strong) !important;
-  outline-offset: 2px;
 }
 
 /* ==========================================================================

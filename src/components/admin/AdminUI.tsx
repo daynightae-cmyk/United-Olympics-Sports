@@ -4,12 +4,82 @@ import type { ReactNode } from 'react';
 import type { BilingualText as BilingualValue } from '../../domain/contracts';
 import { BilingualText, bi } from '../bilingual/BilingualText';
 
-export function PageHeader({ eyebrow, title, description, actions, icon: Icon }: { eyebrow: BilingualValue; title: BilingualValue; description: BilingualValue; actions?: ReactNode; icon?: LucideIcon }) {
-  return <div className="admin-page-header"><div className="admin-page-header-copy">{Icon && <span className="section-icon admin-page-header-icon" aria-hidden="true"><Icon /></span>}<div><BilingualText value={eyebrow} className="admin-eyebrow" /><h1><BilingualText value={title} /></h1><p><BilingualText value={description} /></p></div></div>{actions && <div className="page-actions">{actions}</div>}</div>;
+export function PageHeader({
+  eyebrow,
+  title,
+  description,
+  actions,
+  icon: Icon,
+  meta,
+}: {
+  eyebrow: BilingualValue;
+  title: BilingualValue;
+  description: BilingualValue;
+  actions?: ReactNode;
+  icon?: LucideIcon;
+  meta?: Array<{ icon?: LucideIcon; label: BilingualValue; value: BilingualValue }>;
+}) {
+  return (
+    <div className="admin-page-header spark-top-edge">
+      <div className="admin-page-header-copy">
+        {Icon && <span className="section-icon admin-page-header-icon" aria-hidden="true"><Icon /></span>}
+        <div>
+          <BilingualText value={eyebrow} className="admin-eyebrow" />
+          <h1><BilingualText value={title} /></h1>
+          <p><BilingualText value={description} /></p>
+          {meta && meta.length > 0 && (
+            <div className="spark-page-hero-meta" style={{ marginTop: '14px' }}>
+              {meta.map(({ icon: MetaIcon, label, value }, idx) => (
+                <span key={idx} className="spark-page-hero-meta-item">
+                  {MetaIcon && <MetaIcon size={14} aria-hidden="true" />}
+                  <BilingualText value={label} />
+                  <strong><BilingualText value={value} /></strong>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      {actions && <div className="page-actions">{actions}</div>}
+    </div>
+  );
 }
 
-export function StatCard({ label, value, icon: Icon, note }: { label: BilingualValue; value: string | number; icon: LucideIcon; note?: BilingualValue }) {
-  return <article className="admin-stat-card"><div className="stat-icon"><Icon /></div><div><BilingualText value={label} /><strong>{value}</strong>{note && <BilingualText value={note} className="stat-note" />}</div></article>;
+export function StatCard({
+  label,
+  value,
+  icon: Icon,
+  note,
+  delta,
+}: {
+  label: BilingualValue;
+  value: string | number;
+  icon: LucideIcon;
+  note?: BilingualValue;
+  delta?: { value: string; direction: 'up' | 'down' | 'neutral' };
+}) {
+  return (
+    <article className="admin-stat-card spark-top-edge">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="stat-icon"><Icon size={16} /></div>
+        {delta && delta.direction !== 'neutral' && (
+          <span className={`spark-metric-delta ${delta.direction}`}>
+            {delta.direction === 'up' ? (
+              <ArrowUpRight size={12} aria-hidden="true" />
+            ) : (
+              <ArrowDownRight size={12} aria-hidden="true" />
+            )}
+            {delta.value}
+          </span>
+        )}
+      </div>
+      <div>
+        <BilingualText value={label} />
+        <strong>{value}</strong>
+        {note && <BilingualText value={note} className="stat-note" />}
+      </div>
+    </article>
+  );
 }
 
 export function StatusBadge({ active = true }: { active?: boolean }) { return <span className={`status-badge ${active ? 'active' : 'inactive'}`}><span /><BilingualText value={active ? bi('Active', 'نشط') : bi('Inactive', 'غير نشط')} /></span>; }
