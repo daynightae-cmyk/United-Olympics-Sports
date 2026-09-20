@@ -21,8 +21,6 @@ import './styles/admin-directory-v2.css';
 import './styles/uos-benchmark.css';
 import './styles/player-portal.css';
 import './styles/portal-unification.css';
-import './styles/portal-auth.css';
-import './styles/passkey-auth.css';
 import './styles/product-theme-unification.css';
 import './styles/product-rhythm-unification.css';
 import './styles/portal-visual-proof-closure.css';
@@ -34,6 +32,8 @@ import './styles/coach-portal-final.css';
 import './styles/portal-athletic-cards-final.css';
 import './styles/admin-athletic-final.css';
 import './styles/portal-interior-delivery-final.css';
+import './styles/portal-auth.css';
+import './styles/passkey-auth.css';
 import './styles/store-login-reference.css';
 import './styles/portal-shell-structure-final.css';
 

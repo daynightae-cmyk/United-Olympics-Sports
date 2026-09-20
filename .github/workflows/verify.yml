@@ -210,6 +210,12 @@ jobs:
           UOS_BASE_URL: http://127.0.0.1:4173
         run: node qa/production-runtime-smoke.mjs
 
+      - name: Production Portal Soul authentication proof
+        env:
+          UOS_BASE_URL: http://127.0.0.1:4173
+          UOS_SOUL_MODE: auth
+        run: node qa/portal-soul-closure.mjs
+
       - name: Stop ordinary production preview
         if: always()
         shell: bash
@@ -243,6 +249,7 @@ jobs:
       - name: Portal Soul auth and visual closure
         env:
           UOS_BASE_URL: http://127.0.0.1:4173
+          UOS_SOUL_MODE: internal
         run: node qa/portal-soul-closure.mjs
 
       - name: Stop QA production preview
