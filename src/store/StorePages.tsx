@@ -21,6 +21,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent, type RefObject } 
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useStore } from './StoreContext';
+import { VerifiedMediaShowcase } from './components/collections/VerifiedMediaShowcase';
 import {
   CategoryRail,
   DirectionArrow,
@@ -68,7 +69,7 @@ export function CatalogPage({ categoriesOnly = false, fixedCategory }: { categor
       <button type="button" className={view === 'grid' ? 'is-active' : ''} onClick={() => setView('grid')} aria-pressed={view === 'grid'} aria-label="Grid view | عرض شبكي"><Grid2X2 /></button>
       <button type="button" className={view === 'list' ? 'is-active' : ''} onClick={() => setView('list')} aria-pressed={view === 'list'} aria-label="List view | عرض قائمة"><List /></button>
     </div>
-    <div className="store-catalog-layout"><FilterPanel selected={selected} onSelect={selectCategory} /><section><ProductGrid products={filtered} layout={view} /></section></div>
+    <div className="store-catalog-layout"><FilterPanel selected={selected} onSelect={selectCategory} /><section>{products.length ? <ProductGrid products={filtered} layout={view} /> : <VerifiedMediaShowcase compact />}</section></div>
     {filtersOpen && <div className="store-filter-layer" role="dialog" aria-modal="true" aria-label="Product filters | تصفية المنتجات"><button className="store-drawer-backdrop" type="button" aria-label="Close filters | إغلاق التصفية" onClick={() => setFiltersOpen(false)} /><FilterPanel panelRef={filterRef} selected={selected} onSelect={selectCategory} onClose={() => setFiltersOpen(false)} /></div>}
   </div>;
 }

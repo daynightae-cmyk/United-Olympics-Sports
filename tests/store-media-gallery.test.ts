@@ -49,6 +49,12 @@ async function runStoreMediaGalleryTests() {
     }
   }
 
+  const showcaseSource = fs.readFileSync(path.join(repoRoot, 'src/store/components/collections/VerifiedMediaShowcase.tsx'), 'utf8');
+  assert(showcaseSource.includes('APPROVED_PRODUCT_MEDIA'), 'production showcase must be sourced from the approved media registry');
+  assert(!showcaseSource.includes('<ProductPrice'), 'production showcase must not invent or render prices');
+  assert(!showcaseSource.includes('addToCart'), 'production showcase must not imply purchasable inventory without a live catalog');
+  assert(showcaseSource.includes('Catalog connection pending'), 'showcase must disclose that live catalog connection is pending');
+
   const goggles = applyVerifiedProductMedia(product('elite-hydro-pro-goggles'));
   assert.equal(goggles.image, '/media/products/approved/08-goggles-black-studio.webp');
   assert.equal(goggles.gallery?.length, 3);

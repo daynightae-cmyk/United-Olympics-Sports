@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, BadgeCheck, Headphones, RotateCcw, ShieldCheck, Trophy, Truck } from 'lucide-react';
 import { useStore } from '../../StoreContext';
-import { DirectionArrow, ProductGrid, ProductMedia, ProductPrice, StoreCopy, StoreState } from '../../StoreComponents';
+import { DirectionArrow, ProductGrid, ProductMedia, ProductPrice, StoreCopy } from '../../StoreComponents';
 import type { StoreProduct } from '../../storeTypes';
+import { VerifiedMediaShowcase } from './VerifiedMediaShowcase';
 
 function productFor(products: StoreProduct[], category: string, offset = 0) {
   return products.filter((product) => product.category === category)[offset];
@@ -60,7 +61,7 @@ export function StoreHomePage() {
       <Link className="store-reference-category-all" to="/store/categories"><span>+</span><StoreCopy value={{ en: 'VIEW ALL', ar: 'عرض الكل' }} /></Link>
     </nav>
 
-    {!products.length && <div className="store-page-pad"><StoreState kind="unavailable" title={{ en: 'Production catalog not connected', ar: 'كتالوج الإنتاج غير متصل' }} description={{ en: 'Inventory and pricing are not available yet. The retail shell remains ready for the verified catalog.', ar: 'المخزون والأسعار غير متاحين بعد. واجهة المتجر جاهزة للكتالوج الموثق.' }} /></div>}
+    {!products.length && <VerifiedMediaShowcase />}
 
     <section className="store-reference-feature-row">
       <Link to="/store/category/swimming" className="store-reference-feature-card">
