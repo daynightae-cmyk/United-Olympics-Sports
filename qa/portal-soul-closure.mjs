@@ -170,8 +170,30 @@ try {
       const response = await page.goto(`${baseURL}${entry.route}`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
       assert.ok(!response || response.status() < 400, `${entry.route}: HTTP ${response?.status()}`);
       await waitForApp(page);
-      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-      assert.ok(overflow <= 2, `${entry.route}: ${overflow}px horizontal overflow`);
+      assert.equal(new URL(page.url()).pathname.replace(/\/$/, '') || '/', entry.route.replace(/\/$/, '') || '/', `${entry.route}: authenticated preview navigation changed unexpectedly`);
+      const internalProof = await page.evaluate((portal) => {
+        const overflow = document.documentElement.scrollWidth - document.documentElement.clientWidth;
+        if (portal !== 'player') return { overflow };
+        const shell = document.querySelector('#player-portal-shell');
+        const card = document.querySelector('#player-portal-shell .athlete-glass-card');
+        const title = document.querySelector('#player-portal-shell .athlete-overview-title');
+        return {
+          overflow,
+          shellBackground: shell ? getComputedStyle(shell).backgroundColor : '',
+          cardBackground: card ? getComputedStyle(card).backgroundColor : '',
+          titleColor: title ? getComputedStyle(title).color : '',
+        };
+      }, entry.portal);
+      assert.ok(internalProof.overflow <= 2, `${entry.route}: ${internalProof.overflow}px horizontal overflow`);
+      if (entry.portal === 'player') {
+        assert.ok(internalProof.shellBackground, 'Player workspace shell missing');
+        assert.ok(internalProof.cardBackground, 'Player workspace card missing');
+        if (theme === 'light') {
+          assert.match(internalProof.shellBackground, /rgb\((?:246, 247, 249|251, 250, 247|243, 241, 235)\)/, 'Player Light shell must be a genuinely light surface');
+          assert.match(internalProof.cardBackground, /rgb\((?:255, 253, 249|255, 255, 255)\)/, 'Player Light cards must remain light');
+          assert.match(internalProof.titleColor, /rgb\((?:23, 32, 51|15, 23, 42)\)/, 'Player Light title must use dark readable ink');
+        }
+      }
       assert.deepEqual(runtimeErrors, [], `${entry.route}: runtime errors`);
       await page.screenshot({ path: path.join(outputDir, `${entry.portal}-home-1440-${theme}.png`), fullPage: true });
       await context.close();
