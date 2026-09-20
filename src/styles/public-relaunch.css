@@ -413,3 +413,43 @@
   .uos-program-detail-split article { min-height:220px; padding:24px; }
   .uos-program-availability { padding:18px; }
 }
+
+
+/* === MOBILE DRAWER VIEWPORT ISOLATION · 2026-09-20 === */
+@media (max-width: 980px) {
+  .uos-site-header.mobile-menu-open {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    filter: none !important;
+    transform: none !important;
+    perspective: none !important;
+    contain: none !important;
+  }
+
+  .uos-site-header.mobile-menu-open .uos-drawer-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    z-index: 9998 !important;
+    overscroll-behavior: contain;
+  }
+
+  .uos-site-header.mobile-menu-open .uos-mobile-drawer {
+    position: fixed !important;
+    inset-block: 0 !important;
+    inset-inline-start: 0 !important;
+    width: min(390px, 92vw) !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    z-index: 9999 !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
+
+  .uos-public[dir="rtl"] .uos-site-header.mobile-menu-open .uos-mobile-drawer {
+    inset-inline-start: auto !important;
+    inset-inline-end: 0 !important;
+  }
+}
