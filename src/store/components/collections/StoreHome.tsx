@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, BadgeCheck, Headphones, RotateCcw, ShieldCheck, Trophy, Truck } from 'lucide-react';
 import { useStore } from '../../StoreContext';
-import { DirectionArrow, ProductGrid, ProductMedia, ProductPrice, StoreCopy, StoreState } from '../../StoreComponents';
+import { DirectionArrow, ProductGrid, ProductMedia, ProductPrice, StoreCopy } from '../../StoreComponents';
 import type { StoreProduct } from '../../storeTypes';
 import { VerifiedMediaShowcase } from './VerifiedMediaShowcase';
 
