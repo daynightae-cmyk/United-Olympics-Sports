@@ -112,7 +112,7 @@ html[data-theme='dark'] .store-reference-header,
   min-height:104px;
   padding:14px clamp(24px,4vw,72px);
   display:grid;
-  grid-template-columns:minmax(230px,320px) minmax(320px,1fr) auto;
+  grid-template-columns:minmax(230px,320px) auto minmax(320px,1fr) auto;
   align-items:center;
   gap:36px;
   background:var(--ref-panel) !important;

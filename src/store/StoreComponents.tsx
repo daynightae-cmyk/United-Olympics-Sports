@@ -25,6 +25,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import type { BilingualText as BilingualValue } from '../domain/contracts';
 import { ThemeToggle } from '../components/ui/ThemeToggle';
+import { PortalUtilityNav } from '../components/navigation/PortalUtilityNav';
 import { useStore } from './StoreContext';
 import type { StoreCategory, StoreProduct } from './storeTypes';
 
@@ -74,10 +75,29 @@ export function StoreHeader() {
     return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('pointerdown', onPointer); };
   }, []);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+    const header = headerRef.current;
+    if (!header) return;
+    const previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const syncMobileNavTop = () => header.style.setProperty('--store-mobile-nav-top', `${Math.ceil(header.getBoundingClientRect().bottom)}px`);
+    syncMobileNavTop();
+    const observer = new ResizeObserver(syncMobileNavTop);
+    observer.observe(header);
+    window.addEventListener('resize', syncMobileNavTop);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', syncMobileNavTop);
+      header.style.removeProperty('--store-mobile-nav-top');
+      document.body.style.overflow = previousBodyOverflow;
+    };
+  }, [menuOpen]);
+
   const submitSearch = () => { if (query.trim()) { navigate(`/store/search?q=${encodeURIComponent(query.trim())}`); setSearchOpen(false); setMenuOpen(false); } };
   const closeNavigation = () => { setMegaOpen(false); setMenuOpen(false); };
 
-  return <header className="store-header store-reference-header" ref={headerRef}>
+  return <header className={`store-header store-reference-header ${menuOpen ? 'mobile-menu-open' : ''}`} ref={headerRef}>
     <div className="store-announcement store-reference-topbar">
       <div className="store-topbar-language"><button type="button" onClick={() => setLocale(locale === 'en' ? 'ar' : 'en')}>{locale === 'en' ? 'English  /  العربية' : 'العربية  /  English'}</button></div>
       <strong><StoreCopy value={{ en: 'OFFICIAL UNITED OLYMPICS SPORTS STORE', ar: 'المتجر الرسمي ليونايتد أوليمبيكس سبورت' }} inline /></strong>
@@ -87,6 +107,7 @@ export function StoreHeader() {
     <div className="store-main-header store-reference-mainbar">
       <button type="button" className="store-mobile-menu" onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen} aria-label="Store menu | قائمة المتجر">{menuOpen ? <X /> : <Menu />}</button>
       <Link to="/store" className="store-brand store-reference-brand"><img src="/brand/united-olympics-sports-logo.png" alt="United Olympics Sports | يونايتد أوليمبيكس سبورت" /><span><strong>UNITED OLYMPICS</strong><em>SPORT</em><small lang="ar" dir="rtl">يونايتد أوليمبيكس سبورت</small></span></Link>
+      <PortalUtilityNav homeTo="/store" compact />
 
       <div className="store-search-wrap store-reference-search-wrap" ref={searchWrapRef} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setSearchOpen(false); }}>
         <form className="store-search store-reference-search" role="search" onSubmit={(event) => { event.preventDefault(); submitSearch(); }}>

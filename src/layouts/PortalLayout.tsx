@@ -8,6 +8,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { BilingualText, bi } from '../components/bilingual/BilingualText';
 import { ThemeToggle } from '../components/ui/ThemeToggle';
 import { LanguageOrderToggle } from '../components/ui/LanguageOrderToggle';
+import { PortalUtilityNav } from '../components/navigation/PortalUtilityNav';
 import type { BilingualText as BilingualValue } from '../domain/contracts';
 import '../styles/admin.css';
 import '../styles/portal-shell.css';
@@ -97,6 +98,7 @@ export function PortalLayout({ portal, children }: { portal: PortalKind; childre
       <header className="portal-topbar">
         <button type="button" className="portal-icon-button portal-mobile-only" onClick={() => setOpen(true)} aria-label="Open navigation | فتح القائمة"><Menu /></button>
         <div><small><BilingualText value={meta.title} /></small><strong><BilingualText value={current.label} /></strong></div>
+        <PortalUtilityNav homeTo={portal === 'coach' ? '/coach/home' : base} compact />
         <span className="portal-preview-badge"><span /><BilingualText value={bi('Preview Data', 'بيانات تجريبية')} /></span>
         <LanguageOrderToggle compact />
         <ThemeToggle compact />
