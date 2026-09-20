@@ -58,3 +58,19 @@ html[data-theme=dark] .store-shell{--store-canvas:#07080b;--store-surface:#0d111
 @media(max-width:768px){
   .store-main-header>.portal-utility-nav{justify-self:end}
 }
+
+
+/* === STORE MOBILE TRIGGER VISIBILITY HARDENING · 2026-09-20 === */
+@media(max-width:1024px){
+  .store-main-header .store-mobile-menu{
+    display:grid !important;
+    visibility:visible !important;
+    opacity:1 !important;
+    pointer-events:auto !important;
+  }
+}
+@media(min-width:1025px){
+  .store-main-header .store-mobile-menu{
+    display:none !important;
+  }
+}
