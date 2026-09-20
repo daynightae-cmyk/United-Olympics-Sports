@@ -306,7 +306,7 @@
   grid-column:1/-1;
   align-self:end;
   margin-top:12px;
-  color:#f4efe5;
+  color:var(--admin-athletic-text, var(--uos-text-primary, #f4efe5));
   font-size:clamp(26px,2.8vw,36px);
   line-height:1;
 }
@@ -1071,6 +1071,7 @@ html[data-theme='light'] .admin-shell :where(
 html[data-theme='light'] .admin-shell :where(
   .admin-command-hero h1,
   .admin-stat-card strong,
+  .admin-command-metric strong,
   .admin-panel h2,
   .directory-card h2,
   .organization-card h2,

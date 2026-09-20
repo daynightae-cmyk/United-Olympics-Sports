@@ -47,6 +47,8 @@ html[data-theme='light'] .portal-parent{--parent-bg:#f6f1e7;--parent-panel:rgba(
 }
 
 .portal-parent .parent-family-hero {
+  display:flex;
+  flex-direction:column;
   padding:clamp(22px,2.8vw,34px);
   border-radius:28px;
   overflow:hidden;
@@ -97,7 +99,13 @@ html[data-theme='light'] .portal-parent{--parent-bg:#f6f1e7;--parent-panel:rgba(
 }
 
 .portal-parent .parent-family-metrics {
+  width:100%;
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
   gap:12px;
+  margin-top:20px;
+  padding-top:18px;
+  border-top:1px solid var(--parent-line);
 }
 
 .portal-parent .parent-family-metric {
@@ -461,13 +469,35 @@ html[data-theme='light'] .portal-parent .parent-athlete-signal > strong {
 }
 
 html[data-theme='light'] .portal-parent .parent-athlete-signal,
-html[data-theme='light'] .portal-parent .parent-field {
+html[data-theme='light'] .portal-parent .parent-field,
+html[data-theme='light'] .portal-parent .parent-family-metric {
   background:rgba(15,23,42,.025);
+  border-color:rgba(30,41,59,.11);
+}
+
+html[data-theme='light'] .portal-parent .parent-family-metric strong {
+  color:#172033;
+}
+
+html[data-theme='light'] .portal-parent .parent-family-metric > span:nth-child(2) {
+  color:#5f5a51;
 }
 
 @media(max-width:1180px) {
   .portal-parent .parent-athlete-signals {
     grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:900px) {
+  .portal-parent .parent-family-metrics {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:500px) {
+  .portal-parent .parent-family-metrics {
+    grid-template-columns:1fr;
   }
 }
 
