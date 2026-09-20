@@ -691,10 +691,75 @@ async function runResponsiveSweep() {
   }
 }
 
+async function runMobileNavigationProof() {
+  const browser = await chromium.launch({ headless: true });
+  const context = await createCheckedContext(browser, { viewport: { width: 390, height: 844 } });
+  const { page, runtimeErrors } = await createCheckedPageInContext(context);
+  try {
+    await assertRoute(page, runtimeErrors, '/');
+    await page.locator('#uos-mobile-menu-trigger').click();
+    await page.locator('#uos-mobile-drawer.is-open').waitFor({ state: 'visible', timeout: 5_000 });
+    const publicProof = await page.evaluate(() => {
+      const drawer = document.querySelector('#uos-mobile-drawer');
+      const backdrop = document.querySelector('#uos-drawer-backdrop-overlay');
+      const drawerRect = drawer?.getBoundingClientRect();
+      return {
+        drawerPosition: drawer ? getComputedStyle(drawer).position : null,
+        backdropPosition: backdrop ? getComputedStyle(backdrop).position : null,
+        drawerTop: drawerRect?.top ?? null,
+        drawerBottom: drawerRect?.bottom ?? null,
+        viewportHeight: window.innerHeight,
+        bodyOverflow: getComputedStyle(document.body).overflow,
+      };
+    });
+    if (publicProof.drawerPosition !== 'fixed' || publicProof.backdropPosition !== 'fixed') {
+      throw new Error('Public mobile menu must render as a fixed viewport layer');
+    }
+    if (publicProof.drawerTop == null || Math.abs(publicProof.drawerTop) > 2 || publicProof.drawerBottom == null || publicProof.drawerBottom < publicProof.viewportHeight - 2) {
+      throw new Error(`Public mobile drawer does not cover the viewport: ${JSON.stringify(publicProof)}`);
+    }
+    if (publicProof.bodyOverflow !== 'hidden') throw new Error('Public mobile menu must lock background scrolling');
+    await page.locator('#uos-close-drawer-btn').click();
+
+    await assertRoute(page, runtimeErrors, '/store');
+    await page.locator('.store-mobile-menu').click();
+    await page.locator('.store-nav.is-open').waitFor({ state: 'visible', timeout: 5_000 });
+    await page.waitForTimeout(80);
+    const storeProof = await page.evaluate(() => {
+      const header = document.querySelector('.store-header');
+      const nav = document.querySelector('.store-nav.is-open');
+      const headerRect = header?.getBoundingClientRect();
+      const navRect = nav?.getBoundingClientRect();
+      return {
+        navPosition: nav ? getComputedStyle(nav).position : null,
+        headerBottom: headerRect?.bottom ?? null,
+        navTop: navRect?.top ?? null,
+        navBottom: navRect?.bottom ?? null,
+        viewportHeight: window.innerHeight,
+        bodyOverflow: getComputedStyle(document.body).overflow,
+      };
+    });
+    if (storeProof.navPosition !== 'fixed') throw new Error('Store mobile menu must render as a fixed viewport layer');
+    if (storeProof.headerBottom == null || storeProof.navTop == null || Math.abs(storeProof.navTop - storeProof.headerBottom) > 3) {
+      throw new Error(`Store mobile menu must start below the full rendered header: ${JSON.stringify(storeProof)}`);
+    }
+    if (storeProof.navBottom == null || storeProof.navBottom < storeProof.viewportHeight - 2) {
+      throw new Error(`Store mobile menu must extend to the viewport bottom: ${JSON.stringify(storeProof)}`);
+    }
+    if (storeProof.bodyOverflow !== 'hidden') throw new Error('Store mobile menu must lock background scrolling');
+    await page.locator('.store-mobile-menu').click();
+  } finally {
+    await page.close().catch(() => undefined);
+    await context.close().catch(() => undefined);
+    await browser.close().catch(() => undefined);
+  }
+}
+
 await waitForServer();
 await runRouteSweep(chromium, 'Chromium');
 await runRouteSweep(firefox, 'Firefox');
 await runRouteSweep(webkit, 'WebKit');
 await runResponsiveSweep();
+await runMobileNavigationProof();
 
-console.log(`Interface smoke passed for ${allRoutes.length} routes across Chromium, Firefox, WebKit and ${viewportMatrix.length} responsive viewports.`);
+console.log(`Interface smoke passed for ${allRoutes.length} routes across Chromium, Firefox, WebKit and ${viewportMatrix.length} responsive viewports, including mobile menu viewport isolation.`);
