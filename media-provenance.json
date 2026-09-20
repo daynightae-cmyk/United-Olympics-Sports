@@ -158,6 +158,46 @@
     "approvedBy": "Sadek Elgazar, project owner",
     "approvedAt": "2026-09-20",
     "evidence": "docs/STORE-APPROVED-MEDIA-20260920.md — source 23"
+  },
+  "public/media/portal-auth/admin.webp": {
+    "status": "approved",
+    "rightsBasis": "generated",
+    "source": "OpenAI image generation from the owner-approved Soul Work portal visual references and implementation mission",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/PORTAL-SOUL-ASSET-PROVENANCE-20260920.md — admin portal atmosphere"
+  },
+  "public/media/portal-auth/player.webp": {
+    "status": "approved",
+    "rightsBasis": "generated",
+    "source": "OpenAI image generation from the owner-approved Soul Work portal visual references and implementation mission",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/PORTAL-SOUL-ASSET-PROVENANCE-20260920.md — player portal atmosphere"
+  },
+  "public/media/portal-auth/parent.webp": {
+    "status": "approved",
+    "rightsBasis": "generated",
+    "source": "OpenAI image generation from the owner-approved Soul Work portal visual references and implementation mission",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/PORTAL-SOUL-ASSET-PROVENANCE-20260920.md — parent portal atmosphere"
+  },
+  "public/media/portal-auth/coach.webp": {
+    "status": "approved",
+    "rightsBasis": "generated",
+    "source": "OpenAI image generation from the owner-approved Soul Work portal visual references and implementation mission",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/PORTAL-SOUL-ASSET-PROVENANCE-20260920.md — coach portal atmosphere"
+  },
+  "public/media/portal-auth/store.webp": {
+    "status": "approved",
+    "rightsBasis": "generated",
+    "source": "OpenAI image generation from the owner-approved Soul Work portal visual references and implementation mission",
+    "approvedBy": "Sadek Elgazar, project owner",
+    "approvedAt": "2026-09-20",
+    "evidence": "docs/PORTAL-SOUL-ASSET-PROVENANCE-20260920.md — store portal atmosphere"
   }
   }
 }
