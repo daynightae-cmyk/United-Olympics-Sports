@@ -30,6 +30,7 @@ import { BilingualText, bi } from "../../components/bilingual/BilingualText";
 import { PlayerPortrait } from "./components/PlayerPortrait";
 import { useUiSettings } from "../../ui/theme/useUiSettings";
 import SafeBrandLogo from "../../components/ui/SafeBrandLogo";
+import { PortalUtilityNav } from "../../components/navigation/PortalUtilityNav";
 interface NavItemDef {
   path: string;
   label: { en: string; ar: string };
@@ -262,6 +263,7 @@ export function PlayerPortalShell({ children }: { children: React.ReactNode }) {
       <div className="athlete-workspace">
         <header className="athlete-topbar" id="athlete-topbar">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <PortalUtilityNav homeTo="/player/home" compact />
             <button onClick={() => setMobileMenuOpen(true)} className="lg:hidden p-2 text-slate-300 hover:text-white rounded-xl hover:bg-white/5 border border-white/10" aria-label="Open sidebar">
               <Menu size={20} />
             </button>
