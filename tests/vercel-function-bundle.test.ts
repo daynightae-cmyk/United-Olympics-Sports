@@ -65,6 +65,40 @@ async function runBundleTests() {
   }
   assert.equal(jsonOffenders.length, 0, `JSON imports without import attributes crash Node ESM boot:\n${jsonOffenders.join('\n')}`);
 
+  // 3. Firebase Admin must stay lazy: no static value import of firebase-admin
+  // anywhere in the closure. The admin SDK graph (jwks-rsa/jose) crashes some
+  // serverless loaders at module-evaluation time, so importing this module
+  // must never throw and every admin access must go through getAdminAuth()
+  // (dynamic import inside the caller's try/catch = fail closed).
+  // Allowed: `import type ... from 'firebase-admin/...'` (erased) and
+  // dynamic await import('firebase-admin/...').
+  const staticAdminPattern = /^\s*import\s+(?!type\b)(?:[^'"]*?\bfrom\s*)?['"]firebase-admin[^'"]*['"]/gm;
+  const adminOffenders: string[] = [];
+  for (const dir of closureDirs) {
+    for (const file of listTsFiles(path.join(repoRoot, dir))) {
+      const content = fs.readFileSync(file, 'utf8');
+      const matches = content.match(staticAdminPattern);
+      if (matches) adminOffenders.push(`${path.relative(repoRoot, file)}: ${matches.join(', ')}`);
+    }
+  }
+  assert.equal(adminOffenders.length, 0, `Static firebase-admin imports crash serverless boot; use getAdminAuth():\n${adminOffenders.join('\n')}`);
+
+  // 4. The firebase-admin module itself must load without credentials and
+  // without initializing anything (import-time side-effect free).
+  const savedServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  const savedAdc = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  delete process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  try {
+    const adminModule = (await import(pathToFileURL(path.join(repoRoot, 'src', 'lib', 'firebase-admin.ts')).href)) as {
+      getAdminAuth: unknown;
+    };
+    assert.equal(typeof adminModule.getAdminAuth, 'function', 'firebase-admin module must export lazy getAdminAuth');
+  } finally {
+    if (savedServiceAccount !== undefined) process.env.FIREBASE_SERVICE_ACCOUNT_JSON = savedServiceAccount;
+    if (savedAdc !== undefined) process.env.GOOGLE_APPLICATION_CREDENTIALS = savedAdc;
+  }
+
   // 3. The api entry bundles and serves health without crashing
   const { buildSync } = await import('esbuild');
   const outFile = path.join(repoRoot, 'dist', 'api-bundle-gate.cjs');
