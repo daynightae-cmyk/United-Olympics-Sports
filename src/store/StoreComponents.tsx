@@ -79,6 +79,8 @@ export function StoreHeader() {
     if (!menuOpen) return;
     const header = headerRef.current;
     if (!header) return;
+    const previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     const syncMobileNavTop = () => header.style.setProperty('--store-mobile-nav-top', `${Math.ceil(header.getBoundingClientRect().bottom)}px`);
     syncMobileNavTop();
     const observer = new ResizeObserver(syncMobileNavTop);
@@ -88,6 +90,7 @@ export function StoreHeader() {
       observer.disconnect();
       window.removeEventListener('resize', syncMobileNavTop);
       header.style.removeProperty('--store-mobile-nav-top');
+      document.body.style.overflow = previousBodyOverflow;
     };
   }, [menuOpen]);
 
