@@ -786,3 +786,19 @@ html[data-theme='light'] .portal-coach :where(
     transform:none !important;
   }
 }
+
+
+/* PLAYER LIGHT FORM CLOSURE — keep delivery fields theme-aware */
+html[data-theme='light'] .player-shell-container .athlete-glass-card form :where(input,select,textarea) {
+  border-color: rgba(155,116,23,.16) !important;
+  background: linear-gradient(145deg,#ffffff,#faf6ed) !important;
+  color: #172033 !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.92);
+}
+html[data-theme='light'] .player-shell-container .athlete-glass-card form :where(input,select,textarea)::placeholder {
+  color: #7b8492 !important;
+}
+html[data-theme='light'] .player-shell-container .athlete-glass-card form :where(input,select,textarea):focus-visible {
+  border-color: rgba(155,116,23,.56) !important;
+  box-shadow: 0 0 0 3px rgba(190,145,30,.11) !important;
+}
