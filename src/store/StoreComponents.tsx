@@ -25,6 +25,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import type { BilingualText as BilingualValue } from '../domain/contracts';
 import { ThemeToggle } from '../components/ui/ThemeToggle';
+import { PortalUtilityNav } from '../components/navigation/PortalUtilityNav';
 import { useStore } from './StoreContext';
 import type { StoreCategory, StoreProduct } from './storeTypes';
 
@@ -87,6 +88,7 @@ export function StoreHeader() {
     <div className="store-main-header store-reference-mainbar">
       <button type="button" className="store-mobile-menu" onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen} aria-label="Store menu | قائمة المتجر">{menuOpen ? <X /> : <Menu />}</button>
       <Link to="/store" className="store-brand store-reference-brand"><img src="/brand/united-olympics-sports-logo.png" alt="United Olympics Sports | يونايتد أوليمبيكس سبورت" /><span><strong>UNITED OLYMPICS</strong><em>SPORT</em><small lang="ar" dir="rtl">يونايتد أوليمبيكس سبورت</small></span></Link>
+      <PortalUtilityNav homeTo="/store" compact />
 
       <div className="store-search-wrap store-reference-search-wrap" ref={searchWrapRef} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setSearchOpen(false); }}>
         <form className="store-search store-reference-search" role="search" onSubmit={(event) => { event.preventDefault(); submitSearch(); }}>
