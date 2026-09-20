@@ -16,3 +16,39 @@ html[data-theme=dark] .store-shell{--store-canvas:#07080b;--store-surface:#0d111
 @media(max-width:1280px){.store-admin-kpis{grid-template-columns:repeat(3,1fr)}.store-admin-dashboard-grid{grid-template-columns:1.2fr .8fr}.store-admin-dashboard-grid>article:last-child{grid-column:1/-1}.store-admin-lower{grid-template-columns:1fr 1fr}.store-admin-lower>article:last-child{grid-column:1/-1}.store-admin-settings{grid-template-columns:1fr}}
 @media(max-width:820px){.store-admin-heading{display:block}.store-admin-heading>.ui-button{margin-top:15px}.store-admin-kpis{grid-template-columns:1fr 1fr}.store-admin-dashboard-grid,.store-admin-lower{grid-template-columns:1fr}.store-admin-dashboard-grid>article:last-child,.store-admin-lower>article:last-child{grid-column:auto}.store-admin-toolbar{flex-wrap:wrap}.store-admin-toolbar>label{min-width:0;flex:1}.store-admin-toolbar>.ui-button{width:100%;margin:0}.store-admin-form-grid{grid-template-columns:1fr}.store-admin-form-grid label.wide{grid-column:auto}}
 @media(max-width:480px){.store-admin-kpis{grid-template-columns:1fr}.store-admin-toolbar>select{width:100%}.store-admin-settings>article{grid-template-columns:42px 1fr}.store-admin-settings>article>.ui-status{grid-column:2;width:max-content}.store-admin-editor>footer{flex-direction:column-reverse}.store-admin-editor>footer>*{width:100%}}
+
+
+/* === MOBILE STORE NAV VIEWPORT ISOLATION · 2026-09-20 === */
+@media(max-width:1024px){
+  .store-main-header{
+    grid-template-columns:44px 70px minmax(0,1fr) auto !important;
+    height:auto !important;
+    min-height:82px;
+    gap:8px !important;
+  }
+  .store-brand{grid-column:2 !important}
+  .store-main-header>.portal-utility-nav{grid-column:3;justify-self:start}
+  .store-utilities{grid-column:4 !important}
+  .store-search-wrap{grid-column:1/-1 !important;grid-row:2 !important;width:100%}
+  .store-nav{
+    position:fixed !important;
+    top:82px !important;
+    bottom:0 !important;
+    inset-inline:0 !important;
+    margin:0 !important;
+    max-width:none !important;
+    height:auto !important;
+    max-height:calc(100dvh - 82px) !important;
+    overflow-y:auto !important;
+    border-radius:0 !important;
+    padding:16px !important;
+    z-index:9996 !important;
+    background:var(--store-surface) !important;
+    box-shadow:0 24px 80px rgba(0,0,0,.34);
+    overscroll-behavior:contain;
+  }
+}
+@media(max-width:768px){
+  .store-nav{top:126px !important;max-height:calc(100dvh - 126px) !important}
+  .store-main-header>.portal-utility-nav{justify-self:end}
+}
