@@ -72,7 +72,7 @@ async function runBundleTests() {
   // (dynamic import inside the caller's try/catch = fail closed).
   // Allowed: `import type ... from 'firebase-admin/...'` (erased) and
   // dynamic await import('firebase-admin/...').
-  const staticAdminPattern = /^\s*import\s+(?!type\b)[^'"]*?from\s*['"]firebase-admin[^'"]*['"]/gm;
+  const staticAdminPattern = /^\s*import\s+(?!type\b)(?:[^'"]*?\bfrom\s*)?['"]firebase-admin[^'"]*['"]/gm;
   const adminOffenders: string[] = [];
   for (const dir of closureDirs) {
     for (const file of listTsFiles(path.join(repoRoot, dir))) {
