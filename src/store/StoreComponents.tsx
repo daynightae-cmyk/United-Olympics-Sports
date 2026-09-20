@@ -75,10 +75,26 @@ export function StoreHeader() {
     return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('pointerdown', onPointer); };
   }, []);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+    const header = headerRef.current;
+    if (!header) return;
+    const syncMobileNavTop = () => header.style.setProperty('--store-mobile-nav-top', `${Math.ceil(header.getBoundingClientRect().bottom)}px`);
+    syncMobileNavTop();
+    const observer = new ResizeObserver(syncMobileNavTop);
+    observer.observe(header);
+    window.addEventListener('resize', syncMobileNavTop);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', syncMobileNavTop);
+      header.style.removeProperty('--store-mobile-nav-top');
+    };
+  }, [menuOpen]);
+
   const submitSearch = () => { if (query.trim()) { navigate(`/store/search?q=${encodeURIComponent(query.trim())}`); setSearchOpen(false); setMenuOpen(false); } };
   const closeNavigation = () => { setMegaOpen(false); setMenuOpen(false); };
 
-  return <header className="store-header store-reference-header" ref={headerRef}>
+  return <header className={`store-header store-reference-header ${menuOpen ? 'mobile-menu-open' : ''}`} ref={headerRef}>
     <div className="store-announcement store-reference-topbar">
       <div className="store-topbar-language"><button type="button" onClick={() => setLocale(locale === 'en' ? 'ar' : 'en')}>{locale === 'en' ? 'English  /  العربية' : 'العربية  /  English'}</button></div>
       <strong><StoreCopy value={{ en: 'OFFICIAL UNITED OLYMPICS SPORTS STORE', ar: 'المتجر الرسمي ليونايتد أوليمبيكس سبورت' }} inline /></strong>
