@@ -1,8 +1,8 @@
-import { databaseConfigured, getPool } from '../../db/index';
-import type { AuthorizationContext } from '../authorization-context';
-import { assertCanManagePlayer } from '../authorization-context';
-import { ApiError, isUuid } from '../http';
-import type { DbQueryClient } from '../vertical-slice';
+import { databaseConfigured, getPool } from '../../db/index.js';
+import type { AuthorizationContext } from '../authorization-context.js';
+import { assertCanManagePlayer } from '../authorization-context.js';
+import { ApiError, isUuid } from '../http.js';
+import type { DbQueryClient } from '../vertical-slice.js';
 
 export interface PlayerPortalData {
   player: {

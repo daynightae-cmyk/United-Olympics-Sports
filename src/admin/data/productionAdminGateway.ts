@@ -1,4 +1,4 @@
-import type { AdminDataGateway } from './AdminDataGateway';
+import type { AdminDataGateway } from './AdminDataGateway.js';
 import type {
   OrganizationViewModel,
   CountryViewModel,
@@ -26,7 +26,7 @@ import type {
   CreateResult,
   UpdateResult,
   DeleteResult,
-} from './viewModels';
+} from './viewModels.js';
 
 export class AdminGatewayError extends Error {
   public readonly status: number;

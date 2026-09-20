@@ -4,8 +4,8 @@ const ADMIN_DATA_CHANGED = 'uos:admin-data-changed';
 function notifyAdminDataChanged() {
   if (typeof window !== 'undefined') window.dispatchEvent(new Event(ADMIN_DATA_CHANGED));
 }
-import { useAdminData } from './AdminDataProvider';
-import type { ListResult, ListQueryParams } from './queryTypes';
+import { useAdminData } from './AdminDataProvider.js';
+import type { ListResult, ListQueryParams } from './queryTypes.js';
 import type {
   OrganizationViewModel,
   CountryViewModel,
@@ -28,7 +28,7 @@ import type {
   AnnouncementViewModel,
   MessageViewModel,
   AuditActivityViewModel,
-} from './viewModels';
+} from './viewModels.js';
 
 function useList<T>(fetch: (params?: ListQueryParams) => Promise<ListResult<T>>, initialParams?: ListQueryParams) {
   const fetchRef = useRef(fetch);

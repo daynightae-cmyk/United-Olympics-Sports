@@ -1,8 +1,8 @@
-import { auth, googleSignIn, logout as firebaseLogout } from './firebase';
-import { supabase } from './supabase';
-import { fetchJsonWithRuntimeTimeout, withRuntimeTimeout, withRuntimeTimeoutGuarded } from './runtime-timeout';
-import { createAsyncExclusiveRunner, shouldClearLateSession } from './late-session-guard';
-import { safeReturnTo } from './auth-routing';
+import { auth, googleSignIn, logout as firebaseLogout } from './firebase.js';
+import { supabase } from './supabase.js';
+import { fetchJsonWithRuntimeTimeout, withRuntimeTimeout, withRuntimeTimeoutGuarded } from './runtime-timeout.js';
+import { createAsyncExclusiveRunner, shouldClearLateSession } from './late-session-guard.js';
+import { safeReturnTo } from './auth-routing.js';
 
 const RETURN_TO_KEY = 'uos:auth:return-to';
 const AUTH_RUNTIME_TIMEOUT_MS = 10_000;
@@ -40,7 +40,7 @@ export type PortalIdentity = {
   bindings: PortalBindings;
 };
 
-export { safeReturnTo } from './auth-routing';
+export { safeReturnTo } from './auth-routing.js';
 
 /**
  * Supabase PKCE stores the code verifier in browser storage, which is scoped to

@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { ApiError, normalizeString } from './http';
+import { ApiError, normalizeString } from './http.js';
 
 export type PaymentProviderName = 'stripe';
 

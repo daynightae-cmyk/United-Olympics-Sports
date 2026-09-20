@@ -1,4 +1,4 @@
-import type { AdminDataMode } from './queryTypes';
+import type { AdminDataMode } from './queryTypes.js';
 import type {
   OrganizationViewModel,
   CountryViewModel,
@@ -26,7 +26,7 @@ import type {
   CreateResult,
   UpdateResult,
   DeleteResult,
-} from './viewModels';
+} from './viewModels.js';
 
 export interface AdminDataGateway {
   readonly mode: AdminDataMode;

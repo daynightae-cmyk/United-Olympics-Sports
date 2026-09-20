@@ -1,6 +1,6 @@
-import { getPool, databaseConfigured } from '../db/index';
-import { ApiError } from './http';
-import type { VerifiedIdentity } from './auth';
+import { getPool, databaseConfigured } from '../db/index.js';
+import { ApiError } from './http.js';
+import type { VerifiedIdentity } from './auth.js';
 
 export interface TenantBindings {
   organizationIds: string[];

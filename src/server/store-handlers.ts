@@ -1,9 +1,9 @@
-import { StoreDomainRepository } from './repositories/store-repository';
-import { StoreAccountRepository } from './repositories/store-account-repository';
-import { requireAuthorizationContext } from './auth';
-import { ApiError, assertMethod, normalizeString, readJsonBody, sendJson, type ApiRequest, type ApiResponse } from './http';
-import { expireAbandonedOrderPaymentClaim } from './order-payment-claim';
-import { applyRateLimitHeaders, defaultRateLimiter, getClientIp } from './rate-limiter';
+import { StoreDomainRepository } from './repositories/store-repository.js';
+import { StoreAccountRepository } from './repositories/store-account-repository.js';
+import { requireAuthorizationContext } from './auth.js';
+import { ApiError, assertMethod, normalizeString, readJsonBody, sendJson, type ApiRequest, type ApiResponse } from './http.js';
+import { expireAbandonedOrderPaymentClaim } from './order-payment-claim.js';
+import { applyRateLimitHeaders, defaultRateLimiter, getClientIp } from './rate-limiter.js';
 
 async function enforceCommerceRateLimit(req: ApiRequest, res: ApiResponse, scope: string, uid: string): Promise<void> {
   const clientIp = getClientIp(req);

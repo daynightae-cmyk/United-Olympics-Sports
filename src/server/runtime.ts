@@ -1,4 +1,4 @@
-import { getSupabaseAuthConfig } from './supabase-auth-config';
+import { getSupabaseAuthConfig } from './supabase-auth-config.js';
 
 export interface RuntimeReadiness {
   databaseConfigured: boolean;

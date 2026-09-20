@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { databaseConfigured, getPool } from '../../db/index';
-import type { AuthorizationContext } from '../authorization-context';
-import { recordAudit } from '../audit';
-import { ApiError, normalizeString } from '../http';
-import type { DbQueryClient } from '../vertical-slice';
+import { databaseConfigured, getPool } from '../../db/index.js';
+import type { AuthorizationContext } from '../authorization-context.js';
+import { recordAudit } from '../audit.js';
+import { ApiError, normalizeString } from '../http.js';
+import type { DbQueryClient } from '../vertical-slice.js';
 
 export type NotificationStatus = 'queued' | 'sending' | 'sent' | 'delivered' | 'failed';
 export type NotificationChannel = 'in_app' | 'push' | 'email' | 'sms';

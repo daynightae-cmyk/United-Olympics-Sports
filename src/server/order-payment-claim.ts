@@ -1,16 +1,16 @@
 import { randomUUID } from 'node:crypto';
-import { databaseConfigured, getPool } from '../db/index';
-import type { AuthorizationContext } from './authorization-context';
-import { recordAudit } from './audit';
-import { ApiError, normalizeString } from './http';
+import { databaseConfigured, getPool } from '../db/index.js';
+import type { AuthorizationContext } from './authorization-context.js';
+import { recordAudit } from './audit.js';
+import { ApiError, normalizeString } from './http.js';
 import {
   cancelStripeIntent,
   getPaymentProviderConfig,
   retrieveStripeIntent,
   type PaymentProviderConfig,
   type RemoteIntentResult,
-} from './payment-provider';
-import type { DbQueryClient } from './vertical-slice';
+} from './payment-provider.js';
+import type { DbQueryClient } from './vertical-slice.js';
 
 const ADMIN_ROLES = ['super_admin', 'admin', 'owner', 'administrator'];
 const TERMINAL_CLAIM_STATUSES = ['failed', 'cancelled'];
@@ -244,7 +244,7 @@ export async function expireAbandonedOrderPaymentClaim(
     if (inspected.status === 'cancelled') {
       providerConfirmedCancelled = true;
     } else if (inspected.status === 'succeeded') {
-      const { PaymentDomainRepository } = await import('./repositories/payment-repository');
+      const { PaymentDomainRepository } = await import('./repositories/payment-repository.js');
       const paymentRepo = new PaymentDomainRepository(db);
       await paymentRepo.reconcileProviderEvent({
         provider: 'stripe',

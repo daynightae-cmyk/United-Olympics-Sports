@@ -1,4 +1,4 @@
-import type { AdminDataGateway } from './AdminDataGateway';
+import type { AdminDataGateway } from './AdminDataGateway.js';
 
 const unavailable = async () => {
   throw new Error('Admin production data service is not connected yet.');

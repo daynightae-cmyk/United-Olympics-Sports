@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
-import * as schema from './schema';
-import { databaseConfigured as runtimeDatabaseConfigured } from '../server/runtime';
+import * as schema from './schema.js';
+import { databaseConfigured as runtimeDatabaseConfigured } from '../server/runtime.js';
 
 declare global {
   var _uosPostgresPool: Pool | undefined;

@@ -1,5 +1,5 @@
-import type { BilingualText } from '../../domain/contracts';
-import type { ListResult, ListQueryParams, CreateResult, UpdateResult, DeleteResult } from './queryTypes';
+import type { BilingualText } from '../../domain/contracts.js';
+import type { ListResult, ListQueryParams, CreateResult, UpdateResult, DeleteResult } from './queryTypes.js';
 
 export type { ListResult, ListQueryParams, CreateResult, UpdateResult, DeleteResult };
 

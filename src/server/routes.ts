@@ -8,8 +8,8 @@ import {
   sessionHandler,
   sportRequestHandler,
   type RouteHandler,
-} from './handlers';
-import { phoneOtpRequestHandler, phoneOtpVerifyHandler } from './phone-auth-handlers';
+} from './handlers.js';
+import { phoneOtpRequestHandler, phoneOtpVerifyHandler } from './phone-auth-handlers.js';
 import {
   adminAchievementsHandler,
   adminAnnouncementsHandler,
@@ -28,17 +28,17 @@ import {
   adminRegistrationsHandler,
   adminSessionsHandler,
   adminSportsHandler,
-} from './admin-handlers';
+} from './admin-handlers.js';
 import {
   portalCoachScopeHandler,
   portalParentChildrenHandler,
   portalPlayerDataHandler,
-} from './portal-handlers';
-import { storeAccountHandler, storeCheckoutHandler, storeOrderCancelHandler, storeProductsHandler } from './store-handlers';
-import { paymentConfigHandler, paymentIntentHandler, paymentWebhookHandler } from './payment-handlers';
-import { documentDownloadUrlHandler, documentRegisterHandler } from './document-handlers';
-import { portalWhoAmIHandler } from './portal-bindings';
-import { ApiError, sendError, type ApiRequest, type ApiResponse } from './http';
+} from './portal-handlers.js';
+import { storeAccountHandler, storeCheckoutHandler, storeOrderCancelHandler, storeProductsHandler } from './store-handlers.js';
+import { paymentConfigHandler, paymentIntentHandler, paymentWebhookHandler } from './payment-handlers.js';
+import { documentDownloadUrlHandler, documentRegisterHandler } from './document-handlers.js';
+import { portalWhoAmIHandler } from './portal-bindings.js';
+import { ApiError, sendError, type ApiRequest, type ApiResponse } from './http.js';
 
 export type RouteKey =
   | 'health'
