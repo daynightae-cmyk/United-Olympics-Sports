@@ -13,7 +13,7 @@
   min-height:100svh;
   padding:0;
   overflow:auto;
-  background:#050604;
+  background:#050604 !important;
 }
 
 .portal-auth[data-portal='store']::before {
@@ -280,6 +280,10 @@
   gap:8px;
 }
 
+.portal-auth[data-portal='store'] .portal-auth-providers[data-provider-count='1'] {
+  grid-template-columns:1fr;
+}
+
 .portal-auth[data-portal='store'] .portal-auth-providers button {
   min-height:64px;
   border:1px solid rgba(217,168,59,.23);
@@ -306,7 +310,48 @@
 }
 
 .portal-auth[data-portal='store'] .portal-auth-switcher {
-  display:none !important;
+  width:min(820px,calc(100% - 28px));
+  margin:0 auto 22px !important;
+}
+
+html[data-theme='light'] .portal-auth[data-portal='store'] {
+  --portal-auth-text:#122033;
+  --portal-auth-muted:#687383;
+  --portal-auth-line:rgba(139,99,25,.20);
+  --portal-auth-card:#fffaf0;
+  background:
+    radial-gradient(circle at 18% 10%,rgba(198,148,32,.13),transparent 30%),
+    linear-gradient(150deg,#fffdf8,#f4ecdd) !important;
+}
+
+html[data-theme='light'] .portal-auth[data-portal='store'] .portal-auth-toolbar {
+  border-color:rgba(139,99,25,.18);
+  background:rgba(255,252,245,.90);
+}
+
+html[data-theme='light'] .portal-auth[data-portal='store'] .portal-auth-tools .language-order-toggle,
+html[data-theme='light'] .portal-auth[data-portal='store'] .portal-auth-tools .theme-menu-trigger {
+  border-color:rgba(139,99,25,.20);
+  background:#fffaf0;
+  color:#122033;
+}
+
+html[data-theme='light'] .portal-auth[data-portal='store'] .portal-auth-card {
+  color:#122033;
+  border-color:rgba(139,99,25,.22) !important;
+  background:linear-gradient(145deg,rgba(255,253,248,.98),rgba(247,239,224,.98)) !important;
+  box-shadow:0 26px 64px rgba(58,43,19,.13);
+}
+
+html[data-theme='light'] .portal-auth[data-portal='store'] .portal-auth-providers button {
+  color:#122033;
+  border-color:rgba(139,99,25,.22);
+  background:rgba(255,253,248,.90) !important;
+}
+
+html[data-theme='light'] .portal-auth[data-portal='store'] .portal-auth-provider-state {
+  color:#687383;
+  background:rgba(198,148,32,.07);
 }
 
 @media(max-width:920px) {
@@ -325,8 +370,8 @@
   }
 
   .portal-auth[data-portal='store'] .portal-auth-visual {
-    min-height:260px;
-    padding:26px 6px 18px;
+    min-height:500px;
+    padding:26px 22px 86px;
     text-align:start;
   }
 
@@ -373,7 +418,7 @@
   }
 
   .portal-auth[data-portal='store'] .portal-auth-visual {
-    min-height:210px;
+    min-height:448px;
   }
 
   .portal-auth[data-portal='store'] .portal-auth-visual h1 {
