@@ -311,7 +311,7 @@ export function PortalAuthPage({
 
             {hasProviders && (
               <div className="portal-auth-providers" aria-describedby="portal-auth-status" data-provider-count={providers.length}>
-                {providers.map((provider) => (
+                {providers.filter((provider) => provider !== 'phone' && provider !== 'apple').map((provider) => (
                   <button
                     key={provider}
                     type="button"
@@ -323,6 +323,14 @@ export function PortalAuthPage({
                     <BilingualText value={providerLabels[provider]} />
                   </button>
                 ))}
+                {portal !== 'store' && <button type="button" onClick={() => handleProvider('phone')} hidden={!providers.includes('phone')} disabled={isBusy} aria-label="Phone Number | رقم الهاتف">
+                  <ProviderGlyph provider="phone" />
+                  <BilingualText value={providerLabels.phone} />
+                </button>}
+                {portal !== 'store' && <button type="button" onClick={() => handleProvider('apple')} hidden={!providers.includes('apple')} disabled={isBusy} aria-label="Apple / iPhone | Apple / آيفون">
+                  <ProviderGlyph provider="apple" />
+                  <BilingualText value={providerLabels.apple} />
+                </button>}
               </div>
             )}
 
@@ -367,15 +375,13 @@ export function PortalAuthPage({
         </section>
       </div>
 
-      {portal !== 'store' && (
-        <nav className="portal-auth-switcher" aria-label="Portal login destinations | وجهات تسجيل الدخول">
-          {portalLinks.map((item) => (
-            <Link key={item.kind} className={item.kind === portal ? 'is-active' : ''} aria-current={item.kind === portal ? 'page' : undefined} to={item.to}>
-              <BilingualText value={item.label} />
-            </Link>
-          ))}
-        </nav>
-      )}
+      {portal !== 'store' && <nav className="portal-auth-switcher" aria-label="Portal login destinations | وجهات تسجيل الدخول">
+        {portalLinks.map((item) => (
+          <Link key={item.kind} className={item.kind === portal ? 'is-active' : ''} aria-current={item.kind === portal ? 'page' : undefined} to={item.to}>
+            <BilingualText value={item.label} />
+          </Link>
+        ))}
+      </nav>}
     </main>
   );
 }
