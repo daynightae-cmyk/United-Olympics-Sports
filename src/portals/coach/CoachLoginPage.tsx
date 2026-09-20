@@ -93,5 +93,5 @@ export function CoachLoginPage() {
     }
   };
 
-  return <PortalAuthPage portal="coach" extraContent={<SafeDemoLink />} onProvider={handleProvider} />;
+  return <PortalAuthPage portal="coach" providers={['google']} extraContent={<SafeDemoLink />} onProvider={handleProvider} />;
 }

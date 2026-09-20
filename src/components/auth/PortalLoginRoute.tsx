@@ -186,5 +186,10 @@ export function PortalLoginRoute({ portal }: { portal: PortalAuthKind }) {
     );
   }
 
-  return <PortalAuthPage portal={portal} onProvider={handleProvider} onCredentials={portal === 'store' ? handleCredentials : undefined} />;
+  return <PortalAuthPage
+    portal={portal}
+    providers={['google', 'passkey', 'biometric']}
+    onProvider={handleProvider}
+    onCredentials={portal === 'store' ? handleCredentials : undefined}
+  />;
 }

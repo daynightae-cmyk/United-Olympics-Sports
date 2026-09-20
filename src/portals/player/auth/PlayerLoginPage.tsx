@@ -116,5 +116,5 @@ export function PlayerLoginPage() {
     };
   };
 
-  return <PortalAuthPage portal="player" extraContent={<SafeDemoLink />} onProvider={handleProvider} />;
+  return <PortalAuthPage portal="player" providers={['google', 'apple']} extraContent={<SafeDemoLink />} onProvider={handleProvider} />;
 }

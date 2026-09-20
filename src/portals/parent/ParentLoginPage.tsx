@@ -77,5 +77,5 @@ export function ParentLoginPage() {
     }
   };
 
-  return <PortalAuthPage portal="parent" extraContent={<SafeDemoLink />} onProvider={handleProvider} />;
+  return <PortalAuthPage portal="parent" providers={['google']} extraContent={<SafeDemoLink />} onProvider={handleProvider} />;
 }
