@@ -225,6 +225,14 @@ export function PortalAuthPage({
       : Promise.resolve({ tone: 'info', message: unavailableNotice }));
   };
 
+  const providerActions: Record<PortalAuthProvider, () => void> = {
+    phone: () => handleProvider('phone'),
+    google: () => handleProvider('google'),
+    apple: () => handleProvider('apple'),
+    passkey: () => handleProvider('passkey'),
+    biometric: () => handleProvider('biometric'),
+  };
+
   return (
     <main className="portal-auth" data-portal={portal}>
       <div className="portal-auth-atmosphere" aria-hidden="true" />
@@ -307,7 +315,7 @@ export function PortalAuthPage({
                   <button
                     key={provider}
                     type="button"
-                    onClick={() => handleProvider(provider)}
+                    onClick={providerActions[provider]}
                     disabled={isBusy}
                     aria-label={providerLabels[provider].en + ' | ' + providerLabels[provider].ar}
                   >
