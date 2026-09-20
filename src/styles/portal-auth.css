@@ -517,8 +517,10 @@
     max-width:150px;
     font-size:9px;
   }
-  .portal-auth-back .bi-ar{
-    display:none;
+  .portal-auth-back .bi{
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:2px 6px;
   }
   .portal-auth-layout{
     padding-top:10px;

@@ -323,11 +323,11 @@ export function PortalAuthPage({
                     <BilingualText value={providerLabels[provider]} />
                   </button>
                 ))}
-                {portal !== 'store' && <button type="button" onClick={() => handleProvider('phone')} hidden={!providers.includes('phone')} disabled={isBusy} aria-label="Phone Number | رقم الهاتف">
+                {providers.includes('phone') && portal !== 'store' && <button type="button" onClick={() => handleProvider('phone')} disabled={isBusy} aria-label="Phone Number | رقم الهاتف">
                   <ProviderGlyph provider="phone" />
                   <BilingualText value={providerLabels.phone} />
                 </button>}
-                {portal !== 'store' && <button type="button" onClick={() => handleProvider('apple')} hidden={!providers.includes('apple')} disabled={isBusy} aria-label="Apple / iPhone | Apple / آيفون">
+                {providers.includes('apple') && portal !== 'store' && <button type="button" onClick={() => handleProvider('apple')} disabled={isBusy} aria-label="Apple / iPhone | Apple / آيفون">
                   <ProviderGlyph provider="apple" />
                   <BilingualText value={providerLabels.apple} />
                 </button>}
