@@ -529,6 +529,13 @@
   }
 }
 
+@media(min-width:541px) and (max-width:920px){
+  .portal-auth-visual{
+    min-height:570px;
+    padding-top:126px;
+  }
+}
+
 @media(max-width:540px){
   .portal-auth{
     padding-inline:max(12px,env(safe-area-inset-left));

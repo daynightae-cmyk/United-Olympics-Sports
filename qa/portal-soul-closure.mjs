@@ -121,7 +121,10 @@ async function assertLogin(page, entry, width, theme, rtl) {
   assert.ok(proof.overflow <= 2, `${entry.route}: ${proof.overflow}px horizontal overflow at ${width}px`);
   assert.ok(proof.buttonVisible && proof.buttonHeight >= 44, `${entry.route}: Google control is not touch-ready`);
   assert.ok(proof.cardWidth > 0 && proof.cardLeft >= -1 && proof.cardRight <= proof.viewportWidth + 1, `${entry.route}: auth card is clipped at ${width}px`);
-  assert.ok(proof.brandBottom + 8 <= proof.visualCopyTop, `${entry.route}: brand lockup overlaps the hero copy at ${width}px`);
+  assert.ok(
+    proof.brandBottom + 8 <= proof.visualCopyTop,
+    `${entry.route}: brand lockup overlaps the hero copy at ${width}px (brand bottom ${proof.brandBottom}, copy top ${proof.visualCopyTop})`,
+  );
   if (theme === 'light') {
     assert.match(proof.cardColor, /^rgb\((?:[0-9]|[1-8][0-9]),/, `${entry.route}: Light card text must remain navy`);
     assert.match(proof.cardBackground, /rgba?\((?:255, 255, 255|250, 244, 233)/, `${entry.route}: Light card must use a warm light surface`);

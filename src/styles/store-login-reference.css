@@ -393,6 +393,13 @@ html[data-theme='light'] .portal-auth[data-portal='store'] .portal-auth-provider
   }
 }
 
+@media(min-width:561px) and (max-width:920px) {
+  .portal-auth[data-portal='store'] .portal-auth-visual {
+    min-height:570px;
+    padding-top:126px;
+  }
+}
+
 @media(max-width:560px) {
   .portal-auth[data-portal='store'] .portal-auth-toolbar {
     min-height:72px;
