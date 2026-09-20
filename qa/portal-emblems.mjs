@@ -48,8 +48,9 @@ try {
             text.includes('https://fonts.gstatic.com/');
           if (message.type() === 'error' && !externalFontFailure) consoleErrors.push(text);
         });
-        await page.goto(`${baseUrl}${entry.route}`, { waitUntil: 'networkidle' });
+        await page.goto(`${baseUrl}${entry.route}`, { waitUntil: 'domcontentloaded', timeout: 15_000 });
         const primary = page.locator(entry.primarySelector);
+        await primary.first().waitFor({ state: 'attached', timeout: 5_000 }).catch(() => undefined);
         const primaryCount = await primary.count();
         if (primaryCount !== 1) errors.push(`${entry.route} ${theme.name} ${bilingualOrder}: expected one canonical primary logo, got ${primaryCount}`);
         const primarySrc = primaryCount ? await primary.first().getAttribute('src') : null;
@@ -69,6 +70,7 @@ try {
         await context.close();
       }
     }
+    console.log(`[portal-logo] checked ${entry.route} across explicit/system light-dark and EN/AR order`);
   }
 
   for (const entry of screenshotCases) {
@@ -77,7 +79,10 @@ try {
         const context = await browser.newContext({ viewport, colorScheme: appearance });
         await context.addInitScript(({ payload }) => localStorage.setItem('uos:ui-settings:v1', JSON.stringify(payload)), { payload: settings(appearance, 'en-first') });
         const page = await context.newPage();
-        await page.goto(`${baseUrl}${entry.route}`, { waitUntil: 'networkidle' });
+        await page.goto(`${baseUrl}${entry.route}`, { waitUntil: 'domcontentloaded', timeout: 15_000 });
+        const primary = page.locator(entry.primarySelector);
+        await primary.first().waitFor({ state: 'visible', timeout: 5_000 });
+        await page.waitForTimeout(120);
         await page.screenshot({ path: path.join(outputDir, `${entry.portal}-${viewport.name}-${appearance}.png`), fullPage: true });
         await context.close();
       }
