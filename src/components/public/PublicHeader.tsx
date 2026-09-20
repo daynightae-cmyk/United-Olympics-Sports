@@ -134,7 +134,7 @@ export function PublicHeader({ locale, onToggleLocale, className = '' }: PublicH
   return (
     <header
       id="uos-public-header"
-      className={`uos-site-header ${isScrolled ? 'is-scrolled' : ''} ${className}`}
+      className={`uos-site-header ${isScrolled ? 'is-scrolled' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''} ${className}`}
       dir={isRtl ? 'rtl' : 'ltr'}
     >
       <div className="uos-header-inner">
