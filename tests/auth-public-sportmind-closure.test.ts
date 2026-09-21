@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import { shouldSuppressAssistant } from '../src/assistant/assistantService';
 import { canonicalAuthPageUrl } from '../src/lib/auth-client.js';
+import { classifyAuthError } from '../src/components/auth/AuthCallbackPage';
 import {
-  classifyAuthError,
-  persistSinglePortalBinding,
-} from '../src/components/auth/AuthCallbackPage';
+  bindingStateForPortal,
+  persistLinkedPortalBinding,
+  readUnlinkedPortalAccess,
+} from '../src/portals/shared/portal-entry-access.js';
 import { identityFromSupabaseUser } from '../src/server/auth.js';
 import type { PortalIdentity } from '../src/lib/auth-client.js';
 
@@ -108,19 +110,35 @@ async function runAuthPublicSportMindTests() {
     },
   };
 
-  const unlinkedPlayerResult = persistSinglePortalBinding('/player/home', unlinkedIdentity);
-  assert.equal(unlinkedPlayerResult.ok, false);
-  assert.equal((unlinkedPlayerResult as { code: string }).code, 'PORTAL_RECORD_NOT_LINKED');
+  const unlinkedPlayerResult = persistLinkedPortalBinding('/player/home', unlinkedIdentity);
+  assert.equal(unlinkedPlayerResult.linked, false);
+  assert.equal(readUnlinkedPortalAccess('player')?.reason, 'not-linked');
+  assert.equal(mockStorage.getItem('uos:player-portal:session'), null);
 
-  const unlinkedParentResult = persistSinglePortalBinding('/parent', unlinkedIdentity);
-  assert.equal(unlinkedParentResult.ok, false);
-  assert.equal((unlinkedParentResult as { code: string }).code, 'PORTAL_RECORD_NOT_LINKED');
+  const unlinkedParentResult = persistLinkedPortalBinding('/parent', unlinkedIdentity);
+  assert.equal(unlinkedParentResult.linked, false);
+  assert.equal(readUnlinkedPortalAccess('parent')?.reason, 'not-linked');
+  assert.equal(mockStorage.getItem('uos:parent-portal:session:v1'), null);
 
-  const unlinkedCoachResult = persistSinglePortalBinding('/coach', unlinkedIdentity);
-  assert.equal(unlinkedCoachResult.ok, false);
-  assert.equal((unlinkedCoachResult as { code: string }).code, 'PORTAL_RECORD_NOT_LINKED');
+  const unlinkedCoachResult = persistLinkedPortalBinding('/coach', unlinkedIdentity);
+  assert.equal(unlinkedCoachResult.linked, false);
+  assert.equal(readUnlinkedPortalAccess('coach')?.reason, 'not-linked');
+  assert.equal(mockStorage.getItem('uos:coach-portal:session:v1'), null);
 
-  // 11. legitimate portal binding succeeds
+  const ambiguousPlayerIdentity: PortalIdentity = {
+    ...unlinkedIdentity,
+    bindings: {
+      ...unlinkedIdentity.bindings,
+      playerIds: ['player-a', 'player-b'],
+    },
+  };
+  assert.deepEqual(bindingStateForPortal('player', ambiguousPlayerIdentity), {
+    linked: false,
+    portal: 'player',
+    reason: 'ambiguous',
+  });
+
+  // 11. legitimate portal binding succeeds and clears unlinked shell state
   const linkedPlayerIdentity: PortalIdentity = {
     ...unlinkedIdentity,
     bindings: {
@@ -128,8 +146,9 @@ async function runAuthPublicSportMindTests() {
       playerIds: ['player-rec-123'],
     },
   };
-  const linkedPlayerResult = persistSinglePortalBinding('/player/home', linkedPlayerIdentity);
-  assert.equal(linkedPlayerResult.ok, true);
+  const linkedPlayerResult = persistLinkedPortalBinding('/player/home', linkedPlayerIdentity);
+  assert.equal(linkedPlayerResult.linked, true);
+  assert.equal(readUnlinkedPortalAccess('player'), null);
   assert.equal(mockStorage.getItem('uos:player-portal:auth'), 'true');
   assert.equal(mockStorage.getItem('uos:player-portal:active-id'), 'player-rec-123');
 
@@ -141,8 +160,9 @@ async function runAuthPublicSportMindTests() {
       guardianPlayerIds: ['player-rec-123'],
     },
   };
-  const linkedParentResult = persistSinglePortalBinding('/parent', linkedParentIdentity);
-  assert.equal(linkedParentResult.ok, true);
+  const linkedParentResult = persistLinkedPortalBinding('/parent', linkedParentIdentity);
+  assert.equal(linkedParentResult.linked, true);
+  assert.equal(readUnlinkedPortalAccess('parent'), null);
   const parentSession = JSON.parse(mockStorage.getItem('uos:parent-portal:session:v1') || '{}');
   assert.equal(parentSession.parentId, 'guardian-rec-456');
 
@@ -153,12 +173,13 @@ async function runAuthPublicSportMindTests() {
       coachIds: ['coach-rec-789'],
     },
   };
-  const linkedCoachResult = persistSinglePortalBinding('/coach', linkedCoachIdentity);
-  assert.equal(linkedCoachResult.ok, true);
+  const linkedCoachResult = persistLinkedPortalBinding('/coach', linkedCoachIdentity);
+  assert.equal(linkedCoachResult.linked, true);
+  assert.equal(readUnlinkedPortalAccess('coach'), null);
   const coachSession = JSON.parse(mockStorage.getItem('uos:coach-portal:session:v1') || '{}');
   assert.equal(coachSession.coachId, 'coach-rec-789');
 
-  console.log('Auth + Public SportMind closure tests: ALL 11 TESTS PASSED!');
+  console.log('Auth + Public SportMind closure tests: open Google portal-entry contract PASS');
 }
 
 runAuthPublicSportMindTests().catch((err) => {

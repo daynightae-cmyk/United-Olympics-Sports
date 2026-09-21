@@ -6,6 +6,7 @@ import { clientShowcaseMode } from '../lib/preview-guard';
 import { CoachSessionProvider } from './coach/CoachSessionContext';
 import { CoachProtectedRoute } from './coach/CoachProtectedRoute';
 import { CoachLoginPage } from './coach/CoachLoginPage';
+import { UnlinkedPortalEntryGate } from './shared/UnlinkedPortalEntryGate';
 
 const load = <T extends Record<string, ComponentType>>(factory: () => Promise<T>, key: keyof T) =>
   lazy(() => factory().then((module) => ({ default: module[key] })));
@@ -34,7 +35,8 @@ function CoachShellLayout() {
 
 function CoachPortalApp() {
   return (
-    <CoachSessionProvider>
+    <UnlinkedPortalEntryGate portal="coach">
+      <CoachSessionProvider>
       <CoachProtectedRoute>
         <Routes>
           <Route element={<CoachShellLayout />}>
@@ -54,7 +56,8 @@ function CoachPortalApp() {
           </Route>
         </Routes>
       </CoachProtectedRoute>
-    </CoachSessionProvider>
+      </CoachSessionProvider>
+    </UnlinkedPortalEntryGate>
   );
 }
 

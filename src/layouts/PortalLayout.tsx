@@ -64,7 +64,7 @@ const portalMeta: Record<PortalKind, { title: BilingualValue; role: BilingualVal
   },
 };
 
-export function PortalLayout({ portal, children }: { portal: PortalKind; children: ReactNode }) {
+export function PortalLayout({ portal, children, statusMode = 'preview' }: { portal: PortalKind; children: ReactNode; statusMode?: 'preview' | 'production' | 'unlinked' }) {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const meta = portalMeta[portal];
@@ -99,7 +99,16 @@ export function PortalLayout({ portal, children }: { portal: PortalKind; childre
         <button type="button" className="portal-icon-button portal-mobile-only" onClick={() => setOpen(true)} aria-label="Open navigation | فتح القائمة"><Menu /></button>
         <div><small><BilingualText value={meta.title} /></small><strong><BilingualText value={current.label} /></strong></div>
         <PortalUtilityNav homeTo={portal === 'coach' ? '/coach/home' : base} compact />
-        <span className="portal-preview-badge"><span /><BilingualText value={bi('Preview Data', 'بيانات تجريبية')} /></span>
+        <span className="portal-preview-badge" data-status-mode={statusMode}>
+          <span />
+          <BilingualText value={
+            statusMode === 'unlinked'
+              ? bi('Google Verified', 'Google موثّق')
+              : statusMode === 'production'
+                ? bi('Live Portal', 'بوابة مباشرة')
+                : bi('Preview Data', 'بيانات تجريبية')
+          } />
+        </span>
         <LanguageOrderToggle compact />
         <ThemeToggle compact />
       </header>

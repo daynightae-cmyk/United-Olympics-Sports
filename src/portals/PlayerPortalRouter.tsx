@@ -7,6 +7,7 @@ import { PlayerProtectedRoute } from './player/PlayerProtectedRoute';
 import { BilingualText } from '../components/bilingual/BilingualText';
 import { PlayerPortalNotFoundPage } from '../pages/portal/player/PlayerPortalNotFoundPage';
 import { clientShowcaseMode } from '../lib/preview-guard';
+import { UnlinkedPortalEntryGate } from './shared/UnlinkedPortalEntryGate';
 
 const PlayerPortalOverviewPage = lazy(() => import('../pages/portal/player/PlayerPortalOverviewPage').then(m => ({ default: m.PlayerPortalOverviewPage })));
 const PlayerPortalSchedulePage = lazy(() => import('../pages/portal/player/PlayerPortalSchedulePage').then(m => ({ default: m.PlayerPortalSchedulePage })));
@@ -44,7 +45,8 @@ function LegacyPlayerSessionRedirect() {
 
 function PlayerPortalApp() {
   return (
-    <PlayerSessionProvider>
+    <UnlinkedPortalEntryGate portal="player">
+      <PlayerSessionProvider>
       <PlayerProtectedRoute>
         <PlayerPortalShell>
           <Routes>
@@ -68,7 +70,8 @@ function PlayerPortalApp() {
           </Routes>
         </PlayerPortalShell>
       </PlayerProtectedRoute>
-    </PlayerSessionProvider>
+      </PlayerSessionProvider>
+    </UnlinkedPortalEntryGate>
   );
 }
 
