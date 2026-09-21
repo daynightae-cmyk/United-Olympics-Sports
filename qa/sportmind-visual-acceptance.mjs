@@ -48,14 +48,28 @@ async function waitForServer(url, timeoutMs = 30000) {
   throw new Error(`Server at ${url} failed to respond within ${timeoutMs}ms`);
 }
 
-function killProcessTree(pid) {
-  if (!pid) return;
+function killProcessTree(server) {
+  if (!server || !server.pid) return;
   try {
     if (process.platform === 'win32') {
-      execSync(`taskkill /pid ${pid} /T /F`, { stdio: 'ignore' });
+      execSync(`taskkill /pid ${server.pid} /T /F`, { stdio: 'ignore' });
     } else {
-      process.kill(-pid, 'SIGKILL');
+      try {
+        process.kill(-server.pid, 'SIGKILL');
+      } catch {
+        // Not a process group leader
+      }
+      try {
+        process.kill(server.pid, 'SIGKILL');
+      } catch {
+        // Already exited
+      }
     }
+  } catch {
+    // Already exited
+  }
+  try {
+    server.kill('SIGKILL');
   } catch {
     // Already exited
   }
@@ -289,12 +303,16 @@ async function runVisualQA() {
 
     console.log(`\nSportMind visual capture complete: all ${captured} screenshots verified in ${OUTPUT_DIR}`);
   } finally {
-    if (browser) await browser.close();
-    killProcessTree(server.pid);
+    if (browser) await browser.close().catch(() => {});
+    killProcessTree(server);
   }
 }
 
-runVisualQA().catch((err) => {
-  console.error('Visual QA failed:', err);
-  process.exit(1);
-});
+runVisualQA()
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.error('Visual QA failed:', err);
+    process.exit(1);
+  });
