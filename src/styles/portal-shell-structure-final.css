@@ -6,7 +6,8 @@
    ========================================================================== */
 
 .portal-shell.portal-parent,
-.portal-shell.portal-coach {
+.portal-shell.portal-coach,
+#player-portal-shell.player-shell-container {
   display:grid !important;
   grid-template-columns:292px minmax(0,1fr) !important;
   align-items:start;
@@ -14,10 +15,17 @@
   overflow:visible;
 }
 
+#player-portal-shell.player-shell-container {
+  grid-template-columns:280px minmax(0,1fr) !important;
+  width:100% !important;
+  position:relative;
+}
+
 /* Desktop navigation is a real viewport-height grid column, not a block that
    pushes the workspace below its full content height. */
 .portal-parent > .portal-sidebar,
-.portal-coach > .portal-sidebar {
+.portal-coach > .portal-sidebar,
+#player-portal-shell > .athlete-sidebar {
   position:sticky !important;
   top:0 !important;
   bottom:auto !important;
@@ -34,13 +42,47 @@
   transform:none !important;
 }
 
+#player-portal-shell > .athlete-sidebar {
+  width:280px !important;
+}
+
+#player-portal-shell > .athlete-sidebar .athlete-nav-scroller {
+  flex:1 1 auto;
+  padding:10px 10px 14px !important;
+  display:flex;
+  flex-direction:column;
+  gap:10px !important;
+}
+
+#player-portal-shell > .athlete-sidebar .athlete-nav-item {
+  min-height:38px;
+  padding:8px 12px !important;
+  font-size:13px !important;
+  border-radius:10px !important;
+}
+
+#player-portal-shell > .athlete-sidebar .athlete-nav-group-label {
+  padding:4px 10px 2px !important;
+  font-size:9px !important;
+  font-weight:800 !important;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+#player-portal-shell > .athlete-sidebar .athlete-nav-item svg {
+  width:16px;
+  height:16px;
+  flex-shrink:0;
+}
+
 .portal-parent > .portal-sidebar .portal-nav,
 .portal-coach > .portal-sidebar .portal-nav {
   flex:0 0 auto;
 }
 
 .portal-parent > .portal-sidebar .portal-public-link,
-.portal-coach > .portal-sidebar .portal-public-link {
+.portal-coach > .portal-sidebar .portal-public-link,
+#player-portal-shell > .athlete-sidebar > div:last-child {
   margin-top:auto;
   flex:0 0 auto;
 }
@@ -48,7 +90,9 @@
 /* Workspace always occupies the second grid track on desktop. Earlier RTL
    margin rules are intentionally neutralized because the grid owns placement. */
 .portal-parent > .portal-workspace,
-.portal-coach > .portal-workspace {
+.portal-coach > .portal-workspace,
+#player-portal-shell > .athlete-workspace,
+html[dir="rtl"] #player-portal-shell > .athlete-workspace {
   min-width:0;
   width:100%;
   min-height:100dvh;
@@ -70,8 +114,16 @@
   gap:10px;
 }
 
+#player-portal-shell > .athlete-workspace > .athlete-topbar {
+  position:sticky;
+  top:0;
+  z-index:50;
+  width:100%;
+}
+
 .portal-parent > .portal-workspace > .portal-main,
-.portal-coach > .portal-workspace > .portal-main {
+.portal-coach > .portal-workspace > .portal-main,
+#player-portal-shell > .athlete-workspace > .athlete-content-area {
   flex:1 0 auto;
   width:min(100%,1560px) !important;
   max-width:1560px !important;
@@ -81,7 +133,8 @@
 
 /* Desktop must never show mobile navigation controls. */
 .portal-parent .portal-mobile-only,
-.portal-coach .portal-mobile-only {
+.portal-coach .portal-mobile-only,
+#player-portal-shell .athlete-mobile-bottom-bar {
   display:none !important;
 }
 
@@ -100,13 +153,15 @@
 /* Mobile / tablet: one-column workspace with an off-canvas sidebar. */
 @media (max-width:1024px) {
   .portal-shell.portal-parent,
-  .portal-shell.portal-coach {
+  .portal-shell.portal-coach,
+  #player-portal-shell.player-shell-container {
     display:block !important;
     min-height:100dvh !important;
   }
 
   .portal-parent > .portal-sidebar,
-  .portal-coach > .portal-sidebar {
+  .portal-coach > .portal-sidebar,
+  #player-portal-shell > .athlete-sidebar {
     position:fixed !important;
     inset:0 auto 0 0 !important;
     width:min(88vw,310px) !important;
@@ -119,7 +174,8 @@
   }
 
   html[dir="rtl"] .portal-parent > .portal-sidebar,
-  html[dir="rtl"] .portal-coach > .portal-sidebar {
+  html[dir="rtl"] .portal-coach > .portal-sidebar,
+  html[dir="rtl"] #player-portal-shell > .athlete-sidebar {
     inset:0 0 0 auto !important;
     transform:translateX(105%) !important;
     box-shadow:-28px 0 74px rgba(0,0,0,.44);
@@ -128,14 +184,18 @@
   .portal-parent > .portal-sidebar.is-open,
   .portal-coach > .portal-sidebar.is-open,
   html[dir="rtl"] .portal-parent > .portal-sidebar.is-open,
-  html[dir="rtl"] .portal-coach > .portal-sidebar.is-open {
+  html[dir="rtl"] .portal-coach > .portal-sidebar.is-open,
+  #player-portal-shell > .athlete-sidebar.is-open,
+  html[dir="rtl"] #player-portal-shell > .athlete-sidebar.is-open {
     transform:translateX(0) !important;
   }
 
   .portal-parent > .portal-workspace,
   .portal-coach > .portal-workspace,
   html[dir="rtl"] .portal-parent > .portal-workspace,
-  html[dir="rtl"] .portal-coach > .portal-workspace {
+  html[dir="rtl"] .portal-coach > .portal-workspace,
+  #player-portal-shell > .athlete-workspace,
+  html[dir="rtl"] #player-portal-shell > .athlete-workspace {
     width:100%;
     min-height:100dvh;
     margin:0 !important;
@@ -158,6 +218,32 @@
     max-width:none !important;
     padding:18px 16px calc(22px + env(safe-area-inset-bottom,0px)) !important;
   }
+
+  #player-portal-shell > .athlete-workspace > .athlete-content-area {
+    width:100% !important;
+    max-width:none !important;
+    padding:18px 16px calc(88px + env(safe-area-inset-bottom,0px)) !important;
+  }
+
+  #player-portal-shell .athlete-mobile-bottom-bar {
+    display:flex !important;
+    position:fixed !important;
+    bottom:0 !important;
+    left:0 !important;
+    right:0 !important;
+    height:64px !important;
+    z-index:50 !important;
+  }
+
+  /* Safe positioning for SportMind orb and panel on Player Portal when mobile bottom bar is active */
+  body:has(#player-portal-shell) .uos-assistant-orb {
+    bottom:calc(76px + env(safe-area-inset-bottom,0px)) !important;
+  }
+
+  body:has(#player-portal-shell) .uos-assistant-panel,
+  body:has(#player-portal-shell) .uos-assistant-invite {
+    bottom:calc(140px + env(safe-area-inset-bottom,0px)) !important;
+  }
 }
 
 @media (max-width:640px) {
@@ -171,11 +257,74 @@
   .portal-coach > .portal-workspace > .portal-topbar .portal-preview-badge {
     display:none !important;
   }
+
+  #player-portal-shell .athlete-topbar {
+    padding:0 12px !important;
+    gap:8px !important;
+  }
+
+  #player-portal-shell .athlete-topbar .portal-utility-nav > a {
+    display:none !important;
+  }
+
+  #player-portal-shell #topbar-player-mini-identity .text-\[10px\],
+  #player-portal-shell #topbar-player-mini-identity .text-\[11px\] {
+    display:none !important;
+  }
 }
 
 @media (prefers-reduced-motion:reduce) {
   .portal-parent > .portal-sidebar,
-  .portal-coach > .portal-sidebar {
+  .portal-coach > .portal-sidebar,
+  #player-portal-shell > .athlete-sidebar {
     transition:none !important;
   }
+}
+
+/* Player schedule week grid consistency with coach/admin */
+#player-schedule-page .schedule-week-view {
+  overflow-x:auto;
+  border:1px solid rgba(212,175,55,.13);
+  border-radius:20px;
+  background:
+    radial-gradient(circle at 96% 0,rgba(212,175,55,.05),transparent 34%),
+    rgba(8,11,9,.72);
+}
+
+#player-schedule-page .schedule-week-grid {
+  display:grid;
+  grid-template-columns:repeat(7,minmax(150px,1fr));
+  min-width:1050px;
+}
+
+#player-schedule-page .schedule-day-column {
+  min-height:360px;
+  border-inline-end:1px solid rgba(255,255,255,.045);
+  background:rgba(255,255,255,.008);
+}
+
+#player-schedule-page .schedule-day-column.today {
+  background:linear-gradient(180deg,rgba(212,175,55,.065),rgba(212,175,55,.015));
+}
+
+#player-schedule-page .schedule-day-column > header {
+  min-height:56px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:12px;
+  border-bottom:1px solid rgba(212,175,55,.09);
+}
+
+#player-schedule-page .schedule-day-column > header strong {
+  display:block;
+  color:#ddd8cd;
+  font-family:var(--uos-athletic-font-en,"Outfit","Segoe UI",sans-serif);
+  font-size:12px;
+}
+
+#player-schedule-page .schedule-day-column > header span {
+  color:#8d968f;
+  font-size:11px;
 }
