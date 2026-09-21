@@ -6,6 +6,7 @@ import { PortalErrorBoundary, PortalNotFoundPage, PortalRouteLoader, PortalRunti
 import { fetchPortalIdentity, signOutEverywhere } from '../lib/auth-client';
 import { clientShowcaseMode, previewModeAllowed } from '../lib/preview-guard';
 import { clearParentSession, readParentSession, startParentPreview, startParentProduction } from './parent/parentData';
+import { UnlinkedPortalEntryGate } from './shared/UnlinkedPortalEntryGate';
 
 const load = <T extends Record<string, ComponentType>>(factory: () => Promise<T>, key: keyof T) =>
   lazy(() => factory().then((module) => ({ default: module[key] })));
@@ -78,13 +79,15 @@ function ParentProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function ParentShellLayout() {
   return (
-    <ParentProtectedRoute>
-      <PortalErrorBoundary portal="parent">
+    <UnlinkedPortalEntryGate portal="parent">
+      <ParentProtectedRoute>
+        <PortalErrorBoundary portal="parent">
         <PortalLayout portal="parent">
           <Suspense fallback={<PortalRouteLoader portal="parent" />}><Outlet /></Suspense>
         </PortalLayout>
-      </PortalErrorBoundary>
-    </ParentProtectedRoute>
+        </PortalErrorBoundary>
+      </ParentProtectedRoute>
+    </UnlinkedPortalEntryGate>
   );
 }
 
