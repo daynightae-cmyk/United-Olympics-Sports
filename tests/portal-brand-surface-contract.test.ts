@@ -22,6 +22,10 @@ const [adminSidebar, portalLayout, portalAuth, playerPortalShell, playerOverview
   read('src/styles/portal-athletic-cards-final.css'),
 ]);
 const interiorDelivery = await read('src/styles/portal-interior-delivery-final.css');
+const [parentRouter, coachRouter] = await Promise.all([
+  read('src/portals/ParentPortalRouter.tsx'),
+  read('src/portals/CoachPortalRouter.tsx'),
+]);
 
 for (const [name, source] of [
   ['AdminSidebar', adminSidebar],
@@ -103,6 +107,10 @@ assert(visualClosure.includes('.dashboard-hero'), 'visual proof closure must nor
 assert(visualClosure.includes('.admin-stat-card'), 'visual proof closure must normalize admin stat cards');
 assert(visualClosure.includes('.portal-card'), 'visual proof closure must normalize portal cards');
 assert(visualClosure.includes('.athlete-glass-card'), 'visual proof closure must normalize player portal cards');
+assert(parentRouter.includes("session?.provider === 'production' ? 'production' : 'preview'"), 'Parent shell status must reflect the validated session provider');
+assert(parentRouter.includes('statusMode={statusMode}'), 'Parent PortalLayout must receive the resolved portal status');
+assert(coachRouter.includes('const { isPreviewSession } = useCoachSession();'), 'Coach shell status must use the validated session context');
+assert(coachRouter.includes("statusMode={isPreviewSession ? 'preview' : 'production'}"), 'Coach PortalLayout must distinguish preview from live production');
 assert(portalLayout.includes("className={({ isActive }) => isActive ? 'active' : undefined}"), 'Parent/Coach navigation must expose an explicit active visual state');
 assert(interiorDelivery.includes('.portal-parent .portal-nav a.active'), 'Parent portal must have an athletic active navigation state');
 assert(interiorDelivery.includes('.portal-coach .portal-nav a.active'), 'Coach portal must have an athletic active navigation state');

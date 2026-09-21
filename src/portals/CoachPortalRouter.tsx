@@ -3,7 +3,7 @@ import { Outlet, Route, Routes, Navigate } from 'react-router-dom';
 import { PortalLayout } from '../layouts/PortalLayout';
 import { PortalErrorBoundary, PortalNotFoundPage, PortalRouteLoader } from '../components/portal/PortalRouteState';
 import { clientShowcaseMode } from '../lib/preview-guard';
-import { CoachSessionProvider } from './coach/CoachSessionContext';
+import { CoachSessionProvider, useCoachSession } from './coach/CoachSessionContext';
 import { CoachProtectedRoute } from './coach/CoachProtectedRoute';
 import { CoachLoginPage } from './coach/CoachLoginPage';
 import { UnlinkedPortalEntryGate } from './shared/UnlinkedPortalEntryGate';
@@ -24,9 +24,11 @@ const CoachSessionProgramsPage = load(() => import('../pages/portal/coach/CoachS
 const CoachSessionMessagesPage = load(() => import('../pages/portal/coach/CoachSessionMessagesPage'), 'CoachSessionMessagesPage');
 
 function CoachShellLayout() {
+  const { isPreviewSession } = useCoachSession();
+
   return (
     <PortalErrorBoundary portal="coach">
-      <PortalLayout portal="coach">
+      <PortalLayout portal="coach" statusMode={isPreviewSession ? 'preview' : 'production'}>
         <Suspense fallback={<PortalRouteLoader portal="coach" />}><Outlet /></Suspense>
       </PortalLayout>
     </PortalErrorBoundary>
