@@ -31,11 +31,27 @@ function RouteFallback() {
   );
 }
 
-function InternalProductUtilities() {
+export function shouldSuppressAssistant(pathname: string): boolean {
+  const isPortalAuthRoute = /^\/(admin|player|parent|coach|store)\/login(\/|$)/.test(pathname);
+  if (isPortalAuthRoute) return true;
+  // Sensitive authentication surfaces
+  if (/^\/auth(\/|$)/.test(pathname)) return true;
+  if (/^\/player\/(phone|otp)(\/|$)/.test(pathname)) return true;
+  // Full-screen SportMind Arena workspace
+  if (/^\/(assistant|sportmind)(\/|$)/.test(pathname)) return true;
+  return false;
+}
+
+function ProductUtilities() {
   const { pathname } = useLocation();
-  const isInternalRoute = /^\/(admin|player|parent|coach|store)(\/|$)/.test(pathname);
   const isPortalAuthRoute = /^\/(admin|player|parent|coach|store)\/login\/?$/.test(pathname);
-  return isInternalRoute && !isPortalAuthRoute ? <><UnitedAssistant /><UpdateToast /></> : null;
+  const suppressAssistant = shouldSuppressAssistant(pathname);
+  return (
+    <>
+      {!suppressAssistant && !isPortalAuthRoute && <UnitedAssistant />}
+      <UpdateToast />
+    </>
+  );
 }
 
 const isBenchmarkEnabled = import.meta.env.DEV === true;
@@ -68,7 +84,7 @@ export function AppRouter() {
           <Route path="*" element={<PublicExperience />} />
         </Routes>
       </Suspense>
-      <InternalProductUtilities />
+      <ProductUtilities />
     </BrowserRouter>
   );
 }
