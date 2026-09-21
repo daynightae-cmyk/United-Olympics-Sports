@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { NavLink, useLocation, useNavigate, Link } from "react-router-dom";
 import {
   Home,
@@ -31,6 +31,7 @@ import { PlayerPortrait } from "./components/PlayerPortrait";
 import { useUiSettings } from "../../ui/theme/useUiSettings";
 import SafeBrandLogo from "../../components/ui/SafeBrandLogo";
 import { PortalUtilityNav } from "../../components/navigation/PortalUtilityNav";
+import { usePortalDrawerA11y } from "../../components/portal/usePortalDrawerA11y";
 interface NavItemDef {
   path: string;
   label: { en: string; ar: string };
@@ -73,6 +74,9 @@ export function PlayerPortalShell({ children }: { children: React.ReactNode }) {
   const { bilingualOrder, setSetting, resolvedTheme, setAppearance } = useUiSettings();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mobileDrawerRef = useRef<HTMLElement>(null);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileCloseButtonRef = useRef<HTMLButtonElement>(null);
   const [moreDrawerOpen, setMoreDrawerOpen] = useState(false);
   const [notifPopoverOpen, setNotifPopoverOpen] = useState(false);
   const [athleteModalOpen, setAthleteModalOpen] = useState(false);
@@ -81,6 +85,14 @@ export function PlayerPortalShell({ children }: { children: React.ReactNode }) {
   const isArabic = bilingualOrder === "ar-first";
   const currentLang = isArabic ? "ar" : "en";
   const isPreviewSession = readPreviewSession();
+
+  usePortalDrawerA11y({
+    open: mobileMenuOpen,
+    onClose: () => setMobileMenuOpen(false),
+    drawerRef: mobileDrawerRef,
+    triggerRef: mobileMenuButtonRef,
+    initialFocusRef: mobileCloseButtonRef,
+  });
 
   const toggleTheme = () => {
     const nextTheme = resolvedTheme === "dark" ? "light" : "dark";
@@ -191,7 +203,7 @@ export function PlayerPortalShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="player-shell-container" id="player-portal-shell">
-      <aside className={`athlete-sidebar ${mobileMenuOpen ? "is-open" : ""}`} id="athlete-desktop-sidebar">
+      <aside ref={mobileDrawerRef} className={`athlete-sidebar ${mobileMenuOpen ? "is-open" : ""}`} id="athlete-desktop-sidebar" aria-modal={mobileMenuOpen || undefined} role={mobileMenuOpen ? "dialog" : undefined} tabIndex={-1}>
         <div className="athlete-sidebar-header">
           <SafeBrandLogo className="athlete-sidebar-logo" />
           <div className="min-w-0">
@@ -199,7 +211,7 @@ export function PlayerPortalShell({ children }: { children: React.ReactNode }) {
             <span className="athlete-sidebar-brand-subtitle">يونايتد أوليمبيكس سبورت</span>
           </div>
           {mobileMenuOpen && (
-            <button onClick={() => setMobileMenuOpen(false)} className="p-1 rounded-lg text-slate-400 hover:text-white lg:hidden" aria-label="Close sidebar">
+            <button ref={mobileCloseButtonRef} onClick={() => setMobileMenuOpen(false)} className="p-1 rounded-lg text-slate-400 hover:text-white lg:hidden" aria-label="Close sidebar">
               <X size={20} />
             </button>
           )}
@@ -264,7 +276,7 @@ export function PlayerPortalShell({ children }: { children: React.ReactNode }) {
         <header className="athlete-topbar" id="athlete-topbar">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <PortalUtilityNav homeTo="/player/home" compact />
-            <button onClick={() => setMobileMenuOpen(true)} className="lg:hidden p-2 text-slate-300 hover:text-white rounded-xl hover:bg-white/5 border border-white/10" aria-label="Open sidebar">
+            <button ref={mobileMenuButtonRef} onClick={() => setMobileMenuOpen(true)} className="lg:hidden p-2 text-slate-300 hover:text-white rounded-xl hover:bg-white/5 border border-white/10" aria-label="Open sidebar" aria-expanded={mobileMenuOpen} aria-controls="athlete-desktop-sidebar">
               <Menu size={20} />
             </button>
 

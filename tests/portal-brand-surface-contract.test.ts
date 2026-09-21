@@ -22,9 +22,10 @@ const [adminSidebar, portalLayout, portalAuth, playerPortalShell, playerOverview
   read('src/styles/portal-athletic-cards-final.css'),
 ]);
 const interiorDelivery = await read('src/styles/portal-interior-delivery-final.css');
-const [parentRouter, coachRouter] = await Promise.all([
+const [parentRouter, coachRouter, portalDrawerA11y] = await Promise.all([
   read('src/portals/ParentPortalRouter.tsx'),
   read('src/portals/CoachPortalRouter.tsx'),
+  read('src/components/portal/usePortalDrawerA11y.ts'),
 ]);
 
 for (const [name, source] of [
@@ -107,6 +108,11 @@ assert(visualClosure.includes('.dashboard-hero'), 'visual proof closure must nor
 assert(visualClosure.includes('.admin-stat-card'), 'visual proof closure must normalize admin stat cards');
 assert(visualClosure.includes('.portal-card'), 'visual proof closure must normalize portal cards');
 assert(visualClosure.includes('.athlete-glass-card'), 'visual proof closure must normalize player portal cards');
+assert(portalLayout.includes('usePortalDrawerA11y'), 'Parent/Coach shell must use the shared mobile drawer behavior');
+assert(playerPortalShell.includes('usePortalDrawerA11y'), 'Player shell must use the shared mobile drawer behavior');
+for (const marker of ["document.body.style.overflow = 'hidden'", "event.key === 'Escape'", "event.key !== 'Tab'", 'triggerRef.current?.focus']) {
+  assert(portalDrawerA11y.includes(marker), `Shared portal drawer behavior missing: ${marker}`);
+}
 assert(parentRouter.includes("session?.provider === 'production' ? 'production' : 'preview'"), 'Parent shell status must reflect the validated session provider');
 assert(parentRouter.includes('statusMode={statusMode}'), 'Parent PortalLayout must receive the resolved portal status');
 assert(coachRouter.includes('const { isPreviewSession } = useCoachSession();'), 'Coach shell status must use the validated session context');

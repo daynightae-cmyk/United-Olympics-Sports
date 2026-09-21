@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   Activity, Award, Bell, CalendarDays, CheckCircle2, ChevronLeft, CreditCard, FileText,
   Home, IdCard, Menu, MessageSquareText, Settings, ShieldCheck, Target, UserRound, UsersRound, X,
@@ -9,6 +9,7 @@ import { BilingualText, bi } from '../components/bilingual/BilingualText';
 import { ThemeToggle } from '../components/ui/ThemeToggle';
 import { LanguageOrderToggle } from '../components/ui/LanguageOrderToggle';
 import { PortalUtilityNav } from '../components/navigation/PortalUtilityNav';
+import { usePortalDrawerA11y } from '../components/portal/usePortalDrawerA11y';
 import type { BilingualText as BilingualValue } from '../domain/contracts';
 import '../styles/admin.css';
 import '../styles/portal-shell.css';
@@ -66,6 +67,9 @@ const portalMeta: Record<PortalKind, { title: BilingualValue; role: BilingualVal
 
 export function PortalLayout({ portal, children, statusMode = 'preview' }: { portal: PortalKind; children: ReactNode; statusMode?: 'preview' | 'production' | 'unlinked' }) {
   const [open, setOpen] = useState(false);
+  const drawerRef = useRef<HTMLElement>(null);
+  const openButtonRef = useRef<HTMLButtonElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const location = useLocation();
   const meta = portalMeta[portal];
   const base = `/${portal}`;
@@ -75,19 +79,28 @@ export function PortalLayout({ portal, children, statusMode = 'preview' }: { por
   }, [base, location.pathname, meta.nav]);
 
   useEffect(() => { setOpen(false); }, [location.pathname]);
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setOpen(false); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
+  usePortalDrawerA11y({
+    open,
+    onClose: () => setOpen(false),
+    drawerRef,
+    triggerRef: openButtonRef,
+    initialFocusRef: closeButtonRef,
+  });
 
   return <div className={`portal-shell portal-${portal}`} data-portal={portal}>
-    <aside className={`portal-sidebar ${open ? 'is-open' : ''}`} aria-label={`${meta.title.en} navigation | تنقل ${meta.title.ar}`}>
+    <aside
+      ref={drawerRef}
+      id={`${portal}-portal-navigation`}
+      className={`portal-sidebar ${open ? 'is-open' : ''}`}
+      aria-label={`${meta.title.en} navigation | تنقل ${meta.title.ar}`}
+      aria-modal={open || undefined}
+      role={open ? 'dialog' : undefined}
+      tabIndex={-1}
+    >
       <div className="portal-brand">
         <img className="official-logo portal-brand-logo" src="/brand/united-olympics-sports-logo.png" alt="United Olympics Sports | يونايتد أوليمبيكس سبورت" />
         <div><strong>United Olympics Sports</strong><span lang="ar" dir="rtl">يونايتد أوليمبيكس سبورت</span></div>
-        <button type="button" onClick={() => setOpen(false)} className="portal-icon-button portal-mobile-only" aria-label="Close navigation | إغلاق القائمة"><X /></button>
+        <button ref={closeButtonRef} type="button" onClick={() => setOpen(false)} className="portal-icon-button portal-mobile-only" aria-label="Close navigation | إغلاق القائمة"><X /></button>
       </div>
       <div className="portal-role"><small><BilingualText value={bi('Portal Workspace', 'مساحة البوابة')} /></small><BilingualText value={meta.title} /><span><BilingualText value={meta.role} /></span></div>
       <nav className="portal-nav">{meta.nav.map(({ path, label, icon: Icon }) => <NavLink key={path || 'overview'} to={path ? `${base}/${path}` : base} end={!path} className={({ isActive }) => isActive ? 'active' : undefined}><Icon /><BilingualText value={label} /><ChevronLeft /></NavLink>)}</nav>
@@ -96,7 +109,7 @@ export function PortalLayout({ portal, children, statusMode = 'preview' }: { por
     {open && <button type="button" className="portal-overlay" onClick={() => setOpen(false)} aria-label="Close navigation | إغلاق القائمة" />}
     <section className="portal-workspace">
       <header className="portal-topbar">
-        <button type="button" className="portal-icon-button portal-mobile-only" onClick={() => setOpen(true)} aria-label="Open navigation | فتح القائمة"><Menu /></button>
+        <button ref={openButtonRef} type="button" className="portal-icon-button portal-mobile-only" onClick={() => setOpen(true)} aria-label="Open navigation | فتح القائمة" aria-expanded={open} aria-controls={`${portal}-portal-navigation`}><Menu /></button>
         <div><small><BilingualText value={meta.title} /></small><strong><BilingualText value={current.label} /></strong></div>
         <PortalUtilityNav homeTo={portal === 'coach' ? '/coach/home' : base} compact />
         <span className="portal-preview-badge" data-status-mode={statusMode}>
