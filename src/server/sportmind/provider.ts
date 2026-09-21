@@ -260,10 +260,10 @@ export class DeterministicSportsProvider implements SportsAiProvider {
         body: {
           en: recordsSummary.upcomingSessions > 0
             ? `You have ${recordsSummary.upcomingSessions} upcoming training sessions scheduled. Arrive 15 minutes before drill commencement for dynamic mobility.`
-            : 'No upcoming sessions are currently scheduled on your calendar. Check with your coach or view the academy programs for schedule updates.',
+            : 'No upcoming sessions are currently scheduled on your calendar. Check with your coach or view the sports programs for schedule updates.',
           ar: recordsSummary.upcomingSessions > 0
             ? `لديك ${recordsSummary.upcomingSessions} حصص تدريبية مجدولة قادمة. احرص على الحضور قبل 15 دقيقة لبدء الإحماء الحركي.`
-            : 'لا توجد حصص قادمة مجدولة في جدولك حاليًا. يرجى مراجعة المدرب أو الاطلاع على برامج الأكاديمية لمعرفة المواعيد.',
+            : 'لا توجد حصص قادمة مجدولة في جدولك حاليًا. يرجى مراجعة المدرب أو الاطلاع على البرامج الرياضية لمعرفة المواعيد.',
         },
         actions,
         confidenceLabel: {
