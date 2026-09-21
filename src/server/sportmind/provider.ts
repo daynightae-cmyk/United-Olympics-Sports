@@ -7,6 +7,10 @@ import type {
   SportMindStreamChunk,
 } from './types.js';
 
+// ---------------------------------------------------------------------------
+// Public interface
+// ---------------------------------------------------------------------------
+
 export interface SportsAiProvider {
   readonly name: string;
   isConfigured(): boolean;
@@ -16,6 +20,144 @@ export interface SportsAiProvider {
     signal?: AbortSignal,
   ): AsyncIterable<SportMindStreamChunk>;
 }
+
+// ---------------------------------------------------------------------------
+// Protocol type — explicit authority, no inference
+// ---------------------------------------------------------------------------
+
+export type OpenCodeProtocol = 'chat_completions' | 'responses';
+
+// ---------------------------------------------------------------------------
+// Internal SSE helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Parse a raw SSE buffer into discrete events.
+ * Handles fragmented TCP chunks, multiple events per read,
+ * and split events across reads.
+ *
+ * Returns: [parsedEvents, remainingBuffer]
+ */
+export function parseSseBuffer(buffer: string): [string[], string] {
+  const events: string[] = [];
+  // SSE events are separated by double newlines
+  let idx: number;
+  while ((idx = buffer.indexOf('\n\n')) !== -1) {
+    const block = buffer.slice(0, idx);
+    buffer = buffer.slice(idx + 2);
+    // Each block may have multiple "data:" lines; concatenate them
+    const dataLines: string[] = [];
+    for (const line of block.split('\n')) {
+      const trimmed = line.trimStart();
+      if (trimmed.startsWith('data: ')) {
+        dataLines.push(trimmed.slice(6));
+      } else if (trimmed.startsWith('data:')) {
+        dataLines.push(trimmed.slice(5));
+      }
+      // Ignore non-data lines (comments, event:, id:, retry:)
+    }
+    if (dataLines.length > 0) {
+      events.push(dataLines.join(''));
+    }
+  }
+  return [events, buffer];
+}
+
+/**
+ * Extract text delta from a Chat Completions SSE JSON payload.
+ */
+export function extractChatCompletionsDelta(json: unknown): string | null {
+  if (
+    typeof json === 'object' &&
+    json !== null &&
+    'choices' in json &&
+    Array.isArray((json as Record<string, unknown>).choices)
+  ) {
+    const choices = (json as { choices: Array<{ delta?: { content?: string } }> }).choices;
+    const content = choices[0]?.delta?.content;
+    if (typeof content === 'string') return content;
+  }
+  return null;
+}
+
+/**
+ * Extract text delta from a Responses SSE JSON payload.
+ * Handles response.output_text.delta events.
+ */
+export function extractResponsesDelta(json: unknown): string | null {
+  if (typeof json !== 'object' || json === null) return null;
+  const obj = json as Record<string, unknown>;
+
+  // Responses API: type: "response.output_text.delta", delta: "..."
+  if (obj.type === 'response.output_text.delta' && typeof obj.delta === 'string') {
+    return obj.delta;
+  }
+
+  // Also handle content_part.delta for multi-part responses
+  if (obj.type === 'response.content_part.delta') {
+    const part = obj.part as Record<string, unknown> | undefined;
+    if (part && typeof part.text === 'string') return part.text;
+  }
+
+  return null;
+}
+
+/**
+ * Classify an HTTP status code into a user-safe error code.
+ */
+export function classifyHttpError(
+  status: number,
+): { code: string; message: string; isFatal: boolean } {
+  switch (status) {
+    case 401:
+      return {
+        code: 'PROVIDER_AUTH_FAILED',
+        message: 'Intelligence provider authentication failed.',
+        isFatal: true,
+      };
+    case 403:
+      return {
+        code: 'PROVIDER_FORBIDDEN',
+        message: 'Intelligence provider access denied.',
+        isFatal: true,
+      };
+    case 404:
+      return {
+        code: 'PROVIDER_NOT_FOUND',
+        message: 'Intelligence provider endpoint not found.',
+        isFatal: true,
+      };
+    case 408:
+      return {
+        code: 'PROVIDER_TIMEOUT',
+        message: 'Intelligence provider request timed out.',
+        isFatal: false,
+      };
+    case 429:
+      return {
+        code: 'PROVIDER_RATE_LIMITED',
+        message: 'Intelligence provider rate limit exceeded. Please try again shortly.',
+        isFatal: false,
+      };
+    default:
+      if (status >= 500) {
+        return {
+          code: 'PROVIDER_SERVER_ERROR',
+          message: 'Intelligence provider encountered a server error.',
+          isFatal: false,
+        };
+      }
+      return {
+        code: 'PROVIDER_ERROR',
+        message: `Intelligence provider returned HTTP ${status}.`,
+        isFatal: false,
+      };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Shared constants
+// ---------------------------------------------------------------------------
 
 const MEDICAL_DISCLAIMER_MODULE: SportMindModule = {
   id: 'med-boundary',
@@ -36,8 +178,8 @@ const MEDICAL_DISCLAIMER_MODULE: SportMindModule = {
     },
   ],
   confidenceLabel: {
-    en: 'Verified Health Safety Boundary',
-    ar: 'حدود السلامة الطبية المعتمدة',
+    en: 'General Health Safety Guidance',
+    ar: 'إرشادات السلامة الصحية العامة',
   },
 };
 
@@ -144,6 +286,10 @@ function getSportsSpecificCoachBoard(sport = 'Football'): CoachBoardData {
   };
 }
 
+// ---------------------------------------------------------------------------
+// DeterministicSportsProvider — unchanged safe fallback
+// ---------------------------------------------------------------------------
+
 export class DeterministicSportsProvider implements SportsAiProvider {
   readonly name = 'DeterministicSportsProvider';
 
@@ -209,8 +355,8 @@ export class DeterministicSportsProvider implements SportsAiProvider {
           },
         ],
         confidenceLabel: {
-          en: 'Olympic Training Curriculum',
-          ar: 'منهج التدريب الأولمبي المعتمد',
+          en: 'Suggested Session Plan',
+          ar: 'خطة حصة مقترحة',
         },
       };
 
@@ -267,8 +413,8 @@ export class DeterministicSportsProvider implements SportsAiProvider {
         },
         actions,
         confidenceLabel: {
-          en: 'Live Player Portal Context',
-          ar: 'بيانات بوابة الرياضي الموثقة',
+          en: 'Based on Available Portal Records',
+          ar: 'بناءً على سجلات البوابة المتاحة',
         },
       };
 
@@ -323,8 +469,8 @@ export class DeterministicSportsProvider implements SportsAiProvider {
           },
         ],
         confidenceLabel: {
-          en: 'Guardian Authorized Records',
-          ar: 'بيانات ولي الأمر المصرح بها',
+          en: 'Authorized Portal Context',
+          ar: 'سياق البوابة المصرح به',
         },
       };
 
@@ -358,8 +504,8 @@ export class DeterministicSportsProvider implements SportsAiProvider {
           },
         ],
         confidenceLabel: {
-          en: 'Verified Operations Context',
-          ar: 'سياق العمليات المعتمد',
+          en: 'Authorized Portal Context',
+          ar: 'سياق البوابة المصرح به',
         },
       };
 
@@ -373,21 +519,64 @@ export class DeterministicSportsProvider implements SportsAiProvider {
   }
 }
 
+// ---------------------------------------------------------------------------
+// OpenCodeProvider — protocol-aware, hardened SSE streaming
+// ---------------------------------------------------------------------------
+
 export class OpenCodeProvider implements SportsAiProvider {
   readonly name = 'OpenCodeProvider';
 
   private readonly apiKey: string;
   private readonly baseUrl: string;
   private readonly model: string;
+  private readonly protocol: OpenCodeProtocol;
 
   constructor() {
     this.apiKey = process.env.OPENCODE_API_KEY || '';
     this.baseUrl = (process.env.OPENCODE_BASE_URL || 'https://api.opencode.ai/v1').replace(/\/+$/, '');
-    this.model = process.env.OPENCODE_MODEL || 'opencode-sports';
+    this.model = process.env.OPENCODE_MODEL || '';
+    const configuredProtocol = (process.env.OPENCODE_PROTOCOL || '').toLowerCase();
+    this.protocol = configuredProtocol === 'responses' ? 'responses' : 'chat_completions';
   }
 
   isConfigured(): boolean {
     return Boolean(this.apiKey.trim());
+  }
+
+  /** Build the correct endpoint URL based on protocol, avoiding double paths. */
+  private getEndpointUrl(): string {
+    const base = this.baseUrl;
+    if (this.protocol === 'responses') {
+      // Only append /responses if not already present
+      return base.endsWith('/responses') ? base : `${base}/responses`;
+    }
+    // chat_completions
+    return base.endsWith('/chat/completions') ? base : `${base}/chat/completions`;
+  }
+
+  /** Build the request body appropriate for the configured protocol. */
+  private buildRequestBody(systemPrompt: string, userMessage: string): string {
+    if (this.protocol === 'responses') {
+      return JSON.stringify({
+        model: this.model || undefined,
+        input: [
+          { role: 'developer', content: systemPrompt },
+          { role: 'user', content: userMessage },
+        ],
+        stream: true,
+      });
+    }
+
+    // chat_completions
+    return JSON.stringify({
+      model: this.model || undefined,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage },
+      ],
+      stream: true,
+      temperature: 0.3,
+    });
   }
 
   async *generateStream(
@@ -396,7 +585,6 @@ export class OpenCodeProvider implements SportsAiProvider {
     signal?: AbortSignal,
   ): AsyncIterable<SportMindStreamChunk> {
     if (!this.isConfigured()) {
-      // Fallback cleanly to DeterministicSportsProvider
       const fallback = new DeterministicSportsProvider();
       yield* fallback.generateStream(context, request, signal);
       return;
@@ -407,8 +595,8 @@ export class OpenCodeProvider implements SportsAiProvider {
     yield {
       type: 'thinking',
       thinkingState: {
-        en: 'Connecting to OpenCode sports intelligence engine...',
-        ar: 'الاتصال بمحرك الذكاء الرياضي المفتوح...',
+        en: 'Connecting to sports intelligence engine...',
+        ar: 'الاتصال بمحرك الذكاء الرياضي...',
       },
     };
 
@@ -444,28 +632,29 @@ Active Entity: ${context.entity ? `${context.entity.type}: ${context.entity.name
 Upcoming Sessions: ${context.recordsSummary.upcomingSessions}
 Attendance Records: ${context.recordsSummary.attendanceRecords}`;
 
+    const extractDelta =
+      this.protocol === 'responses' ? extractResponsesDelta : extractChatCompletionsDelta;
+
     try {
-      const endpoint = `${this.baseUrl}/chat/completions`;
+      const endpoint = this.getEndpointUrl();
+      const body = this.buildRequestBody(systemPrompt, request.message);
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${this.apiKey}`,
         },
-        body: JSON.stringify({
-          model: this.model,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: request.message },
-          ],
-          stream: true,
-          temperature: 0.3,
-        }),
+        body,
         signal,
       });
 
       if (!response.ok || !response.body) {
-        console.warn(`OpenCode API responded with HTTP ${response.status}. Falling back to deterministic guidance.`);
+        const classified = classifyHttpError(response.status);
+        // Log status only — never the API key
+        console.warn(
+          `OpenCode API (${this.protocol}) responded with HTTP ${response.status} [${classified.code}]. Falling back to deterministic.`,
+        );
         const fallback = new DeterministicSportsProvider();
         yield* fallback.generateStream(context, request, signal);
         return;
@@ -477,37 +666,62 @@ Attendance Records: ${context.recordsSummary.attendanceRecords}`;
       let fullText = '';
 
       while (true) {
+        if (signal?.aborted) return;
         const { done, value } = await reader.read();
         if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
 
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed || !trimmed.startsWith('data: ')) continue;
-          const dataStr = trimmed.slice(6).trim();
-          if (dataStr === '[DONE]') continue;
+        buffer += decoder.decode(value, { stream: true });
+        const [events, remaining] = parseSseBuffer(buffer);
+        buffer = remaining;
+
+        for (const eventData of events) {
+          const trimmed = eventData.trim();
+          if (trimmed === '[DONE]') continue;
+          if (!trimmed) continue;
 
           try {
-            const parsed = JSON.parse(dataStr) as {
-              choices?: Array<{ delta?: { content?: string } }>;
-            };
-            const delta = parsed.choices?.[0]?.delta?.content;
+            const parsed = JSON.parse(trimmed);
+            const delta = extractDelta(parsed);
             if (delta) {
               fullText += delta;
-              yield {
-                type: 'delta',
-                delta,
-              };
+              yield { type: 'delta', delta };
             }
           } catch {
-            // Non-fatal parse error on line
+            // Non-fatal JSON parse error — skip malformed event
           }
         }
       }
 
-      // If response accumulated, wrap into structured module
+      // Flush any remaining buffer
+      if (buffer.trim()) {
+        const trimmed = buffer.trim();
+        if (trimmed !== '[DONE]') {
+          // Try to extract from remaining data lines
+          for (const line of trimmed.split('\n')) {
+            const lineStr = line.trim();
+            let dataStr = '';
+            if (lineStr.startsWith('data: ')) {
+              dataStr = lineStr.slice(6).trim();
+            } else if (lineStr.startsWith('data:')) {
+              dataStr = lineStr.slice(5).trim();
+            }
+            if (dataStr && dataStr !== '[DONE]') {
+              try {
+                const parsed = JSON.parse(dataStr);
+                const delta = extractDelta(parsed);
+                if (delta) {
+                  fullText += delta;
+                  yield { type: 'delta', delta };
+                }
+              } catch {
+                // Non-fatal
+              }
+            }
+          }
+        }
+      }
+
+      // Wrap accumulated text into a structured module
       if (fullText) {
         yield {
           type: 'module',
@@ -515,16 +729,16 @@ Attendance Records: ${context.recordsSummary.attendanceRecords}`;
             id: `ai-${Date.now()}`,
             type: 'INSIGHT',
             title: {
-              en: 'SportMind Intelligence Analysis',
-              ar: 'تحليل ساحة الذكاء الرياضي',
+              en: 'SportMind Training Guidance',
+              ar: 'إرشادات تدريب ساحة الذكاء الرياضي',
             },
             body: {
               en: fullText,
               ar: fullText,
             },
             confidenceLabel: {
-              en: `OpenCode Engine (${this.model})`,
-              ar: `محرك الذكاء المفتوح (${this.model})`,
+              en: 'SportMind Intelligence Analysis',
+              ar: 'تحليل ساحة الذكاء الرياضي',
             },
           },
         };
@@ -533,12 +747,19 @@ Attendance Records: ${context.recordsSummary.attendanceRecords}`;
       yield { type: 'done' };
     } catch (err) {
       if (signal?.aborted) return;
-      console.warn('OpenCode provider error, falling back to deterministic:', err);
+      // Safe error logging — never include API key
+      const errorMessage =
+        err instanceof Error ? err.message : 'Unknown provider error';
+      console.warn(`OpenCode provider error (${this.protocol}): ${errorMessage}. Falling back to deterministic.`);
       const fallback = new DeterministicSportsProvider();
       yield* fallback.generateStream(context, request, signal);
     }
   }
 }
+
+// ---------------------------------------------------------------------------
+// Factory
+// ---------------------------------------------------------------------------
 
 export function getSportsAiProvider(): SportsAiProvider {
   if (process.env.OPENCODE_API_KEY?.trim()) {
