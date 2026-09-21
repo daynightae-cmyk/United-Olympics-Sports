@@ -23,6 +23,7 @@ const COACH_CTX: SportMindHydratedContext = {
     attendanceRecords: 12,
     hasActiveSubscription: true,
     recentNotesCount: 4,
+    dataAvailability: 'verified',
   },
   evidence: [
     {

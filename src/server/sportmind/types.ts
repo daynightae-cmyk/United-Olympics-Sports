@@ -78,6 +78,16 @@ export interface SportMindRequest {
   };
 }
 
+export type DataAvailability = 'verified' | 'unavailable' | 'none';
+
+export interface SportMindRecordsSummary {
+  upcomingSessions: number | null;
+  attendanceRecords: number | null;
+  hasActiveSubscription: boolean | null;
+  recentNotesCount: number | null;
+  dataAvailability: DataAvailability;
+}
+
 export interface SportMindHydratedContext {
   role: SportMindRole;
   userId: string;
@@ -91,12 +101,7 @@ export interface SportMindHydratedContext {
     name: string;
     summary?: string;
   };
-  recordsSummary: {
-    upcomingSessions: number;
-    attendanceRecords: number;
-    hasActiveSubscription: boolean;
-    recentNotesCount: number;
-  };
+  recordsSummary: SportMindRecordsSummary;
   evidence: SportMindEvidenceItem[];
   isMedicalInquiry?: boolean;
 }

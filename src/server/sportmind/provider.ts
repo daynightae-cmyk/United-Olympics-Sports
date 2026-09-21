@@ -409,6 +409,37 @@ export class DeterministicSportsProvider implements SportsAiProvider {
         },
       ];
 
+      let playerBodyEn: string;
+      let playerBodyAr: string;
+      let confidenceEn = 'Based on Verified Portal Records';
+      let confidenceAr = 'بناءً على سجلات البوابة المؤكدة';
+
+      if (recordsSummary.dataAvailability === 'verified') {
+        const upcoming = recordsSummary.upcomingSessions ?? 0;
+        playerBodyEn =
+          upcoming > 0
+            ? `You have ${upcoming} upcoming training sessions scheduled. Arrive 15 minutes before drill commencement for dynamic mobility.`
+            : 'No upcoming sessions are currently scheduled on your calendar. Check with your coach or view the sports programs for schedule updates.';
+        playerBodyAr =
+          upcoming > 0
+            ? `لديك ${upcoming} حصص تدريبية مجدولة قادمة. احرص على الحضور قبل 15 دقيقة لبدء الإحماء الحركي.`
+            : 'لا توجد حصص قادمة مجدولة في جدولك حاليًا. يرجى مراجعة المدرب أو الاطلاع على البرامج الرياضية لمعرفة المواعيد.';
+      } else if (recordsSummary.dataAvailability === 'unavailable') {
+        playerBodyEn =
+          'Upcoming session schedule and records are temporarily unavailable. Check your schedule tab for real-time updates.';
+        playerBodyAr =
+          'جدول الحصص القادمة والسجلات غير متاحة مؤقتاً. يرجى مراجعة تبويب الجدول للاطلاع على التحديثات المباشرة.';
+        confidenceEn = 'Unverified / Needs Data';
+        confidenceAr = 'غير مؤكد / بانتظار البيانات';
+      } else {
+        playerBodyEn =
+          'No athlete profile records are linked to this session. Sign in with an active athlete account to view personal training schedules.';
+        playerBodyAr =
+          'لا توجد سجلات ملف رياضي مرتبطة بهذه الجلسة. سجل الدخول بحساب رياضي نشط للاطلاع على جدول التدريب الشخصي.';
+        confidenceEn = 'Unlinked Context';
+        confidenceAr = 'سياق غير مرتبط';
+      }
+
       const playerSummaryModule: SportMindModule = {
         id: 'ins-player-1',
         type: 'INSIGHT',
@@ -417,17 +448,13 @@ export class DeterministicSportsProvider implements SportsAiProvider {
           ar: 'مسار الرياضي: الاستعداد الحالي',
         },
         body: {
-          en: recordsSummary.upcomingSessions > 0
-            ? `You have ${recordsSummary.upcomingSessions} upcoming training sessions scheduled. Arrive 15 minutes before drill commencement for dynamic mobility.`
-            : 'No upcoming sessions are currently scheduled on your calendar. Check with your coach or view the sports programs for schedule updates.',
-          ar: recordsSummary.upcomingSessions > 0
-            ? `لديك ${recordsSummary.upcomingSessions} حصص تدريبية مجدولة قادمة. احرص على الحضور قبل 15 دقيقة لبدء الإحماء الحركي.`
-            : 'لا توجد حصص قادمة مجدولة في جدولك حاليًا. يرجى مراجعة المدرب أو الاطلاع على البرامج الرياضية لمعرفة المواعيد.',
+          en: playerBodyEn,
+          ar: playerBodyAr,
         },
         actions,
         confidenceLabel: {
-          en: 'Based on Available Portal Records',
-          ar: 'بناءً على سجلات البوابة المتاحة',
+          en: confidenceEn,
+          ar: confidenceAr,
         },
       };
 
@@ -436,7 +463,7 @@ export class DeterministicSportsProvider implements SportsAiProvider {
         module: playerSummaryModule,
       };
 
-      if (recordsSummary.attendanceRecords === 0) {
+      if (recordsSummary.dataAvailability === 'verified' && recordsSummary.attendanceRecords === 0) {
         yield {
           type: 'module',
           module: {
@@ -452,8 +479,40 @@ export class DeterministicSportsProvider implements SportsAiProvider {
             },
           },
         };
+      } else if (recordsSummary.dataAvailability === 'unavailable') {
+        yield {
+          type: 'module',
+          module: {
+            id: 'needs-data-sync',
+            type: 'NEEDS_DATA',
+            title: {
+              en: 'Data Synchronization Notice',
+              ar: 'تنبيه مزامنة البيانات',
+            },
+            body: {
+              en: 'Athlete records are temporarily unavailable or not synchronized. Please check back shortly.',
+              ar: 'سجلات الرياضي غير متاحة مؤقتاً أو قيد المزامنة. يرجى إعادة المحاولة بعد قليل.',
+            },
+          },
+        };
       }
     } else if (role === 'parent') {
+      let parentBodyEn: string;
+      let parentBodyAr: string;
+
+      if (recordsSummary.dataAvailability === 'verified' && recordsSummary.upcomingSessions !== null && entity) {
+        parentBodyEn = `Tracking progress for ${entity.name}. ${recordsSummary.upcomingSessions} upcoming sessions are confirmed on the family calendar.`;
+        parentBodyAr = `متابعة تقدم ${entity.name}. هناك ${recordsSummary.upcomingSessions} حصص قادمة مؤكدة في جدول الأسرة.`;
+      } else if (entity) {
+        parentBodyEn = `Tracking progress for ${entity.name}. Session schedule details are currently being updated.`;
+        parentBodyAr = `متابعة تقدم ${entity.name}. تفاصيل جدول الحصص قيد التحديث حالياً.`;
+      } else {
+        parentBodyEn =
+          'Select a child profile in the Parent Portal to view targeted session schedules, coach evaluations, and attendance tracking.';
+        parentBodyAr =
+          'اختر ملف الابن من بوابة أولياء الأمور للاطلاع على جدول الحصص المخصص وتقييمات المدرب وسجلات الحضور.';
+      }
+
       const parentModule: SportMindModule = {
         id: 'ins-parent-1',
         type: 'INSIGHT',
@@ -462,12 +521,8 @@ export class DeterministicSportsProvider implements SportsAiProvider {
           ar: 'نظرة عامة على مسيرة الابن الرياضية',
         },
         body: {
-          en: entity
-            ? `Tracking progress for ${entity.name}. ${recordsSummary.upcomingSessions} upcoming sessions are confirmed on the family calendar.`
-            : 'Select a child profile in the Parent Portal to view targeted session schedules, coach evaluations, and attendance tracking.',
-          ar: entity
-            ? `متابعة تقدم ${entity.name}. هناك ${recordsSummary.upcomingSessions} حصص قادمة مؤكدة في جدول الأسرة.`
-            : 'اختر ملف الابن من بوابة أولياء الأمور للاطلاع على جدول الحصص المخصص وتقييمات المدرب وسجلات الحضور.',
+          en: parentBodyEn,
+          ar: parentBodyAr,
         },
         actions: [
           {
@@ -482,8 +537,8 @@ export class DeterministicSportsProvider implements SportsAiProvider {
           },
         ],
         confidenceLabel: {
-          en: 'Authorized Portal Context',
-          ar: 'سياق البوابة المصرح به',
+          en: recordsSummary.dataAvailability === 'verified' ? 'Authorized Portal Context' : 'Portal Guidance',
+          ar: recordsSummary.dataAvailability === 'verified' ? 'سياق البوابة المصرح به' : 'إرشادات البوابة',
         },
       };
 
@@ -660,8 +715,9 @@ Role: ${context.role}
 Sport: ${context.sport || 'Multi-Sport'}
 Branch: ${context.branchName || 'Not specified'}
 Active Entity: ${context.entity ? `${context.entity.type}: ${context.entity.name}` : 'None'}
-Upcoming Sessions: ${context.recordsSummary.upcomingSessions}
-Attendance Records: ${context.recordsSummary.attendanceRecords}`;
+Data Availability: ${context.recordsSummary.dataAvailability}
+Upcoming Sessions: ${context.recordsSummary.upcomingSessions !== null ? context.recordsSummary.upcomingSessions : 'Unavailable / Not applicable'}
+Attendance Records: ${context.recordsSummary.attendanceRecords !== null ? context.recordsSummary.attendanceRecords : 'Unavailable / Not applicable'}`;
 
     const extractDelta =
       this.protocol === 'responses' ? extractResponsesDelta : extractChatCompletionsDelta;

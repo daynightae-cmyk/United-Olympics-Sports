@@ -10,6 +10,7 @@ import {
 } from '../authorization-context.js';
 import { PortalDomainRepository } from '../repositories/portal-repository.js';
 import type {
+  DataAvailability,
   SportMindEvidenceItem,
   SportMindHydratedContext,
   SportMindRequest,
@@ -46,26 +47,24 @@ export function detectMedicalInquiry(message: string): boolean {
   return MEDICAL_KEYWORDS.some((kw) => normalized.includes(kw));
 }
 
-function resolveRoleFromContext(ctx: AuthorizationContext, currentRoute?: string): SportMindRole {
-  if (isSuperAdmin(ctx) || ctx.roles.includes('admin') || ctx.roles.includes('branch_admin')) {
-    return 'admin';
-  }
-  if (ctx.roles.includes('coach') || ctx.bindings.coachIds.length > 0) {
-    return 'coach';
-  }
-  if (ctx.roles.includes('guardian') || ctx.bindings.guardianIds.length > 0) {
-    return 'parent';
-  }
-  if (ctx.roles.includes('player') || ctx.bindings.playerIds.length > 0) {
-    return 'player';
+export function resolveRoleFromContext(ctx: AuthorizationContext, currentRoute?: string): SportMindRole {
+  const hasAdmin = isSuperAdmin(ctx) || ctx.roles.includes('admin') || ctx.roles.includes('branch_admin');
+  const hasCoach = ctx.roles.includes('coach') || ctx.bindings.coachIds.length > 0;
+  const hasParent = ctx.roles.includes('guardian') || ctx.bindings.guardianIds.length > 0;
+  const hasPlayer = ctx.roles.includes('player') || ctx.bindings.playerIds.length > 0;
+
+  // Disambiguate multi-role users based on current portal route
+  if (currentRoute) {
+    if (currentRoute.startsWith('/admin') && hasAdmin) return 'admin';
+    if (currentRoute.startsWith('/coach') && hasCoach) return 'coach';
+    if (currentRoute.startsWith('/parent') && hasParent) return 'parent';
+    if (currentRoute.startsWith('/player') && hasPlayer) return 'player';
   }
 
-  if (currentRoute) {
-    if (currentRoute.startsWith('/admin')) return 'admin';
-    if (currentRoute.startsWith('/coach')) return 'coach';
-    if (currentRoute.startsWith('/parent')) return 'parent';
-    if (currentRoute.startsWith('/player')) return 'player';
-  }
+  if (hasAdmin) return 'admin';
+  if (hasCoach) return 'coach';
+  if (hasParent) return 'parent';
+  if (hasPlayer) return 'player';
 
   return 'public';
 }
@@ -122,21 +121,79 @@ export async function hydrateSportMindContext(
   req: ApiRequest,
   input: SportMindRequest,
 ): Promise<SportMindHydratedContext> {
-  let identity: VerifiedIdentity;
+  const isMedical = detectMedicalInquiry(input.message);
+
+  let identity: VerifiedIdentity | null;
   try {
     identity = await verifyBearerIdentity(req);
-  } catch (err) {
-    // In preview / development environment, allow fallback to preview identity
-    if (process.env.NODE_ENV !== 'production') {
+  } catch {
+    // In preview / development environment, allow fallback to preview identity if in a portal route
+    if (
+      process.env.NODE_ENV !== 'production' &&
+      input.currentRoute &&
+      (input.currentRoute.startsWith('/admin') ||
+        input.currentRoute.startsWith('/coach') ||
+        input.currentRoute.startsWith('/parent') ||
+        input.currentRoute.startsWith('/player'))
+    ) {
       identity = getPreviewIdentity(input.currentRoute);
     } else {
-      throw err;
+      identity = null;
     }
+  }
+
+  // Unauthenticated / public access: enforce neutral public scope with no private data access
+  if (!identity) {
+    return {
+      role: 'public',
+      userId: 'anonymous',
+      recordsSummary: {
+        upcomingSessions: null,
+        attendanceRecords: null,
+        hasActiveSubscription: null,
+        recentNotesCount: null,
+        dataAvailability: 'none',
+      },
+      evidence: [
+        {
+          type: 'system',
+          description: {
+            en: 'Public sports intelligence session',
+            ar: 'جلسة ذكاء رياضي عامة',
+          },
+        },
+      ],
+      isMedicalInquiry: isMedical,
+    };
   }
 
   const authCtx = await resolveAuthorizationContext(identity);
   const role = resolveRoleFromContext(authCtx, input.currentRoute);
-  const isMedical = detectMedicalInquiry(input.message);
+
+  // If authenticated identity has no authorized roles, maintain public boundaries
+  if (role === 'public') {
+    return {
+      role: 'public',
+      userId: authCtx.uid,
+      recordsSummary: {
+        upcomingSessions: null,
+        attendanceRecords: null,
+        hasActiveSubscription: null,
+        recentNotesCount: null,
+        dataAvailability: 'none',
+      },
+      evidence: [
+        {
+          type: 'system',
+          description: {
+            en: 'Public sports intelligence session',
+            ar: 'جلسة ذكاء رياضي عامة',
+          },
+        },
+      ],
+      isMedicalInquiry: isMedical,
+    };
+  }
 
   const evidence: SportMindEvidenceItem[] = [
     {
@@ -149,21 +206,31 @@ export async function hydrateSportMindContext(
   ];
 
   let entity: SportMindHydratedContext['entity'];
-  let upcomingSessions = 0;
-  let attendanceRecords = 0;
-  let hasActiveSubscription = false;
-  let recentNotesCount = 0;
+  let upcomingSessions: number | null = null;
+  let attendanceRecords: number | null = null;
+  let hasActiveSubscription: boolean | null = null;
+  let recentNotesCount: number | null = null;
+  let dataAvailability: DataAvailability = 'none';
+
   let sport: string | undefined;
   let branchId: string | undefined = authCtx.tenant.branchIds[0];
   let branchName: string | undefined;
 
   const requested = input.requestedContext;
 
-  if (requested?.entityType === 'player' && requested.entityId && isUuid(requested.entityId)) {
-    if (canManagePlayer(authCtx, requested.entityId)) {
+  // Resolve target player ID safely based on authorized role & bindings
+  const targetPlayerId =
+    requested?.entityType === 'player' && requested.entityId && isUuid(requested.entityId)
+      ? requested.entityId
+      : role === 'player' && authCtx.bindings.playerIds[0] && isUuid(authCtx.bindings.playerIds[0])
+        ? authCtx.bindings.playerIds[0]
+        : undefined;
+
+  if (targetPlayerId) {
+    if (canManagePlayer(authCtx, targetPlayerId)) {
       try {
         const portalRepo = new PortalDomainRepository();
-        const playerData = await portalRepo.getPlayerData(authCtx, requested.entityId);
+        const playerData = await portalRepo.getPlayerData(authCtx, targetPlayerId);
         entity = {
           type: 'player',
           id: playerData.player.id,
@@ -176,6 +243,7 @@ export async function hydrateSportMindContext(
         attendanceRecords = playerData.attendance.length;
         hasActiveSubscription = playerData.subscriptions.some((s) => s.status === 'active');
         recentNotesCount = playerData.performance.length;
+        dataAvailability = 'verified';
 
         evidence.push({
           type: 'player',
@@ -198,6 +266,11 @@ export async function hydrateSportMindContext(
         if (!(err instanceof ApiError)) {
           console.warn('SportMind context hydration warning:', err);
         }
+        upcomingSessions = null;
+        attendanceRecords = null;
+        hasActiveSubscription = null;
+        recentNotesCount = null;
+        dataAvailability = 'unavailable';
       }
     }
   } else if (requested?.entityType === 'coach' && requested.entityId && isUuid(requested.entityId)) {
@@ -246,6 +319,7 @@ export async function hydrateSportMindContext(
       attendanceRecords,
       hasActiveSubscription,
       recentNotesCount,
+      dataAvailability,
     },
     evidence,
     isMedicalInquiry: isMedical,
