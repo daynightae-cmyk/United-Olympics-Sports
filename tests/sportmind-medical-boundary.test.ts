@@ -26,6 +26,7 @@ async function runMedicalBoundaryTests() {
       attendanceRecords: 5,
       hasActiveSubscription: true,
       recentNotesCount: 1,
+      dataAvailability: 'verified',
     },
     evidence: [],
     isMedicalInquiry: true,
