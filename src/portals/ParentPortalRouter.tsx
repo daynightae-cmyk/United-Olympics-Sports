@@ -78,11 +78,14 @@ function ParentProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function ParentShellLayout() {
+  const session = readParentSession();
+  const statusMode = session?.provider === 'production' ? 'production' : 'preview';
+
   return (
     <UnlinkedPortalEntryGate portal="parent">
       <ParentProtectedRoute>
         <PortalErrorBoundary portal="parent">
-        <PortalLayout portal="parent">
+        <PortalLayout portal="parent" statusMode={statusMode}>
           <Suspense fallback={<PortalRouteLoader portal="parent" />}><Outlet /></Suspense>
         </PortalLayout>
         </PortalErrorBoundary>
