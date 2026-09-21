@@ -383,6 +383,31 @@
   color: var(--color-text-secondary, #94a3b8);
 }
 
+.sportmind-reveal-quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sportmind-reveal-chip {
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  color: var(--uos-text-primary, #f4efe5);
+  cursor: pointer;
+  transition: all var(--uos-motion-fast, 150ms) var(--uos-ease);
+}
+
+.sportmind-reveal-chip:hover {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: rgba(212, 175, 55, 0.5);
+  color: var(--uos-gold-primary, #c9a227);
+  transform: translateY(-1px);
+}
+
 .sportmind-reveal-actions {
   display: flex;
   align-items: center;

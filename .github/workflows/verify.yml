@@ -103,6 +103,53 @@ jobs:
 
           exit "$failed"
 
+  sportmind-gates:
+    name: SportMind production & visual gates
+    needs: static-gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          for source in /etc/apt/sources.list.d/*; do
+            if [ -f "$source" ] && grep -q 'dl.google.com/linux/chrome-stable' "$source"; then
+              sudo mv "$source" "${source}.disabled"
+            fi
+          done
+          npx playwright install --with-deps chromium
+
+      - name: SportMind unit and contract tests
+        run: npm run test:sportmind
+
+      - name: Production build
+        run: npm run build
+
+      - name: SportMind 24-shot visual acceptance
+        run: npm run qa:sportmind
+
+      - name: Upload SportMind visual evidence
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: sportmind-visual-evidence
+          path: dist/qa-screenshots/sportmind
+
   build:
     needs: static-gates
     runs-on: ubuntu-latest

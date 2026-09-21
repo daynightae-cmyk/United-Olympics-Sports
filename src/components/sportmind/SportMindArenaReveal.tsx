@@ -4,6 +4,11 @@
  * Finite state model: 'idle' | 'field-lines' | 'core-emerging' | 'revealed' | 'collapsed'
  * Auto-collapse timer (10s, within 8-12s requirement) with hover/focus pause.
  * Mobile bottom sheet at <= 480px / 390px with safe area padding.
+ * Public copy truth & approved public actions:
+ * - Explore Sports (/programs)
+ * - Find Your Program (/programs)
+ * - Ask SportMind (opens assistant drawer)
+ * - Enter Arena (/assistant)
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -15,13 +20,17 @@ export type RevealState = 'idle' | 'field-lines' | 'core-emerging' | 'revealed' 
 
 export interface SportMindArenaRevealProps {
   onOpenArena?: () => void;
+  onAskSportMind?: () => void;
   onDismiss?: () => void;
+  onAutoCollapse?: () => void;
   autoCollapseMs?: number; // default 10000ms (10s)
 }
 
 export const SportMindArenaReveal: React.FC<SportMindArenaRevealProps> = ({
   onOpenArena,
+  onAskSportMind,
   onDismiss,
+  onAutoCollapse,
   autoCollapseMs = 10000,
 }) => {
   const navigate = useNavigate();
@@ -54,13 +63,13 @@ export const SportMindArenaReveal: React.FC<SportMindArenaRevealProps> = ({
 
     timerRef.current = setTimeout(() => {
       setState('collapsed');
-      onDismiss?.();
+      onAutoCollapse?.();
     }, autoCollapseMs);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [state, isPaused, autoCollapseMs, onDismiss]);
+  }, [state, isPaused, autoCollapseMs, onAutoCollapse]);
 
   const handleEnterArena = () => {
     setState('collapsed');
@@ -69,6 +78,25 @@ export const SportMindArenaReveal: React.FC<SportMindArenaRevealProps> = ({
     } else {
       navigate('/assistant');
     }
+  };
+
+  const handleAskSportMind = () => {
+    setState('collapsed');
+    if (onAskSportMind) {
+      onAskSportMind();
+    }
+  };
+
+  const handleExploreSports = () => {
+    setState('collapsed');
+    onAutoCollapse?.();
+    navigate('/programs');
+  };
+
+  const handleFindProgram = () => {
+    setState('collapsed');
+    onAutoCollapse?.();
+    navigate('/programs');
   };
 
   const handleDismiss = () => {
@@ -165,11 +193,35 @@ export const SportMindArenaReveal: React.FC<SportMindArenaRevealProps> = ({
             <p className="sportmind-reveal-description">
               <BilingualText
                 value={bi(
-                  'Explore AI-assisted workout progressions, real-time schedule intelligence, and tactical coach drills designed for champions.',
-                  'استكشف التدرج التدريبي المدعوم بالذكاء الاصطناعي، ومتابعة الجداول الفورية، والخطط التكتيكية المصممة للأبطال.',
+                  'Explore sports, programs, training guidance, and the UOS experience with SportMind.',
+                  'استكشف الرياضات والبرامج والتوجيه التدريبي وتجربة يونايتد مع SportMind.',
                 )}
               />
             </p>
+          </div>
+
+          <div className="sportmind-reveal-quick-links">
+            <button
+              type="button"
+              className="sportmind-reveal-chip uos-touch"
+              onClick={handleExploreSports}
+            >
+              <BilingualText value={bi('Explore Sports', 'استكشف الرياضات')} />
+            </button>
+            <button
+              type="button"
+              className="sportmind-reveal-chip uos-touch"
+              onClick={handleFindProgram}
+            >
+              <BilingualText value={bi('Find Your Program', 'اكتشف برنامجك')} />
+            </button>
+            <button
+              type="button"
+              className="sportmind-reveal-chip uos-touch"
+              onClick={handleAskSportMind}
+            >
+              <BilingualText value={bi('Ask SportMind', 'اسأل SportMind')} />
+            </button>
           </div>
 
           <div className="sportmind-reveal-actions">

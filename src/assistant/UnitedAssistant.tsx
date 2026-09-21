@@ -20,7 +20,9 @@ import { SportMindArenaReveal } from '../components/sportmind/SportMindArenaReve
 import { SportMindModuleRenderer } from '../components/sportmind/SportMindModules';
 import type { SportMindModule } from '../server/sportmind/types';
 
-const DISMISS_KEY = 'uos:assistant-dismissed';
+export const SPORTMIND_SEEN_KEY = 'uos:sportmind-intro-seen';
+export const SPORTMIND_DISMISSED_KEY = 'uos:sportmind-intro-dismissed';
+const LEGACY_DISMISS_KEY = 'uos:assistant-dismissed';
 
 interface ChatEntry {
   id: number;
@@ -56,16 +58,70 @@ export function UnitedAssistant() {
 
   useEffect(() => {
     if (open || isSuppressed) return;
-    const dismissed = (() => {
+    const isDismissed = (() => {
       try {
-        return window.sessionStorage.getItem(DISMISS_KEY) === '1';
+        return (
+          window.sessionStorage.getItem(SPORTMIND_DISMISSED_KEY) === '1' ||
+          window.sessionStorage.getItem(LEGACY_DISMISS_KEY) === '1'
+        );
       } catch {
         return false;
       }
     })();
-    if (dismissed) return;
-    const timer = window.setTimeout(() => setInvited(true), 2600);
-    return () => window.clearTimeout(timer);
+    if (isDismissed) return;
+
+    const isSeen = (() => {
+      try {
+        return window.sessionStorage.getItem(SPORTMIND_SEEN_KEY) === '1';
+      } catch {
+        return false;
+      }
+    })();
+    if (isSeen) return;
+
+    // Splash-safe timing:
+    // Wait until OlympicLuxurySplash is complete/dismissed before starting the reveal timer.
+    // If the route changes or becomes suppressed before the timer fires, cancel the pending timer.
+    let timer: number | null = null;
+    let splashCheckInterval: number | null = null;
+
+    const checkSplashAndStartTimer = () => {
+      const splashSeen = (() => {
+        try {
+          return (
+            window.sessionStorage.getItem('uos:luxury-splash-seen') === 'true' ||
+            window.sessionStorage.getItem('uos:splash-seen') === 'true'
+          );
+        } catch {
+          return true;
+        }
+      })();
+
+      const splashInDom =
+        typeof document !== 'undefined' &&
+        Boolean(document.getElementById('olympic-luxury-splash-root'));
+
+      if (splashSeen && !splashInDom) {
+        if (splashCheckInterval) {
+          window.clearInterval(splashCheckInterval);
+          splashCheckInterval = null;
+        }
+        timer = window.setTimeout(() => {
+          setInvited(true);
+        }, 2600);
+      }
+    };
+
+    checkSplashAndStartTimer();
+
+    if (!timer) {
+      splashCheckInterval = window.setInterval(checkSplashAndStartTimer, 200);
+    }
+
+    return () => {
+      if (timer) window.clearTimeout(timer);
+      if (splashCheckInterval) window.clearInterval(splashCheckInterval);
+    };
   }, [open, isSuppressed, location.pathname]);
 
   useEffect(() => {
@@ -83,10 +139,21 @@ export function UnitedAssistant() {
 
   if (isSuppressed) return null;
 
+  const handleAutoCollapse = () => {
+    setInvited(false);
+    try {
+      window.sessionStorage.setItem(SPORTMIND_SEEN_KEY, '1');
+    } catch {
+      /* session storage unavailable */
+    }
+  };
+
   const dismissInvitation = () => {
     setInvited(false);
     try {
-      window.sessionStorage.setItem(DISMISS_KEY, '1');
+      window.sessionStorage.setItem(SPORTMIND_SEEN_KEY, '1');
+      window.sessionStorage.setItem(SPORTMIND_DISMISSED_KEY, '1');
+      window.sessionStorage.setItem(LEGACY_DISMISS_KEY, '1');
     } catch {
       /* session preference unavailable */
     }
@@ -114,10 +181,15 @@ export function UnitedAssistant() {
       {invited && !open ? (
         <SportMindArenaReveal
           onOpenArena={() => {
-            dismissInvitation();
+            handleAutoCollapse();
             navigate('/assistant');
           }}
+          onAskSportMind={() => {
+            handleAutoCollapse();
+            setOpen(true);
+          }}
           onDismiss={dismissInvitation}
+          onAutoCollapse={handleAutoCollapse}
           autoCollapseMs={10000}
         />
       ) : null}
