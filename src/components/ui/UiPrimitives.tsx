@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, Info, LoaderCircle, X, ChevronDown } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle2, Info, LoaderCircle, X, ChevronDown } from 'lucide-react';
 import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import type { BilingualText as BilingualValue } from '../../domain/contracts';
 import { BilingualText, bi } from '../bilingual/BilingualText';
@@ -193,23 +193,60 @@ const statusIcons = {
   error: AlertTriangle,
   info: Info,
   preview: Info,
+  active: CheckCircle2,
+  inactive: AlertCircle,
+  pending: AlertTriangle,
+  danger: AlertTriangle,
+  brand: Info,
+  gold: Info,
 } as const;
+
+export type UiStatusTone = keyof typeof statusIcons;
 
 export function UiStatusBadge({
   tone = 'info',
   label,
+  dot = false,
+  className = '',
 }: {
-  tone?: keyof typeof statusIcons;
+  tone?: UiStatusTone;
   label: BilingualValue;
+  dot?: boolean;
+  className?: string;
 }) {
-  const Icon = statusIcons[tone];
+  const Icon = statusIcons[tone] ?? Info;
   return (
-    <span className={`ui-status ui-status-${tone}`}>
-      <Icon aria-hidden="true" />
+    <span className={`ui-status ui-status-${tone} spark-chip spark-chip-${tone} ${className}`.trim()}>
+      {dot ? <span className="spark-chip-dot" aria-hidden="true" /> : <Icon aria-hidden="true" size={13} />}
       <BilingualText value={label} />
     </span>
   );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Canonical SPARK Reconciled Primitives
+// ─────────────────────────────────────────────────────────────────────────────
+
+export {
+  SparkIconCapsule as UiIconCapsule,
+  SparkBreadcrumbs as UiBreadcrumbs,
+  SparkBack as UiBackButton,
+  SparkContextBar as UiContextBar,
+  SparkFilterPill as UiFilterPill,
+  SparkFilterBar as UiFilterBar,
+  SparkStepper as UiStepper,
+  SparkFormSection as UiFormSection,
+  SparkTooltipWrap as UiTooltip,
+  SparkNotifBadge as UiNotifBadge,
+  SparkProgressRail as UiProgressRail,
+  SparkDrawerHandle as UiDrawerHandle,
+  SparkActionCluster as UiActionCluster,
+  SparkKbd as UiKbd,
+  SparkVerified as UiVerifiedBadge,
+  SparkNewIndicator as UiNewBadge,
+  SparkUnsavedBar as UiUnsavedBar,
+  SparkCard as UiCard,
+} from './SparkAccessories';
 
 function StateShell({
   kind,

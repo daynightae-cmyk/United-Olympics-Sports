@@ -5,14 +5,14 @@
    ========================================================================== */
 
 :root {
-  --uos-athletic-gold: #d4af37;
-  --uos-athletic-gold-soft: #f0d77b;
-  --uos-athletic-ink: #070907;
-  --uos-athletic-panel: rgba(16, 19, 16, .92);
-  --uos-athletic-panel-2: rgba(22, 26, 21, .92);
-  --uos-athletic-line: rgba(212, 175, 55, .17);
-  --uos-athletic-line-strong: rgba(212, 175, 55, .38);
-  --uos-athletic-shadow: 0 22px 64px rgba(0,0,0,.24);
+  --uos-athletic-gold: var(--uos-brand, #d4af37);
+  --uos-athletic-gold-soft: var(--uos-brand-soft, #f0d77b);
+  --uos-athletic-ink: var(--uos-canvas, #070907);
+  --uos-athletic-panel: var(--uos-surface-1, rgba(16, 19, 16, .92));
+  --uos-athletic-panel-2: var(--uos-surface-2, rgba(22, 26, 21, .92));
+  --uos-athletic-line: var(--uos-border, rgba(212, 175, 55, .17));
+  --uos-athletic-line-strong: var(--uos-border-strong, rgba(212, 175, 55, .38));
+  --uos-athletic-shadow: var(--uos-shadow-soft, 0 22px 64px rgba(0,0,0,.24));
   --uos-athletic-font-en: "Outfit", "Segoe UI Variable Display", "Segoe UI", Arial, sans-serif;
   --uos-athletic-font-body: "DM Sans", "Segoe UI Variable Text", "Segoe UI", Arial, sans-serif;
   --uos-athletic-font-ar: "Tajawal", "Cairo", Tahoma, "Segoe UI", sans-serif;

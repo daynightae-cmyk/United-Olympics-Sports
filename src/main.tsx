@@ -36,6 +36,7 @@ import './styles/portal-auth.css';
 import './styles/passkey-auth.css';
 import './styles/store-login-reference.css';
 import './styles/portal-shell-structure-final.css';
+import './styles/spark-accessories.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
