@@ -125,7 +125,7 @@ export function persistLinkedPortalBinding(destination: string, identity: Portal
   if (!portal) throw new Error('UNSUPPORTED_OPEN_PORTAL');
 
   const state = bindingStateForPortal(portal, identity);
-  if (!state.linked) {
+  if (state.linked === false) {
     persistUnlinkedPortalAccess(portal, identity.identity, state.reason);
     return state;
   }
