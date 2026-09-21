@@ -123,8 +123,16 @@ export function AuthCallbackPage() {
       return;
     }
 
-    // Store and any other authenticated destinations preserve the existing
-    // server-session requirement.
+    // Store access follows the same Google-authenticated entry policy:
+    // the successful Supabase OAuth exchange is enough to enter the customer
+    // surface. Store APIs remain server-authoritative for account/order data.
+    if (destination.startsWith('/store')) {
+      consumeAuthReturnTo('/');
+      navigate(destination, { replace: true });
+      return;
+    }
+
+    // Any other authenticated destination preserves the existing server-session requirement.
     await fetchServerSession(token);
     consumeAuthReturnTo('/');
     navigate(destination, { replace: true });
