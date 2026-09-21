@@ -76,7 +76,9 @@ export function UnlinkedPortalEntryGate({ portal, children }: { portal: OpenPort
   }, [portal]);
 
   useEffect(() => {
-    if (!access) {
+    const currentAccess = readUnlinkedPortalAccess(portal);
+    if (!currentAccess) {
+      setAccess(null);
       setState('linked');
       return;
     }
@@ -85,12 +87,14 @@ export function UnlinkedPortalEntryGate({ portal, children }: { portal: OpenPort
       if (active) setState('unlinked');
     });
     return () => { active = false; };
-  }, [access, reconcile]);
+  }, [portal, reconcile]);
 
   const checkProfileLink = async () => {
     setCheckingLink(true);
     try {
       await reconcile();
+    } catch {
+      setState('unlinked');
     } finally {
       setCheckingLink(false);
     }
