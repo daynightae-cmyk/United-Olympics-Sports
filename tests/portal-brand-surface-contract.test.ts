@@ -22,10 +22,12 @@ const [adminSidebar, portalLayout, portalAuth, playerPortalShell, playerOverview
   read('src/styles/portal-athletic-cards-final.css'),
 ]);
 const interiorDelivery = await read('src/styles/portal-interior-delivery-final.css');
-const [parentRouter, coachRouter, portalDrawerA11y] = await Promise.all([
+const [parentRouter, coachRouter, portalDrawerA11y, adminLayout, adminTopbar] = await Promise.all([
   read('src/portals/ParentPortalRouter.tsx'),
   read('src/portals/CoachPortalRouter.tsx'),
   read('src/components/portal/usePortalDrawerA11y.ts'),
+  read('src/layouts/AdminLayout.tsx'),
+  read('src/components/admin/AdminTopbar.tsx'),
 ]);
 
 for (const [name, source] of [
@@ -110,6 +112,9 @@ assert(visualClosure.includes('.portal-card'), 'visual proof closure must normal
 assert(visualClosure.includes('.athlete-glass-card'), 'visual proof closure must normalize player portal cards');
 assert(portalLayout.includes('usePortalDrawerA11y'), 'Parent/Coach shell must use the shared mobile drawer behavior');
 assert(playerPortalShell.includes('usePortalDrawerA11y'), 'Player shell must use the shared mobile drawer behavior');
+assert(adminLayout.includes('usePortalDrawerA11y'), 'Admin shell must use the shared mobile drawer behavior');
+assert(adminSidebar.includes('id="admin-portal-navigation"'), 'Admin sidebar must expose a stable controlled drawer id');
+assert(adminTopbar.includes('aria-controls="admin-portal-navigation"'), 'Admin menu trigger must control the shared drawer id');
 for (const marker of ["document.body.style.overflow = 'hidden'", "event.key === 'Escape'", "event.key !== 'Tab'", 'triggerRef.current?.focus']) {
   assert(portalDrawerA11y.includes(marker), `Shared portal drawer behavior missing: ${marker}`);
 }

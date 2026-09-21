@@ -1,4 +1,5 @@
 import { ChevronLeft, X } from 'lucide-react';
+import { forwardRef, type RefObject } from 'react';
 import { NavLink } from 'react-router-dom';
 import { adminIconRegistry, type AdminIconKey } from '../../ui/icons/iconRegistry';
 import { BilingualText, bi } from '../bilingual/BilingualText';
@@ -58,13 +59,13 @@ const sections: Array<{ title: { en: string; ar: string }; items: NavItem[] }> =
   ] },
 ];
 
-type Props = { open: boolean; collapsed: boolean; onClose: () => void; onCollapse: () => void };
-export function AdminSidebar({ open, collapsed, onClose, onCollapse }: Props) {
-  return <aside className={`admin-sidebar ${open ? 'is-open' : ''} ${collapsed ? 'is-collapsed' : ''}`} aria-label="Admin navigation | تنقل الإدارة">
+type Props = { open: boolean; collapsed: boolean; onClose: () => void; onCollapse: () => void; closeButtonRef: RefObject<HTMLButtonElement | null> };
+export const AdminSidebar = forwardRef<HTMLElement, Props>(function AdminSidebar({ open, collapsed, onClose, onCollapse, closeButtonRef }, ref) {
+  return <aside ref={ref} id="admin-portal-navigation" className={`admin-sidebar ${open ? 'is-open' : ''} ${collapsed ? 'is-collapsed' : ''}`} aria-label="Admin navigation | تنقل الإدارة" aria-modal={open || undefined} role={open ? 'dialog' : undefined} tabIndex={-1}>
     <div className="admin-brand">
       <img className="official-logo admin-brand-logo" src="/brand/united-olympics-sports-logo.png" alt="United Olympics Sports | يونايتد أوليمبيكس سبورت" />
       <div className="admin-brand-copy"><strong>United Olympics Sports</strong><span lang="ar" dir="rtl">يونايتد أوليمبيكس سبورت</span><BilingualText value={bi('Super Admin', 'الإدارة الرئيسية')} /></div>
-      <button type="button" className="admin-icon-button mobile-only" onClick={onClose} aria-label="Close navigation | إغلاق القائمة"><X aria-hidden="true" /></button>
+      <button ref={closeButtonRef} type="button" className="admin-icon-button mobile-only" onClick={onClose} aria-label="Close navigation | إغلاق القائمة"><X aria-hidden="true" /></button>
     </div>
     <nav className="admin-nav">{sections.map((section) => <section className="admin-nav-section" key={section.title.en}>
       <BilingualText value={section.title} className="admin-nav-heading" />
@@ -72,4 +73,4 @@ export function AdminSidebar({ open, collapsed, onClose, onCollapse }: Props) {
     </section>)}</nav>
     <button type="button" className="sidebar-collapse desktop-only" onClick={onCollapse} aria-label={collapsed ? 'Expand sidebar | توسيع القائمة الجانبية' : 'Collapse sidebar | طي القائمة الجانبية'}><ChevronLeft aria-hidden="true" /><BilingualText value={collapsed ? bi('Expand', 'توسيع') : bi('Collapse', 'طي القائمة')} /></button>
   </aside>;
-}
+});
