@@ -127,7 +127,7 @@ export function AdminDashboardPage() {
         </div>
         <div className="uos-cc__header-brand" aria-hidden="true">
           <img
-            className="official-logo uos-cc__logo"
+            className="uos-cc__logo"
             data-surface="admin-command-logo"
             src="/brand/united-olympics-sports-logo.png"
             alt=""

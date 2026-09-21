@@ -92,12 +92,13 @@
   flex-shrink: 0;
 }
 
+.admin-shell .uos-cc__logo,
 .uos-cc__logo {
   width: clamp(56px, 8vw, 96px);
   height: auto;
   opacity: 0.12;
   filter: grayscale(0.4);
-  object-fit: cover;
+  object-fit: cover !important;
 }
 
 /* ── Status Bar ─────────────────────────────────────────────────────── */
