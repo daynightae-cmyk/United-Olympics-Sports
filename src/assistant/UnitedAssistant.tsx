@@ -16,6 +16,7 @@ import {
   shouldSuppressAssistant,
 } from './assistantService';
 import { SportMindCore } from '../components/sportmind/SportMindCore';
+import { SportMindArenaReveal } from '../components/sportmind/SportMindArenaReveal';
 import { SportMindModuleRenderer } from '../components/sportmind/SportMindModules';
 import type { SportMindModule } from '../server/sportmind/types';
 
@@ -111,30 +112,14 @@ export function UnitedAssistant() {
   return (
     <>
       {invited && !open ? (
-        <div className="uos-assistant-invite uos-glass-4 uos-safe-bottom" role="status">
-          <div className="uos-assistant-invite-head">
-            <SportMindCore size={28} state="idle" />
-            <p className="uos-assistant-invite-title">
-              <BilingualText value={bi('UOS SPORTMIND 👋', 'ساحة الذكاء الرياضي 👋')} />
-            </p>
-          </div>
-          <p className="uos-assistant-invite-body">
-            <BilingualText
-              value={bi(
-                'Welcome to United Olympics Sports. SportMind can help you prepare training plans, review schedules, or navigate directly to your portal.',
-                'أهلًا بك في يونايتد أوليمبيكس سبورت. تساعدك ساحة الذكاء الرياضي في إعداد الخطط التدريبية، مراجعة الجداول، أو الوصول المباشر إلى بوابتك.',
-              )}
-            />
-          </p>
-          <div className="uos-assistant-invite-actions">
-            <button type="button" className="uos-btn-primary uos-touch" onClick={openAssistant}>
-              <BilingualText value={bi('Open SportMind', 'فتح ساحة الذكاء')} />
-            </button>
-            <button type="button" className="uos-btn-ghost uos-touch" onClick={dismissInvitation}>
-              <BilingualText value={bi('Later', 'لاحقًا')} />
-            </button>
-          </div>
-        </div>
+        <SportMindArenaReveal
+          onOpenArena={() => {
+            dismissInvitation();
+            navigate('/assistant');
+          }}
+          onDismiss={dismissInvitation}
+          autoCollapseMs={10000}
+        />
       ) : null}
 
       <button
