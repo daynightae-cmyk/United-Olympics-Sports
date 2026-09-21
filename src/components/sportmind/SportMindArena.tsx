@@ -202,8 +202,9 @@ export const SportMindArena: React.FC<SportMindArenaProps> = ({
         signal: controller.signal,
       });
 
-      if (!response.ok) {
-        // If API endpoint is unreachable (e.g. pure static preview / offline), use deterministic local guidance
+      const contentType = response.headers.get('content-type') || '';
+      if (!response.ok || !contentType.includes('text/event-stream')) {
+        // If API endpoint is unreachable or not an event-stream (e.g. pure static preview / offline), use deterministic local guidance
         const localAnswer = answerLocally(trimmed);
         const assistantMsg: MessageEntry = {
           id: `sm-${Date.now()}`,
