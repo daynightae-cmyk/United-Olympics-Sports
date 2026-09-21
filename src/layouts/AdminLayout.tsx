@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { AdminBreadcrumbs } from '../components/admin/AdminBreadcrumbs';
 import { AdminSidebar } from '../components/admin/AdminSidebar';
 import { AdminTopbar } from '../components/admin/AdminTopbar';
+import { usePortalDrawerA11y } from '../components/portal/usePortalDrawerA11y';
 import { bi } from '../components/bilingual/BilingualText';
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
 import { AdminGroupDetailPage } from '../pages/admin/AdminGroupDetailPage';
@@ -77,21 +78,25 @@ function usePageTitle() {
 export function AdminLayout() {
   const { sidebarDefault, setSetting, density, fontScale } = useUiSettings();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [collapsed, setCollapsed] = useState(sidebarDefault === 'collapsed');
   const title = usePageTitle();
 
   useEffect(() => { setCollapsed(sidebarDefault === 'collapsed'); }, [sidebarDefault]);
-  useEffect(() => {
-    if (!sidebarOpen) return;
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setSidebarOpen(false); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [sidebarOpen]);
+  usePortalDrawerA11y({
+    open: sidebarOpen,
+    onClose: () => setSidebarOpen(false),
+    drawerRef: sidebarRef,
+    triggerRef: menuButtonRef,
+    initialFocusRef: closeButtonRef,
+  });
 
   return <div className={`admin-shell ${collapsed ? 'sidebar-collapsed' : ''} density-${density} font-${fontScale}`}>
-    <AdminSidebar open={sidebarOpen} collapsed={collapsed} onClose={() => setSidebarOpen(false)} onCollapse={() => { const nextCollapsed = !collapsed; setCollapsed(nextCollapsed); setSetting('sidebarDefault', nextCollapsed ? 'collapsed' : 'expanded'); }} />
+    <AdminSidebar ref={sidebarRef} closeButtonRef={closeButtonRef} open={sidebarOpen} collapsed={collapsed} onClose={() => setSidebarOpen(false)} onCollapse={() => { const nextCollapsed = !collapsed; setCollapsed(nextCollapsed); setSetting('sidebarDefault', nextCollapsed ? 'collapsed' : 'expanded'); }} />
     {sidebarOpen && <button type="button" className="admin-sidebar-overlay" onClick={() => setSidebarOpen(false)} aria-label="Close navigation | إغلاق القائمة" />}
-    <div className="admin-workspace"><AdminTopbar title={title} onMenu={() => setSidebarOpen(true)} /><main className="admin-main"><AdminBreadcrumbs /><Routes>
+    <div className="admin-workspace"><AdminTopbar title={title} onMenu={() => setSidebarOpen(true)} menuButtonRef={menuButtonRef} sidebarOpen={sidebarOpen} /><main className="admin-main"><AdminBreadcrumbs /><Routes>
       <Route index element={<AdminDashboardPage />} />
       <Route path="sports" element={<AdminSportsPage />} />
       <Route path="sports/:sportId/groups/:groupId" element={<AdminGroupDetailPage />} />
