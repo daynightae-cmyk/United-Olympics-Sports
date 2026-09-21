@@ -9,9 +9,13 @@ import {
   fetchServerSession,
   peekAuthReturnTo,
   signOutEverywhere,
-  type PortalIdentity,
   type ServerAuthSession,
 } from '../../lib/auth-client';
+import {
+  persistLinkedPortalBinding,
+  persistUnlinkedPortalAccess,
+  portalKindFromDestination,
+} from '../../portals/shared/portal-entry-access';
 
 function hasAdminAccess(session: ServerAuthSession): boolean {
   return session.roles.some((role) => ['super_admin', 'admin', 'owner', 'administrator'].includes(role));
@@ -48,56 +52,6 @@ export function classifyAuthError(error: unknown): string {
   return 'AUTH_CALLBACK_UNCLASSIFIED';
 }
 
-export type PortalBindingResult =
-  | { ok: true; code?: undefined }
-  | { ok: false; code: 'PORTAL_RECORD_NOT_LINKED' | 'PORTAL_RECORD_AMBIGUOUS' };
-
-export function persistSinglePortalBinding(destination: string, portal: PortalIdentity): PortalBindingResult {
-  const now = new Date().toISOString();
-
-  if (destination.startsWith('/player')) {
-    if (portal.bindings.playerIds.length === 0) return { ok: false, code: 'PORTAL_RECORD_NOT_LINKED' };
-    if (portal.bindings.playerIds.length !== 1) return { ok: false, code: 'PORTAL_RECORD_AMBIGUOUS' };
-    const playerId = portal.bindings.playerIds[0];
-    localStorage.setItem('uos:player-portal:session', JSON.stringify({
-      userId: portal.identity.uid,
-      playerId,
-      ...(portal.identity.email ? { email: portal.identity.email } : {}),
-      provider: 'production',
-      createdAt: now,
-    }));
-    localStorage.setItem('uos:player-portal:active-id', playerId);
-    localStorage.setItem('uos:player-portal:auth', 'true');
-    return { ok: true };
-  }
-
-  if (destination.startsWith('/parent')) {
-    if (portal.bindings.guardianIds.length === 0) return { ok: false, code: 'PORTAL_RECORD_NOT_LINKED' };
-    if (portal.bindings.guardianIds.length !== 1) return { ok: false, code: 'PORTAL_RECORD_AMBIGUOUS' };
-    localStorage.setItem('uos:parent-portal:session:v1', JSON.stringify({
-      parentId: portal.bindings.guardianIds[0],
-      provider: 'production',
-      createdAt: now,
-      authorizedPlayerIds: portal.bindings.guardianPlayerIds,
-    }));
-    return { ok: true };
-  }
-
-  if (destination.startsWith('/coach')) {
-    if (portal.bindings.coachIds.length === 0) return { ok: false, code: 'PORTAL_RECORD_NOT_LINKED' };
-    if (portal.bindings.coachIds.length !== 1) return { ok: false, code: 'PORTAL_RECORD_AMBIGUOUS' };
-    localStorage.setItem('uos:coach-portal:session:v1', JSON.stringify({
-      coachId: portal.bindings.coachIds[0],
-      provider: 'production',
-      createdAt: now,
-    }));
-    sessionStorage.removeItem('uos:coach-portal:preview-session:v1');
-    return { ok: true };
-  }
-
-  return { ok: true };
-}
-
 export function AuthCallbackPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -116,10 +70,14 @@ export function AuthCallbackPage() {
   const providerError = params.get('error_description') || params.get('error');
 
   const finish = async (token: string) => {
-    const session = await fetchServerSession(token);
-    const destination = consumeAuthReturnTo('/');
+    const destination = peekAuthReturnTo('/');
+    const openPortal = portalKindFromDestination(destination);
 
+    // Administration remains strictly role-gated by the server. A successful
+    // Google sign-in alone never grants administrative access.
     if (destination.startsWith('/admin')) {
+      const session = await fetchServerSession(token);
+      consumeAuthReturnTo('/');
       if (!hasAdminAccess(session)) {
         await signOutEverywhere().catch(() => undefined);
         setState('denied');
@@ -131,22 +89,44 @@ export function AuthCallbackPage() {
       return;
     }
 
-    if (/^\/(player|parent|coach)(\/|$)/.test(destination)) {
-      const portalIdentity = await fetchPortalIdentity(token);
-      const bindingResult = persistSinglePortalBinding(destination, portalIdentity);
-      if (!bindingResult.ok) {
-        await signOutEverywhere().catch(() => undefined);
-        setState(bindingResult.code === 'PORTAL_RECORD_NOT_LINKED' ? 'not-linked' : 'denied');
-        setErrorCode(bindingResult.code);
-        setMessage(
-          bindingResult.code === 'PORTAL_RECORD_NOT_LINKED'
-            ? 'Your account is verified, but it is not linked to an active player, parent, or coach record for this portal. Please contact administration. | تم التحقق من حسابك، لكنه غير مرتبط بسجل نشط للاعب أو ولي أمر أو مدرب لهذه البوابة. يرجى التواصل مع الإدارة.'
-            : 'Your account is verified, but it is not linked to exactly one valid record for this portal. | تم التحقق من حسابك، لكنه غير مرتبط بسجل واحد صالح لهذه البوابة.',
-        );
+    // Player / parent / coach portal ENTRY is granted to any successfully
+    // authenticated Google/Supabase browser session. Private records remain
+    // server-authorized and are shown only after an exact verified binding.
+    if (openPortal) {
+      let session: ServerAuthSession | null = null;
+      try {
+        session = await fetchServerSession(token);
+      } catch (error) {
+        const code = classifyAuthError(error);
+        if (code === 'AUTH_INVALID' || code === 'AUTH_REQUIRED') throw error;
+
+        // OAuth exchange already established a valid Supabase browser session.
+        // When the production data/authorization plane is unavailable, enter a
+        // zero-private-data shell instead of trapping the user on the callback.
+        persistUnlinkedPortalAccess(openPortal, { provider: 'supabase' }, 'data-unavailable');
+        consumeAuthReturnTo('/');
+        navigate(destination, { replace: true });
         return;
       }
+
+      try {
+        const portalIdentity = await fetchPortalIdentity(token);
+        persistLinkedPortalBinding(destination, portalIdentity);
+      } catch (error) {
+        const code = classifyAuthError(error);
+        if (code === 'AUTH_INVALID' || code === 'AUTH_REQUIRED') throw error;
+        persistUnlinkedPortalAccess(openPortal, session, 'data-unavailable');
+      }
+
+      consumeAuthReturnTo('/');
+      navigate(destination, { replace: true });
+      return;
     }
 
+    // Store and any other authenticated destinations preserve the existing
+    // server-session requirement.
+    await fetchServerSession(token);
+    consumeAuthReturnTo('/');
     navigate(destination, { replace: true });
   };
 
