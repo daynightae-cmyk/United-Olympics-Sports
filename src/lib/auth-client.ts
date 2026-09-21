@@ -78,6 +78,17 @@ export async function isPlatformAuthenticatorAvailable(): Promise<boolean> {
 export async function beginSupabaseGoogleOAuth(returnTo = '/'): Promise<void> {
   const safeDestination = safeReturnTo(returnTo);
   sessionStorage.setItem(RETURN_TO_KEY, safeDestination);
+
+  // If on apex host, we must canonicalize to www before starting PKCE.
+  // Otherwise PKCE verifier is stored on apex while callback redirects to www.
+  if (typeof window !== 'undefined' && window.location.hostname === PRODUCTION_AUTH_APEX_HOST) {
+    const canonical = canonicalAuthPageUrl(window.location.href);
+    if (canonical) {
+      window.location.replace(canonical);
+      return;
+    }
+  }
+
   const redirectTo = `${window.location.origin}/auth/callback`;
   const { data, error } = await withRuntimeTimeout(
     'supabase-google-oauth-start',

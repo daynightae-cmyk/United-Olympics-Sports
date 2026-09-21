@@ -350,7 +350,7 @@
 .portal-auth[data-portal="parent"] .portal-auth-visual{background-position:center 42%}
 .portal-auth[data-portal="coach"] .portal-auth-visual{background-position:center 44%}
 .portal-auth[data-portal="player"] .portal-auth-visual{background-position:center 40%}
-.portal-auth[data-portal="admin"] .portal-auth-visual{background-position:center 48%}
+.portal-auth[data-portal="admin"] .portal-auth-visual{background-position:60% 50%}
 .portal-auth[data-portal="store"] .portal-auth-visual{background-position:center 46%}
 .portal-auth-visual-overlay{
   position:absolute;

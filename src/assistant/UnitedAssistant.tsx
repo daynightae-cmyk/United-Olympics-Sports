@@ -13,13 +13,13 @@ import {
   answerLocally,
   getAssistantProviderStatus,
   getAssistantQuickActions,
+  shouldSuppressAssistant,
 } from './assistantService';
 import { SportMindCore } from '../components/sportmind/SportMindCore';
 import { SportMindModuleRenderer } from '../components/sportmind/SportMindModules';
 import type { SportMindModule } from '../server/sportmind/types';
 
 const DISMISS_KEY = 'uos:assistant-dismissed';
-const AUTH_PREFIXES = ['/player/login', '/player/auth', '/player/phone', '/player/otp'];
 
 interface ChatEntry {
   id: number;
@@ -40,11 +40,8 @@ export function UnitedAssistant() {
   const [draft, setDraft] = useState('');
   const [online, setOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
   const composerRef = useRef<HTMLInputElement>(null);
-  const isAuthRoute = AUTH_PREFIXES.some((prefix) => location.pathname.startsWith(prefix));
+  const isSuppressed = shouldSuppressAssistant(location.pathname);
   const provider = getAssistantProviderStatus();
-
-  // Hide floating launcher on the dedicated full-screen /assistant page
-  const isAssistantPage = location.pathname === '/assistant';
 
   useEffect(() => {
     const onStatus = () => setOnline(navigator.onLine);
@@ -57,7 +54,7 @@ export function UnitedAssistant() {
   }, []);
 
   useEffect(() => {
-    if (open || isAuthRoute || isAssistantPage) return;
+    if (open || isSuppressed) return;
     const dismissed = (() => {
       try {
         return window.sessionStorage.getItem(DISMISS_KEY) === '1';
@@ -68,7 +65,7 @@ export function UnitedAssistant() {
     if (dismissed) return;
     const timer = window.setTimeout(() => setInvited(true), 2600);
     return () => window.clearTimeout(timer);
-  }, [open, isAuthRoute, isAssistantPage, location.pathname]);
+  }, [open, isSuppressed, location.pathname]);
 
   useEffect(() => {
     if (open) composerRef.current?.focus();
@@ -83,7 +80,7 @@ export function UnitedAssistant() {
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
-  if (isAssistantPage) return null;
+  if (isSuppressed) return null;
 
   const dismissInvitation = () => {
     setInvited(false);
@@ -107,7 +104,7 @@ export function UnitedAssistant() {
   };
 
   const openAssistant = () => {
-    setInvited(false);
+    dismissInvitation();
     setOpen(true);
   };
 

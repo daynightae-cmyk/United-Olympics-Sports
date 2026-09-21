@@ -115,3 +115,14 @@ export function answerLocally(query: string): AssistantAnswer {
 export function getAssistantProviderStatus(): { mode: 'sportmind' | 'local-guide'; aiConnected: boolean } {
   return { mode: 'sportmind', aiConnected: false };
 }
+
+/** Determines whether the floating SportMind / UnitedAssistant should be suppressed for a given route. */
+export function shouldSuppressAssistant(pathname: string): boolean {
+  // Sensitive authentication surfaces
+  if (/^\/auth(\/|$)/.test(pathname)) return true;
+  if (/^\/(admin|player|parent|coach|store)\/login(\/|$)/.test(pathname)) return true;
+  if (/^\/player\/(phone|otp)(\/|$)/.test(pathname)) return true;
+  // Full-screen SportMind Arena workspace
+  if (/^\/(assistant|sportmind)(\/|$)/.test(pathname)) return true;
+  return false;
+}
