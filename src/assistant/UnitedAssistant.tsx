@@ -129,13 +129,19 @@ export function UnitedAssistant() {
   }, [open]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open && !invited) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
+      if (event.key === 'Escape') {
+        if (open) {
+          setOpen(false);
+        } else if (invited) {
+          dismissInvitation();
+        }
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
+  }, [open, invited]);
 
   if (isSuppressed) return null;
 
@@ -176,6 +182,12 @@ export function UnitedAssistant() {
     setOpen(true);
   };
 
+  const autoCollapseMs =
+    typeof window !== 'undefined' &&
+    typeof (window as unknown as { __UOS_SPORTMIND_AUTO_COLLAPSE_MS__?: number }).__UOS_SPORTMIND_AUTO_COLLAPSE_MS__ === 'number'
+      ? (window as unknown as { __UOS_SPORTMIND_AUTO_COLLAPSE_MS__?: number }).__UOS_SPORTMIND_AUTO_COLLAPSE_MS__!
+      : 10000;
+
   return (
     <>
       {invited && !open ? (
@@ -190,7 +202,7 @@ export function UnitedAssistant() {
           }}
           onDismiss={dismissInvitation}
           onAutoCollapse={handleAutoCollapse}
-          autoCollapseMs={10000}
+          autoCollapseMs={autoCollapseMs}
         />
       ) : null}
 
