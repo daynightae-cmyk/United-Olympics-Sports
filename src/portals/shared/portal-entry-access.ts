@@ -28,40 +28,40 @@ export function portalKindFromDestination(destination: string): OpenPortalKind |
 }
 
 export function clearLinkedPortalSession(portal: OpenPortalKind): void {
-  if (typeof window === 'undefined') return;
+  if (typeof globalThis.localStorage === 'undefined') return;
   try {
     if (portal === 'player') {
-      window.localStorage.removeItem('uos:player-portal:session');
-      window.localStorage.removeItem('uos:player-portal:active-id');
-      window.localStorage.removeItem('uos:player-portal:auth');
+      globalThis.localStorage.removeItem('uos:player-portal:session');
+      globalThis.localStorage.removeItem('uos:player-portal:active-id');
+      globalThis.localStorage.removeItem('uos:player-portal:auth');
       return;
     }
     if (portal === 'parent') {
-      window.localStorage.removeItem('uos:parent-portal:session:v1');
+      globalThis.localStorage.removeItem('uos:parent-portal:session:v1');
       return;
     }
-    window.localStorage.removeItem('uos:coach-portal:session:v1');
-    window.sessionStorage.removeItem('uos:coach-portal:preview-session:v1');
-    window.localStorage.removeItem('uos:coach-portal:auth');
-    window.localStorage.removeItem('uos:coach-portal:active-id');
+    globalThis.localStorage.removeItem('uos:coach-portal:session:v1');
+    globalThis.sessionStorage.removeItem('uos:coach-portal:preview-session:v1');
+    globalThis.localStorage.removeItem('uos:coach-portal:auth');
+    globalThis.localStorage.removeItem('uos:coach-portal:active-id');
   } catch {
     // Storage may be unavailable in privacy modes. The server still protects all private data.
   }
 }
 
 export function clearUnlinkedPortalAccess(portal: OpenPortalKind): void {
-  if (typeof window === 'undefined') return;
+  if (typeof globalThis.localStorage === 'undefined') return;
   try {
-    window.sessionStorage.removeItem(unlinkedKey(portal));
+    globalThis.sessionStorage.removeItem(unlinkedKey(portal));
   } catch {
     // Session storage may be unavailable; no private data is granted by this marker.
   }
 }
 
 export function readUnlinkedPortalAccess(portal: OpenPortalKind): UnlinkedPortalAccess | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof globalThis.localStorage === 'undefined') return null;
   try {
-    const raw = window.sessionStorage.getItem(unlinkedKey(portal));
+    const raw = globalThis.sessionStorage.getItem(unlinkedKey(portal));
     if (!raw) return null;
     const value = JSON.parse(raw) as Partial<UnlinkedPortalAccess>;
     if (
@@ -69,7 +69,7 @@ export function readUnlinkedPortalAccess(portal: OpenPortalKind): UnlinkedPortal
       || (value.provider !== 'supabase' && value.provider !== 'firebase')
       || (value.reason !== 'not-linked' && value.reason !== 'ambiguous' && value.reason !== 'data-unavailable')
     ) {
-      window.sessionStorage.removeItem(unlinkedKey(portal));
+      globalThis.sessionStorage.removeItem(unlinkedKey(portal));
       return null;
     }
     return {
@@ -101,7 +101,7 @@ export function persistUnlinkedPortalAccess(
   };
   if (typeof window !== 'undefined') {
     try {
-      window.sessionStorage.setItem(unlinkedKey(portal), JSON.stringify(access));
+      globalThis.sessionStorage.setItem(unlinkedKey(portal), JSON.stringify(access));
     } catch {
       // The marker only unlocks a zero-private-data shell; server APIs remain authoritative.
     }
@@ -134,20 +134,20 @@ export function persistLinkedPortalBinding(destination: string, identity: Portal
   const now = new Date().toISOString();
 
   if (portal === 'player') {
-    window.localStorage.setItem('uos:player-portal:session', JSON.stringify({
+    globalThis.localStorage.setItem('uos:player-portal:session', JSON.stringify({
       userId: identity.identity.uid,
       playerId: state.recordId,
       ...(identity.identity.email ? { email: identity.identity.email } : {}),
       provider: 'production',
       createdAt: now,
     }));
-    window.localStorage.setItem('uos:player-portal:active-id', state.recordId);
-    window.localStorage.setItem('uos:player-portal:auth', 'true');
+    globalThis.localStorage.setItem('uos:player-portal:active-id', state.recordId);
+    globalThis.localStorage.setItem('uos:player-portal:auth', 'true');
     return state;
   }
 
   if (portal === 'parent') {
-    window.localStorage.setItem('uos:parent-portal:session:v1', JSON.stringify({
+    globalThis.localStorage.setItem('uos:parent-portal:session:v1', JSON.stringify({
       parentId: state.recordId,
       provider: 'production',
       createdAt: now,
@@ -156,11 +156,11 @@ export function persistLinkedPortalBinding(destination: string, identity: Portal
     return state;
   }
 
-  window.localStorage.setItem('uos:coach-portal:session:v1', JSON.stringify({
+  globalThis.localStorage.setItem('uos:coach-portal:session:v1', JSON.stringify({
     coachId: state.recordId,
     provider: 'production',
     createdAt: now,
   }));
-  window.sessionStorage.removeItem('uos:coach-portal:preview-session:v1');
+  globalThis.sessionStorage.removeItem('uos:coach-portal:preview-session:v1');
   return state;
 }
