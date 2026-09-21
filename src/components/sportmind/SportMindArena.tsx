@@ -67,17 +67,32 @@ export const SportMindArena: React.FC<SportMindArenaProps> = ({
   const [draft, setDraft] = useState('');
   const [state, setState] = useState<SportMindState>('idle');
   const [thinkingText, setThinkingText] = useState<{ en: string; ar: string } | null>(null);
+  const [streamingDelta, setStreamingDelta] = useState('');
   const [messages, setMessages] = useState<MessageEntry[]>([]);
   const [activeEvidence, setActiveEvidence] = useState<SportMindEvidenceItem[]>([]);
   const [showMobileDrawer, setShowMobileDrawer] = useState(false);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const timelineEndRef = useRef<HTMLDivElement>(null);
+  const streamingTextRef = useRef('');
+  const isMountedRef = useRef(true);
+
+  // Unmount safety: cancel pending stream and prevent state updates after unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
+  }, []);
 
   // Auto-scroll timeline to bottom
   useEffect(() => {
     timelineEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, thinkingText]);
+  }, [messages, thinkingText, streamingDelta]);
 
   // Suggestions based on role
   const getSuggestions = () => {
@@ -113,6 +128,18 @@ export const SportMindArena: React.FC<SportMindArenaProps> = ({
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
+    // If there was partial streamed text when stopped, finalize it cleanly into a message
+    if (streamingTextRef.current.trim()) {
+      const partialMsg: MessageEntry = {
+        id: `sm-${Date.now()}`,
+        sender: 'sportmind',
+        text: streamingTextRef.current.trim(),
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages((prev) => [...prev, partialMsg]);
+    }
+    setStreamingDelta('');
+    streamingTextRef.current = '';
     setState('idle');
     setThinkingText(null);
   };
@@ -130,6 +157,8 @@ export const SportMindArena: React.FC<SportMindArenaProps> = ({
     };
     setMessages((prev) => [...prev, userMsg]);
     setDraft('');
+    setStreamingDelta('');
+    streamingTextRef.current = '';
     setState('thinking');
     setThinkingText({
       en: 'Analyzing sports context and session parameters…',
@@ -241,18 +270,30 @@ export const SportMindArena: React.FC<SportMindArenaProps> = ({
             const chunk = JSON.parse(dataStr) as SportMindStreamChunk;
 
             if (chunk.type === 'thinking' && chunk.thinkingState) {
-              setThinkingText(chunk.thinkingState);
+              if (isMountedRef.current) setThinkingText(chunk.thinkingState);
             } else if (chunk.type === 'evidence' && chunk.evidence) {
               accumulatedEvidence.push(...chunk.evidence);
-              setActiveEvidence([...accumulatedEvidence]);
+              if (isMountedRef.current) setActiveEvidence([...accumulatedEvidence]);
+            } else if (chunk.type === 'delta' && chunk.delta) {
+              streamingTextRef.current += chunk.delta;
+              if (isMountedRef.current) {
+                setStreamingDelta(streamingTextRef.current);
+                setState('streaming');
+                setThinkingText(null);
+              }
             } else if (chunk.type === 'module' && chunk.module) {
               accumulatedModules.push(chunk.module);
             } else if (chunk.type === 'done') {
-              setState('complete');
-              setThinkingText(null);
+              if (isMountedRef.current) {
+                setState('complete');
+                setThinkingText(null);
+              }
             } else if (chunk.type === 'error') {
-              setState('error');
-              setThinkingText(null);
+              if (isMountedRef.current) {
+                setState('error');
+                setThinkingText(null);
+                setStreamingDelta('');
+              }
             }
           } catch {
             // line parse ignore
@@ -260,21 +301,40 @@ export const SportMindArena: React.FC<SportMindArenaProps> = ({
         }
       }
 
-      // Add SportMind response message entry
-      const assistantMsg: MessageEntry = {
-        id: `sm-${Date.now()}`,
-        sender: 'sportmind',
-        modules: accumulatedModules,
-        evidence: accumulatedEvidence,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-
-      setMessages((prev) => [...prev, assistantMsg]);
-      setState('complete');
-      setThinkingText(null);
+      // Canonical finalization:
+      // Replace in-progress streaming delta with permanent message.
+      // If structured modules arrived, display modules (no duplicate streamed text underneath).
+      // If raw text was streamed without modules, display text message.
+      if (isMountedRef.current) {
+        setStreamingDelta('');
+        if (accumulatedModules.length > 0) {
+          const assistantMsg: MessageEntry = {
+            id: `sm-${Date.now()}`,
+            sender: 'sportmind',
+            modules: accumulatedModules,
+            evidence: accumulatedEvidence,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          };
+          setMessages((prev) => [...prev, assistantMsg]);
+        } else if (streamingTextRef.current.trim()) {
+          const assistantMsg: MessageEntry = {
+            id: `sm-${Date.now()}`,
+            sender: 'sportmind',
+            text: streamingTextRef.current.trim(),
+            evidence: accumulatedEvidence,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          };
+          setMessages((prev) => [...prev, assistantMsg]);
+        }
+        streamingTextRef.current = '';
+        setState('complete');
+        setThinkingText(null);
+      }
     } catch (err: unknown) {
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted || !isMountedRef.current) return;
       console.error('SportMind stream error:', err);
+      setStreamingDelta('');
+      streamingTextRef.current = '';
       setState('error');
       setThinkingText(null);
 
@@ -509,6 +569,18 @@ export const SportMindArena: React.FC<SportMindArenaProps> = ({
                 )}
               </div>
             ))}
+
+            {/* Active In-Progress Streaming Response */}
+            {streamingDelta && (
+              <div
+                className="sportmind-message sportmind-message--sportmind sportmind-message--streaming"
+                data-testid="sportmind-streaming-delta"
+              >
+                <div className="sportmind-message-bubble">
+                  <p>{streamingDelta}<span className="sportmind-streaming-pulse" /></p>
+                </div>
+              </div>
+            )}
 
             {/* Thinking / Status Indicator */}
             {thinkingText && (

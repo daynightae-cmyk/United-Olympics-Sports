@@ -111,6 +111,9 @@
 .sportmind-message--user{align-self:flex-end;max-width:80%;}
 .sportmind-message--sportmind{align-self:stretch;}
 .sportmind-message-bubble{padding:12px 16px;border-radius:16px;background:rgba(212,175,55,.14);border:1px solid var(--uos-glass-border);font-size:13px;line-height:1.6;}
+.sportmind-message--streaming .sportmind-message-bubble{background:rgba(212,175,55,.18);border-color:rgba(212,175,55,.3);position:relative;}
+.sportmind-streaming-pulse{display:inline-block;width:6px;height:14px;margin-inline-start:4px;vertical-align:middle;background:var(--uos-gold-primary,#c9a227);border-radius:2px;animation:sportmind-pulse 1s ease-in-out infinite;}
+@keyframes sportmind-pulse{0%,100%{opacity:.3;}50%{opacity:1;}}
 .sportmind-message-bubble p{margin:0;}
 .sportmind-message-time{display:block;margin-top:4px;font-size:10px;color:var(--color-text-muted);text-align:end;}
 
