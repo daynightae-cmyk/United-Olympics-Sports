@@ -71,8 +71,40 @@ export const SportMindArenaReveal: React.FC<SportMindArenaRevealProps> = ({
     };
   }, [state, isPaused, autoCollapseMs, onAutoCollapse]);
 
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const handleDismiss = () => {
+    if (isMountedRef.current) setState('collapsed');
+    onDismiss?.();
+  };
+
+  // Escape key accessibility: close reveal on Escape
+  useEffect(() => {
+    if (state === 'idle' || state === 'collapsed') return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleDismiss();
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown, true);
+    };
+  }, [state, onDismiss]);
+
   const handleEnterArena = () => {
-    setState('collapsed');
+    if (isMountedRef.current) setState('collapsed');
     if (onOpenArena) {
       onOpenArena();
     } else {
@@ -81,27 +113,22 @@ export const SportMindArenaReveal: React.FC<SportMindArenaRevealProps> = ({
   };
 
   const handleAskSportMind = () => {
-    setState('collapsed');
+    if (isMountedRef.current) setState('collapsed');
     if (onAskSportMind) {
       onAskSportMind();
     }
   };
 
   const handleExploreSports = () => {
-    setState('collapsed');
+    if (isMountedRef.current) setState('collapsed');
     onAutoCollapse?.();
     navigate('/programs');
   };
 
   const handleFindProgram = () => {
-    setState('collapsed');
+    if (isMountedRef.current) setState('collapsed');
     onAutoCollapse?.();
     navigate('/programs');
-  };
-
-  const handleDismiss = () => {
-    setState('collapsed');
-    onDismiss?.();
   };
 
   if (state === 'idle' || state === 'collapsed') {
