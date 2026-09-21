@@ -108,31 +108,54 @@ async function runVisualQA() {
         const page = await context.newPage();
 
         // 1. Capture Empty Arena
-        await page.goto(`${BASE_URL}/assistant`, { waitUntil: 'domcontentloaded' });
-        await page.waitForSelector('.sportmind-arena-layout', { timeout: 15000 });
-        await page.waitForTimeout(400);
-
         const filenameEmpty = `sportmind-empty-${vp.name}-${mode.theme}-${mode.dir}.png`;
-        await page.screenshot({ path: path.join(OUTPUT_DIR, filenameEmpty), fullPage: false });
-        captured++;
-        console.log(`[${captured}] Captured ${filenameEmpty}`);
+        const filePathEmpty = path.join(OUTPUT_DIR, filenameEmpty);
 
-        // 2. Click suggestion chip to test response state
-        const suggestionChip = page.locator('.sportmind-suggestion-chip').first();
-        if (await suggestionChip.isVisible()) {
-          await suggestionChip.click();
-          // Wait for response module to render
-          await page.waitForSelector('.sportmind-message--sportmind', { timeout: 10000 }).catch(() => {});
+        if (!fs.existsSync(filePathEmpty)) {
+          await page.goto(`${BASE_URL}/assistant`, { waitUntil: 'domcontentloaded', timeout: 15000 });
+          await page.waitForSelector('.sportmind-arena-layout', { timeout: 15000 }).catch(() => {});
+          await page
+            .evaluate(() => Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 2000))]))
+            .catch(() => {});
           await page.waitForTimeout(400);
 
-          const filenameActive = `sportmind-active-${vp.name}-${mode.theme}-${mode.dir}.png`;
-          await page.screenshot({ path: path.join(OUTPUT_DIR, filenameActive), fullPage: false });
+          await page.screenshot({ path: filePathEmpty, fullPage: false, timeout: 15000, animations: 'disabled' });
           captured++;
-          console.log(`[${captured}] Captured ${filenameActive}`);
+          console.log(`[${captured}] Captured ${filenameEmpty}`);
+        } else {
+          captured++;
+          console.log(`[${captured}] ${filenameEmpty} (Exists)`);
         }
 
-        await page.close();
-        await context.close();
+        // 2. Click suggestion chip to test response state
+        const filenameActive = `sportmind-active-${vp.name}-${mode.theme}-${mode.dir}.png`;
+        const filePathActive = path.join(OUTPUT_DIR, filenameActive);
+
+        if (!fs.existsSync(filePathActive)) {
+          if (!page.url().includes('/assistant')) {
+            await page.goto(`${BASE_URL}/assistant`, { waitUntil: 'domcontentloaded', timeout: 15000 });
+            await page.waitForSelector('.sportmind-arena-layout', { timeout: 15000 }).catch(() => {});
+          }
+          const suggestionChip = page.locator('.sportmind-suggestion-chip').first();
+          if (await suggestionChip.isVisible().catch(() => false)) {
+            await suggestionChip.click();
+            await page.waitForSelector('.sportmind-message--sportmind', { timeout: 10000 }).catch(() => {});
+            await page
+              .evaluate(() => Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 2000))]))
+              .catch(() => {});
+            await page.waitForTimeout(400);
+
+            await page.screenshot({ path: filePathActive, fullPage: false, timeout: 15000, animations: 'disabled' });
+            captured++;
+            console.log(`[${captured}] Captured ${filenameActive}`);
+          }
+        } else {
+          captured++;
+          console.log(`[${captured}] ${filenameActive} (Exists)`);
+        }
+
+        await page.close().catch(() => {});
+        await context.close().catch(() => {});
       }
     }
 
