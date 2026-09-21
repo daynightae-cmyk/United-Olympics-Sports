@@ -25,7 +25,7 @@
   gap: 32px;
   padding: clamp(28px, 4vw, 48px);
   border: 1px solid var(--bm-card-border, rgba(255, 255, 255, 0.08));
-  border-radius: var(--bm-radius-lg, 22px);
+  border-radius: var(--bm-radius-xl, 28px);
   background:
     linear-gradient(135deg, rgba(212, 175, 55, 0.06), transparent 50%),
     linear-gradient(180deg, var(--bm-inner-hi, rgba(255, 255, 255, 0.035)), transparent),
@@ -97,6 +97,7 @@
   height: auto;
   opacity: 0.12;
   filter: grayscale(0.4);
+  object-fit: cover;
 }
 
 /* ── Status Bar ─────────────────────────────────────────────────────── */
@@ -160,8 +161,9 @@
   gap: 4px;
   padding: 16px 18px;
   border: 1px solid var(--bm-card-border, rgba(255, 255, 255, 0.08));
-  border-radius: var(--bm-radius-md, 16px);
-  background: var(--bm-glass-1, rgba(18, 22, 29, 0.88));
+  border-radius: var(--bm-radius-lg, 18px);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.008));
+  background-color: var(--bm-glass-1, rgba(18, 22, 29, 0.88));
   text-decoration: none;
   color: inherit;
   transition:
@@ -247,14 +249,17 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 14px;
-  border-radius: var(--bm-radius-sm, 10px);
-  border: 1px solid transparent;
+  padding: 12px 16px;
+  border-radius: var(--bm-radius-md, 16px);
+  border: 1px solid var(--bm-card-border, rgba(255, 255, 255, 0.08));
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.008));
+  background-color: var(--bm-glass-2, rgba(18, 22, 29, 0.72));
   color: inherit;
   text-decoration: none;
   transition:
     background var(--bm-transition, 200ms),
-    border-color var(--bm-transition, 200ms);
+    border-color var(--bm-transition, 200ms),
+    transform var(--bm-transition, 200ms);
 }
 
 .uos-cc__op-card:hover {
@@ -318,7 +323,8 @@
 .uos-cc__activity {
   border: 1px solid var(--bm-card-border, rgba(255, 255, 255, 0.08));
   border-radius: var(--bm-radius-lg, 22px);
-  background: var(--bm-glass-1, rgba(18, 22, 29, 0.88));
+  background-image: linear-gradient(180deg, var(--bm-inner-hi, rgba(255, 255, 255, 0.035)), transparent);
+  background-color: var(--bm-glass-1, rgba(18, 22, 29, 0.88));
   padding: clamp(20px, 3vw, 28px);
 }
 

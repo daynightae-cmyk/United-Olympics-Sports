@@ -77,7 +77,7 @@ export function AdminDashboardPage() {
   return (
     <div className="admin-page uos-cc" id="admin-command-page">
       {/* ── Command Center Header ───────────────────────────────────────── */}
-      <header className="uos-cc__header" aria-labelledby="admin-command-title">
+      <header className="uos-cc__header" data-surface="admin-command-hero" aria-labelledby="admin-command-title">
         <div className="uos-cc__header-content">
           <span className="uos-cc__kicker">
             <Server size={14} aria-hidden="true" />
@@ -127,7 +127,8 @@ export function AdminDashboardPage() {
         </div>
         <div className="uos-cc__header-brand" aria-hidden="true">
           <img
-            className="uos-cc__logo"
+            className="official-logo uos-cc__logo"
+            data-surface="admin-command-logo"
             src="/brand/united-olympics-sports-logo.png"
             alt=""
             loading="lazy"
@@ -313,7 +314,7 @@ export function AdminDashboardPage() {
       </div>
 
       {/* ── Recent Activity Feed ────────────────────────────────────────── */}
-      <section className="uos-cc__activity" aria-label="Recent Activity | النشاط الحديث">
+      <section className="uos-cc__activity" data-surface="admin-activity-command" aria-label="Recent Activity | النشاط الحديث">
         <div className="uos-cc__panel-head">
           <div>
             <h2><BilingualText value={bi('Recent Activity', 'النشاط الحديث')} /></h2>
@@ -406,7 +407,7 @@ function MetricTile({
   href: string;
 }) {
   return (
-    <Link to={href} className="uos-cc__metric" aria-label={`${label.en}: ${value}`}>
+    <Link to={href} className="uos-cc__metric" data-surface="admin-command-metric" aria-label={`${label.en}: ${value}`}>
       <span className="uos-cc__metric-icon" aria-hidden="true">{icon}</span>
       <span className="uos-cc__metric-label"><BilingualText value={label} /></span>
       <strong className="uos-cc__metric-value">{value}</strong>
@@ -427,7 +428,7 @@ function OperationCard({
   detail: { en: string; ar: string };
 }) {
   return (
-    <Link to={to} className="uos-cc__op-card">
+    <Link to={to} className="uos-cc__op-card" data-surface="admin-operation-card">
       <span className="uos-cc__op-icon" aria-hidden="true">{icon}</span>
       <span className="uos-cc__op-text">
         <strong><BilingualText value={title} /></strong>

@@ -95,9 +95,18 @@ assert(coachClosure.includes('.enterprise-table'), 'Coach athletic authority mus
 assert(coachClosure.includes('.enterprise-toolbar'), 'Coach athletic authority must cover coach filters and search');
 assert(adminSidebar.includes('official-logo admin-brand-logo'), 'Admin sidebar must expose the crop-safe canonical logo class');
 assert(portalLayout.includes('official-logo portal-brand-logo'), 'Parent/Coach shared shell must expose the crop-safe canonical logo class');
-assert(adminDashboard.includes('admin-command-hero'), 'Admin dashboard must expose the operations command hero');
-assert(adminDashboard.includes('admin-command-metric'), 'Admin dashboard must expose semantic command metrics');
-assert(adminDashboard.includes('admin-operation-card'), 'Admin dashboard must expose sports operation cards');
+assert(
+  adminDashboard.includes('uos-cc__header') || adminDashboard.includes('data-surface="admin-command-hero"'),
+  'Admin dashboard must expose the operations command hero',
+);
+assert(
+  adminDashboard.includes('uos-cc__metric') || adminDashboard.includes('data-surface="admin-command-metric"'),
+  'Admin dashboard must expose semantic command metrics',
+);
+assert(
+  adminDashboard.includes('uos-cc__op-card') || adminDashboard.includes('data-surface="admin-operation-card"'),
+  'Admin dashboard must expose sports operation cards',
+);
 assert(adminClosure.includes('Admin Athletic Command Authority'), 'Admin athletic authority must remain present');
 assert(adminClosure.includes('.enterprise-table-shell'), 'Admin athletic authority must cover enterprise tables');
 assert(adminClosure.includes('.uos-form-grid'), 'Admin athletic authority must cover bilingual forms');

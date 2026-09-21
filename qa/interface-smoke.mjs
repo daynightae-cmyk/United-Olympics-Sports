@@ -470,9 +470,9 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
 }
 
 async function assertAdminVisualAuthority(page) {
-  await page.waitForSelector('#admin-command-page .admin-command-hero', { state: 'visible', timeout: 10_000 });
-  await page.waitForSelector('#admin-command-page .admin-command-metric', { state: 'visible', timeout: 10_000 });
-  await page.waitForSelector('#admin-command-page .admin-operation-card', { state: 'visible', timeout: 10_000 });
+  await page.waitForSelector('#admin-command-page .uos-cc__header, #admin-command-page [data-surface="admin-command-hero"]', { state: 'visible', timeout: 10_000 });
+  await page.waitForSelector('#admin-command-page .uos-cc__metric, #admin-command-page [data-surface="admin-command-metric"]', { state: 'visible', timeout: 10_000 });
+  await page.waitForSelector('#admin-command-page .uos-cc__op-card, #admin-command-page [data-surface="admin-operation-card"]', { state: 'visible', timeout: 10_000 });
 
   const proof = await page.evaluate(() => {
     const brand = document.querySelector('.admin-brand');
@@ -481,11 +481,12 @@ async function assertAdminVisualAuthority(page) {
       (image.getAttribute('src') ?? '').includes('/brand/united-olympics-sports-logo.png')
     ).length;
     const brandLogo = document.querySelector('.admin-brand > img.official-logo.admin-brand-logo');
-    const hero = document.querySelector('#admin-command-page .admin-command-hero');
-    const heroLogo = document.querySelector('#admin-command-page .admin-command-logo');
-    const stat = document.querySelector('#admin-command-page .admin-stat-card');
-    const operation = document.querySelector('#admin-command-page .admin-operation-card');
-    const activity = document.querySelector('#admin-command-page .admin-activity-command');
+    const hero = document.querySelector('#admin-command-page .uos-cc__header, #admin-command-page [data-surface="admin-command-hero"]');
+    const heroLogo = document.querySelector('#admin-command-page .uos-cc__logo, #admin-command-page [data-surface="admin-command-logo"]');
+    const stat = document.querySelector('#admin-command-page .uos-cc__metric, #admin-command-page [data-surface="admin-command-metric"]');
+    const operation = document.querySelector('#admin-command-page .uos-cc__op-card, #admin-command-page [data-surface="admin-operation-card"]');
+    const activity = document.querySelector('#admin-command-page .uos-cc__activity, #admin-command-page [data-surface="admin-activity-command"]');
+    const coreMetrics = document.querySelectorAll('#admin-command-page .uos-cc__metrics:first-of-type .uos-cc__metric, #admin-command-page [data-surface="admin-core-metrics"] [data-surface="admin-command-metric"]');
 
     return {
       totalBrandImages: brandImages.length,
@@ -494,8 +495,8 @@ async function assertAdminVisualAuthority(page) {
       heroRadius: hero ? parseFloat(getComputedStyle(hero).borderTopLeftRadius) : null,
       heroBackground: hero ? getComputedStyle(hero).backgroundImage : null,
       heroLogoObjectFit: heroLogo ? getComputedStyle(heroLogo).objectFit : null,
-      commandMetricCount: document.querySelectorAll('#admin-command-page .admin-command-metric').length,
-      operationCount: document.querySelectorAll('#admin-command-page .admin-operation-card').length,
+      commandMetricCount: coreMetrics.length,
+      operationCount: document.querySelectorAll('#admin-command-page .uos-cc__op-card, #admin-command-page [data-surface="admin-operation-card"]').length,
       statRadius: stat ? parseFloat(getComputedStyle(stat).borderTopLeftRadius) : null,
       statBackground: stat ? getComputedStyle(stat).backgroundImage : null,
       operationRadius: operation ? parseFloat(getComputedStyle(operation).borderTopLeftRadius) : null,
