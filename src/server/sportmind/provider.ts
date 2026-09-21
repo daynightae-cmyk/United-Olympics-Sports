@@ -22,10 +22,14 @@ export interface SportsAiProvider {
 }
 
 // ---------------------------------------------------------------------------
-// Protocol type — explicit authority, no inference
+// Protocol type — explicit authority, no silent inference
 // ---------------------------------------------------------------------------
 
 export type OpenCodeProtocol = 'chat_completions' | 'responses';
+
+export function isValidOpenCodeProtocol(val: unknown): val is OpenCodeProtocol {
+  return val === 'chat_completions' || val === 'responses';
+}
 
 // ---------------------------------------------------------------------------
 // Internal SSE helpers
@@ -33,33 +37,44 @@ export type OpenCodeProtocol = 'chat_completions' | 'responses';
 
 /**
  * Parse a raw SSE buffer into discrete events.
- * Handles fragmented TCP chunks, multiple events per read,
- * and split events across reads.
+ * Handles:
+ * - standard LF framing (\n\n)
+ * - CRLF framing (\r\n\r\n)
+ * - mixed line endings
+ * - fragmented TCP chunks
+ * - multiple events per read
+ * - split events across reads
  *
  * Returns: [parsedEvents, remainingBuffer]
  */
 export function parseSseBuffer(buffer: string): [string[], string] {
   const events: string[] = [];
-  // SSE events are separated by double newlines
-  let idx: number;
-  while ((idx = buffer.indexOf('\n\n')) !== -1) {
+
+  while (true) {
+    const match = buffer.match(/\r?\n\r?\n/);
+    if (!match || match.index === undefined) {
+      break;
+    }
+
+    const idx = match.index;
+    const delimiterLength = match[0].length;
     const block = buffer.slice(0, idx);
-    buffer = buffer.slice(idx + 2);
-    // Each block may have multiple "data:" lines; concatenate them
+    buffer = buffer.slice(idx + delimiterLength);
+
     const dataLines: string[] = [];
-    for (const line of block.split('\n')) {
+    for (const line of block.split(/\r?\n/)) {
       const trimmed = line.trimStart();
       if (trimmed.startsWith('data: ')) {
         dataLines.push(trimmed.slice(6));
       } else if (trimmed.startsWith('data:')) {
         dataLines.push(trimmed.slice(5));
       }
-      // Ignore non-data lines (comments, event:, id:, retry:)
     }
     if (dataLines.length > 0) {
-      events.push(dataLines.join(''));
+      events.push(dataLines.join('\n'));
     }
   }
+
   return [events, buffer];
 }
 
@@ -82,18 +97,16 @@ export function extractChatCompletionsDelta(json: unknown): string | null {
 
 /**
  * Extract text delta from a Responses SSE JSON payload.
- * Handles response.output_text.delta events.
+ * Handles response.output_text.delta events and content_part.delta.
  */
 export function extractResponsesDelta(json: unknown): string | null {
   if (typeof json !== 'object' || json === null) return null;
   const obj = json as Record<string, unknown>;
 
-  // Responses API: type: "response.output_text.delta", delta: "..."
   if (obj.type === 'response.output_text.delta' && typeof obj.delta === 'string') {
     return obj.delta;
   }
 
-  // Also handle content_part.delta for multi-part responses
   if (obj.type === 'response.content_part.delta') {
     const part = obj.part as Record<string, unknown> | undefined;
     if (part && typeof part.text === 'string') return part.text;
@@ -523,34 +536,52 @@ export class DeterministicSportsProvider implements SportsAiProvider {
 // OpenCodeProvider — protocol-aware, hardened SSE streaming
 // ---------------------------------------------------------------------------
 
+export interface OpenCodeProviderOptions {
+  apiKey?: string;
+  baseUrl?: string;
+  model?: string;
+  protocol?: string;
+  timeoutMs?: number;
+}
+
 export class OpenCodeProvider implements SportsAiProvider {
   readonly name = 'OpenCodeProvider';
 
   private readonly apiKey: string;
   private readonly baseUrl: string;
   private readonly model: string;
-  private readonly protocol: OpenCodeProtocol;
+  private readonly protocol: OpenCodeProtocol | null;
+  private readonly timeoutMs: number;
 
-  constructor() {
-    this.apiKey = process.env.OPENCODE_API_KEY || '';
-    this.baseUrl = (process.env.OPENCODE_BASE_URL || 'https://api.opencode.ai/v1').replace(/\/+$/, '');
-    this.model = process.env.OPENCODE_MODEL || '';
-    const configuredProtocol = (process.env.OPENCODE_PROTOCOL || '').toLowerCase();
-    this.protocol = configuredProtocol === 'responses' ? 'responses' : 'chat_completions';
+  constructor(opts?: OpenCodeProviderOptions) {
+    this.apiKey = opts?.apiKey ?? (process.env.OPENCODE_API_KEY || '');
+    this.baseUrl = (opts?.baseUrl ?? (process.env.OPENCODE_BASE_URL || 'https://opencode.ai/zen/v1')).replace(/\/+$/, '');
+    this.model = opts?.model ?? (process.env.OPENCODE_MODEL || '');
+    const rawProtocol = opts?.protocol ?? process.env.OPENCODE_PROTOCOL;
+    this.protocol = isValidOpenCodeProtocol(rawProtocol) ? rawProtocol : null;
+    this.timeoutMs = opts?.timeoutMs ?? (process.env.OPENCODE_TIMEOUT_MS ? parseInt(process.env.OPENCODE_TIMEOUT_MS, 10) : 30_000);
   }
 
+  /**
+   * Provider readiness requires ALL necessary configuration:
+   * 1. Non-empty API key
+   * 2. Non-empty Model (missing model MUST mean unconfigured)
+   * 3. Explicitly valid Protocol ('chat_completions' | 'responses')
+   */
   isConfigured(): boolean {
-    return Boolean(this.apiKey.trim());
+    return Boolean(
+      this.apiKey.trim() &&
+      this.model.trim() &&
+      this.protocol !== null
+    );
   }
 
   /** Build the correct endpoint URL based on protocol, avoiding double paths. */
-  private getEndpointUrl(): string {
+  getEndpointUrl(): string {
     const base = this.baseUrl;
     if (this.protocol === 'responses') {
-      // Only append /responses if not already present
       return base.endsWith('/responses') ? base : `${base}/responses`;
     }
-    // chat_completions
     return base.endsWith('/chat/completions') ? base : `${base}/chat/completions`;
   }
 
@@ -558,7 +589,7 @@ export class OpenCodeProvider implements SportsAiProvider {
   private buildRequestBody(systemPrompt: string, userMessage: string): string {
     if (this.protocol === 'responses') {
       return JSON.stringify({
-        model: this.model || undefined,
+        model: this.model,
         input: [
           { role: 'developer', content: systemPrompt },
           { role: 'user', content: userMessage },
@@ -569,7 +600,7 @@ export class OpenCodeProvider implements SportsAiProvider {
 
     // chat_completions
     return JSON.stringify({
-      model: this.model || undefined,
+      model: this.model,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userMessage },
@@ -635,6 +666,18 @@ Attendance Records: ${context.recordsSummary.attendanceRecords}`;
     const extractDelta =
       this.protocol === 'responses' ? extractResponsesDelta : extractChatCompletionsDelta;
 
+    // Real server-side timeout mechanism composing safely with caller signal
+    const timeoutController = new AbortController();
+    let timeoutFired = false;
+    const timeoutId = setTimeout(() => {
+      timeoutFired = true;
+      timeoutController.abort(new Error('PROVIDER_TIMEOUT'));
+    }, this.timeoutMs);
+
+    const combinedSignal = signal
+      ? AbortSignal.any([signal, timeoutController.signal])
+      : timeoutController.signal;
+
     try {
       const endpoint = this.getEndpointUrl();
       const body = this.buildRequestBody(systemPrompt, request.message);
@@ -646,12 +689,11 @@ Attendance Records: ${context.recordsSummary.attendanceRecords}`;
           Authorization: `Bearer ${this.apiKey}`,
         },
         body,
-        signal,
+        signal: combinedSignal,
       });
 
       if (!response.ok || !response.body) {
         const classified = classifyHttpError(response.status);
-        // Log status only — never the API key
         console.warn(
           `OpenCode API (${this.protocol}) responded with HTTP ${response.status} [${classified.code}]. Falling back to deterministic.`,
         );
@@ -687,7 +729,7 @@ Attendance Records: ${context.recordsSummary.attendanceRecords}`;
               yield { type: 'delta', delta };
             }
           } catch {
-            // Non-fatal JSON parse error — skip malformed event
+            // Non-fatal JSON parse error on event — safely ignored
           }
         }
       }
@@ -696,8 +738,7 @@ Attendance Records: ${context.recordsSummary.attendanceRecords}`;
       if (buffer.trim()) {
         const trimmed = buffer.trim();
         if (trimmed !== '[DONE]') {
-          // Try to extract from remaining data lines
-          for (const line of trimmed.split('\n')) {
+          for (const line of trimmed.split(/\r?\n/)) {
             const lineStr = line.trim();
             let dataStr = '';
             if (lineStr.startsWith('data: ')) {
@@ -746,13 +787,20 @@ Attendance Records: ${context.recordsSummary.attendanceRecords}`;
 
       yield { type: 'done' };
     } catch (err) {
-      if (signal?.aborted) return;
-      // Safe error logging — never include API key
+      if (signal?.aborted) return; // Caller cancelled -> immediate exit, zero late output
+      if (timeoutFired || timeoutController.signal.aborted) {
+        console.warn(`OpenCode provider timed out after ${this.timeoutMs}ms. Falling back to deterministic.`);
+        const fallback = new DeterministicSportsProvider();
+        yield* fallback.generateStream(context, request, signal);
+        return;
+      }
       const errorMessage =
         err instanceof Error ? err.message : 'Unknown provider error';
       console.warn(`OpenCode provider error (${this.protocol}): ${errorMessage}. Falling back to deterministic.`);
       const fallback = new DeterministicSportsProvider();
       yield* fallback.generateStream(context, request, signal);
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 }
@@ -762,8 +810,9 @@ Attendance Records: ${context.recordsSummary.attendanceRecords}`;
 // ---------------------------------------------------------------------------
 
 export function getSportsAiProvider(): SportsAiProvider {
-  if (process.env.OPENCODE_API_KEY?.trim()) {
-    return new OpenCodeProvider();
+  const opencode = new OpenCodeProvider();
+  if (opencode.isConfigured()) {
+    return opencode;
   }
   return new DeterministicSportsProvider();
 }
