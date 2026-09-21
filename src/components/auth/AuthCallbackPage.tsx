@@ -93,7 +93,7 @@ export function AuthCallbackPage() {
     // authenticated Google/Supabase browser session. Private records remain
     // server-authorized and are shown only after an exact verified binding.
     if (openPortal) {
-      let session: ServerAuthSession | null = null;
+      let session: ServerAuthSession;
       try {
         session = await fetchServerSession(token);
       } catch (error) {
