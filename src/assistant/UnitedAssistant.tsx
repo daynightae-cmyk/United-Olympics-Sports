@@ -1,13 +1,22 @@
 /**
- * United Assistant — floating launcher, first-visit invitation, drawer.
- * Local guide mode until an AI provider is connected (see assistantService).
- * Auth routes: no auto-invitation, launcher stays available but quiet.
+ * UOS SPORTMIND — United Sports Intelligence Arena (Mission 10X Closure).
+ * Evolved from canonical United Assistant.
+ * Floating launcher, first-visit invitation, and quick drawer.
+ * Can be expanded to the immersive full-screen Arena at /assistant.
  */
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { MessageCircleHeart, Send, Sparkles, X } from 'lucide-react';
+import { Maximize2, Send, X } from 'lucide-react';
 import { BilingualText, bi } from '../components/bilingual/BilingualText';
-import { ASSISTANT_IDENTITY, answerLocally, getAssistantProviderStatus, getAssistantQuickActions } from './assistantService';
+import {
+  ASSISTANT_IDENTITY,
+  answerLocally,
+  getAssistantProviderStatus,
+  getAssistantQuickActions,
+} from './assistantService';
+import { SportMindCore } from '../components/sportmind/SportMindCore';
+import { SportMindModuleRenderer } from '../components/sportmind/SportMindModules';
+import type { SportMindModule } from '../server/sportmind/types';
 
 const DISMISS_KEY = 'uos:assistant-dismissed';
 const AUTH_PREFIXES = ['/player/login', '/player/auth', '/player/phone', '/player/otp'];
@@ -15,7 +24,8 @@ const AUTH_PREFIXES = ['/player/login', '/player/auth', '/player/phone', '/playe
 interface ChatEntry {
   id: number;
   from: 'user' | 'assistant';
-  text: { en: string; ar: string };
+  text?: { en: string; ar: string };
+  modules?: SportMindModule[];
   to?: string;
 }
 
@@ -33,6 +43,9 @@ export function UnitedAssistant() {
   const isAuthRoute = AUTH_PREFIXES.some((prefix) => location.pathname.startsWith(prefix));
   const provider = getAssistantProviderStatus();
 
+  // Hide floating launcher on the dedicated full-screen /assistant page
+  const isAssistantPage = location.pathname === '/assistant';
+
   useEffect(() => {
     const onStatus = () => setOnline(navigator.onLine);
     window.addEventListener('online', onStatus);
@@ -44,7 +57,7 @@ export function UnitedAssistant() {
   }, []);
 
   useEffect(() => {
-    if (open || isAuthRoute) return;
+    if (open || isAuthRoute || isAssistantPage) return;
     const dismissed = (() => {
       try {
         return window.sessionStorage.getItem(DISMISS_KEY) === '1';
@@ -55,11 +68,11 @@ export function UnitedAssistant() {
     if (dismissed) return;
     const timer = window.setTimeout(() => setInvited(true), 2600);
     return () => window.clearTimeout(timer);
-  }, [open, isAuthRoute, location.pathname]);
+  }, [open, isAuthRoute, isAssistantPage, location.pathname]);
 
   useEffect(() => {
     if (open) composerRef.current?.focus();
-  }, [open ]);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -68,7 +81,9 @@ export function UnitedAssistant() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open ]);
+  }, [open]);
+
+  if (isAssistantPage) return null;
 
   const dismissInvitation = () => {
     setInvited(false);
@@ -100,18 +115,23 @@ export function UnitedAssistant() {
     <>
       {invited && !open ? (
         <div className="uos-assistant-invite uos-glass-4 uos-safe-bottom" role="status">
-          <p className="uos-assistant-invite-title"><BilingualText value={bi('السلام عليكم 👋', 'Welcome 👋')} /></p>
+          <div className="uos-assistant-invite-head">
+            <SportMindCore size={28} state="idle" />
+            <p className="uos-assistant-invite-title">
+              <BilingualText value={bi('UOS SPORTMIND 👋', 'ساحة الذكاء الرياضي 👋')} />
+            </p>
+          </div>
           <p className="uos-assistant-invite-body">
             <BilingualText
               value={bi(
-                'أهلًا بك في يونايتد أوليمبيكس سبورت. أنا مساعد يونايتد، ويمكنني مساعدتك في الوصول إلى الأقسام والخدمات المناسبة بسرعة.',
-                "Welcome to United Olympics Sports. I'm United Assistant, and I can help you quickly find the right sections and services.",
+                'Welcome to United Olympics Sports. SportMind can help you prepare training plans, review schedules, or navigate directly to your portal.',
+                'أهلًا بك في يونايتد أوليمبيكس سبورت. تساعدك ساحة الذكاء الرياضي في إعداد الخطط التدريبية، مراجعة الجداول، أو الوصول المباشر إلى بوابتك.',
               )}
             />
           </p>
           <div className="uos-assistant-invite-actions">
             <button type="button" className="uos-btn-primary uos-touch" onClick={openAssistant}>
-              <BilingualText value={bi('Open assistant', 'فتح المساعد')} />
+              <BilingualText value={bi('Open SportMind', 'فتح ساحة الذكاء')} />
             </button>
             <button type="button" className="uos-btn-ghost uos-touch" onClick={dismissInvitation}>
               <BilingualText value={bi('Later', 'لاحقًا')} />
@@ -124,11 +144,11 @@ export function UnitedAssistant() {
         type="button"
         className="uos-assistant-orb uos-touch"
         onClick={() => (open ? setOpen(false) : openAssistant())}
-        aria-label="United Assistant | مساعد يونايتد"
+        aria-label="UOS SportMind | ساحة الذكاء الرياضي"
         aria-expanded={open}
-        title="United Assistant | مساعد يونايتد"
+        title="UOS SportMind | ساحة الذكاء الرياضي"
       >
-        {open ? <X size={20} /> : <MessageCircleHeart size={20} />}
+        <SportMindCore size={32} state={open ? 'thinking' : 'idle'} />
       </button>
 
       {open ? (
@@ -139,23 +159,42 @@ export function UnitedAssistant() {
           className="uos-assistant-panel uos-glass-4 uos-safe-bottom"
           role="dialog"
           aria-modal="true"
-          aria-label="United Assistant | مساعد يونايتد"
+          aria-label="UOS SportMind | ساحة الذكاء الرياضي"
         >
           <header className="uos-assistant-head">
-            <span className="uos-assistant-avatar" aria-hidden="true"><Sparkles size={16} /></span>
+            <SportMindCore size={32} state="idle" />
             <div>
               <h2><BilingualText value={bi(ASSISTANT_IDENTITY.en, ASSISTANT_IDENTITY.ar)} /></h2>
               <small>
                 {online ? (
-                  <BilingualText value={bi('Local guide mode', 'وضع الإرشاد المحلي')} />
+                  <BilingualText value={bi('Sports Intelligence Arena', 'ساحة الذكاء الرياضي')} />
                 ) : (
                   <BilingualText value={bi("You're offline", 'أنت غير متصل بالإنترنت')} />
                 )}
               </small>
             </div>
-            <button type="button" className="uos-btn-ghost uos-touch" onClick={() => setOpen(false)} aria-label="Close assistant | إغلاق المساعد">
-              <X size={17} />
-            </button>
+            <div className="uos-assistant-head-actions">
+              <button
+                type="button"
+                className="uos-btn-ghost uos-touch"
+                onClick={() => {
+                  setOpen(false);
+                  navigate('/assistant');
+                }}
+                aria-label="Expand to Full Arena | توسيع الساحة"
+                title="Expand to Full Arena | توسيع الساحة"
+              >
+                <Maximize2 size={16} />
+              </button>
+              <button
+                type="button"
+                className="uos-btn-ghost uos-touch"
+                onClick={() => setOpen(false)}
+                aria-label="Close assistant | إغلاق المساعد"
+              >
+                <X size={17} />
+              </button>
+            </div>
           </header>
 
           <div className="uos-assistant-quick">
@@ -169,7 +208,10 @@ export function UnitedAssistant() {
                     setOpen(false);
                     navigate(action.to);
                   } else if (action.help) {
-                    setEntries((current) => [...current, { id: ++entryId, from: 'assistant', text: action.help as { en: string; ar: string } }]);
+                    setEntries((current) => [
+                      ...current,
+                      { id: ++entryId, from: 'assistant', text: action.help as { en: string; ar: string } },
+                    ]);
                   }
                 }}
               >
@@ -183,15 +225,18 @@ export function UnitedAssistant() {
               <p className="uos-assistant-hint">
                 <BilingualText
                   value={bi(
-                    'Ask where to find sports, programs, schedules, or sign-in — I answer from verified app information only.',
-                    'اسأل عن الرياضات أو البرامج أو الجداول أو تسجيل الدخول — أجيب من معلومات التطبيق الموثقة فقط.',
+                    'Ask about training sessions, schedules, drill progressions, or portal navigation. I answer strictly from verified athletic records.',
+                    'اسأل عن الحصص التدريبية، الجداول، تصعيد التدريبات، أو التنقل في البوابات. أجيب بدقة من السجلات الرياضية المعتمدة.',
                   )}
                 />
               </p>
             ) : (
               entries.map((entry) => (
                 <div key={entry.id} className={`uos-assistant-msg uos-assistant-msg--${entry.from}`}>
-                  <p><BilingualText value={entry.text} /></p>
+                  {entry.text && <p><BilingualText value={entry.text} /></p>}
+                  {entry.modules && entry.modules.map((mod) => (
+                    <SportMindModuleRenderer key={mod.id} module={mod} />
+                  ))}
                   {entry.to ? (
                     <button
                       type="button"
@@ -220,8 +265,8 @@ export function UnitedAssistant() {
               ref={composerRef}
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
-              placeholder="Ask United Assistant… | اسأل مساعد يونايتد…"
-              aria-label="Ask United Assistant | اسأل مساعد يونايتد"
+              placeholder="Ask SportMind… | اسأل ساحة الذكاء الرياضي…"
+              aria-label="Ask SportMind | اسأل ساحة الذكاء الرياضي"
               className="uos-input uos-halo"
               autoComplete="off"
             />
@@ -233,8 +278,8 @@ export function UnitedAssistant() {
             <BilingualText
               value={
                 provider.aiConnected
-                  ? bi('Connected assistant', 'مساعد متصل')
-                  : bi('AI provider not connected — deterministic local guidance.', 'موفر الذكاء الاصطناعي غير مربوط — إرشادات محلية محددة.')
+                  ? bi('Connected to OpenCode Sports Engine', 'متصل بمحرك الذكاء الرياضي المفتوح')
+                  : bi('Deterministic sports intelligence mode active.', 'وضع الذكاء الرياضي المحدد نشط.')
               }
             />
           </p>
