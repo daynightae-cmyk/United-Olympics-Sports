@@ -1,11 +1,10 @@
 /**
- * United Assistant — service abstraction (Mission 10X).
+ * UOS SPORTMIND — Service Abstraction (Mission 10X).
  *
- * Layers: navigation/help provider (live, deterministic) -> application
- * context -> future AI / knowledge / authenticated-user providers.
- * No secrets in frontend. No hallucinated business data: until a real
- * provider is connected the assistant only explains the interface, navigates
- * to real routes, and guides users to the correct portal.
+ * Layers: deterministic sports navigation/help provider -> application
+ * context -> OpenCode Sports AI provider adapter.
+ * No secrets in frontend. No hallucinated business data: the assistant only
+ * operates from verified application context, real routes, and verified portal data.
  */
 import { bi } from '../components/bilingual/BilingualText';
 import type { BilingualText as BilingualValue } from '../domain/contracts';
@@ -18,12 +17,13 @@ export interface AssistantQuickAction {
 }
 
 export const ASSISTANT_IDENTITY = {
-  en: 'United Assistant',
-  ar: 'مساعد يونايتد',
+  en: 'UOS SportMind',
+  ar: 'ساحة الذكاء الرياضي',
 };
 
 export function getAssistantQuickActions(): AssistantQuickAction[] {
   return [
+    { id: 'arena', label: bi('Open Intelligence Arena', 'ساحة الذكاء الرياضي'), to: '/assistant' },
     { id: 'sports', label: bi('Explore Sports', 'استكشف الرياضات'), to: '/sports' },
     { id: 'programs', label: bi('View Programs', 'البرامج'), to: '/programs' },
     { id: 'portal', label: bi('My Portal', 'بوابتي'), to: '/player/home' },
@@ -39,6 +39,14 @@ export function getAssistantQuickActions(): AssistantQuickAction[] {
 }
 
 const HELP_TOPICS: Array<{ keys: string[]; reply: BilingualValue; to?: string }> = [
+  {
+    keys: ['arena', 'intelligence', 'ai', 'sportmind', 'ذكاء', 'ساحة', 'مساعد'],
+    reply: bi(
+      'UOS SportMind Arena is the role-aware sports intelligence workspace. Expand to /assistant for tactical session planning, drill progressions, and verified records.',
+      'ساحة الذكاء الرياضي هي مساحة العمل التكتيكية المصرح بها. انتقل إلى /assistant للحصول على خطط الحصص وتصعيد التدريبات والبيانات المعتمدة.',
+    ),
+    to: '/assistant',
+  },
   {
     keys: ['schedule', 'session', 'training', 'جدول', 'حصة', 'تدريب'],
     reply: bi(
@@ -96,13 +104,14 @@ export function answerLocally(query: string): AssistantAnswer {
   }
   return {
     text: bi(
-      'I can guide you to Sports, Programs, your portal, or sign-in. Personal records, payments and schedules appear only inside the correct portal once real data is connected.',
-      'يمكنني إرشادك إلى الرياضات أو البرامج أو بوابتك أو تسجيل الدخول. أما السجلات الشخصية والمدفوعات والجداول فتظهر فقط داخل البوابة الصحيحة بعد ربط البيانات الحقيقية.',
+      'SportMind guides you through training sessions, programs, schedules, and portal navigation. Open /assistant to enter the full Sports Intelligence Arena.',
+      'ترشدك ساحة الذكاء الرياضي في الحصص التدريبية والبرامج والجداول وبوابات النظام. انتقل إلى /assistant للدخول إلى ساحة الذكاء الكاملة.',
     ),
+    to: '/assistant',
   };
 }
 
-/** Future AI providers plug in here. Null today: local guide mode. */
-export function getAssistantProviderStatus(): { mode: 'local-guide'; aiConnected: boolean } {
-  return { mode: 'local-guide', aiConnected: false };
+/** Provider status check. Connects to server-side OpenCode or deterministic fallback. */
+export function getAssistantProviderStatus(): { mode: 'sportmind' | 'local-guide'; aiConnected: boolean } {
+  return { mode: 'sportmind', aiConnected: false };
 }

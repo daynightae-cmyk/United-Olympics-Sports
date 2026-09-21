@@ -38,10 +38,12 @@ import { storeAccountHandler, storeCheckoutHandler, storeOrderCancelHandler, sto
 import { paymentConfigHandler, paymentIntentHandler, paymentWebhookHandler } from './payment-handlers.js';
 import { documentDownloadUrlHandler, documentRegisterHandler } from './document-handlers.js';
 import { portalWhoAmIHandler } from './portal-bindings.js';
+import { sportmindHandler } from './sportmind/sportmind-handler.js';
 import { ApiError, sendError, type ApiRequest, type ApiResponse } from './http.js';
 
 export type RouteKey =
   | 'health'
+  | 'sportmind'
   | 'auth-session'
   | 'auth-revoke'
   | 'auth-phone-request'
@@ -123,6 +125,7 @@ const handlers: Record<RouteKey, RouteHandler> = {
   'payment-webhook': paymentWebhookHandler,
   'document-register': documentRegisterHandler,
   'document-signed-url': documentDownloadUrlHandler,
+  sportmind: sportmindHandler,
 };
 
 export function resolveRouteKey(req: ApiRequest): RouteKey | null {
@@ -136,6 +139,7 @@ export function resolveRouteKey(req: ApiRequest): RouteKey | null {
 
   const pathname = urlObj.pathname.replace(/\/+$/, '') || '/';
   if (pathname === '/api/v1/health' || pathname === '/health') return 'health';
+  if (pathname === '/api/v1/sportmind' || pathname === '/api/sportmind') return 'sportmind';
   if (pathname === '/auth/session' || pathname === '/api/v1/auth/session') return 'auth-session';
   if (pathname === '/auth/revoke' || pathname === '/api/v1/auth/revoke') return 'auth-revoke';
   if (pathname === '/api/v1/auth/phone/request') return 'auth-phone-request';

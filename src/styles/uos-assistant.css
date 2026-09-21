@@ -36,3 +36,184 @@
   .uos-assistant-orb{inset-inline-end:14px;bottom:calc(96px + env(safe-area-inset-bottom,0px));}
 }
 @media (prefers-reduced-motion:reduce){.uos-assistant-orb{animation:none;}}
+
+/* =====================================================================
+   UOS SPORTMIND — United Sports Intelligence Arena (Mission 10X Closure)
+   Signature Visual Language: Deep navy, midnight, ivory, metallic gold,
+   sports tactical geometry (pitch lines, swimming lanes, court arcs).
+   ===================================================================== */
+.uos-assistant-invite-head{display:flex;align-items:center;gap:10px;}
+.uos-assistant-head-actions{display:flex;align-items:center;gap:4px;margin-inline-start:auto;}
+
+/* SportMind Core Visual Object */
+.sportmind-core-container{position:relative;display:grid;place-items:center;flex-shrink:0;}
+.sportmind-core-svg{width:100%;height:100%;overflow:visible;}
+.sportmind-ring-orbit{transform-origin:50px 50px;}
+.sportmind-aura{transform-origin:50px 50px;}
+.sportmind-core--idle .sportmind-ring-orbit{animation:sportmind-rotate 24s linear infinite;}
+.sportmind-core--thinking .sportmind-ring-orbit{animation:sportmind-rotate 4s linear infinite;}
+.sportmind-core--thinking .sportmind-aura{animation:sportmind-pulse 2s ease-in-out infinite;}
+.sportmind-core--streaming .sportmind-ring-orbit{animation:sportmind-rotate 2s linear infinite;}
+.sportmind-core--streaming .sportmind-aura{animation:sportmind-pulse 1.2s ease-in-out infinite;}
+.sportmind-core--error .sportmind-aura{fill:rgba(220,38,38,.28);}
+
+@keyframes sportmind-rotate{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes sportmind-pulse{0%,100%{transform:scale(1);opacity:.25;}50%{transform:scale(1.08);opacity:.45;}}
+
+/* Fullscreen Arena Page */
+.sportmind-page-wrapper{min-height:100dvh;height:100dvh;width:100%;display:flex;flex-direction:column;overflow:hidden;background:var(--uos-canvas,#0a0c12);color:var(--uos-text-primary,#f4efe5);}
+.sportmind-arena-layout{position:relative;display:flex;flex-direction:column;height:100%;width:100%;overflow:hidden;}
+.sportmind-arena-body{display:grid;grid-template-columns:280px 1fr 310px;height:100%;overflow:hidden;position:relative;z-index:2;}
+
+/* Dynamic Sports Geometry Backdrop */
+.sportmind-field-backdrop{position:absolute;inset:0;pointer-events:none;z-index:1;overflow:hidden;opacity:.06;}
+.sportmind-field-grid{position:absolute;inset:0;background-image:linear-gradient(to right,rgba(212,175,55,.15) 1px,transparent 1px),linear-gradient(to bottom,rgba(212,175,55,.15) 1px,transparent 1px);background-size:40px 40px;}
+.sportmind-field-center-circle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:min(600px,80vw);height:min(600px,80vw);border-radius:9999px;border:1.5px dashed rgba(212,175,55,.3);}
+.sportmind-field-lanes{position:absolute;inset-inline:0;top:25%;height:50%;border-top:1px solid rgba(212,175,55,.2);border-bottom:1px solid rgba(212,175,55,.2);}
+
+/* Desktop Rails */
+.sportmind-rail{overflow-y:auto;padding:24px 18px;display:flex;flex-direction:column;gap:20px;background:rgba(10,12,18,.55);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}
+.sportmind-rail--context{border-inline-end:1px solid var(--color-border);}
+.sportmind-rail--insight{border-inline-start:1px solid var(--color-border);}
+.sportmind-rail-header{display:flex;align-items:center;gap:8px;padding-bottom:12px;border-bottom:1px solid var(--color-border);}
+.sportmind-rail-header h3{margin:0;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-secondary);}
+.sportmind-rail-section{display:flex;flex-direction:column;gap:8px;}
+.sportmind-rail-label{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--color-text-muted);}
+
+.sportmind-role-badge{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.3);color:#e9d8a6;font-size:12px;font-weight:800;letter-spacing:.08em;}
+.sportmind-sport-selector{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;}
+.sportmind-sport-btn{padding:8px 10px;border-radius:10px;border:1px solid var(--color-border);background:rgba(255,255,255,.03);color:inherit;font:inherit;font-size:12px;font-weight:700;cursor:pointer;text-align:center;transition:all var(--uos-motion-fast) var(--uos-ease);}
+.sportmind-sport-btn:hover{border-color:var(--uos-hover-edge);}
+.sportmind-sport-btn--active{border-color:rgba(212,175,55,.6);background:rgba(212,175,55,.15);color:#e9d8a6;}
+
+.sportmind-entity-card{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;}
+.sportmind-entity-card strong{display:block;font-size:13px;}
+.sportmind-entity-card small{font-size:11px;color:var(--color-text-muted);}
+
+.sportmind-quick-nav{display:flex;flex-direction:column;gap:6px;}
+.sportmind-nav-link{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:10px;border:1px solid transparent;background:transparent;color:inherit;font:inherit;font-size:12px;cursor:pointer;transition:background var(--uos-motion-fast) var(--uos-ease);}
+.sportmind-nav-link:hover{background:rgba(255,255,255,.04);border-color:var(--color-border);}
+
+/* Central Arena */
+.sportmind-arena-center{display:flex;flex-direction:column;height:100%;overflow:hidden;position:relative;}
+.sportmind-arena-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--color-border);background:rgba(10,12,18,.35);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+.sportmind-arena-brand{display:flex;align-items:center;gap:14px;}
+.sportmind-arena-brand h1{margin:0;font-size:15px;font-weight:800;letter-spacing:-.01em;}
+.sportmind-arena-brand p{margin:2px 0 0;font-size:11px;color:var(--color-text-secondary);}
+.sportmind-header-controls{display:flex;align-items:center;gap:6px;}
+
+.sportmind-timeline{flex:1;overflow-y:auto;padding:24px 32px;display:flex;flex-direction:column;gap:20px;}
+.sportmind-welcome-hero{margin:auto;text-align:center;max-width:580px;display:flex;flex-direction:column;align-items:center;padding:40px 20px;}
+.sportmind-welcome-hero h2{margin:16px 0 8px;font-size:20px;font-weight:800;}
+.sportmind-welcome-hero p{margin:0;font-size:13px;line-height:1.7;color:var(--color-text-secondary);}
+
+.sportmind-message{display:flex;flex-direction:column;gap:8px;}
+.sportmind-message--user{align-self:flex-end;max-width:80%;}
+.sportmind-message--sportmind{align-self:stretch;}
+.sportmind-message-bubble{padding:12px 16px;border-radius:16px;background:rgba(212,175,55,.14);border:1px solid var(--uos-glass-border);font-size:13px;line-height:1.6;}
+.sportmind-message-bubble p{margin:0;}
+.sportmind-message-time{display:block;margin-top:4px;font-size:10px;color:var(--color-text-muted);text-align:end;}
+
+.sportmind-modules-stack{display:flex;flex-direction:column;gap:16px;}
+.sportmind-thinking-bar{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:999px;font-size:12px;color:var(--uos-gold-primary,#c9a227);align-self:flex-start;}
+.sportmind-spin-icon{animation:sportmind-rotate 2s linear infinite;}
+
+/* Structured Modules */
+.sportmind-coach-board,.sportmind-insight-card,.sportmind-attention-card,.sportmind-needs-data-card{border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:14px;}
+.sportmind-module-header{display:flex;align-items:center;justify-content:space-between;}
+.sportmind-module-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#d8b35a;}
+.sportmind-module-badge--insight{color:#60a5fa;}
+.sportmind-module-badge--attention{color:#f87171;}
+.sportmind-module-badge--neutral{color:var(--color-text-muted);}
+.sportmind-confidence-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--color-text-muted);border:1px solid var(--color-border);padding:4px 8px;border-radius:999px;}
+.sportmind-module-title{margin:0;font-size:16px;font-weight:800;}
+.sportmind-module-body{margin:0;font-size:13px;line-height:1.7;color:var(--uos-text-primary,#f4efe5);}
+
+.sportmind-board-objective{padding:12px 14px;border-radius:12px;background:rgba(212,175,55,.08);border-inline-start:3px solid var(--uos-gold-primary,#c9a227);}
+.sportmind-board-kicker{display:block;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--uos-gold-secondary,#e9d8a6);margin-bottom:4px;}
+.sportmind-board-objective-text{margin:0;font-size:13px;font-weight:700;}
+
+.sportmind-board-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.sportmind-board-stage{padding:12px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid var(--color-border);display:flex;flex-direction:column;gap:8px;}
+.sportmind-board-stage--main{border-color:rgba(212,175,55,.35);background:rgba(212,175,55,.05);}
+.sportmind-stage-head{display:flex;align-items:center;justify-content:space-between;}
+.sportmind-stage-tag{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;}
+.sportmind-stage-tag--gold{color:#e9d8a6;}
+.sportmind-stage-time{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--color-text-muted);}
+.sportmind-board-stage h4{margin:0;font-size:12px;font-weight:700;}
+.sportmind-board-stage p{margin:0;font-size:12px;line-height:1.6;color:var(--color-text-secondary);}
+.sportmind-stage-note{font-size:11px;color:var(--color-text-muted);}
+.sportmind-progression-box{margin-top:6px;padding:8px;border-radius:8px;background:rgba(0,0,0,.25);border:1px solid var(--color-border);}
+.sportmind-progression-label{display:block;font-size:10px;font-weight:800;color:var(--uos-gold-secondary,#e9d8a6);margin-bottom:2px;}
+.sportmind-board-notes{padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.02);border:1px solid var(--color-border);}
+.sportmind-board-notes p{margin:0;font-size:12px;line-height:1.6;}
+
+.sportmind-module-actions{display:flex;flex-wrap:wrap;gap:8px;}
+.sportmind-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:all var(--uos-motion-fast) var(--uos-ease);}
+.sportmind-btn--primary{background:linear-gradient(135deg,#c9a227,#9a6c13);color:#0a0a0a;border:1px solid rgba(212,175,55,.5);}
+.sportmind-btn--secondary{background:rgba(255,255,255,.04);color:inherit;border:1px solid var(--color-border);}
+.sportmind-btn--secondary:hover{border-color:var(--uos-hover-edge);}
+.sportmind-btn--accent{background:rgba(220,38,38,.15);color:#fca5a5;border:1px solid rgba(220,38,38,.4);}
+
+.sportmind-evidence-panel{padding:14px;border-radius:14px;display:flex;flex-direction:column;gap:10px;}
+.sportmind-evidence-head{display:flex;align-items:center;gap:6px;}
+.sportmind-evidence-title{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-secondary);}
+.sportmind-evidence-items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;}
+.sportmind-evidence-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--color-text-secondary);}
+.sportmind-evidence-check{color:#10b981;flex-shrink:0;}
+.sportmind-integrity-card{padding:12px 14px;border-radius:12px;display:flex;align-items:flex-start;gap:10px;}
+.sportmind-integrity-card strong{display:block;font-size:12px;color:var(--uos-gold-secondary,#e9d8a6);}
+.sportmind-integrity-card p{margin:2px 0 0;font-size:11px;line-height:1.6;color:var(--color-text-muted);}
+
+/* Composer */
+.sportmind-composer-wrap{padding:16px 24px;border-top:1px solid var(--color-border);background:var(--uos-canvas,#0a0c12);display:flex;flex-direction:column;gap:10px;}
+.sportmind-suggestions-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;}
+.sportmind-suggestion-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--color-border);background:rgba(255,255,255,.03);color:inherit;font:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;transition:border-color var(--uos-motion-fast) var(--uos-ease);}
+.sportmind-suggestion-chip:hover{border-color:var(--uos-hover-edge);}
+
+.sportmind-context-pills{display:flex;flex-wrap:wrap;gap:6px;}
+.sportmind-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.25);font-size:11px;color:#e9d8a6;}
+.sportmind-pill-remove{background:none;border:none;padding:0;color:inherit;cursor:pointer;display:grid;place-items:center;}
+
+.sportmind-composer{display:flex;align-items:flex-end;gap:10px;padding:10px 14px;border-radius:16px;}
+.sportmind-composer-input{flex:1;background:transparent;border:none;color:inherit;font:inherit;font-size:14px;line-height:1.5;resize:none;outline:none;min-height:24px;max-height:160px;}
+.sportmind-composer-controls{display:flex;align-items:center;gap:6px;}
+.sportmind-send-btn{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#c9a227,#9a6c13);border:1px solid rgba(212,175,55,.5);color:#0a0a0a;cursor:pointer;}
+.sportmind-send-btn:disabled{opacity:.4;cursor:not-allowed;}
+.sportmind-stop-btn{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;background:rgba(220,38,38,.2);border:1px solid rgba(220,38,38,.5);color:#fca5a5;cursor:pointer;}
+.sportmind-composer-footnote{font-size:10px;color:var(--color-text-muted);text-align:center;}
+
+.sportmind-gold-icon{color:var(--uos-gold-primary,#c9a227);flex-shrink:0;}
+.sportmind-mobile-bar{display:none;}
+
+/* Responsive Layout */
+@media (max-width:1024px){
+  .sportmind-arena-body{grid-template-columns:240px 1fr 0px;}
+  .sportmind-rail--insight{position:fixed;top:0;inset-inline-end:0;bottom:0;width:300px;z-index:90;box-shadow:0 0 40px rgba(0,0,0,.6);transform:translateX(100%);transition:transform var(--uos-motion-base) var(--uos-ease);}
+  [dir="rtl"] .sportmind-rail--insight{transform:translateX(-100%);}
+  .sportmind-rail--mobile-open{transform:translateX(0) !important;}
+  .sportmind-drawer-close{margin-inline-start:auto;}
+}
+
+@media (max-width:768px){
+  .sportmind-mobile-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--color-border);background:var(--uos-canvas,#0a0c12);z-index:10;}
+  .sportmind-mobile-title{display:flex;align-items:center;gap:10px;}
+  .sportmind-mobile-title h2{margin:0;font-size:14px;font-weight:800;}
+  .sportmind-mobile-title small{font-size:10px;color:var(--color-text-muted);}
+  .sportmind-mobile-actions{display:flex;align-items:center;gap:4px;}
+  .sportmind-arena-header{display:none;}
+  .sportmind-arena-body{grid-template-columns:1fr;}
+  .sportmind-rail--context{display:none;}
+  .sportmind-timeline{padding:16px;}
+  .sportmind-board-grid{grid-template-columns:1fr;}
+  .sportmind-composer-wrap{padding:12px 16px;}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .sportmind-core--idle .sportmind-ring-orbit,
+  .sportmind-core--thinking .sportmind-ring-orbit,
+  .sportmind-core--streaming .sportmind-ring-orbit,
+  .sportmind-core--thinking .sportmind-aura,
+  .sportmind-core--streaming .sportmind-aura,
+  .sportmind-spin-icon{animation:none !important;}
+}

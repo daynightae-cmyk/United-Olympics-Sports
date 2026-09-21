@@ -18,6 +18,7 @@ const PublicExperience = lazy(() => import('../pages/public/PublicExperience').t
 const BenchmarkShowcasePage = lazy(() => import('../pages/benchmark/BenchmarkShowcasePage').then((module) => ({ default: module.BenchmarkShowcasePage })));
 const PortalDemoPage = lazy(() => import('../pages/demo/PortalDemoPage').then((module) => ({ default: module.PortalDemoPage })));
 const StoreApp = lazy(() => import('../store/StoreApp').then((module) => ({ default: module.StoreApp })));
+const SportMindArenaPage = lazy(() => import('../pages/assistant/SportMindArenaPage').then((module) => ({ default: module.SportMindArenaPage })));
 
 function RouteFallback() {
   return (
@@ -62,6 +63,8 @@ export function AppRouter() {
           <Route path="/player/*" element={<PlayerPortalRouter />} />
           <Route path="/parent/*" element={<ParentPortalRouter />} />
           <Route path="/coach/*" element={<CoachPortalRouter />} />
+          <Route path="/assistant" element={<SportMindArenaPage />} />
+          <Route path="/sportmind" element={<Navigate to="/assistant" replace />} />
           <Route path="*" element={<PublicExperience />} />
         </Routes>
       </Suspense>
