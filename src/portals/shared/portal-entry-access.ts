@@ -50,7 +50,7 @@ export function clearLinkedPortalSession(portal: OpenPortalKind): void {
 }
 
 export function clearUnlinkedPortalAccess(portal: OpenPortalKind): void {
-  if (typeof globalThis.localStorage === 'undefined') return;
+  if (typeof globalThis.sessionStorage === 'undefined') return;
   try {
     globalThis.sessionStorage.removeItem(unlinkedKey(portal));
   } catch {
@@ -59,7 +59,7 @@ export function clearUnlinkedPortalAccess(portal: OpenPortalKind): void {
 }
 
 export function readUnlinkedPortalAccess(portal: OpenPortalKind): UnlinkedPortalAccess | null {
-  if (typeof globalThis.localStorage === 'undefined') return null;
+  if (typeof globalThis.sessionStorage === 'undefined') return null;
   try {
     const raw = globalThis.sessionStorage.getItem(unlinkedKey(portal));
     if (!raw) return null;
@@ -99,7 +99,7 @@ export function persistUnlinkedPortalAccess(
     reason,
     createdAt: new Date().toISOString(),
   };
-  if (typeof window !== 'undefined') {
+  if (typeof globalThis.sessionStorage !== 'undefined') {
     try {
       globalThis.sessionStorage.setItem(unlinkedKey(portal), JSON.stringify(access));
     } catch {
