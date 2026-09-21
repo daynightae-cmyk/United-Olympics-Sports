@@ -25,7 +25,7 @@
 .athlete-sidebar-logo {
   width: 44px;
   height: 44px;
-  object-fit: contain;
+  object-fit: cover !important;
   filter: drop-shadow(0 4px 12px var(--athlete-gold-glow));
 }
 
