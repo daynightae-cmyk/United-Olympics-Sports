@@ -60,7 +60,7 @@ export function PlayerSessionDetailContent({ sessionId }: { sessionId: string })
     session,
     sport?.name.en ?? 'Training Session',
     group?.name.en ?? 'United Olympics Sports Group',
-    branch?.name.en ?? 'United Olympics Sports Academy'
+    branch?.name.en ?? 'United Olympics Sports'
   );
 
   return (
@@ -97,8 +97,8 @@ export function PlayerSessionDetailContent({ sessionId }: { sessionId: string })
             <p className="text-xs leading-6 text-slate-400 max-w-2xl">
               <BilingualText
                 value={bi(
-                  'Authentic session schedule and preparation instructions for your athlete profile. All data is verified through academy training rosters.',
-                  'جدول الحصة المعتمد وإرشادات التحضير لملف اللاعب الخاص بك. جميع البيانات موثقة من خلال قوائم تدريب الأكاديمية.'
+                  'Authentic session schedule and preparation instructions for your athlete profile. All data is verified through official training rosters.',
+                  'جدول الحصة المعتمد وإرشادات التحضير لملف اللاعب الخاص بك. جميع البيانات موثقة من خلال قوائم تدريب يونايتد أوليمبيكس سبورت.'
                 )}
               />
             </p>
@@ -146,7 +146,7 @@ export function PlayerSessionDetailContent({ sessionId }: { sessionId: string })
                 <BilingualText value={group?.name ?? bi('Assigned Group', 'المجموعة المخصصة')} />
               </strong>
               <span className="text-[10px] text-slate-400 mt-1 block">
-                <BilingualText value={bi('Confirmed in academy schedule', 'مؤكدة في جدول الأكاديمية')} />
+                <BilingualText value={bi('Confirmed in official schedule', 'مؤكدة في الجدول الرسمي')} />
               </span>
             </div>
 
@@ -208,7 +208,7 @@ export function PlayerSessionDetailContent({ sessionId }: { sessionId: string })
             icon={<MapPin size={15} />}
             label={bi('Facility / branch', 'المرفق / الفرع')}
             value={branch ? `${branch.name.en} · ${branch.name.ar}` : undefined}
-            secondary="United Olympics Sports Training Facility"
+            secondary={branch ? (locale === 'ar' ? 'المقر المعتمد' : 'Official Venue') : undefined}
           />
           <RecordCard
             icon={<CalendarCheck2 size={15} />}
@@ -233,7 +233,7 @@ export function PlayerSessionDetailContent({ sessionId }: { sessionId: string })
 
           <div className="rounded-2xl border border-white/10 bg-white/[.02] p-4 space-y-2">
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 block">
-              <BilingualText value={bi('Academy Protocol & Arrival', 'بروتوكول الأكاديمية والوصول')} />
+              <BilingualText value={bi('Training Protocol & Arrival', 'بروتوكول التدريب والوصول')} />
             </span>
             <ul className="space-y-1.5 text-xs text-slate-300 list-disc list-inside">
               <li><BilingualText value={bi('Arrive 15 minutes prior to scheduled start time', 'الوصول قبل 15 دقيقة من موعد بدء الحصة')} /></li>

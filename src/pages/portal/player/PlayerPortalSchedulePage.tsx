@@ -525,8 +525,8 @@ export function PlayerPortalSchedulePage() {
           <ShieldCheck size={14} className="text-amber-400 flex-shrink-0 mt-0.5" />
           <p className="m-0 leading-relaxed text-xs">
             <BilingualText value={bi(
-              'Session IDs, sport/group relationships, start times, and recorded statuses are derived authoritatively from the academy database. Facility and attendance details are shown where verified in provider records.',
-              'يتم استرجاع معرفات الحصص وعلاقات الرياضة والمجموعة وأوقات البدء والحالات المسجلة مباشرة من قاعدة بيانات الأكاديمية. وتُعرض تفاصيل المرفق والحضور عند التحقق منها في سجلات النظام.'
+              'Session IDs, sport/group relationships, start times, and recorded statuses are derived authoritatively from the training database. Facility and attendance details are shown where verified in provider records.',
+              'يتم استرجاع معرفات الحصص وعلاقات الرياضة والمجموعة وأوقات البدء والحالات المسجلة مباشرة من قاعدة بيانات التدريب. وتُعرض تفاصيل المرفق والحضور عند التحقق منها في سجلات النظام.'
             )} />
           </p>
         </div>
