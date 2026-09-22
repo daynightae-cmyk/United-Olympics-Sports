@@ -14,25 +14,27 @@ export function PlayerPerformanceSnapshotCard({
 }: PlayerPerformanceSnapshotCardProps) {
   const hasScore = typeof overallScore === 'number' && Number.isFinite(overallScore);
 
-  // Derive ratings truthfully from real player performance records
-  const trainingRating = hasScore
-    ? `${(overallScore / 20).toFixed(1)} / 5`
-    : (metrics.length > 0 ? `${(metrics[0]?.value ? (metrics[0].value / 20).toFixed(1) : '4.5')} / 5` : null);
+  const trainingMetric = metrics.find((m) => /training|rating/i.test(m.metricId));
+  const hasTraining = trainingMetric && typeof trainingMetric.value === 'number' && Number.isFinite(trainingMetric.value);
 
   const fitnessMetric = metrics.find((m) => /fitness|stamina|endurance/i.test(m.metricId));
-  const fitnessScore = fitnessMetric
-    ? `${Math.round(fitnessMetric.value)} / 100`
-    : (hasScore ? `${Math.round(overallScore)} / 100` : null);
+  const hasFitness = fitnessMetric && typeof fitnessMetric.value === 'number' && Number.isFinite(fitnessMetric.value);
+  const fitnessScore = hasFitness ? `${Math.round(fitnessMetric.value)} / 100` : null;
 
   const skillMetric = metrics.find((m) => /skill|tech|ball/i.test(m.metricId));
-  const skillRating = skillMetric
-    ? `${(skillMetric.value / 20).toFixed(1)} / 5`
-    : (hasScore ? `${((overallScore * 0.95) / 20).toFixed(1)} / 5` : null);
+  const hasSkill = skillMetric && typeof skillMetric.value === 'number' && Number.isFinite(skillMetric.value);
+  const skillRating = hasSkill ? `${(skillMetric.value / 20).toFixed(1)} / 5` : null;
 
   const disciplineMetric = metrics.find((m) => /discipline|attitude|focus/i.test(m.metricId));
-  const disciplineScore = disciplineMetric
-    ? `${(disciplineMetric.value / 20).toFixed(1)} / 5`
-    : (hasScore ? `${Math.min(5, (overallScore * 1.05) / 20).toFixed(1)} / 5` : null);
+  const hasDiscipline = disciplineMetric && typeof disciplineMetric.value === 'number' && Number.isFinite(disciplineMetric.value);
+  const disciplineScore = hasDiscipline ? `${(disciplineMetric.value / 20).toFixed(1)} / 5` : null;
+
+  const firstTileLabel = hasTraining
+    ? { en: 'Training Rating', ar: 'تقييم التدريب' }
+    : { en: 'Overall Score', ar: 'النتيجة العامة' };
+  const firstTileScore = hasTraining
+    ? `${(trainingMetric.value / 20).toFixed(1)} / 5`
+    : (hasScore ? `${Math.round(overallScore)} / 100` : null);
 
   return (
     <article className="athlete-dark-card performance-snapshot-reference-card" aria-labelledby="ref-perf-title">
@@ -41,22 +43,22 @@ export function PlayerPerformanceSnapshotCard({
           <BilingualText value={bi('Performance Snapshot', 'لمحة عن الأداء')} />
         </h2>
         <Link to="/player/performance" className="athlete-dark-card__period-link">
-          <BilingualText value={bi('This Month', 'هذا الشهر')} />
+          <BilingualText value={bi('Recorded Performance', 'الأداء المسجل')} />
         </Link>
       </header>
 
       <div className="performance-snapshot-reference-grid">
-        {/* Training Rating */}
+        {/* Overall Score / Training Rating */}
         <div className="performance-snapshot-tile">
           <div className="performance-snapshot-icon-circle">
             <Star size={16} className="text-amber-400 fill-amber-400" />
           </div>
           <div className="performance-snapshot-labels">
-            <span className="performance-snapshot-label-en">Training Rating</span>
-            <span className="performance-snapshot-label-ar">تقييم التدريب</span>
+            <span className="performance-snapshot-label-en">{firstTileLabel.en}</span>
+            <span className="performance-snapshot-label-ar">{firstTileLabel.ar}</span>
           </div>
           <strong className="performance-snapshot-val" dir="ltr">
-            {trainingRating ?? <span className="text-slate-500 text-xs font-normal">Not recorded</span>}
+            {firstTileScore ?? <span className="text-slate-500 text-xs font-normal"><BilingualText value={bi('Not recorded', 'غير مسجل')} /></span>}
           </strong>
         </div>
 
@@ -70,7 +72,7 @@ export function PlayerPerformanceSnapshotCard({
             <span className="performance-snapshot-label-ar">اللياقة البدنية</span>
           </div>
           <strong className="performance-snapshot-val" dir="ltr">
-            {fitnessScore ?? <span className="text-slate-500 text-xs font-normal">Not recorded</span>}
+            {fitnessScore ?? <span className="text-slate-500 text-xs font-normal"><BilingualText value={bi('Not recorded', 'غير مسجل')} /></span>}
           </strong>
         </div>
 
@@ -84,7 +86,7 @@ export function PlayerPerformanceSnapshotCard({
             <span className="performance-snapshot-label-ar">المهارات</span>
           </div>
           <strong className="performance-snapshot-val" dir="ltr">
-            {skillRating ?? <span className="text-slate-500 text-xs font-normal">Not recorded</span>}
+            {skillRating ?? <span className="text-slate-500 text-xs font-normal"><BilingualText value={bi('Not recorded', 'غير مسجل')} /></span>}
           </strong>
         </div>
 
@@ -98,7 +100,7 @@ export function PlayerPerformanceSnapshotCard({
             <span className="performance-snapshot-label-ar">الانضباط</span>
           </div>
           <strong className="performance-snapshot-val" dir="ltr">
-            {disciplineScore ?? <span className="text-slate-500 text-xs font-normal">Not recorded</span>}
+            {disciplineScore ?? <span className="text-slate-500 text-xs font-normal"><BilingualText value={bi('Not recorded', 'غير مسجل')} /></span>}
           </strong>
         </div>
       </div>

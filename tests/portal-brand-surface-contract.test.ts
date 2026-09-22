@@ -74,8 +74,8 @@ assert(
   entry.indexOf("portal-interior-delivery-final.css") > entry.indexOf("admin-athletic-final.css"),
   'Client-delivery portal interior authority must load last',
 );
-assert(playerOverview.includes('athlete-snapshot-card'), 'Player overview snapshots must use semantic athletic cards');
-assert(playerOverview.includes('athlete-quick-link-card'), 'Player overview quick links must use semantic athletic cards');
+assert(playerOverview.includes('PlayerPerformanceSnapshotCard'), 'Player overview snapshots must use semantic athletic cards');
+assert(playerOverview.includes('PlayerQuickActionsCard'), 'Player overview quick links must use semantic athletic cards');
 assert(playerOverview.includes('athlete-overview-title'), 'Player overview must expose semantic athletic heading hierarchy');
 assert(athleticClosure.includes('object-fit: cover !important'), 'Portal emblem crop must prevent the composite lockup from displaying as two visible emblems');
 assert(athleticClosure.includes('.bm-action-card'), 'Parent/Coach action cards must receive the athletic card authority');

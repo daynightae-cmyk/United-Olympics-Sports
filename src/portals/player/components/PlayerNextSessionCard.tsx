@@ -23,19 +23,6 @@ export function PlayerNextSessionCard({
 
   const isArabic = bilingualOrder === 'ar-first';
 
-  const defaultDateStr = session
-    ? formatPlayerDate(session.startsAt, bilingualOrder, { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })
-    : (isArabic ? 'الإثنين، 22 أبريل 2026' : 'Mon, 22 Apr 2026');
-
-  const defaultTimeStr = session
-    ? `${formatPlayerTime(session.startsAt, bilingualOrder)} – ${formatPlayerTime(new Date(new Date(session.startsAt).getTime() + 90 * 60000).toISOString(), bilingualOrder)}`
-    : (isArabic ? '5:00 مساءً – 7:00 مساءً' : '5:00 PM – 7:00 PM');
-
-  const venueName = branch?.name ?? bi('UO Training Center – Riyadh', 'مركز يونايتد أوليمبيكس التدريبي - الرياض');
-  const coachName = coach
-    ? (isArabic ? coach.nameAr : coach.nameEn)
-    : (isArabic ? 'المدرب أحمد' : 'Coach Ahmed');
-
   const handleActionClick = () => {
     if (session) {
       navigate(`/player/schedule/${session.id}`);
@@ -43,6 +30,50 @@ export function PlayerNextSessionCard({
       navigate('/player/schedule');
     }
   };
+
+  if (!session) {
+    return (
+      <article className="athlete-dark-card next-session-reference-card" aria-labelledby="ref-next-session-title">
+        <header className="athlete-dark-card__header">
+          <h2 id="ref-next-session-title" className="athlete-dark-card__title">
+            <BilingualText value={bi('Next Training Session', 'الحصة التدريبية القادمة')} />
+          </h2>
+          <Link to="/player/schedule" className="athlete-dark-card__schedule-link">
+            <span><BilingualText value={bi('View Schedule', 'عرض الجدول')} /></span>
+            <ArrowUpRight size={14} className="rtl:rotate-[-90deg]" />
+          </Link>
+        </header>
+
+        <div className="next-session-reference-body next-session-empty-state flex items-center justify-center p-6 text-center">
+          <div className="py-4">
+            <Calendar size={28} className="mx-auto text-amber-400/40 mb-3" aria-hidden="true" />
+            <p className="text-white font-bold text-sm mb-1">
+              <BilingualText value={bi('No upcoming training session is recorded.', 'لا توجد حصة تدريبية قادمة مسجلة.')} />
+            </p>
+            <p className="text-slate-400 text-xs max-w-xs mx-auto">
+              <BilingualText value={bi('Check your schedule for future training dates and assignments.', 'تحقق من جدولك التدريبي لمعرفة مواعيد وتفاصيل الحصص القادمة.')} />
+            </p>
+          </div>
+        </div>
+
+        <div className="next-session-reference-footer">
+          <button
+            type="button"
+            onClick={handleActionClick}
+            className="next-session-reference-cta-btn"
+          >
+            <span><BilingualText value={bi('View Schedule', 'عرض الجدول')} /></span>
+            <span className="rtl:rotate-180">→</span>
+          </button>
+        </div>
+      </article>
+    );
+  }
+
+  const sessionDateStr = formatPlayerDate(session.startsAt, bilingualOrder, { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+  const sessionTimeStr = formatPlayerTime(session.startsAt, bilingualOrder);
+  const venueContent = branch?.name ? <BilingualText value={branch.name} /> : <BilingualText value={bi('Not recorded', 'غير مسجل')} />;
+  const coachContent = coach ? (isArabic ? coach.nameAr : coach.nameEn) : <BilingualText value={bi('Not recorded', 'غير مسجل')} />;
 
   return (
     <article className="athlete-dark-card next-session-reference-card" aria-labelledby="ref-next-session-title">
@@ -66,7 +97,7 @@ export function PlayerNextSessionCard({
               <span className="next-session-reference-label">
                 <BilingualText value={bi('Date', 'التاريخ')} />
               </span>
-              <strong className="next-session-reference-val">{defaultDateStr}</strong>
+              <strong className="next-session-reference-val">{sessionDateStr}</strong>
             </div>
           </div>
 
@@ -78,7 +109,7 @@ export function PlayerNextSessionCard({
               <span className="next-session-reference-label">
                 <BilingualText value={bi('Time', 'الوقت')} />
               </span>
-              <strong className="next-session-reference-val">{defaultTimeStr}</strong>
+              <strong className="next-session-reference-val">{sessionTimeStr}</strong>
             </div>
           </div>
 
@@ -91,7 +122,7 @@ export function PlayerNextSessionCard({
                 <BilingualText value={bi('Venue', 'الملعب')} />
               </span>
               <strong className="next-session-reference-val">
-                <BilingualText value={venueName} />
+                {venueContent}
               </strong>
             </div>
           </div>
@@ -104,7 +135,7 @@ export function PlayerNextSessionCard({
               <span className="next-session-reference-label">
                 <BilingualText value={bi('Coach', 'المدرب')} />
               </span>
-              <strong className="next-session-reference-val">{coachName}</strong>
+              <strong className="next-session-reference-val">{coachContent}</strong>
             </div>
           </div>
         </div>
@@ -112,7 +143,8 @@ export function PlayerNextSessionCard({
         <div className="next-session-reference-media-box">
           <img
             src="/media/sports/football/football-01-hero.webp"
-            alt="UO Training Facility"
+            alt=""
+            aria-hidden="true"
             className="next-session-reference-media-img"
             loading="lazy"
           />
