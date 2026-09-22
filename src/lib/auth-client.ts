@@ -77,14 +77,18 @@ export async function isPlatformAuthenticatorAvailable(): Promise<boolean> {
 
 export async function beginSupabaseGoogleOAuth(returnTo = '/'): Promise<void> {
   const safeDestination = safeReturnTo(returnTo);
-  sessionStorage.setItem(RETURN_TO_KEY, safeDestination);
+  recordAuthReturnTo(safeDestination);
 
   // If on apex host, we must canonicalize to www before starting PKCE.
   // Otherwise PKCE verifier is stored on apex while callback redirects to www.
   if (typeof window !== 'undefined' && window.location.hostname === PRODUCTION_AUTH_APEX_HOST) {
     const canonical = canonicalAuthPageUrl(window.location.href);
     if (canonical) {
-      window.location.replace(canonical);
+      const targetUrl = new URL(canonical);
+      if (safeDestination && safeDestination !== '/') {
+        targetUrl.searchParams.set('returnTo', safeDestination);
+      }
+      window.location.replace(targetUrl.toString());
       return;
     }
   }
@@ -191,15 +195,88 @@ export async function deleteSupabasePasskey(passkeyId: string): Promise<void> {
   if (error) throw error;
 }
 
-export function peekAuthReturnTo(fallback = '/'): string {
-  const stored = sessionStorage.getItem(RETURN_TO_KEY);
-  return safeReturnTo(stored, fallback);
+export function recordAuthReturnTo(destination: string): void {
+  const safe = safeReturnTo(destination);
+  if (typeof globalThis.sessionStorage !== 'undefined') {
+    try {
+      globalThis.sessionStorage.setItem(RETURN_TO_KEY, safe);
+    } catch {
+      // Session storage may be unavailable in private modes.
+    }
+  }
+  if (typeof globalThis.localStorage !== 'undefined') {
+    try {
+      globalThis.localStorage.setItem(RETURN_TO_KEY, safe);
+    } catch {
+      // Local storage may be unavailable in private modes.
+    }
+  }
 }
 
-export function consumeAuthReturnTo(fallback = '/'): string {
-  const stored = sessionStorage.getItem(RETURN_TO_KEY);
-  sessionStorage.removeItem(RETURN_TO_KEY);
-  return safeReturnTo(stored, fallback);
+export function peekAuthReturnTo(fallback = '/', searchParams?: URLSearchParams | null): string {
+  if (searchParams) {
+    const fromParam = searchParams.get('returnTo') || searchParams.get('next') || searchParams.get('from');
+    if (fromParam) {
+      const safe = safeReturnTo(fromParam, '');
+      if (safe) return safe;
+    }
+  } else if (typeof globalThis.window !== 'undefined') {
+    try {
+      const urlParams = new URLSearchParams(globalThis.window.location.search);
+      const fromParam = urlParams.get('returnTo') || urlParams.get('next') || urlParams.get('from');
+      if (fromParam) {
+        const safe = safeReturnTo(fromParam, '');
+        if (safe) return safe;
+      }
+    } catch {
+      // Ignore search param read errors
+    }
+  }
+
+  if (typeof globalThis.sessionStorage !== 'undefined') {
+    try {
+      const sessionStored = globalThis.sessionStorage.getItem(RETURN_TO_KEY);
+      if (sessionStored) {
+        const safe = safeReturnTo(sessionStored, '');
+        if (safe) return safe;
+      }
+    } catch {
+      // Session storage may be unavailable
+    }
+  }
+
+  if (typeof globalThis.localStorage !== 'undefined') {
+    try {
+      const localStored = globalThis.localStorage.getItem(RETURN_TO_KEY);
+      if (localStored) {
+        const safe = safeReturnTo(localStored, '');
+        if (safe) return safe;
+      }
+    } catch {
+      // Local storage may be unavailable
+    }
+  }
+
+  return fallback;
+}
+
+export function consumeAuthReturnTo(fallback = '/', searchParams?: URLSearchParams | null): string {
+  const destination = peekAuthReturnTo(fallback, searchParams);
+  if (typeof globalThis.sessionStorage !== 'undefined') {
+    try {
+      globalThis.sessionStorage.removeItem(RETURN_TO_KEY);
+    } catch {
+      // Session storage cleanup
+    }
+  }
+  if (typeof globalThis.localStorage !== 'undefined') {
+    try {
+      globalThis.localStorage.removeItem(RETURN_TO_KEY);
+    } catch {
+      // Local storage cleanup
+    }
+  }
+  return destination;
 }
 
 export async function exchangeSupabaseAuthCode(code: string): Promise<string> {

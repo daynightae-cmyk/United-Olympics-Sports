@@ -49,8 +49,11 @@ function SafeDemoLink() {
 
 export function CoachLoginPage() {
   const navigate = useNavigate();
-  const routerState = useLocation().state as { from?: unknown } | null;
-  const resolveTarget = () => resolvePortalPostSignInDestination('coach', routerState?.from, '/coach/home');
+  const location = useLocation();
+  const routerState = location.state as { from?: unknown } | null;
+  const searchReturnTo = new URLSearchParams(location.search).get('returnTo');
+  const fromCandidate = searchReturnTo || routerState?.from;
+  const resolveTarget = () => resolvePortalPostSignInDestination('coach', fromCandidate, '/coach/home');
 
   useEffect(() => {
     let active = true;
