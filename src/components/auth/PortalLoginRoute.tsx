@@ -92,7 +92,10 @@ function passkeyFailureNotice(error: unknown, biometric: boolean): PortalAuthNot
 
 export function PortalLoginRoute({ portal }: { portal: PortalAuthKind }) {
   const canonicalTarget = typeof window === 'undefined' ? null : canonicalAuthPageUrl(window.location.href);
-  const routerState = useLocation().state as { from?: unknown } | null;
+  const location = useLocation();
+  const routerState = location.state as { from?: unknown } | null;
+  const searchReturnTo = new URLSearchParams(location.search).get('returnTo');
+  const fromCandidate = searchReturnTo || routerState?.from;
 
   useEffect(() => {
     if (canonicalTarget) window.location.replace(canonicalTarget);
@@ -103,9 +106,9 @@ export function PortalLoginRoute({ portal }: { portal: PortalAuthKind }) {
   // Admin sign-in honors the guarded destination captured by AdminAccessGate.
   // Every other portal keeps its fixed post-sign-in destination.
   const resolveTarget = () => portal === 'store'
-    ? resolveStorePostSignInDestination(routerState?.from, destinations.store)
+    ? resolveStorePostSignInDestination(fromCandidate, destinations.store)
     : portal === 'admin'
-      ? resolvePortalPostSignInDestination('admin', routerState?.from, destinations.admin)
+      ? resolvePortalPostSignInDestination('admin', fromCandidate, destinations.admin)
       : destinations[portal];
 
   const handleProvider = async (provider: PortalAuthProvider): Promise<PortalAuthNotice | null> => {

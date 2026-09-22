@@ -15,7 +15,9 @@ export function safeReturnTo(value: string | null | undefined, fallback = '/'): 
   try {
     const resolved = new URL(value, SAFE_RETURN_BASE);
     if (resolved.origin !== SAFE_RETURN_BASE) return fallback;
-    return resolved.pathname + resolved.search + resolved.hash;
+    const path = resolved.pathname;
+    if (path === '/auth/callback' || path.startsWith('/auth/callback/')) return fallback;
+    return path + resolved.search + resolved.hash;
   } catch {
     return fallback;
   }

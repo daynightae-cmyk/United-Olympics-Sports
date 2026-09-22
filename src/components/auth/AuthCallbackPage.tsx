@@ -21,20 +21,23 @@ function hasAdminAccess(session: ServerAuthSession): boolean {
   return session.roles.some((role) => ['super_admin', 'admin', 'owner', 'administrator'].includes(role));
 }
 
-function portalFromDestination(destination: string): 'admin' | 'store' | 'player' | 'parent' | 'coach' {
+export type AuthCallbackPortal = 'admin' | 'store' | 'player' | 'parent' | 'coach' | 'neutral';
+
+export function portalFromDestination(destination: string): AuthCallbackPortal {
+  if (destination.startsWith('/admin')) return 'admin';
   if (destination.startsWith('/store')) return 'store';
   if (destination.startsWith('/player')) return 'player';
   if (destination.startsWith('/parent')) return 'parent';
   if (destination.startsWith('/coach')) return 'coach';
-  return 'admin';
+  return 'neutral';
 }
 
-function loginRouteForDestination(destination: string): string {
+export function loginRouteForDestination(destination: string): string {
+  if (destination.startsWith('/admin')) return '/admin/login';
   if (destination.startsWith('/store')) return '/store/login';
   if (destination.startsWith('/player')) return '/player/login';
   if (destination.startsWith('/parent')) return '/parent/login';
   if (destination.startsWith('/coach')) return '/coach/login';
-  if (destination.startsWith('/admin')) return '/admin/login';
   return '/';
 }
 
@@ -60,7 +63,7 @@ export function AuthCallbackPage() {
   const canonicalTarget = typeof window === 'undefined' || params.has('code')
     ? null
     : canonicalAuthPageUrl(window.location.href);
-  const destinationHint = peekAuthReturnTo('/');
+  const destinationHint = peekAuthReturnTo('/', params);
   const portal = portalFromDestination(destinationHint);
   const retryRoute = loginRouteForDestination(destinationHint);
   const [state, setState] = useState<'working' | 'denied' | 'not-linked' | 'error'>('working');
@@ -70,14 +73,14 @@ export function AuthCallbackPage() {
   const providerError = params.get('error_description') || params.get('error');
 
   const finish = async (token: string) => {
-    const destination = peekAuthReturnTo('/');
+    const destination = peekAuthReturnTo('/', params);
     const openPortal = portalKindFromDestination(destination);
 
     // Administration remains strictly role-gated by the server. A successful
     // Google sign-in alone never grants administrative access.
     if (destination.startsWith('/admin')) {
       const session = await fetchServerSession(token);
-      consumeAuthReturnTo('/');
+      consumeAuthReturnTo('/', params);
       if (!hasAdminAccess(session)) {
         await signOutEverywhere().catch(() => undefined);
         setState('denied');
@@ -93,18 +96,15 @@ export function AuthCallbackPage() {
     // authenticated Google/Supabase browser session. Private records remain
     // server-authorized and are shown only after an exact verified binding.
     if (openPortal) {
-      let session: ServerAuthSession;
-      try {
-        session = await fetchServerSession(token);
-      } catch (error) {
+      const session = await fetchServerSession(token).catch((error) => {
         const code = classifyAuthError(error);
         if (code === 'AUTH_INVALID' || code === 'AUTH_REQUIRED') throw error;
+        return null;
+      });
 
-        // OAuth exchange already established a valid Supabase browser session.
-        // When the production data/authorization plane is unavailable, enter a
-        // zero-private-data shell instead of trapping the user on the callback.
+      if (!session) {
         persistUnlinkedPortalAccess(openPortal, { provider: 'supabase' }, 'data-unavailable');
-        consumeAuthReturnTo('/');
+        consumeAuthReturnTo('/', params);
         navigate(destination, { replace: true });
         return;
       }
@@ -118,7 +118,7 @@ export function AuthCallbackPage() {
         persistUnlinkedPortalAccess(openPortal, session, 'data-unavailable');
       }
 
-      consumeAuthReturnTo('/');
+      consumeAuthReturnTo('/', params);
       navigate(destination, { replace: true });
       return;
     }
@@ -127,15 +127,63 @@ export function AuthCallbackPage() {
     // the successful Supabase OAuth exchange is enough to enter the customer
     // surface. Store APIs remain server-authoritative for account/order data.
     if (destination.startsWith('/store')) {
-      consumeAuthReturnTo('/');
+      consumeAuthReturnTo('/', params);
       navigate(destination, { replace: true });
       return;
     }
 
-    // Any other authenticated destination preserves the existing server-session requirement.
-    await fetchServerSession(token);
-    consumeAuthReturnTo('/');
-    navigate(destination, { replace: true });
+    // Root ("/") or missing/unmapped destination:
+    // The user MUST NOT be treated as attempting privileged Admin access.
+    // The user MUST NOT receive a false "access denied to this portal" error.
+    const session = await fetchServerSession(token).catch((error) => {
+      const code = classifyAuthError(error);
+      if (code === 'AUTH_INVALID' || code === 'AUTH_REQUIRED') throw error;
+      return null;
+    });
+
+    // If user is an admin -> /admin
+    if (session && hasAdminAccess(session)) {
+      consumeAuthReturnTo('/', params);
+      navigate('/admin', { replace: true });
+      return;
+    }
+
+    // Check if user has a single portal binding
+    try {
+      const portalIdentity = await fetchPortalIdentity(token);
+      const playerBound = portalIdentity.bindings.playerIds.length === 1;
+      const parentBound = portalIdentity.bindings.guardianIds.length === 1;
+      const coachBound = portalIdentity.bindings.coachIds.length === 1;
+
+      const singleBindingCount = (playerBound ? 1 : 0) + (parentBound ? 1 : 0) + (coachBound ? 1 : 0);
+      if (singleBindingCount === 1) {
+        if (playerBound) {
+          persistLinkedPortalBinding('/player', portalIdentity);
+          consumeAuthReturnTo('/', params);
+          navigate('/player/home', { replace: true });
+          return;
+        }
+        if (parentBound) {
+          persistLinkedPortalBinding('/parent', portalIdentity);
+          consumeAuthReturnTo('/', params);
+          navigate('/parent', { replace: true });
+          return;
+        }
+        if (coachBound) {
+          persistLinkedPortalBinding('/coach', portalIdentity);
+          consumeAuthReturnTo('/', params);
+          navigate('/coach/home', { replace: true });
+          return;
+        }
+      }
+    } catch (error) {
+      const code = classifyAuthError(error);
+      if (code === 'AUTH_INVALID' || code === 'AUTH_REQUIRED') throw error;
+    }
+
+    // Otherwise (zero bindings or multiple bindings) -> safe neutral authenticated destination
+    consumeAuthReturnTo('/', params);
+    navigate('/', { replace: true });
   };
 
   useEffect(() => {

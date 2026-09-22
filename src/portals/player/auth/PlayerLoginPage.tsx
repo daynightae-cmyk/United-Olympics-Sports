@@ -56,8 +56,11 @@ function SafeDemoLink() {
 
 export function PlayerLoginPage() {
   const navigate = useNavigate();
-  const routerState = useLocation().state as { from?: unknown } | null;
-  const resolveTarget = () => resolvePortalPostSignInDestination('player', routerState?.from, '/player/home');
+  const location = useLocation();
+  const routerState = location.state as { from?: unknown } | null;
+  const searchReturnTo = new URLSearchParams(location.search).get('returnTo');
+  const fromCandidate = searchReturnTo || routerState?.from;
+  const resolveTarget = () => resolvePortalPostSignInDestination('player', fromCandidate, '/player/home');
 
   useEffect(() => {
     let active = true;
