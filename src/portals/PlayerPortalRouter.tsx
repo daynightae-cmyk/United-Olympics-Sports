@@ -4,7 +4,7 @@ import { PlayerSessionProvider } from './player/PlayerSessionContext';
 import { PlayerLoginPage } from './player/auth/PlayerLoginPage';
 import { PlayerPortalShell } from './player/PlayerPortalShell';
 import { PlayerProtectedRoute } from './player/PlayerProtectedRoute';
-import { BilingualText } from '../components/bilingual/BilingualText';
+import { PortalRouteLoader } from '../components/portal/PortalRouteState';
 import { PlayerPortalNotFoundPage } from '../pages/portal/player/PlayerPortalNotFoundPage';
 import { clientShowcaseMode } from '../lib/preview-guard';
 import { UnlinkedPortalEntryGate } from './shared/UnlinkedPortalEntryGate';
@@ -26,13 +26,7 @@ const PlayerPortalProfilePage = lazy(() => import('../pages/portal/player/Player
 
 function LazyRoute({ Component }: { Component: ComponentType }) {
   return (
-    <Suspense
-      fallback={
-        <div data-route-loading="true" role="status" aria-live="polite" aria-busy="true" className="athlete-glass-card" style={{ padding: 32, textAlign: 'center', margin: 24 }}>
-          <BilingualText value={{ en: 'Loading…', ar: 'جارٍ التحميل…' }} />
-        </div>
-      }
-    >
+    <Suspense fallback={<PortalRouteLoader portal="player" contained />}>
       <Component />
     </Suspense>
   );

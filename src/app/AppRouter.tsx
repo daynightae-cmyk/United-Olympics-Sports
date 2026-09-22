@@ -7,6 +7,7 @@ import { OlympicLuxurySplash } from '../components/splash/OlympicLuxurySplash';
 import { AuthCallbackPage } from '../components/auth/AuthCallbackPage';
 import { PasskeySetupPage } from '../components/auth/PasskeySetupPage';
 import { PortalLoginRoute } from '../components/auth/PortalLoginRoute';
+import { PortalRouteLoader, type SharedPortalKind } from '../components/portal/PortalRouteState';
 import { clientShowcaseMode, previewModeAllowed } from '../lib/preview-guard';
 
 const AdminLayout = lazy(() => import('../layouts/AdminLayout').then((module) => ({ default: module.AdminLayout })));
@@ -19,8 +20,16 @@ const BenchmarkShowcasePage = lazy(() => import('../pages/benchmark/BenchmarkSho
 const PortalDemoPage = lazy(() => import('../pages/demo/PortalDemoPage').then((module) => ({ default: module.PortalDemoPage })));
 const StoreApp = lazy(() => import('../store/StoreApp').then((module) => ({ default: module.StoreApp })));
 const SportMindArenaPage = lazy(() => import('../pages/assistant/SportMindArenaPage').then((module) => ({ default: module.SportMindArenaPage })));
+const LoadingExperienceShowcase = lazy(() => import('../pages/benchmark/LoadingExperienceShowcase').then((module) => ({ default: module.LoadingExperienceShowcase })));
 
 function RouteFallback() {
+  const { pathname } = useLocation();
+  const portalMatch = pathname.match(/^\/(admin|player|parent|coach)(?:\/|$)/);
+  const isLoginRoute = /^\/(admin|player|parent|coach)\/login(?:\/|$)/.test(pathname);
+  if (portalMatch && !isLoginRoute) {
+    return <PortalRouteLoader portal={portalMatch[1] as SharedPortalKind} />;
+  }
+
   return (
     <div data-route-loading="true" role="status" aria-live="polite" aria-busy="true" className="ui-skeleton">
       <span>Loading United Olympics Sports… | جاري التحميل</span>
@@ -68,6 +77,7 @@ export function AppRouter() {
       <OlympicRouteTransition />
       <Suspense fallback={<RouteFallback />}>
         <Routes>
+          {isBenchmarkEnabled && <Route path="/benchmark/loading" element={<LoadingExperienceShowcase />} />}
           {isBenchmarkEnabled && <Route path="/benchmark" element={<BenchmarkShowcasePage />} />}
           {isSafeDemoEnabled && <Route path="/demo/:portal" element={<PortalDemoPage />} />}
           <Route path="/auth/callback" element={<AuthCallbackPage />} />

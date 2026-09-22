@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { PageHeader } from '../../../components/admin/AdminUI';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
 import { EnterpriseEmpty, EnterpriseKpi, EnterpriseProgress, EnterpriseStatus, EnterpriseTable, PreviewNotice } from '../../../components/enterprise/EnterpriseUI';
+import { UosSectionSkeleton } from '../../../components/loading/UosLoadingSystem';
 import { PortalPreviewCard, PortalSection } from '../../../components/portal/PortalUI';
 import { useParentPortalGatewayData } from '../../../portals/parent/useParentPortalGatewayData';
 
@@ -23,7 +24,7 @@ const paymentLabel = (status: string) => bi(
 );
 
 function FamilyUnavailable({ loading, error }: { loading: boolean; error: Error | null }) {
-  if (loading) return <div className="enterprise-empty" role="status"><BilingualText value={bi('Loading family records…', 'جارٍ تحميل سجلات الأسرة…')} /></div>;
+  if (loading) return <UosSectionSkeleton kind="cards" rows={3} label={bi('Loading family records', 'جارِ تحميل سجلات الأسرة')} />;
   if (error) return <div className="enterprise-empty" role="alert"><BilingualText value={bi('Family data provider is unavailable.', 'موفر بيانات الأسرة غير متاح.')} /></div>;
   return <EnterpriseEmpty title={bi('Family profile unavailable', 'ملف الأسرة غير متاح')} description={bi('The current Parent session no longer points to an active provider record. Sign in again from the Parent login page.', 'جلسة ولي الأمر الحالية لم تعد تشير إلى سجل متاح لدى موفر البيانات. سجّل الدخول مجددًا من صفحة دخول ولي الأمر.')} />;
 }

@@ -86,7 +86,7 @@ function ParentShellLayout() {
       <ParentProtectedRoute>
         <PortalErrorBoundary portal="parent">
         <PortalLayout portal="parent" statusMode={statusMode}>
-          <Suspense fallback={<PortalRouteLoader portal="parent" />}><Outlet /></Suspense>
+          <Suspense fallback={<PortalRouteLoader portal="parent" contained />}><Outlet /></Suspense>
         </PortalLayout>
         </PortalErrorBoundary>
       </ParentProtectedRoute>
@@ -94,7 +94,13 @@ function ParentShellLayout() {
   );
 }
 
-function LazyLogin() { return <Suspense fallback={<PortalRouteLoader portal="parent" />}><ParentLoginPage /></Suspense>; }
+function LazyLogin() {
+  return (
+    <Suspense fallback={<div className="ui-skeleton" data-route-loading="true" aria-hidden="true"><i /><i /><i /></div>}>
+      <ParentLoginPage />
+    </Suspense>
+  );
+}
 
 export function ParentPortalRouter() {
   const showcase = clientShowcaseMode();

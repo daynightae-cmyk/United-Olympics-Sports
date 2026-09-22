@@ -1,29 +1,16 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { AlertTriangle, ArrowLeft, Home, LoaderCircle, RefreshCw, SearchX } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Home, RefreshCw, SearchX } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BilingualText, bi } from '../bilingual/BilingualText';
+import { RouteLoadingExperience, type UosLoadingPortal } from '../loading/UosLoadingSystem';
 
-export type SharedPortalKind = 'player' | 'parent' | 'coach';
+export type SharedPortalKind = Exclude<UosLoadingPortal, 'generic'>;
 
-const portalHome: Record<SharedPortalKind, string> = { player: '/player', parent: '/parent', coach: '/coach' };
-const portalLogin: Record<SharedPortalKind, string> = { player: '/player/login', parent: '/parent/login', coach: '/coach/login' };
-const portalLoadingCopy: Record<SharedPortalKind, { en: string; ar: string }> = {
-  player: bi('Player portal modules are being prepared.', 'جارٍ تجهيز وحدات بوابة اللاعب.'),
-  parent: bi('Family portal modules are being prepared.', 'جارٍ تجهيز وحدات بوابة الأسرة.'),
-  coach: bi('Coach portal modules are being prepared.', 'جارٍ تجهيز وحدات بوابة المدرب.'),
-};
+const portalHome: Record<SharedPortalKind, string> = { player: '/player', parent: '/parent', coach: '/coach', admin: '/admin' };
+const portalLogin: Record<SharedPortalKind, string> = { player: '/player/login', parent: '/parent/login', coach: '/coach/login', admin: '/admin/login' };
 
-export function PortalRouteLoader({ portal }: { portal: SharedPortalKind }) {
-  return (
-    <div data-route-loading="true" className="portal-route-state portal-route-loading" role="status" aria-live="polite" aria-busy="true">
-      <div className="portal-route-state__icon"><LoaderCircle aria-hidden="true" /></div>
-      <div className="portal-route-state__copy">
-        <strong><BilingualText value={bi('Loading workspace', 'جارٍ تحميل مساحة العمل')} /></strong>
-        <span><BilingualText value={portalLoadingCopy[portal]} /></span>
-      </div>
-      <div className="portal-route-skeleton" aria-hidden="true"><i /><i /><i /></div>
-    </div>
-  );
+export function PortalRouteLoader({ portal, contained = false }: { portal: SharedPortalKind; contained?: boolean }) {
+  return <RouteLoadingExperience portal={portal} contained={contained} />;
 }
 
 export function PortalRuntimeError({ portal, onRetry }: { portal: SharedPortalKind; onRetry?: () => void }) {

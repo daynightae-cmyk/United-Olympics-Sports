@@ -1,5 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { createElement } from 'react';
+import type { ReactElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { InlineActionLoader, RouteLoadingExperience, UosSectionSkeleton } from '../src/components/loading/UosLoadingSystem';
+import { UiSettingsProvider } from '../src/ui/theme/UiSettingsProvider';
 
 const read = (path: string) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
@@ -21,6 +26,13 @@ const files = await Promise.all([
   read('src/server/repositories/store-account-repository.ts'),
   read('.github/workflows/verify.yml'),
   read('qa/production-runtime-smoke.mjs'),
+  read('src/components/loading/UosLoadingSystem.tsx'),
+  read('src/components/portal/PortalRouteState.tsx'),
+  read('src/styles/uos-loading-system.css'),
+  read('src/app/AppRouter.tsx'),
+  read('src/portals/admin/AdminAccessGate.tsx'),
+  read('src/portals/PlayerPortalRouter.tsx'),
+  read('src/portals/ParentPortalRouter.tsx'),
 ]);
 
 const [
@@ -41,6 +53,13 @@ const [
   storeAccountRepo,
   workflow,
   smoke,
+  loadingSystem,
+  portalRouteState,
+  loadingStyles,
+  appRouter,
+  adminAccessGate,
+  playerRouter,
+  parentRouter,
 ] = files;
 
 for (const [name, source, forbidden] of [
@@ -117,5 +136,44 @@ assert(smoke.includes('[data-route-loading="true"]'), 'Production QA must detect
 assert(smoke.includes('runtimeErrors'));
 assert(smoke.includes('failedRequests'));
 assert(smoke.includes('badResponses'));
+
+// UOS FIELD PULSE — route, section, and action loading hierarchy.
+const withUiSettings = (child: ReactElement) =>
+  renderToStaticMarkup(createElement(UiSettingsProvider, null, child));
+for (const [portal, english, arabic] of [
+  ['player', 'Preparing your athlete workspace', 'جارِ تجهيز مساحة اللاعب'],
+  ['parent', 'Preparing your family sports workspace', 'جارِ تجهيز مساحة الأسرة الرياضية'],
+  ['coach', 'Preparing your training workspace', 'جارِ تجهيز مساحة التدريب'],
+  ['admin', 'Preparing the operations command center', 'جارِ تجهيز مركز العمليات'],
+] as const) {
+  const markup = withUiSettings(createElement(RouteLoadingExperience, { portal }));
+  assert(markup.includes('data-loading-system="uos-field-pulse"'), `${portal} route loader must render the canonical Field Pulse system`);
+  assert(markup.includes('data-loading-level="route"'), `${portal} route loader must declare route-level loading`);
+  assert(markup.includes('aria-live="polite"') && markup.includes('aria-busy="true"'), `${portal} route loader must expose stable progress semantics`);
+  assert(markup.includes(english) && markup.includes(arabic), `${portal} route loader must render contextual bilingual copy`);
+  assert.equal(/player-demo|coach-preview|parent-preview|athlete name/i.test(markup), false, `${portal} loading must not expose private records`);
+}
+const sectionMarkup = withUiSettings(createElement(UosSectionSkeleton, { kind: 'table', rows: 4 }));
+assert(sectionMarkup.includes('data-loading-level="section"'), 'Section skeleton must declare section-level loading');
+assert.equal((sectionMarkup.match(/uos-section-skeleton__item/g) ?? []).length, 4, 'Section skeleton must preserve the requested table row geometry');
+const actionMarkup = withUiSettings(createElement(InlineActionLoader));
+assert(actionMarkup.includes('data-loading-level="action"'), 'Inline loader must declare action-level loading');
+
+for (const marker of ['player:', 'parent:', 'coach:', 'admin:', 'generic:', 'UosFieldPulse', 'UosSectionSkeleton', 'InlineActionLoader']) {
+  assert(loadingSystem.includes(marker), `Canonical loading system missing ${marker}`);
+}
+assert.equal(loadingSystem.includes('LoaderCircle'), false, 'Canonical loader must not fall back to a generic loading wheel');
+assert(portalRouteState.includes('RouteLoadingExperience'), 'Shared portal loading must delegate to the canonical loading experience');
+assert(appRouter.includes('!isLoginRoute'), 'Top-level portal loading must explicitly preserve the Auth/Login visual boundary');
+assert(adminAccessGate.includes('PortalRouteLoader portal="admin"'), 'Admin access initialization must use the operations loader');
+assert(playerRouter.includes('PortalRouteLoader portal="player" contained'), 'Player lazy modules must use a contained athlete loader');
+assert(parentRouter.includes('PortalRouteLoader portal="parent" contained'), 'Parent lazy modules must use a contained family loader');
+assert(loadingStyles.includes('@media (prefers-reduced-motion: reduce)'), 'Loading motion must honor the OS reduced-motion preference');
+assert(loadingStyles.includes("html[data-motion='reduced']"), 'Loading motion must honor the product reduced-motion setting');
+assert(loadingStyles.includes("[dir='rtl'] .uos-loading-stage__telemetry"), 'RTL loading telemetry must have an intentional structure');
+assert(loadingStyles.includes('env(safe-area-inset-top'), 'Mobile loader must be safe-area aware');
+assert(playerGuard.includes('if (error || validationError)') && playerGuard.includes('PortalRuntimeError'), 'Player failure must transition to a terminal error instead of loading forever');
+assert(playerGuard.includes('return <>{children}</>'), 'Player loading must transition to resolved route content');
+assert(portalRouteState.includes('data-route-terminal="error"'), 'Shared loader failures must expose a terminal error state');
 
 console.log('Portal runtime closure contract passed.');

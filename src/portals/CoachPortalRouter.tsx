@@ -29,7 +29,7 @@ function CoachShellLayout() {
   return (
     <PortalErrorBoundary portal="coach">
       <PortalLayout portal="coach" statusMode={isPreviewSession ? 'preview' : 'production'}>
-        <Suspense fallback={<PortalRouteLoader portal="coach" />}><Outlet /></Suspense>
+        <Suspense fallback={<PortalRouteLoader portal="coach" contained />}><Outlet /></Suspense>
       </PortalLayout>
     </PortalErrorBoundary>
   );

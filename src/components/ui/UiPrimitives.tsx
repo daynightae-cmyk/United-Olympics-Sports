@@ -2,6 +2,7 @@ import { AlertCircle, AlertTriangle, CheckCircle2, Info, LoaderCircle, X, Chevro
 import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import type { BilingualText as BilingualValue } from '../../domain/contracts';
 import { BilingualText, bi } from '../bilingual/BilingualText';
+import { InlineActionLoader } from '../loading/UosLoadingSystem';
 
 export type UiButtonVariant =
   | 'primary'
@@ -39,7 +40,7 @@ export function UiButton({
       aria-busy={loading ? 'true' : undefined}
       className={`ui-button ui-button-${variant} ui-button-size-${size} uos-touch ${loading ? 'is-loading' : ''} ${className}`.trim()}
     >
-      {loading ? <LoaderCircle size={16} className="animate-spin uos-btn-spinner" /> : iconPrefix}
+      {loading ? <InlineActionLoader /> : iconPrefix}
       <span>{children}</span>
       {!loading && iconSuffix}
     </button>
