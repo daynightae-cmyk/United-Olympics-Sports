@@ -16,7 +16,7 @@
 }
 
 #player-portal-shell.player-shell-container {
-  grid-template-columns:280px minmax(0,1fr) !important;
+  grid-template-columns:var(--player-sidebar-width, 230px) minmax(0,1fr) !important;
   width:100% !important;
   position:relative;
 }
@@ -31,7 +31,6 @@
   bottom:auto !important;
   inset-inline:auto !important;
   align-self:start;
-  width:292px !important;
   height:100dvh !important;
   min-height:100dvh;
   display:flex;
@@ -42,8 +41,13 @@
   transform:none !important;
 }
 
+.portal-parent > .portal-sidebar,
+.portal-coach > .portal-sidebar {
+  width:292px !important;
+}
+
 #player-portal-shell > .athlete-sidebar {
-  width:280px !important;
+  width:var(--player-sidebar-width, 230px) !important;
 }
 
 #player-portal-shell > .athlete-sidebar .athlete-nav-scroller {

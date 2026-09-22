@@ -117,8 +117,7 @@ html[data-theme='dark'],
 
 /* One navigation treatment across all operational portals. */
 .admin-sidebar,
-.portal-sidebar,
-#player-portal-shell .athlete-sidebar {
+.portal-sidebar {
   --admin-surface:#0c0c0a;
   --admin-surface-2:#12110e;
   --admin-surface-3:#191711;

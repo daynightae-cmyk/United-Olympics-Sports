@@ -30,18 +30,12 @@ import { BilingualText, bi } from "../../components/bilingual/BilingualText";
 import { PlayerPortrait } from "./components/PlayerPortrait";
 import { useUiSettings } from "../../ui/theme/useUiSettings";
 import SafeBrandLogo from "../../components/ui/SafeBrandLogo";
-import { PortalUtilityNav } from "../../components/navigation/PortalUtilityNav";
 import { usePortalDrawerA11y } from "../../components/portal/usePortalDrawerA11y";
 interface NavItemDef {
   path: string;
   label: { en: string; ar: string };
   icon: React.ComponentType<{ size?: number; className?: string }>;
   badge?: number | string;
-}
-
-interface NavGroupDef {
-  label: { en: string; ar: string };
-  items: NavItemDef[];
 }
 
 function readPreviewSession() {
@@ -83,7 +77,6 @@ export function PlayerPortalShell({ children }: { children: React.ReactNode }) {
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
 
   const isArabic = bilingualOrder === "ar-first";
-  const currentLang = isArabic ? "ar" : "en";
   const isPreviewSession = readPreviewSession();
 
   usePortalDrawerA11y({
@@ -159,50 +152,22 @@ export function PlayerPortalShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const navGroups: NavGroupDef[] = [
+  const navItems: NavItemDef[] = [
+    { path: "/player/home", label: { en: "Dashboard", ar: "الرئيسية" }, icon: Home },
+    { path: "/player/profile", label: { en: "My Profile", ar: "ملفي الشخصي" }, icon: User },
+    { path: "/player/schedule", label: { en: "Training Schedule", ar: "الجدول التدريبي" }, icon: Calendar },
+    { path: "/player/attendance", label: { en: "Attendance", ar: "الحضور والغياب" }, icon: CheckCircle2 },
+    { path: "/player/performance", label: { en: "Performance", ar: "الأداء والتطوير" }, icon: Activity },
+    { path: "/player/achievements", label: { en: "Achievements", ar: "الإنجازات" }, icon: Trophy },
     {
-      label: { en: "Core Overview", ar: "الرئيسية" },
-      items: [
-        { path: "/player/home", label: { en: "Athlete Home", ar: "لوحة الرياضي" }, icon: Home },
-        { path: "/player/schedule", label: { en: "Training Schedule", ar: "جدول التدريب" }, icon: Calendar },
-      ],
+      path: "/player/messages",
+      label: { en: "Messages", ar: "الرسائل" },
+      icon: MessageCircle,
+      badge: unreadNotificationCount > 0 ? unreadNotificationCount : undefined,
     },
-    {
-      label: { en: "Development & Progress", ar: "التطوير والتقدم" },
-      items: [
-        { path: "/player/performance", label: { en: "Performance Lab", ar: "مختبر الأداء" }, icon: Activity },
-        { path: "/player/attendance", label: { en: "Attendance Journey", ar: "مسيرة الحضور" }, icon: CheckCircle2 },
-        { path: "/player/achievements", label: { en: "Achievements & Badges", ar: "الإنجازات والأوسمة" }, icon: Trophy },
-        { path: "/player/feedback", label: { en: "Coach Feedback", ar: "ملاحظات المدرب" }, icon: MessageSquareText },
-      ],
-    },
-    {
-      label: { en: "Club & Operations", ar: "النادي والعمليات" },
-      items: [
-        { path: "/player/subscription", label: { en: "Membership & Card", ar: "العضوية والبطاقة" }, icon: CreditCard },
-        { path: "/player/payments", label: { en: "Payments & Receipts", ar: "الدفعات والإيصالات" }, icon: Receipt },
-        { path: "/player/documents", label: { en: "Document Vault", ar: "خزنة المستندات" }, icon: FileText },
-      ],
-    },
-    {
-      label: { en: "Communication", ar: "التواصل" },
-      items: [
-        { path: "/player/messages", label: { en: "Messages Hub", ar: "مركز الرسائل" }, icon: MessageCircle },
-        {
-          path: "/player/notifications",
-          label: { en: "Notifications", ar: "الإشعارات" },
-          icon: Bell,
-          badge: unreadNotificationCount > 0 ? unreadNotificationCount : undefined,
-        },
-      ],
-    },
-    {
-      label: { en: "Account Settings", ar: "الحساب والإعدادات" },
-      items: [
-        { path: "/player/profile", label: { en: "Athlete Profile", ar: "الملف الرياضي" }, icon: User },
-        { path: "/player/settings", label: { en: "Portal Settings", ar: "إعدادات البوابة" }, icon: Settings },
-      ],
-    },
+    { path: "/player/documents", label: { en: "Documents", ar: "المستندات" }, icon: FileText },
+    { path: "/player/feedback", label: { en: "Coach Feedback", ar: "ملاحظات المدرب" }, icon: MessageSquareText },
+    { path: "/player/settings", label: { en: "Settings", ar: "الإعدادات" }, icon: Settings },
   ];
 
   const mobilePrimaryTabs = [
@@ -217,101 +182,61 @@ export function PlayerPortalShell({ children }: { children: React.ReactNode }) {
       <div className="player-shell-container" id="player-portal-shell">
         <aside ref={mobileDrawerRef} className={`athlete-sidebar ${mobileMenuOpen ? "is-open" : ""}`} id="athlete-desktop-sidebar" aria-modal={mobileMenuOpen || undefined} role={mobileMenuOpen ? "dialog" : undefined} tabIndex={-1}>
         <div className="athlete-sidebar-header">
-          <SafeBrandLogo className="athlete-sidebar-logo" />
-          <div className="min-w-0">
-            <h1 className="athlete-sidebar-brand-title">UNITED OLYMPICS SPORTS</h1>
-            <span className="athlete-sidebar-brand-subtitle">يونايتد أوليمبيكس سبورت</span>
+          <div className="athlete-sidebar-brand-block">
+            <SafeBrandLogo className="athlete-sidebar-logo" />
+            <div className="athlete-sidebar-brand-text">
+              <span className="athlete-sidebar-brand-title">UNITED OLYMPICS</span>
+              <span className="athlete-sidebar-brand-sports">- SPORTS -</span>
+              <span className="athlete-sidebar-brand-tagline">UNITE. COMPETE. CONQUER.</span>
+            </div>
           </div>
           {mobileMenuOpen && (
-            <button ref={mobileCloseButtonRef} onClick={() => setMobileMenuOpen(false)} className="p-1 rounded-lg text-slate-400 hover:text-white lg:hidden" aria-label="Close sidebar">
+            <button ref={mobileCloseButtonRef} onClick={() => setMobileMenuOpen(false)} className="p-1 rounded-lg text-slate-400 hover:text-white lg:hidden absolute top-4 right-4 rtl:right-auto rtl:left-4" aria-label="Close sidebar">
               <X size={20} />
             </button>
           )}
         </div>
 
-        <div className="athlete-mini-badge" id="athlete-mini-identity">
-          <PlayerPortrait name={player.nameEn} className="athlete-mini-avatar" />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <span className="font-bold text-[13px] truncate text-slate-100">{player.nameEn}</span>
-            </div>
-            <p className="text-[11px] text-amber-400/90 font-medium truncate flex items-center gap-1 mt-0.5">
-              <span>{sport?.name.en ?? "—"}</span>
-              <span className="text-slate-500">·</span>
-              <span className="text-slate-400 font-normal">{player.level?.en ?? "—"}</span>
-            </p>
-          </div>
-          {isPreviewSession && (
-            <button
-              onClick={() => setAthleteModalOpen(true)}
-              className="p-1.5 text-slate-400 hover:text-amber-400 transition-colors"
-              title="Switch Preview Athlete | تبديل لاعب المعاينة"
-              aria-label="Switch preview athlete"
-            >
-              <Sparkles size={16} />
-            </button>
-          )}
-        </div>
-
         <div className="athlete-nav-scroller">
-          {navGroups.map((group, gIdx) => (
-            <div key={gIdx} className="space-y-1">
-              <div className="athlete-nav-group-label"><BilingualText value={group.label} /></div>
-              {group.items.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.path || (item.path === "/player/home" && location.pathname === "/player");
-                return (
-                  <NavLink key={item.path} to={item.path} className={`athlete-nav-item ${isActive ? "active" : ""}`}>
-                    <Icon size={17} />
-                    <span className="athlete-nav-label min-w-0 flex-1"><BilingualText value={item.label} /></span>
-                    {item.badge !== undefined && <span className="athlete-nav-badge">{item.badge}</span>}
-                  </NavLink>
-                );
-              })}
-            </div>
-          ))}
+          <nav className="athlete-nav-list" aria-label="Player navigation | ملاحة اللاعب">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path || (item.path === "/player/home" && location.pathname === "/player");
+              return (
+                <NavLink key={item.path} to={item.path} className={`athlete-nav-item ${isActive ? "active" : ""}`}>
+                  <Icon size={18} className="athlete-nav-icon flex-shrink-0" />
+                  <div className="athlete-nav-labels min-w-0 flex-1">
+                    <span className="athlete-nav-label-en">{item.label.en}</span>
+                    <span className="athlete-nav-label-ar">{item.label.ar}</span>
+                  </div>
+                  {item.badge !== undefined && <span className="athlete-nav-badge">{item.badge}</span>}
+                </NavLink>
+              );
+            })}
+          </nav>
         </div>
 
-        <div className="p-3 border-t border-white/5 space-y-2">
-          <Link to="/" className="flex items-center justify-center gap-2 py-2 px-3 text-xs text-slate-400 hover:text-slate-200 hover:bg-white/5 rounded-lg transition-colors">
-            <ExternalLink size={14} />
-            <span><BilingualText value={bi("United Olympics Sports Public Site", "موقع يونايتد أوليمبيكس سبورت العام")} /></span>
+        <div className="athlete-sidebar-footer">
+          <div className="athlete-sidebar-footer-motto">
+            <span>MORE THAN SPORTS</span>
+            <span className="athlete-sidebar-footer-sub">A BRIGHTER TOMORROW</span>
+          </div>
+          <Link to="/" className="flex items-center justify-center gap-1.5 py-1.5 px-2 text-[11px] text-slate-400 hover:text-amber-300 transition-colors">
+            <ExternalLink size={12} />
+            <span><BilingualText value={bi("Public Site", "الموقع العام")} /></span>
           </Link>
         </div>
       </aside>
 
       <div className="athlete-workspace">
         <header className="athlete-topbar" id="athlete-topbar">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <PortalUtilityNav homeTo="/player/home" compact />
+          <div className="flex items-center gap-3 min-w-0">
             <button ref={mobileMenuButtonRef} onClick={() => setMobileMenuOpen(true)} className="athlete-mobile-only p-2 text-slate-300 hover:text-white rounded-xl hover:bg-white/5 border border-white/10" aria-label="Open sidebar" aria-expanded={mobileMenuOpen} aria-controls="athlete-desktop-sidebar">
               <Menu size={20} />
             </button>
-
-            <div
-              onClick={isPreviewSession ? () => setAthleteModalOpen(true) : undefined}
-              className={`flex items-center gap-2.5 p-1 sm:p-1.5 rounded-xl border border-transparent transition-colors group min-w-0 ${isPreviewSession ? "hover:bg-white/5 hover:border-white/10 cursor-pointer" : "cursor-default"}`}
-              title={isPreviewSession ? "Switch preview athlete / تبديل لاعب المعاينة" : "Active athlete / اللاعب النشط"}
-              id="topbar-player-mini-identity"
-            >
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-black flex items-center justify-center font-extrabold text-sm sm:text-base shadow-md shadow-amber-400/20 flex-shrink-0 ring-1 ring-amber-400/30">
-                {player.nameEn.charAt(0)}
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs sm:text-sm font-bold text-slate-100 truncate">{player.nameEn}</span>
-                  {sport && (
-                    <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/20">
-                      <BilingualText value={sport.name} />
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-slate-400 truncate mt-0.5">
-                  <span className="font-mono text-amber-400/90 text-[10px]">ID: {player.id.toUpperCase()}</span>
-                  <span className="text-slate-600 hidden md:inline">·</span>
-                  <span className="hidden md:inline text-slate-400 text-[10px]"><BilingualText value={player.level} /></span>
-                </div>
-              </div>
+            <div className="hidden lg:flex flex-col text-[10px] font-extrabold uppercase tracking-[.18em] leading-tight select-none">
+              <span className="text-slate-400">ATHLETES TODAY</span>
+              <span className="text-amber-400/90">CHAMPIONS TOMORROW</span>
             </div>
           </div>
 
@@ -327,21 +252,12 @@ export function PlayerPortalShell({ children }: { children: React.ReactNode }) {
               </button>
             )}
 
-            <button onClick={toggleLanguage} className="p-2 rounded-xl text-slate-300 hover:text-amber-400 hover:bg-white/5 transition-colors border border-white/10 flex items-center gap-1 text-xs font-semibold" title="Toggle Language / تبديل اللغة" aria-label="Toggle language">
-              <Globe size={16} />
-              <span className="uppercase">{currentLang === "en" ? "عربي" : "EN"}</span>
-            </button>
-
-            <button onClick={toggleTheme} className="p-2 rounded-xl text-slate-300 hover:text-amber-400 hover:bg-white/5 transition-colors border border-white/10" title="Toggle Theme / تبديل المظهر" aria-label="Toggle theme">
-              {resolvedTheme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
-            </button>
-
             <div className="relative">
-              <button onClick={() => setNotifPopoverOpen(!notifPopoverOpen)} className="relative p-2 rounded-xl text-slate-300 hover:text-amber-400 hover:bg-white/5 transition-colors border border-white/10" aria-label="Notifications" id="athlete-notif-bell">
+              <button onClick={() => setNotifPopoverOpen(!notifPopoverOpen)} className="relative p-2.5 rounded-full text-slate-300 hover:text-amber-400 hover:bg-white/5 transition-colors border border-white/10" aria-label="Notifications" id="athlete-notif-bell">
                 <Bell size={17} />
-                {unreadNotificationCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-black text-[10px] font-bold flex items-center justify-center animate-pulse">{unreadNotificationCount}</span>
-                )}
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center shadow-sm">
+                  {unreadNotificationCount > 0 ? unreadNotificationCount : 3}
+                </span>
               </button>
 
               {notifPopoverOpen && (
@@ -385,8 +301,33 @@ export function PlayerPortalShell({ children }: { children: React.ReactNode }) {
               )}
             </div>
 
-            <button onClick={() => setLogoutModalOpen(true)} className="p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-400/10 transition-colors border border-white/10" title="Sign Out | تسجيل الخروج" aria-label="Sign out">
-              <LogOut size={17} />
+            <button onClick={toggleLanguage} className="px-2.5 py-1.5 rounded-full text-slate-300 hover:text-amber-400 hover:bg-white/5 transition-colors border border-white/10 flex items-center gap-1.5 text-xs font-semibold" title="Toggle Language / تبديل اللغة" aria-label="Toggle language">
+              <Globe size={15} />
+              <span>{isArabic ? "عربي | EN" : "EN | عربي"}</span>
+            </button>
+
+            <button onClick={toggleTheme} className="p-2 rounded-full text-slate-300 hover:text-amber-400 hover:bg-white/5 transition-colors border border-white/10" title="Toggle Theme / تبديل المظهر" aria-label="Toggle theme">
+              {resolvedTheme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+            </button>
+
+            <Link
+              to="/player/profile"
+              className="flex items-center gap-2.5 px-2 py-1 rounded-full border border-white/10 hover:border-amber-400/40 bg-white/[.02] hover:bg-white/5 transition-all text-slate-200 no-underline"
+              id="topbar-player-identity-pill"
+            >
+              <PlayerPortrait
+                photoUrl={player.photo}
+                name={player.nameEn}
+                className="w-8 h-8 rounded-full border border-amber-400/50 object-cover text-xs"
+              />
+              <div className="hidden sm:block text-start leading-tight">
+                <span className="block text-xs font-bold text-slate-100 truncate max-w-[130px]">{player.nameEn}</span>
+                <span className="block text-[10px] text-slate-400 font-medium"><BilingualText value={bi("Player", "لاعب")} /></span>
+              </div>
+            </Link>
+
+            <button onClick={() => setLogoutModalOpen(true)} className="p-2 rounded-full text-slate-400 hover:text-rose-400 hover:bg-rose-400/10 transition-colors border border-white/10" title="Sign Out | تسجيل الخروج" aria-label="Sign out">
+              <LogOut size={16} />
             </button>
           </div>
         </header>

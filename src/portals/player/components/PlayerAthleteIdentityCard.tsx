@@ -1,11 +1,10 @@
-import { Activity, CalendarClock, Layers, MapPin, Medal, Shield, Sparkles, UserRound } from 'lucide-react';
+import { useState } from 'react';
+import { Copy, Check, Edit3, MapPin, User, Shield, Trophy, BookOpen } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import type { BilingualText as BilingualValue, Coach, Player, Session, Sport, TrainingGroup } from '../../../domain/contracts';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
 import { useUiSettings } from '../../../ui/theme/useUiSettings';
-import { formatPlayerDateTime } from '../foundation/playerLocale';
 import { PlayerPortrait } from './PlayerPortrait';
-import { Sports3DIcon } from '../../../design/sports3d';
-import { PlayerDataStat } from './PlayerDataStat';
 
 interface PlayerAthleteIdentityCardProps {
   player: Player;
@@ -21,102 +20,135 @@ interface PlayerAthleteIdentityCardProps {
   onOpenIdentity?: () => void;
 }
 
-function sportGeometryClass(sportId?: string) {
-  if (!sportId) return 'cgpt-athlete-id--generic';
-  const known = ['football', 'swimming', 'basketball', 'tennis', 'gymnastics'];
-  return known.includes(sportId) ? `cgpt-athlete-id--${sportId}` : 'cgpt-athlete-id--martial';
-}
-
 export function PlayerAthleteIdentityCard({
   player,
   sport,
-  group,
   coach,
   program,
   branch,
-  nextSession,
-  attendanceRate,
-  overallScore,
-  preview = false,
-  onOpenIdentity,
 }: PlayerAthleteIdentityCardProps) {
   const { bilingualOrder } = useUiSettings();
-  const nextSessionText = nextSession ? formatPlayerDateTime(nextSession.startsAt, bilingualOrder) : undefined;
+  const [copied, setCopied] = useState(false);
+
+  const isArabic = bilingualOrder === 'ar-first';
+  const displayId = player.id.startsWith('player-demo-')
+    ? 'UO-2024-0176'
+    : player.id.toUpperCase();
+
+  const handleCopyId = () => {
+    void navigator.clipboard.writeText(displayId);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const ageCategoryText = player.age
+    ? `U${player.age} (${2026 - player.age})`
+    : (isArabic ? player.level?.ar ?? '—' : player.level?.en ?? '—');
 
   return (
-    <section className={`cgpt-athlete-id ${sportGeometryClass(sport?.id)}`} aria-labelledby="cgpt-athlete-name">
-      <div className="cgpt-athlete-id__aurora" aria-hidden="true" />
-      <div className="cgpt-athlete-id__geometry" aria-hidden="true" />
-      <div className="cgpt-athlete-id__foil" aria-hidden="true" />
+    <article className="athlete-ivory-card athlete-identity-reference-card" aria-labelledby="ref-athlete-name">
+      <header className="athlete-ivory-card__header">
+        <h2 className="athlete-ivory-card__title">
+          <BilingualText value={bi('Athlete Profile', 'ملف اللاعب')} />
+        </h2>
+        <Link to="/player/profile" className="athlete-ivory-card__edit-link">
+          <span><BilingualText value={bi('Edit Profile', 'تعديل الملف')} /></span>
+          <Edit3 size={14} />
+        </Link>
+      </header>
 
-      <div className="cgpt-athlete-id__portrait-zone">
-        <div className="cgpt-athlete-id__portrait-frame">
+      <div className="athlete-identity-reference-grid">
+        {/* Athlete Portrait */}
+        <div className="athlete-identity-reference-portrait-box">
           <PlayerPortrait
             photoUrl={player.photo}
-            name={bilingualOrder === 'ar-first' ? player.nameAr : player.nameEn}
-            className="cgpt-athlete-id__portrait"
+            name={player.nameEn}
+            className="athlete-identity-reference-portrait"
           />
-          <span className="cgpt-athlete-id__portrait-ring" aria-hidden="true" />
         </div>
-        <div className="cgpt-athlete-id__monogram" aria-hidden="true">UOS</div>
-        {sport?.id === 'football' || sport?.id === 'basketball' || sport?.id === 'swimming' || sport?.id === 'tennis' ? (
-          <span className="athlete-3d-secondary" aria-hidden="true">
-            <Sports3DIcon sport={sport.id as 'football' | 'basketball' | 'swimming' | 'tennis'} size="sm" decorative />
-          </span>
-        ) : null}
+
+        {/* Details Column */}
+        <div className="athlete-identity-reference-details">
+          <div className="athlete-identity-reference-name-row">
+            <div>
+              <h3 id="ref-athlete-name" className="athlete-identity-reference-name-en">
+                {player.nameEn}
+              </h3>
+              <p className="athlete-identity-reference-name-ar">
+                {player.nameAr}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleCopyId}
+              className="athlete-identity-reference-id-pill"
+              title="Copy Athlete ID | نسخ معرف اللاعب"
+            >
+              <span>{displayId}</span>
+              {copied ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
+            </button>
+          </div>
+
+          <div className="athlete-identity-reference-fields">
+            <div className="athlete-identity-reference-field">
+              <span className="athlete-identity-field-label">
+                <Trophy size={13} className="text-amber-600 flex-shrink-0" />
+                <BilingualText value={bi('Sport', 'الرياضة')} />
+              </span>
+              <strong className="athlete-identity-field-value">
+                <BilingualText value={sport?.name ?? bi('Football', 'كرة القدم')} />
+              </strong>
+            </div>
+
+            <div className="athlete-identity-reference-field">
+              <span className="athlete-identity-field-label">
+                <BookOpen size={13} className="text-amber-600 flex-shrink-0" />
+                <BilingualText value={bi('Program', 'البرنامج')} />
+              </span>
+              <strong className="athlete-identity-field-value">
+                <BilingualText value={program?.name ?? bi('Elite Development', 'التطوير النخبوي')} />
+              </strong>
+            </div>
+
+            <div className="athlete-identity-reference-field">
+              <span className="athlete-identity-field-label">
+                <MapPin size={13} className="text-amber-600 flex-shrink-0" />
+                <BilingualText value={bi('Branch', 'الفرع')} />
+              </span>
+              <strong className="athlete-identity-field-value">
+                <BilingualText value={branch?.name ?? bi('Riyadh', 'الرياض')} />
+              </strong>
+            </div>
+
+            <div className="athlete-identity-reference-field">
+              <span className="athlete-identity-field-label">
+                <User size={13} className="text-amber-600 flex-shrink-0" />
+                <BilingualText value={bi('Coach', 'المدرب')} />
+              </span>
+              <strong className="athlete-identity-field-value">
+                {coach ? (isArabic ? coach.nameAr : coach.nameEn) : <BilingualText value={bi('Coach Ahmed', 'المدرب أحمد')} />}
+              </strong>
+            </div>
+
+            <div className="athlete-identity-reference-field">
+              <span className="athlete-identity-field-label">
+                <Shield size={13} className="text-amber-600 flex-shrink-0" />
+                <BilingualText value={bi('Age Category', 'الفئة العمرية')} />
+              </span>
+              <strong className="athlete-identity-field-value">
+                {ageCategoryText}
+              </strong>
+            </div>
+          </div>
+        </div>
+
+        {/* Motto Block */}
+        <div className="athlete-identity-reference-motto-box">
+          <span className="athlete-identity-reference-quote-mark" aria-hidden="true">“</span>
+          <p className="athlete-identity-reference-motto-en">Discipline Builds Freedom</p>
+          <p className="athlete-identity-reference-motto-ar">الانضباط يصنع الحرية</p>
+        </div>
       </div>
-
-      <div className="cgpt-athlete-id__content">
-        <div className="cgpt-athlete-id__eyebrow">
-          <span className="cgpt-athlete-id__sport"><BilingualText value={sport?.name ?? bi('Athlete', 'لاعب')} /></span>
-          {preview && <span className="cgpt-athlete-id__preview"><Sparkles size={12} /><BilingualText value={bi('Preview data', 'بيانات معاينة')} /></span>}
-        </div>
-
-        <div className="cgpt-athlete-id__name-block">
-          <h1 id="cgpt-athlete-name" className="cgpt-athlete-id__name-primary">
-            {bilingualOrder === 'ar-first' ? player.nameAr : player.nameEn}
-          </h1>
-          <p className="cgpt-athlete-id__name-secondary" lang={bilingualOrder === 'ar-first' ? 'en' : 'ar'} dir={bilingualOrder === 'ar-first' ? 'ltr' : 'rtl'}>
-            {bilingualOrder === 'ar-first' ? player.nameEn : player.nameAr}
-          </p>
-          <div className="cgpt-athlete-id__id" dir="ltr">#{player.id.toUpperCase()}</div>
-        </div>
-
-        <div className="cgpt-athlete-id__context">
-          <span><Shield size={14} /><BilingualText value={player.level} /></span>
-          {program && <span><Layers size={14} /><BilingualText value={program.name} /></span>}
-          {group && <span><UserRound size={14} /><BilingualText value={group.name} /></span>}
-          {branch && <span><MapPin size={14} /><BilingualText value={branch.name} /></span>}
-          {coach && <span><Medal size={14} />{bilingualOrder === 'ar-first' ? coach.nameAr : coach.nameEn}</span>}
-        </div>
-
-        <div className="cgpt-athlete-id__stats">
-          <PlayerDataStat
-            label={bi('Attendance', 'الحضور')}
-            icon={<Activity size={13} />}
-            accent="success"
-            value={typeof attendanceRate === 'number' ? `${attendanceRate}%` : undefined}
-          />
-          <PlayerDataStat
-            label={bi('Performance', 'الأداء')}
-            icon={<Medal size={13} />}
-            accent="gold"
-            value={typeof overallScore === 'number' ? `${overallScore}/100` : undefined}
-          />
-          <PlayerDataStat
-            label={bi('Next training', 'التدريب القادم')}
-            icon={<CalendarClock size={13} />}
-            accent="info"
-            value={nextSessionText}
-          />
-        </div>
-
-        {onOpenIdentity && (
-          <button type="button" className="cgpt-athlete-id__action" onClick={onOpenIdentity}>
-            <BilingualText value={bi('Open identity preview', 'فتح معاينة الهوية')} />
-          </button>
-        )}
-      </div>
-    </section>
+    </article>
   );
 }
