@@ -32,7 +32,7 @@ export function PlayerAttendanceSummaryCard({ stats }: PlayerAttendanceSummaryCa
           <BilingualText value={bi('Attendance Summary', 'ملخص الحضور')} />
         </h2>
         <Link to="/player/attendance" className="athlete-ivory-card__period-link">
-          <BilingualText value={bi('This Month', 'هذا الشهر')} />
+          <BilingualText value={bi('Recorded Attendance', 'الحضور المسجل')} />
         </Link>
       </header>
 

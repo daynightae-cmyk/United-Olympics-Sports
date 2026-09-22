@@ -64,49 +64,17 @@ export function PlayerAchievementsCard({ achievements = [] }: PlayerAchievements
             );
           })
         ) : (
-          <>
-            <div className="achievements-reference-tile">
-              <div className="achievements-reference-icon-circle">
-                <Trophy size={18} className="text-amber-700" />
-              </div>
-              <div className="achievements-reference-tile-info">
-                <h4 className="achievements-reference-tile-title">
-                  <BilingualText value={bi('Player of the Month', 'لاعب الشهر')} />
-                </h4>
-                <span className="achievements-reference-tile-sub">
-                  <BilingualText value={bi('March 2026', 'مارس 2026')} />
-                </span>
-              </div>
+          <div className="achievements-reference-empty w-full py-6 px-4 text-center">
+            <div className="mx-auto w-10 h-10 rounded-full bg-amber-400/10 flex items-center justify-center text-amber-700 mb-2">
+              <Trophy size={20} />
             </div>
-
-            <div className="achievements-reference-tile">
-              <div className="achievements-reference-icon-circle">
-                <Medal size={18} className="text-amber-700" />
-              </div>
-              <div className="achievements-reference-tile-info">
-                <h4 className="achievements-reference-tile-title">
-                  <BilingualText value={bi('Top Attendance', 'أعلى نسبة حضور')} />
-                </h4>
-                <span className="achievements-reference-tile-sub">
-                  <BilingualText value={bi('Term 2', 'الفصل الثاني')} />
-                </span>
-              </div>
-            </div>
-
-            <div className="achievements-reference-tile">
-              <div className="achievements-reference-icon-circle">
-                <TrendingUp size={18} className="text-amber-700" />
-              </div>
-              <div className="achievements-reference-tile-info">
-                <h4 className="achievements-reference-tile-title">
-                  <BilingualText value={bi('Skill Development', 'تطور المهارات')} />
-                </h4>
-                <span className="achievements-reference-tile-sub">
-                  <BilingualText value={bi('Level 4', 'المستوى الرابع')} />
-                </span>
-              </div>
-            </div>
-          </>
+            <p className="text-sm font-bold text-slate-800 mb-0.5">
+              <BilingualText value={bi('No achievements recorded yet.', 'لم يتم تسجيل إنجازات بعد.')} />
+            </p>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              <BilingualText value={bi('Earn milestones through training attendance and performance evaluations.', 'اكسب الإنجازات من خلال الالتزام بالتدريب وتقييمات الأداء.')} />
+            </p>
+          </div>
         )}
       </div>
     </article>

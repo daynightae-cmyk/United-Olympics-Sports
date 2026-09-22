@@ -214,11 +214,6 @@ export function PlayerPortalOverviewPage() {
         </div>
       )}
 
-      {/* Semantic contract elements for test coverage */}
-      <div className="sr-only" aria-hidden="true">
-        <div className="athlete-snapshot-card" />
-        <div className="athlete-quick-link-card" />
-      </div>
     </div>
   );
 }

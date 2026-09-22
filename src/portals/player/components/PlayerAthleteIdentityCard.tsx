@@ -23,6 +23,7 @@ interface PlayerAthleteIdentityCardProps {
 export function PlayerAthleteIdentityCard({
   player,
   sport,
+  group,
   coach,
   program,
   branch,
@@ -31,9 +32,7 @@ export function PlayerAthleteIdentityCard({
   const [copied, setCopied] = useState(false);
 
   const isArabic = bilingualOrder === 'ar-first';
-  const displayId = player.id.startsWith('player-demo-')
-    ? 'UO-2024-0176'
-    : player.id.toUpperCase();
+  const displayId = player.id;
 
   const handleCopyId = () => {
     void navigator.clipboard.writeText(displayId);
@@ -41,9 +40,11 @@ export function PlayerAthleteIdentityCard({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const ageCategoryText = player.age
-    ? `U${player.age} (${2026 - player.age})`
-    : (isArabic ? player.level?.ar ?? '—' : player.level?.en ?? '—');
+  const ageCategoryText = group?.ageGroup
+    ? (isArabic ? group.ageGroup.ar : group.ageGroup.en)
+    : (player.age
+      ? `U${player.age}`
+      : (player.level ? (isArabic ? player.level.ar : player.level.en) : (isArabic ? 'غير مسجل' : 'Not recorded')));
 
   return (
     <article className="athlete-ivory-card athlete-identity-reference-card" aria-labelledby="ref-athlete-name">
@@ -96,7 +97,7 @@ export function PlayerAthleteIdentityCard({
                 <BilingualText value={bi('Sport', 'الرياضة')} />
               </span>
               <strong className="athlete-identity-field-value">
-                <BilingualText value={sport?.name ?? bi('Football', 'كرة القدم')} />
+                {sport?.name ? <BilingualText value={sport.name} /> : <BilingualText value={bi('Not recorded', 'غير مسجل')} />}
               </strong>
             </div>
 
@@ -106,7 +107,7 @@ export function PlayerAthleteIdentityCard({
                 <BilingualText value={bi('Program', 'البرنامج')} />
               </span>
               <strong className="athlete-identity-field-value">
-                <BilingualText value={program?.name ?? bi('Elite Development', 'التطوير النخبوي')} />
+                {program?.name ? <BilingualText value={program.name} /> : <BilingualText value={bi('Not recorded', 'غير مسجل')} />}
               </strong>
             </div>
 
@@ -116,7 +117,7 @@ export function PlayerAthleteIdentityCard({
                 <BilingualText value={bi('Branch', 'الفرع')} />
               </span>
               <strong className="athlete-identity-field-value">
-                <BilingualText value={branch?.name ?? bi('Riyadh', 'الرياض')} />
+                {branch?.name ? <BilingualText value={branch.name} /> : <BilingualText value={bi('Not recorded', 'غير مسجل')} />}
               </strong>
             </div>
 
@@ -126,7 +127,7 @@ export function PlayerAthleteIdentityCard({
                 <BilingualText value={bi('Coach', 'المدرب')} />
               </span>
               <strong className="athlete-identity-field-value">
-                {coach ? (isArabic ? coach.nameAr : coach.nameEn) : <BilingualText value={bi('Coach Ahmed', 'المدرب أحمد')} />}
+                {coach ? (isArabic ? coach.nameAr : coach.nameEn) : <BilingualText value={bi('Not recorded', 'غير مسجل')} />}
               </strong>
             </div>
 

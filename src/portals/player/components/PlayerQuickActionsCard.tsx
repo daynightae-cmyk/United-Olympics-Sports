@@ -6,7 +6,7 @@ interface PlayerQuickActionsCardProps {
   unreadCount?: number;
 }
 
-export function PlayerQuickActionsCard({ unreadCount = 3 }: PlayerQuickActionsCardProps) {
+export function PlayerQuickActionsCard({ unreadCount = 0 }: PlayerQuickActionsCardProps) {
   const actions = [
     {
       to: '/player/schedule',
