@@ -165,9 +165,15 @@ for (const marker of ['player:', 'parent:', 'coach:', 'admin:', 'generic:', 'Uos
 assert.equal(loadingSystem.includes('LoaderCircle'), false, 'Canonical loader must not fall back to a generic loading wheel');
 assert(portalRouteState.includes('RouteLoadingExperience'), 'Shared portal loading must delegate to the canonical loading experience');
 assert(appRouter.includes('!isLoginRoute'), 'Top-level portal loading must explicitly preserve the Auth/Login visual boundary');
+for (const authAlias of ['login', 'phone', 'otp', 'verify', 'auth\\/(?:phone|verify)']) {
+  assert(appRouter.includes(authAlias), `Top-level route fallback must preserve the Player auth alias: ${authAlias}`);
+}
 assert(adminAccessGate.includes('PortalRouteLoader portal="admin"'), 'Admin access initialization must use the operations loader');
 assert(playerRouter.includes('PortalRouteLoader portal="player" contained'), 'Player lazy modules must use a contained athlete loader');
 assert(parentRouter.includes('PortalRouteLoader portal="parent" contained'), 'Parent lazy modules must use a contained family loader');
+for (const marker of ['role="status"', 'aria-live="polite"', 'aria-busy="true"', 'Loading Parent sign-in…', '<i aria-hidden="true" />']) {
+  assert(parentRouter.includes(marker), `Parent sign-in fallback missing accessible marker: ${marker}`);
+}
 assert(loadingStyles.includes('@media (prefers-reduced-motion: reduce)'), 'Loading motion must honor the OS reduced-motion preference');
 assert(loadingStyles.includes("html[data-motion='reduced']"), 'Loading motion must honor the product reduced-motion setting');
 assert(loadingStyles.includes("[dir='rtl'] .uos-loading-stage__telemetry"), 'RTL loading telemetry must have an intentional structure');

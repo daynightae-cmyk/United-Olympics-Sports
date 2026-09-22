@@ -25,7 +25,9 @@ const LoadingExperienceShowcase = lazy(() => import('../pages/benchmark/LoadingE
 function RouteFallback() {
   const { pathname } = useLocation();
   const portalMatch = pathname.match(/^\/(admin|player|parent|coach)(?:\/|$)/);
-  const isLoginRoute = /^\/(admin|player|parent|coach)\/login(?:\/|$)/.test(pathname);
+  const isLoginRoute =
+    /^\/(admin|parent|coach)\/login(?:\/|$)/.test(pathname)
+    || /^\/player\/(?:login|phone|otp|verify|auth\/(?:phone|verify))(?:\/|$)/.test(pathname);
   if (portalMatch && !isLoginRoute) {
     return <PortalRouteLoader portal={portalMatch[1] as SharedPortalKind} />;
   }

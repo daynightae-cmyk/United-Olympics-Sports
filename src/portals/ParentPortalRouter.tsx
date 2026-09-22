@@ -96,7 +96,14 @@ function ParentShellLayout() {
 
 function LazyLogin() {
   return (
-    <Suspense fallback={<div className="ui-skeleton" data-route-loading="true" aria-hidden="true"><i /><i /><i /></div>}>
+    <Suspense fallback={
+      <div className="ui-skeleton" data-route-loading="true" role="status" aria-live="polite" aria-busy="true">
+        <span className="sr-only">Loading Parent sign-in… | جاري تحميل تسجيل دخول ولي الأمر</span>
+        <i aria-hidden="true" />
+        <i aria-hidden="true" />
+        <i aria-hidden="true" />
+      </div>
+    }>
       <ParentLoginPage />
     </Suspense>
   );
