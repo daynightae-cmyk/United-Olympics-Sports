@@ -1,18 +1,19 @@
-import { Activity, CalendarClock, Medal, Shield, Sparkles, UserRound } from 'lucide-react';
-import type { Coach, Player, Sport, TrainingGroup } from '../../../domain/contracts';
+import { Activity, CalendarClock, Layers, MapPin, Medal, Shield, Sparkles, UserRound } from 'lucide-react';
+import type { BilingualText as BilingualValue, Coach, Player, Session, Sport, TrainingGroup } from '../../../domain/contracts';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
 import { useUiSettings } from '../../../ui/theme/useUiSettings';
 import { formatPlayerDateTime } from '../foundation/playerLocale';
 import { PlayerPortrait } from './PlayerPortrait';
 import { Sports3DIcon } from '../../../design/sports3d';
 import { PlayerDataStat } from './PlayerDataStat';
-import type { Session } from '../../../domain/contracts';
 
 interface PlayerAthleteIdentityCardProps {
   player: Player;
   sport?: Sport;
   group?: TrainingGroup;
   coach?: Coach;
+  program?: { id: string; name: BilingualValue };
+  branch?: { id: string; name: BilingualValue };
   nextSession?: Session | null;
   attendanceRate?: number | null;
   overallScore?: number | null;
@@ -31,6 +32,8 @@ export function PlayerAthleteIdentityCard({
   sport,
   group,
   coach,
+  program,
+  branch,
   nextSession,
   attendanceRate,
   overallScore,
@@ -81,7 +84,9 @@ export function PlayerAthleteIdentityCard({
 
         <div className="cgpt-athlete-id__context">
           <span><Shield size={14} /><BilingualText value={player.level} /></span>
+          {program && <span><Layers size={14} /><BilingualText value={program.name} /></span>}
           {group && <span><UserRound size={14} /><BilingualText value={group.name} /></span>}
+          {branch && <span><MapPin size={14} /><BilingualText value={branch.name} /></span>}
           {coach && <span><Medal size={14} />{bilingualOrder === 'ar-first' ? coach.nameAr : coach.nameEn}</span>}
         </div>
 

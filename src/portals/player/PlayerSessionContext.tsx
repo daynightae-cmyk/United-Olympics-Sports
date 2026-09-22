@@ -2,11 +2,13 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import { useAdminData } from '../../admin/data/AdminDataProvider';
 import type {
   AchievementViewModel,
+  BranchViewModel,
   CoachViewModel,
   MessageViewModel,
   ParentViewModel,
   PaymentViewModel,
   PlayerViewModel,
+  ProgramViewModel,
   SessionViewModel,
   SportViewModel,
   SubscriptionViewModel,
@@ -97,6 +99,8 @@ interface PlayerSessionContextType {
   coach?: Coach;
   allCoaches: Coach[];
   parent?: Parent;
+  program?: { id: string; name: BilingualText };
+  branch?: { id: string; name: BilingualText };
   sessions: Session[];
   attendanceRecords: Player['attendanceRecords'];
   attendanceStats: { present: number; late: number; absent: number; excused: number; total: number; rate: number | null; streak: number };
@@ -233,9 +237,11 @@ type PreviewBundle = {
   payments: PaymentViewModel[];
   achievements: AchievementViewModel[];
   messages: MessageViewModel[];
+  programs: ProgramViewModel[];
+  branches: BranchViewModel[];
 };
 
-const EMPTY_PREVIEW: PreviewBundle = { players: [], sports: [], groups: [], coaches: [], parents: [], sessions: [], subscriptions: [], payments: [], achievements: [], messages: [] };
+const EMPTY_PREVIEW: PreviewBundle = { players: [], sports: [], groups: [], coaches: [], parents: [], sessions: [], subscriptions: [], payments: [], achievements: [], messages: [], programs: [], branches: [] };
 
 function resolveParticipantName(participantId: string, player: Player, coaches: CoachViewModel[], parents: ParentViewModel[]) {
   if (participantId === player.id) return { name: bi(player.nameEn, player.nameAr), role: bi('Player', 'اللاعب'), category: 'support' as const, senderRole: 'player' as const };
@@ -331,10 +337,12 @@ export function PlayerSessionProvider({ children }: { children: React.ReactNode 
       gateway.listPayments({ page: 1, pageSize: 4000 }),
       gateway.listAchievements({ page: 1, pageSize: 4000 }),
       gateway.listMessages({ page: 1, pageSize: 4000 }),
+      gateway.listPrograms({ page: 1, pageSize: 1000 }),
+      gateway.listBranches({ page: 1, pageSize: 1000 }),
     ])
-      .then(([players, sports, groups, coaches, parents, sessions, subscriptions, payments, achievements, messages]) => {
+      .then(([players, sports, groups, coaches, parents, sessions, subscriptions, payments, achievements, messages, programs, branches]) => {
         if (!active) return;
-        setPreview({ players: players.items, sports: sports.items, groups: groups.items, coaches: coaches.items, parents: parents.items, sessions: sessions.items, subscriptions: subscriptions.items, payments: payments.items, achievements: achievements.items, messages: messages.items });
+        setPreview({ players: players.items, sports: sports.items, groups: groups.items, coaches: coaches.items, parents: parents.items, sessions: sessions.items, subscriptions: subscriptions.items, payments: payments.items, achievements: achievements.items, messages: messages.items, programs: programs.items, branches: branches.items });
       })
       .catch((caught) => { if (active) { setPreview(EMPTY_PREVIEW); setError(caught instanceof Error ? caught : new Error('PLAYER_PREVIEW_DATA_FAILED')); } })
       .finally(() => { if (active) setLoading(false); });
@@ -383,6 +391,29 @@ export function PlayerSessionProvider({ children }: { children: React.ReactNode 
 
   const parentView = useMemo(() => sessionProvider === 'preview' && player ? preview.parents.find((item) => item.playerIds.includes(player.id)) : undefined, [player, preview.parents, sessionProvider]);
   const parent = parentView ? toParent(parentView) : undefined;
+
+  const program = useMemo<{ id: string; name: BilingualText } | undefined>(() => {
+    if (sessionProvider === 'production') {
+      const item = production?.relations.program;
+      return item ? { id: item.id, name: bi(item.name, item.nameAr || item.name) } : undefined;
+    }
+    const item = player?.programId ? preview.programs.find((candidate) => candidate.id === player.programId) : undefined;
+    return item ? { id: item.id, name: item.name } : undefined;
+  }, [player?.programId, preview.programs, production?.relations.program, sessionProvider]);
+
+  const branch = useMemo<{ id: string; name: BilingualText } | undefined>(() => {
+    if (sessionProvider === 'production') {
+      const item = production?.relations.branch;
+      return item ? { id: item.id, name: bi(item.name, item.nameAr || item.name) } : undefined;
+    }
+    if (!player) return undefined;
+    const item = preview.branches.find((b) =>
+      b.playerIds.includes(player.id) ||
+      (player.groupId && b.groupIds.includes(player.groupId)) ||
+      (player.programId && b.programIds.includes(player.programId))
+    );
+    return item ? { id: item.id, name: item.name } : undefined;
+  }, [player, preview.branches, production?.relations.branch, sessionProvider]);
 
   const sessions = useMemo<Session[]>(() => {
     if (!player) return [];
@@ -544,6 +575,8 @@ export function PlayerSessionProvider({ children }: { children: React.ReactNode 
       coach,
       allCoaches,
       parent,
+      program,
+      branch,
       sessions,
       attendanceRecords,
       attendanceStats,
