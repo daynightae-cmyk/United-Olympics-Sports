@@ -391,6 +391,11 @@
 @keyframes uos-skeleton-scan-rtl { 0% { transform: translateX(110%); } 45%, 100% { transform: translateX(-110%); } }
 @keyframes uos-action-tick { 50% { opacity: 0.38; transform: scaleY(0.55); } }
 
+@media (max-width: 900px) {
+  .uos-loading-stage__copy { width: min(100%, 640px); }
+  .uos-loading-stage__copy h1 { font-size: clamp(26px, 3.65vw, 34px); }
+}
+
 @media (max-width: 760px) {
   .uos-loading-stage.is-contained { min-height: 390px; }
   .uos-loading-stage__skeleton { grid-template-columns: 1fr; width: min(100%, 360px); }

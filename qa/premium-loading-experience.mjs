@@ -1,9 +1,11 @@
-import { chromium } from 'playwright';
+import { chromium, firefox } from 'playwright';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const baseUrl = process.env.UOS_BASE_URL ?? 'http://127.0.0.1:3000';
 const outputDir = process.env.UOS_LOADING_SCREENSHOTS ?? 'test-results/premium-loading';
+const browserType = process.env.UOS_BROWSER === 'firefox' ? firefox : chromium;
+const fixtureDir = process.env.UOS_SSR_FIXTURES;
 const scenarios = [
   { name: 'coach-1440-dark-ltr', portal: 'coach', width: 1440, height: 1000, appearance: 'dark', order: 'en-first' },
   { name: 'player-1440-light-rtl', portal: 'player', width: 1440, height: 1000, appearance: 'light', order: 'ar-first' },
@@ -30,7 +32,7 @@ const settings = (appearance, bilingualOrder) => ({
 });
 
 await fs.mkdir(outputDir, { recursive: true });
-const browser = await chromium.launch();
+const browser = await browserType.launch();
 const failures = [];
 
 try {
@@ -53,7 +55,11 @@ try {
     page.on('console', (message) => {
       if (message.type() === 'error' && !message.text().includes('fonts.gstatic.com')) consoleErrors.push(message.text());
     });
-    await page.goto(`${baseUrl}/benchmark/loading?portal=${scenario.portal}`, { waitUntil: 'networkidle', timeout: 20_000 });
+    if (fixtureDir) {
+      await page.setContent(await fs.readFile(path.join(fixtureDir, `${scenario.name}.html`), 'utf8'), { waitUntil: 'domcontentloaded' });
+    } else {
+      await page.goto(`${baseUrl}/benchmark/loading?portal=${scenario.portal}`, { waitUntil: 'domcontentloaded', timeout: 20_000 });
+    }
     const loader = page.locator('[data-loading-system="uos-field-pulse"]');
     await loader.waitFor({ state: 'visible', timeout: 8_000 });
     await page.waitForTimeout(500);
@@ -61,6 +67,9 @@ try {
     const result = await loader.evaluate((node) => {
       const core = node.querySelector('.uos-field-pulse')?.getBoundingClientRect();
       const skeleton = node.querySelector('.uos-loading-stage__skeleton')?.getBoundingClientRect();
+      const titleLines = [...node.querySelectorAll('.uos-loading-stage__copy h1 .bi-en, .uos-loading-stage__copy h1 .bi-ar')]
+        .map((line) => line.getBoundingClientRect())
+        .map((rect) => ({ left: rect.left, right: rect.right }));
       const style = getComputedStyle(node);
       return {
         text: node.textContent ?? '',
@@ -69,6 +78,7 @@ try {
         portal: node.getAttribute('data-loading-portal'),
         coreWidth: core?.width ?? 0,
         skeletonHeight: skeleton?.height ?? 0,
+        titleLines,
         background: style.backgroundColor,
         overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
         dir: document.documentElement.dir,
@@ -87,6 +97,7 @@ try {
     if (result.theme !== scenario.appearance) failures.push(`${scenario.name}: theme=${result.theme}, expected ${scenario.appearance}`);
     if (result.coreWidth < 120 || result.coreWidth > 230) failures.push(`${scenario.name}: athletic core width ${result.coreWidth}px is out of bounds`);
     if (result.skeletonHeight < 10) failures.push(`${scenario.name}: structured loading surfaces are missing`);
+    if (result.titleLines.some(({ left, right }) => left < -0.5 || right > scenario.width + 0.5)) failures.push(`${scenario.name}: title copy is clipped`);
     if (result.overflow) failures.push(`${scenario.name}: horizontal overflow detected`);
     if (result.errorOverlay) failures.push(`${scenario.name}: framework error overlay detected`);
     if (consoleErrors.length || result.errors.length) failures.push(`${scenario.name}: console errors ${[...consoleErrors, ...result.errors].join(' | ')}`);
@@ -102,7 +113,11 @@ try {
     sessionStorage.setItem('uos:luxury-splash-seen', 'true');
   }, { payload: settings('dark', 'en-first') });
   const reducedPage = await reducedContext.newPage();
-  await reducedPage.goto(`${baseUrl}/benchmark/loading?portal=coach`, { waitUntil: 'networkidle', timeout: 20_000 });
+  if (fixtureDir) {
+    await reducedPage.setContent(await fs.readFile(path.join(fixtureDir, 'coach-1440-dark-ltr.html'), 'utf8'), { waitUntil: 'domcontentloaded' });
+  } else {
+    await reducedPage.goto(`${baseUrl}/benchmark/loading?portal=coach`, { waitUntil: 'domcontentloaded', timeout: 20_000 });
+  }
   await reducedPage.locator('[data-loading-system="uos-field-pulse"]').waitFor({ state: 'visible' });
   const reducedAnimations = await reducedPage.evaluate(() => [
     '.uos-field-pulse__orbit',
