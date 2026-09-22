@@ -208,7 +208,7 @@ export function PlayerSessionDetailContent({ sessionId }: { sessionId: string })
             icon={<MapPin size={15} />}
             label={bi('Facility / branch', 'المرفق / الفرع')}
             value={branch ? `${branch.name.en} · ${branch.name.ar}` : undefined}
-            secondary={branch ? (locale === 'ar' ? 'المقر المعتمد' : 'Official Venue') : undefined}
+            secondary={branch ? (bilingualOrder === 'ar-first' ? 'المقر المعتمد' : 'Official Venue') : undefined}
           />
           <RecordCard
             icon={<CalendarCheck2 size={15} />}
