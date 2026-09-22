@@ -121,6 +121,17 @@ export function PlayerPortalShell({ children }: { children: React.ReactNode }) {
     setAthleteModalOpen(false);
   }, [location.pathname]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 1024) {
+        setMobileMenuOpen(false);
+        setMoreDrawerOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   if (!player) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center text-slate-300 space-y-4">
@@ -202,8 +213,9 @@ export function PlayerPortalShell({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="player-shell-container" id="player-portal-shell">
-      <aside ref={mobileDrawerRef} className={`athlete-sidebar ${mobileMenuOpen ? "is-open" : ""}`} id="athlete-desktop-sidebar" aria-modal={mobileMenuOpen || undefined} role={mobileMenuOpen ? "dialog" : undefined} tabIndex={-1}>
+    <>
+      <div className="player-shell-container" id="player-portal-shell">
+        <aside ref={mobileDrawerRef} className={`athlete-sidebar ${mobileMenuOpen ? "is-open" : ""}`} id="athlete-desktop-sidebar" aria-modal={mobileMenuOpen || undefined} role={mobileMenuOpen ? "dialog" : undefined} tabIndex={-1}>
         <div className="athlete-sidebar-header">
           <SafeBrandLogo className="athlete-sidebar-logo" />
           <div className="min-w-0">
@@ -251,7 +263,7 @@ export function PlayerPortalShell({ children }: { children: React.ReactNode }) {
                 return (
                   <NavLink key={item.path} to={item.path} className={`athlete-nav-item ${isActive ? "active" : ""}`}>
                     <Icon size={17} />
-                    <span className="truncate"><BilingualText value={item.label} /></span>
+                    <span className="athlete-nav-label min-w-0 flex-1"><BilingualText value={item.label} /></span>
                     {item.badge !== undefined && <span className="athlete-nav-badge">{item.badge}</span>}
                   </NavLink>
                 );
@@ -268,15 +280,11 @@ export function PlayerPortalShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 lg:hidden" onClick={() => setMobileMenuOpen(false)} />
-      )}
-
       <div className="athlete-workspace">
         <header className="athlete-topbar" id="athlete-topbar">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <PortalUtilityNav homeTo="/player/home" compact />
-            <button ref={mobileMenuButtonRef} onClick={() => setMobileMenuOpen(true)} className="lg:hidden p-2 text-slate-300 hover:text-white rounded-xl hover:bg-white/5 border border-white/10" aria-label="Open sidebar" aria-expanded={mobileMenuOpen} aria-controls="athlete-desktop-sidebar">
+            <button ref={mobileMenuButtonRef} onClick={() => setMobileMenuOpen(true)} className="athlete-mobile-only p-2 text-slate-300 hover:text-white rounded-xl hover:bg-white/5 border border-white/10" aria-label="Open sidebar" aria-expanded={mobileMenuOpen} aria-controls="athlete-desktop-sidebar">
               <Menu size={20} />
             </button>
 
@@ -402,8 +410,13 @@ export function PlayerPortalShell({ children }: { children: React.ReactNode }) {
           </button>
         </nav>
       </div>
+    </div>
 
-      {moreDrawerOpen && (
+    {mobileMenuOpen && (
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 lg:hidden" onClick={() => setMobileMenuOpen(false)} />
+    )}
+
+    {moreDrawerOpen && (
         <>
           <div className="athlete-drawer-overlay" onClick={() => setMoreDrawerOpen(false)} />
           <div className="athlete-drawer-sheet" id="athlete-more-drawer">
@@ -536,6 +549,6 @@ export function PlayerPortalShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
