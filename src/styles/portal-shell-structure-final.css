@@ -54,19 +54,123 @@
   gap:10px !important;
 }
 
-#player-portal-shell > .athlete-sidebar .athlete-nav-item {
-  min-height:38px;
-  padding:8px 12px !important;
-  font-size:13px !important;
-  border-radius:10px !important;
+#player-portal-shell > .athlete-sidebar .athlete-nav-group-label {
+  padding:8px 12px 3px !important;
+  font-size:10px !important;
+  font-weight:800 !important;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#94a3b8 !important;
 }
 
-#player-portal-shell > .athlete-sidebar .athlete-nav-group-label {
-  padding:4px 10px 2px !important;
-  font-size:9px !important;
+#player-portal-shell > .athlete-sidebar .athlete-nav-group-label .bi {
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:baseline !important;
+  gap:8px !important;
+  justify-content:flex-start !important;
+  text-align:start !important;
+}
+
+html[dir="rtl"] #player-portal-shell > .athlete-sidebar .athlete-nav-group-label .bi {
+  justify-content:flex-start !important;
+  text-align:start !important;
+}
+
+#player-portal-shell > .athlete-sidebar .athlete-nav-group-label .bi-en,
+#player-portal-shell > .athlete-sidebar .athlete-nav-group-label .bi-ar {
+  display:inline-block !important;
+  text-align:start !important;
+  white-space:nowrap !important;
+}
+
+#player-portal-shell > .athlete-sidebar .athlete-nav-group-label .bi-ar {
+  font-size:11px !important;
+  font-weight:700 !important;
+  color:var(--uos-brand,#d4af37) !important;
+  letter-spacing:0 !important;
+}
+
+#player-portal-shell > .athlete-sidebar .athlete-nav-item {
+  display:flex !important;
+  align-items:center !important;
+  gap:12px !important;
+  min-height:42px !important;
+  padding:8px 12px !important;
+  border-radius:12px !important;
+  text-decoration:none !important;
+  font-size:13px !important;
+  transition:all .16s ease;
+}
+
+#player-portal-shell > .athlete-sidebar .athlete-nav-item .athlete-nav-label {
+  min-width:0 !important;
+  flex:1 1 auto !important;
+}
+
+#player-portal-shell > .athlete-sidebar .athlete-nav-item .athlete-nav-label .bi {
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:flex-start !important;
+  justify-content:center !important;
+  text-align:start !important;
+  gap:1px !important;
+  line-height:1.2 !important;
+}
+
+html[dir="rtl"] #player-portal-shell > .athlete-sidebar .athlete-nav-item .athlete-nav-label .bi {
+  align-items:flex-start !important;
+  text-align:start !important;
+}
+
+#player-portal-shell > .athlete-sidebar .athlete-nav-item .athlete-nav-label .bi-en {
+  font-size:13px !important;
+  font-weight:700 !important;
+  line-height:1.25 !important;
+  color:#f1f5f9 !important;
+  text-align:start !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  max-width:100% !important;
+}
+
+#player-portal-shell > .athlete-sidebar .athlete-nav-item .athlete-nav-label .bi-ar {
+  font-size:11px !important;
+  font-weight:500 !important;
+  line-height:1.25 !important;
+  color:#94a3b8 !important;
+  text-align:start !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  max-width:100% !important;
+}
+
+#player-portal-shell > .athlete-sidebar .athlete-nav-item.active .athlete-nav-label .bi-en {
+  color:#fef08a !important;
   font-weight:800 !important;
-  letter-spacing:.1em;
-  text-transform:uppercase;
+}
+
+#player-portal-shell > .athlete-sidebar .athlete-nav-item.active .athlete-nav-label .bi-ar {
+  color:#fde047 !important;
+  font-weight:600 !important;
+}
+
+[data-theme="light"] #player-portal-shell > .athlete-sidebar .athlete-nav-item .athlete-nav-label .bi-en {
+  color:#0f172a !important;
+}
+
+[data-theme="light"] #player-portal-shell > .athlete-sidebar .athlete-nav-item .athlete-nav-label .bi-ar {
+  color:#64748b !important;
+}
+
+[data-theme="light"] #player-portal-shell > .athlete-sidebar .athlete-nav-item.active .athlete-nav-label .bi-en {
+  color:#854d0e !important;
+}
+
+[data-theme="light"] #player-portal-shell > .athlete-sidebar .athlete-nav-item.active .athlete-nav-label .bi-ar {
+  color:#a16207 !important;
 }
 
 #player-portal-shell > .athlete-sidebar .athlete-nav-item svg {
@@ -134,7 +238,8 @@ html[dir="rtl"] #player-portal-shell > .athlete-workspace {
 /* Desktop must never show mobile navigation controls. */
 .portal-parent .portal-mobile-only,
 .portal-coach .portal-mobile-only,
-#player-portal-shell .athlete-mobile-bottom-bar {
+#player-portal-shell .athlete-mobile-bottom-bar,
+#player-portal-shell .athlete-mobile-only {
   display:none !important;
 }
 
@@ -210,6 +315,12 @@ html[dir="rtl"] #player-portal-shell > .athlete-workspace {
   .portal-coach .portal-mobile-only {
     display:grid !important;
     place-items:center;
+  }
+
+  #player-portal-shell .athlete-mobile-only {
+    display:inline-flex !important;
+    align-items:center;
+    justify-content:center;
   }
 
   .portal-parent > .portal-workspace > .portal-main,
