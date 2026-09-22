@@ -91,14 +91,14 @@ export function PlayerSessionDetailContent({ sessionId }: { sessionId: string })
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              <BilingualText value={bi('Training Session Preparation', 'تحضير الحصة التدريبية')} />
+              <BilingualText value={bi('Training Session Details', 'تفاصيل الحصة التدريبية')} />
             </h1>
 
             <p className="text-xs leading-6 text-slate-400 max-w-2xl">
               <BilingualText
                 value={bi(
-                  'Authentic session schedule and preparation instructions for your athlete profile. All data is verified through official training rosters.',
-                  'جدول الحصة المعتمد وإرشادات التحضير لملف اللاعب الخاص بك. جميع البيانات موثقة من خلال قوائم تدريب يونايتد أوليمبيكس سبورت.'
+                  'Scheduled training session details and group assignment for your player record.',
+                  'تفاصيل الحصة التدريبية وسياق المجموعة المسجلة في ملف اللاعب الخاص بك.'
                 )}
               />
             </p>
@@ -132,49 +132,53 @@ export function PlayerSessionDetailContent({ sessionId }: { sessionId: string })
           </div>
         </div>
 
-        {/* Restrained Sports Timeline Progression */}
+        {/* Truthful Session Status Summary */}
         <div className="mt-8 pt-6 border-t border-white/10">
           <span className="text-[10px] font-extrabold uppercase tracking-[.16em] text-amber-400 block mb-4">
-            <BilingualText value={bi('Session Timeline', 'الجدول الزمني للحصة')} />
+            <BilingualText value={bi('Session Status Summary', 'ملخص حالة الحصة')} />
           </span>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3">
-              <span className="text-[10px] font-bold text-emerald-400 block mb-1">
-                1. <BilingualText value={bi('Roster & Group Assigned', 'تخصيص المجموعة والقائمة')} />
+            <div className="rounded-xl border border-white/10 bg-white/[.02] p-3">
+              <span className="text-[10px] font-bold text-slate-400 block mb-1">
+                <BilingualText value={bi('Lifecycle Status', 'حالة الحصة')} />
               </span>
               <strong className="text-xs text-white block">
-                <BilingualText value={group?.name ?? bi('Assigned Group', 'المجموعة المخصصة')} />
+                <BilingualText value={session.status} />
               </strong>
               <span className="text-[10px] text-slate-400 mt-1 block">
-                <BilingualText value={bi('Confirmed in official schedule', 'مؤكدة في الجدول الرسمي')} />
+                <BilingualText value={bi('Recorded in system database', 'مسجلة في قاعدة بيانات النظام')} />
               </span>
             </div>
 
             <div className={`rounded-xl border p-3 ${isToday ? 'border-amber-400/40 bg-amber-400/10' : 'border-white/10 bg-white/[.02]'}`}>
               <span className="text-[10px] font-bold text-amber-400 block mb-1">
-                2. <BilingualText value={bi('Arrival & Warm-up', 'الوصول والإحماء')} />
+                <BilingualText value={bi('Scheduled Start', 'موعد البدء المجدول')} />
               </span>
               <strong className="text-xs text-white block font-mono">
                 {formatPlayerTime(session.startsAt, bilingualOrder)}
               </strong>
               <span className="text-[10px] text-slate-400 mt-1 block">
-                <BilingualText value={bi('Arrive 15 min early for briefing', 'الحضور قبل 15 دقيقة للتحضير')} />
+                {formatPlayerDate(session.startsAt, bilingualOrder, { weekday: 'short', month: 'short', day: 'numeric' })}
               </span>
             </div>
 
-            <div className={`rounded-xl border p-3 ${!isFuture ? 'border-sky-500/30 bg-sky-500/5' : 'border-white/10 bg-white/[.02]'}`}>
-              <span className="text-[10px] font-bold text-sky-400 block mb-1">
-                3. <BilingualText value={bi('Training & Attendance', 'التدريب والحضور')} />
+            <div className={`rounded-xl border p-3 ${attendanceForDate ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-white/10 bg-white/[.02]'}`}>
+              <span className="text-[10px] font-bold text-slate-400 block mb-1">
+                <BilingualText value={bi('Attendance Record', 'سجل الحضور')} />
               </span>
               <strong className="text-xs text-white block">
                 {attendanceForDate ? (
                   <span className="text-emerald-300"><BilingualText value={attendanceLabel(attendanceForDate.status)} /></span>
                 ) : (
-                  <BilingualText value={bi('Verified on-site by coach', 'التسجيل مع المدرب ميدانيًا')} />
+                  <span className="text-slate-400"><BilingualText value={bi('Not recorded', 'غير مسجل')} /></span>
                 )}
               </strong>
               <span className="text-[10px] text-slate-400 mt-1 block">
-                <BilingualText value={bi('Attendance logged upon session completion', 'يُسجل الحضور عند انتهاء الحصة')} />
+                {attendanceForDate ? (
+                  <BilingualText value={bi('Recorded attendance entry', 'مدخل حضور مسجل')} />
+                ) : (
+                  <BilingualText value={bi('Recorded when submitted by coach', 'يُسجل عند اعتماده من المدرب')} />
+                )}
               </span>
             </div>
           </div>
@@ -208,7 +212,6 @@ export function PlayerSessionDetailContent({ sessionId }: { sessionId: string })
             icon={<MapPin size={15} />}
             label={bi('Facility / branch', 'المرفق / الفرع')}
             value={branch ? `${branch.name.en} · ${branch.name.ar}` : undefined}
-            secondary={branch ? (bilingualOrder === 'ar-first' ? 'المقر المعتمد' : 'Official Venue') : undefined}
           />
           <RecordCard
             icon={<CalendarCheck2 size={15} />}
@@ -218,28 +221,18 @@ export function PlayerSessionDetailContent({ sessionId }: { sessionId: string })
           />
         </div>
 
-        {/* Athlete Checklist & Preparation Guidance */}
-        <div className="mt-6 pt-6 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="rounded-2xl border border-white/10 bg-white/[.02] p-4 space-y-2">
+        {/* General Advisory Notice */}
+        <div className="mt-6 pt-6 border-t border-white/10">
+          <div className="rounded-2xl border border-white/10 bg-white/[.02] p-4 text-xs text-slate-300 space-y-1.5">
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 block">
-              <BilingualText value={bi('Required Athlete Gear', 'المعدات المطلوبة للاعب')} />
+              <BilingualText value={bi('General Athlete Advisory (Advisory — Not Session Data)', 'إرشادات عامة للاعب (توجيهات عامة — وليست بيانات خاصة بالحصة)')} />
             </span>
-            <ul className="space-y-1.5 text-xs text-slate-300 list-disc list-inside">
-              <li><BilingualText value={bi('Official United Olympics Sports training kit', 'طقم تدريب يونايتد أوليمبيكس سبورت الرسمي')} /></li>
-              <li><BilingualText value={bi('Sport-appropriate footwear & protective gear', 'حذاء رياضي مناسب ومعدات الوقاية')} /></li>
-              <li><BilingualText value={bi('Personal water bottle & sports towel', 'قارورة ماء خاصة ومنشفة رياضية')} /></li>
-            </ul>
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-white/[.02] p-4 space-y-2">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 block">
-              <BilingualText value={bi('Training Protocol & Arrival', 'بروتوكول التدريب والوصول')} />
-            </span>
-            <ul className="space-y-1.5 text-xs text-slate-300 list-disc list-inside">
-              <li><BilingualText value={bi('Arrive 15 minutes prior to scheduled start time', 'الوصول قبل 15 دقيقة من موعد بدء الحصة')} /></li>
-              <li><BilingualText value={bi('Check in with the coaching staff upon arrival', 'تسجيل الدخول مع الطاقم التدريبي عند الوصول')} /></li>
-              <li><BilingualText value={bi('Warm-up routines begin strictly at the start minute', 'تبدأ تمارين الإحماء بدقة في الموعد المحدد')} /></li>
-            </ul>
+            <p className="leading-relaxed text-slate-400 m-0">
+              <BilingualText value={bi(
+                'Bring sport-appropriate apparel, personal hydration, and report to your designated coach at the scheduled start time. Specific drills and session protocols are communicated directly on-site.',
+                'يرجى إحضار الملابس الرياضية المناسبة وعبوة المياه الشخصية، والتواجد مع المدرب في موعد البدء المجدول. تُحدد التمارين والبروتوكولات الميدانية مباشرة في موقع التدريب.'
+              )} />
+            </p>
           </div>
         </div>
 
@@ -318,7 +311,6 @@ function attendanceLabel(status: 'present' | 'absent' | 'late' | 'excused') {
 
 function generateIcsUrl(session: Session, sportName: string, groupName: string, venueName: string) {
   const start = new Date(session.startsAt);
-  const end = new Date(start.getTime() + 90 * 60 * 1000);
   const formatIcs = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
   const ics = [
     'BEGIN:VCALENDAR',
@@ -328,7 +320,6 @@ function generateIcsUrl(session: Session, sportName: string, groupName: string, 
     `UID:uos-${session.id}@unitedolympicssports.com`,
     `DTSTAMP:${formatIcs(new Date())}`,
     `DTSTART:${formatIcs(start)}`,
-    `DTEND:${formatIcs(end)}`,
     `SUMMARY:UOS Training: ${sportName} - ${groupName}`,
     `DESCRIPTION:United Olympics Sports scheduled training session for group ${groupName}.`,
     `LOCATION:${venueName}`,

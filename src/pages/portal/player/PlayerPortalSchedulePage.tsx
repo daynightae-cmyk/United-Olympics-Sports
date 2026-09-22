@@ -97,8 +97,8 @@ export function PlayerPortalSchedulePage() {
         eyebrow={bi('Athlete training schedule', 'جدول تدريب اللاعب')}
         title={bi('Training Schedule & Sessions', 'جدول الحصص والتدريب')}
         description={bi(
-          `Official training sessions assigned to ${player.nameEn} through the ${group?.name.en ?? 'assigned'} group. Location, coach, and session times reflect authentic academy records.`,
-          `حصص التدريب الرسمية المخصصة للاعب ${player.nameAr} من خلال مجموعة ${group?.name.ar ?? 'التدريب'}. يعكس الموقع والمدرب وأوقات الحصص السجلات المعتمدة للأكاديمية.`
+          `Training sessions assigned to ${player.nameEn} through the ${group?.name.en ?? 'assigned'} group. Schedules, coach assignments, and statuses reflect player-linked records.`,
+          `حصص التدريب المخصصة للاعب ${player.nameAr} من خلال مجموعة ${group?.name.ar ?? 'التدريب'}. تعكس المواعيد وتعيينات المدربين والحالات السجلات المرتبطة باللاعب.`
         )}
         actions={
           <div className="flex flex-wrap items-center gap-2">
@@ -430,17 +430,6 @@ export function PlayerPortalSchedulePage() {
                   onOpen={() => navigate(`/player/schedule/${nextUpcomingSession.id}`)}
                 />
 
-                <div className="rounded-xl border border-white/10 bg-white/[.02] p-3 text-xs text-slate-300 space-y-2">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 block">
-                    <BilingualText value={bi('Athlete Checklist', 'قائمة تحضير اللاعب')} />
-                  </span>
-                  <ul className="space-y-1.5 text-slate-300 list-disc list-inside">
-                    <li><BilingualText value={bi('Official academy training kit', 'طقم التدريب الرسمي للأكاديمية')} /></li>
-                    <li><BilingualText value={bi('Sport-appropriate footwear & gear', 'حذاء ومعدات مناسبة للرياضة')} /></li>
-                    <li><BilingualText value={bi('Hydration bottle', 'قارورة مياه مخصصة')} /></li>
-                  </ul>
-                </div>
-
                 <Link
                   to={`/player/schedule/${nextUpcomingSession.id}`}
                   className="athlete-action-primary w-full text-center"
@@ -492,15 +481,15 @@ export function PlayerPortalSchedulePage() {
 
               <div className="flex items-center justify-between py-1.5 border-b border-white/5">
                 <span className="text-slate-400"><BilingualText value={bi('Branch / Venue', 'الفرع / الموقع')} /></span>
-                <strong className="text-white font-semibold">
-                  <BilingualText value={branch?.name ?? bi('Main Facility', 'المقر الرئيسي')} />
+                <strong className={branch?.name ? 'text-white font-semibold' : 'athlete-unavailable'}>
+                  <BilingualText value={branch?.name ?? bi('Not recorded', 'غير مسجل')} />
                 </strong>
               </div>
 
               <div className="flex items-center justify-between py-1.5 border-b border-white/5">
                 <span className="text-slate-400"><BilingualText value={bi('Lead coach', 'المدرب المشرف')} /></span>
-                <strong className="text-white font-semibold">
-                  {coach ? (bilingualOrder === 'ar-first' ? coach.nameAr : coach.nameEn) : <BilingualText value={bi('Staff coach', 'مدرب معتمد')} />}
+                <strong className={coach ? 'text-white font-semibold' : 'athlete-unavailable'}>
+                  {coach ? (bilingualOrder === 'ar-first' ? coach.nameAr : coach.nameEn) : <BilingualText value={bi('Not assigned', 'غير معين')} />}
                 </strong>
               </div>
             </div>
