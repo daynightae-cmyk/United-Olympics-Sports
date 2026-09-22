@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { PortalRouteLoader } from '../../components/portal/PortalRouteState';
 import { getAccessToken } from '../../lib/auth-client';
 import { clientShowcaseMode, previewModeAllowed } from '../../lib/preview-guard';
 
@@ -36,11 +37,7 @@ export function AdminAccessGate({ children }: { children: ReactNode }) {
   }, [previewAccess]);
 
   if (status === 'checking') {
-    return (
-      <div className="ui-skeleton" role="status" aria-live="polite" aria-busy="true" data-admin-auth-check="true">
-        Checking server-side access… | جارٍ التحقق من الصلاحية الخادمية…
-      </div>
-    );
+    return <div data-admin-auth-check="true"><PortalRouteLoader portal="admin" /></div>;
   }
 
   if (status === 'denied') {
