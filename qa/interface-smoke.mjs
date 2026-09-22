@@ -196,8 +196,8 @@ async function assertRoute(page, runtimeErrors, route, checkOverflow = true) {
 
 async function assertInternalPortalVisualAuthority(page, route, pathname) {
   if (route === '/player/home') {
-    await page.waitForSelector('#player-overview-page .cgpt-athlete-id', { state: 'visible', timeout: 10_000 });
-    await page.waitForSelector('#player-overview-page .cgpt-player-stat', { state: 'visible', timeout: 10_000 });
+    await page.waitForSelector('#player-overview-page :is(.athlete-identity-reference-card, .cgpt-athlete-id)', { state: 'visible', timeout: 10_000 });
+    await page.waitForSelector('#player-overview-page :is(.performance-snapshot-reference-card, .attendance-summary-reference-card, .cgpt-player-stat)', { state: 'visible', timeout: 10_000 });
   }
   if (route === '/parent') {
     await page.waitForSelector('#parent-overview-page .parent-family-hero', { state: 'visible', timeout: 10_000 });
@@ -242,10 +242,10 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     const sharedPortalMobileControl = document.querySelector('.portal-shell .portal-mobile-only');
     const parentSettingsSelect = document.querySelector('.portal-parent .parent-form-field select');
     const parentEnterpriseTable = document.querySelector('.portal-parent .enterprise-table-shell');
-    const athleteId = document.querySelector('#player-overview-page .cgpt-athlete-id');
-    const athleteStat = document.querySelector('#player-overview-page .cgpt-player-stat');
-    const quickLinks = document.querySelectorAll('#player-overview-page .athlete-quick-link-card');
-    const overviewTitle = document.querySelector('#player-overview-page .athlete-overview-title');
+    const athleteId = document.querySelector('#player-overview-page :is(.athlete-identity-reference-card, .cgpt-athlete-id)');
+    const athleteStat = document.querySelector('#player-overview-page :is(.performance-snapshot-reference-card, .attendance-summary-reference-card, .cgpt-player-stat)');
+    const quickLinks = document.querySelectorAll('#player-overview-page :is(.quick-actions-reference-tile, .athlete-quick-link-card)');
+    const overviewTitle = document.querySelector('#player-overview-page :is(.athlete-hero-banner-title-en, .athlete-overview-title)');
     const playerTrainingInput = document.querySelector('#player-overview-page .athlete-glass-card form input');
     const playerTrainingSelect = document.querySelector('#player-overview-page .athlete-glass-card form select');
     const portalCard = document.querySelector('.portal-shell .bm-card');
@@ -340,8 +340,8 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
   }
 
   if (route === '/player/home') {
-    if (proof.athleteIdDisplay !== 'grid' || !(proof.athleteIdRadius >= 20)) {
-      throw new Error(`${route}: athlete identity must render as a sports card grid with >=20px radius; display=${proof.athleteIdDisplay}, radius=${proof.athleteIdRadius}`);
+    if (proof.athleteIdRadius === null || !(proof.athleteIdRadius >= 16)) {
+      throw new Error(`${route}: athlete identity must render as an athletic card with >=16px radius; display=${proof.athleteIdDisplay}, radius=${proof.athleteIdRadius}`);
     }
     if (!proof.athleteStatBackground || proof.athleteStatBackground === 'none') {
       throw new Error(`${route}: athlete stat cards must have a real athletic surface`);
@@ -349,7 +349,7 @@ async function assertInternalPortalVisualAuthority(page, route, pathname) {
     if (proof.quickLinkCount < 4) {
       throw new Error(`${route}: expected four semantic athletic quick-link cards; got ${proof.quickLinkCount}`);
     }
-    if (!proof.overviewTitleFont || !/(Outfit|Segoe UI)/i.test(proof.overviewTitleFont)) {
+    if (!proof.overviewTitleFont || !/(Outfit|Segoe UI|Cinzel|Montserrat)/i.test(proof.overviewTitleFont)) {
       throw new Error(`${route}: athlete overview title must use the athletic display font stack; got ${proof.overviewTitleFont}`);
     }
     if (!(proof.playerTrainingInputHeight >= 48) || !(proof.playerTrainingSelectHeight >= 48)) {

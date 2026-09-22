@@ -177,8 +177,6 @@ html[data-theme="light"] #player-portal-shell [class~="text-slate-600"] { color:
 html[data-theme="light"] #player-portal-shell [class*="bg-white/"] { background-color: color-mix(in srgb, var(--color-surface-2) 78%, transparent) !important; }
 html[data-theme="light"] #player-portal-shell [class*="border-white/"] { border-color: var(--color-border) !important; }
 
-html[data-theme="light"] #player-portal-shell .athlete-sidebar :where([class~="text-white"], [class~="text-slate-100"], [class~="text-slate-200"]) { color: #f7f3eb !important; }
-html[data-theme="light"] #player-portal-shell .athlete-sidebar :where([class~="text-slate-300"], [class~="text-slate-400"], [class~="text-slate-500"], [class~="text-slate-600"]) { color: #99958d !important; }
 
 /* Admin: black navigation with a theme-aware workspace in both modes. */
 .admin-sidebar {
