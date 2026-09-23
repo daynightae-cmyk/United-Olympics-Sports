@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
-  Activity, Award, CalendarDays, CheckCircle2, ChevronLeft, CreditCard, FileText,
-  Home, IdCard, Menu, MessageSquareText, ShieldCheck, Target, UserRound, UsersRound, X,
+  Activity, Award, Bell, CalendarDays, CheckCircle2, ChevronLeft, CreditCard, FileText,
+  Home, IdCard, Menu, MessageSquareText, Settings, ShieldCheck, Target, UserRound, UsersRound, X,
   type LucideIcon,
 } from 'lucide-react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
@@ -10,6 +10,9 @@ import { ThemeToggle } from '../components/ui/ThemeToggle';
 import type { BilingualText as BilingualValue } from '../domain/contracts';
 import '../styles/admin.css';
 import '../styles/portal-shell.css';
+import '../styles/player-portal.css';
+import { PlayerPortrait } from '../components/player/PlayerIdentity';
+import { usePlayerSession } from '../portals/player/PlayerSessionContext';
 
 type PortalKind = 'player' | 'parent' | 'coach';
 type PortalNavItem = { path: string; label: BilingualValue; icon: LucideIcon };
@@ -25,7 +28,12 @@ const portalMeta: Record<PortalKind, { title: BilingualValue; role: BilingualVal
       { path: 'feedback', label: bi('Feedback', 'الملاحظات'), icon: MessageSquareText },
       { path: 'achievements', label: bi('Achievements', 'الإنجازات'), icon: Award },
       { path: 'documents', label: bi('Documents', 'المستندات'), icon: FileText },
+      { path: 'subscription', label: bi('Membership', 'العضوية'), icon: ShieldCheck },
+      { path: 'payments', label: bi('Payments', 'المدفوعات'), icon: CreditCard },
+      { path: 'messages', label: bi('Messages', 'الرسائل'), icon: MessageSquareText },
+      { path: 'notifications', label: bi('Notifications', 'الإشعارات'), icon: Bell },
       { path: 'profile', label: bi('Profile', 'الملف الشخصي'), icon: IdCard },
+      { path: 'settings', label: bi('Settings', 'الإعدادات'), icon: Settings },
     ],
   },
   parent: {
@@ -84,7 +92,7 @@ export function PortalLayout({ portal, children }: { portal: PortalKind; childre
         <div><strong>United Olympics Sports</strong><span lang="ar" dir="rtl">يونايتد أوليمبيكس سبورت</span></div>
         <button type="button" onClick={() => setOpen(false)} className="portal-icon-button portal-mobile-only" aria-label="Close navigation | إغلاق القائمة"><X /></button>
       </div>
-      <div className="portal-role"><small><BilingualText value={bi('Preview Product', 'منتج تجريبي')} /></small><BilingualText value={meta.title} /><span><BilingualText value={meta.role} /></span></div>
+      {portal === 'player' ? <PlayerMiniProfile/> : <div className="portal-role"><BilingualText value={meta.title} /><span><BilingualText value={meta.role} /></span></div>}
       <nav className="portal-nav">{meta.nav.map(({ path, label, icon: Icon }) => <NavLink key={path || 'overview'} to={path ? `${base}/${path}` : base} end={!path}><Icon /><BilingualText value={label} /><ChevronLeft /></NavLink>)}</nav>
       <Link className="portal-public-link" to="/"><ChevronLeft /><BilingualText value={bi('Public Website', 'الموقع العام')} /></Link>
     </aside>
@@ -93,10 +101,28 @@ export function PortalLayout({ portal, children }: { portal: PortalKind; childre
       <header className="portal-topbar">
         <button type="button" className="portal-icon-button portal-mobile-only" onClick={() => setOpen(true)} aria-label="Open navigation | فتح القائمة"><Menu /></button>
         <div><small><BilingualText value={meta.title} /></small><strong><BilingualText value={current.label} /></strong></div>
-        <span className="portal-preview-badge"><span /><BilingualText value={bi('Preview Data', 'بيانات تجريبية')} /></span>
+        {portal === 'player' ? <Link className="portal-icon-button player-notification-link" to="/player/notifications" aria-label="Notifications | الإشعارات"><Bell/></Link> : <span className="portal-preview-badge"><span /><BilingualText value={bi('Preview Data', 'بيانات تجريبية')} /></span>}
         <ThemeToggle compact />
       </header>
       <main className="portal-main">{children}</main>
+      {portal === 'player' && <PlayerMobileNav/>}
     </section>
   </div>;
+}
+
+function PlayerMiniProfile() { const { player, sport } = usePlayerSession(); return <div className="player-mini-profile"><PlayerPortrait player={player} size="small"/><div><strong>{player.nameEn}</strong><span lang="ar" dir="rtl">{player.nameAr}</span><small><BilingualText value={sport?.name ?? bi('Athlete','رياضي')}/></small></div><i title="Preview mode | وضع المعاينة">P</i></div>; }
+
+function PlayerMobileNav() {
+  const [moreOpen, setMoreOpen] = useState(false);
+  const location = useLocation();
+  useEffect(() => setMoreOpen(false), [location.pathname]);
+  useEffect(() => {
+    if (!moreOpen) return;
+    const close = (event: KeyboardEvent) => { if (event.key === 'Escape') setMoreOpen(false); };
+    window.addEventListener('keydown', close);
+    return () => window.removeEventListener('keydown', close);
+  }, [moreOpen]);
+  const primary = [{ path: '/player/home', label: bi('Home','الرئيسية'), icon: Home }, { path: '/player/schedule', label: bi('Schedule','الجدول'), icon: CalendarDays }, { path: '/player/performance', label: bi('Performance','الأداء'), icon: Activity }, { path: '/player/messages', label: bi('Messages','الرسائل'), icon: MessageSquareText }];
+  const more = portalMeta.player.nav.filter(item => !['','schedule','performance','messages'].includes(item.path));
+  return <><nav className="player-bottom-nav" aria-label="Player navigation | تنقل اللاعب">{primary.map(({path,label,icon:Icon}) => <NavLink key={path} to={path}><Icon/><BilingualText value={label}/></NavLink>)}<button type="button" className={moreOpen ? 'active' : ''} onClick={() => setMoreOpen(true)} aria-expanded={moreOpen}><Menu/><BilingualText value={bi('More','المزيد')}/></button></nav>{moreOpen && <><button className="player-more-backdrop" aria-label="Close more menu | إغلاق قائمة المزيد" onClick={() => setMoreOpen(false)}/><section className="player-more-sheet" role="dialog" aria-modal="true" aria-labelledby="player-more-title"><header><h2 id="player-more-title"><BilingualText value={bi('More','المزيد')}/></h2><button onClick={() => setMoreOpen(false)} aria-label="Close | إغلاق"><X/></button></header><nav>{more.map(({path,label,icon:Icon}) => <Link key={path} to={`/player/${path}`}><Icon/><BilingualText value={label}/><ChevronLeft/></Link>)}</nav></section></>}</>;
 }

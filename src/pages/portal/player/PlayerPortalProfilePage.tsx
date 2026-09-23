@@ -1,62 +1,13 @@
-import { ShieldCheck, User, Award, CalendarDays, Activity } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { PageHeader } from '../../../components/admin/AdminUI';
+import { Activity, Contact, IdCard, LockKeyhole, ShieldCheck, UsersRound } from 'lucide-react';
 import { BilingualText, bi } from '../../../components/bilingual/BilingualText';
-import { demoPlayers } from '../../../data/demo/players';
-import { getGroup, getSport } from '../../../data/demo/selectors';
+import { PlayerPortrait } from '../../../components/player/PlayerIdentity';
+import { demoCoaches } from '../../../data/demo/coaches';
+import { getBranch } from '../../../data/demo/selectors';
+import { usePlayerSession } from '../../../portals/player/PlayerSessionContext';
 
+function ProfileSection({ icon: Icon, title, children }: { icon: typeof IdCard; title: ReturnType<typeof bi>; children: React.ReactNode }) { return <section className="profile-section"><header><Icon/><h2><BilingualText value={title}/></h2></header><dl>{children}</dl></section>; }
+function Field({ label, children, locked = true }: { label: ReturnType<typeof bi>; children: React.ReactNode; locked?: boolean }) { return <div className="profile-field"><dt><BilingualText value={label}/>{locked && <LockKeyhole aria-label="Read only | للقراءة فقط"/>}</dt><dd>{children}</dd></div>; }
 export function PlayerPortalProfilePage() {
-  const player = demoPlayers[0];
-  const sport = getSport(player.sportId);
-  const group = getGroup(player.groupId);
-  return (
-    <div className="admin-page">
-      <PageHeader
-        eyebrow={bi('Player Portal | Profile', 'بوابة اللاعب | الملف الشخصي')}
-        title={bi('Profile', 'الملف الشخصي')}
-        description={bi('A focused athlete identity preview using anonymized records.', 'معاينة هوية لاعب مركزة باستخدام سجلات تجريبية مجهولة.')}
-      />
-      <section className="player-identity-card" aria-label="Player identity preview">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <span style={{ width: 62, height: 62, borderRadius: 18, border: '1px solid rgba(212,175,55,0.28)', display: 'grid', placeItems: 'center', background: 'rgba(212,175,55,0.08)' }}>
-            <User size={28} color="#d4b23a" />
-          </span>
-          <div style={{ minWidth: 0 }}>
-            <h2 style={{ margin: 0, fontSize: 20, overflowWrap: 'anywhere' }}>{player.nameEn}<span lang="ar" dir="rtl"> · {player.nameAr}</span></h2>
-            <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--color-text-muted)' }}>
-              <BilingualText value={sport ? sport.name : bi('Sport', 'الرياضة')} /> · <BilingualText value={group ? (group.name.en ? { en: group.name.en, ar: group.name.ar } : bi('Group', 'المجموعة')) : bi('Group', 'المجموعة')} />
-            </p>
-          </div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 18 }}>
-          <div style={{ border: '1px solid var(--color-border)', borderRadius: 12, padding: 12 }}>
-            <ShieldCheck size={18} style={{ color: '#d4b23a', marginBottom: 6 }} />
-            <strong style={{ fontSize: 16 }}>Member</strong>
-            <small style={{ display: 'block', fontSize: 11, color: 'var(--color-text-muted)' }}><BilingualText value={bi('Verified preview', 'معاينة موثقة')} /></small>
-          </div>
-          <div style={{ border: '1px solid var(--color-border)', borderRadius: 12, padding: 12 }}>
-            <Award size={18} style={{ color: '#d4b23a', marginBottom: 6 }} />
-            <strong style={{ fontSize: 16 }}>{player.age ?? '—'}</strong>
-            <small style={{ display: 'block', fontSize: 11, color: 'var(--color-text-muted)' }}><BilingualText value={bi('Age Group', 'الفئة العمرية')} /></small>
-          </div>
-          <div style={{ border: '1px solid var(--color-border)', borderRadius: 12, padding: 12 }}>
-            <CalendarDays size={18} style={{ color: '#d4b23a', marginBottom: 6 }} />
-            <strong style={{ fontSize: 16 }}>{player.dateOfBirth ? new Date(player.dateOfBirth).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) : '—'}</strong>
-            <small style={{ display: 'block', fontSize: 11, color: 'var(--color-text-muted)' }}><BilingualText value={bi('Enrolled', 'تاريخ التسجيل')} /></small>
-          </div>
-          <div style={{ border: '1px solid var(--color-border)', borderRadius: 12, padding: 12 }}>
-            <Activity size={18} style={{ color: '#d4b23a', marginBottom: 6 }} />
-            <strong style={{ fontSize: 16 }}>{player.attendanceSummary ? `${player.attendanceSummary.attended}/${player.attendanceSummary.scheduled}` : '—'}</strong>
-            <small style={{ display: 'block', fontSize: 11, color: 'var(--color-text-muted)' }}><BilingualText value={bi('Attendance', 'الحضور')} /></small>
-          </div>
-        </div>
-      </section>
-      <section aria-label="Profile actions">
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 10 }}>
-          <Link to="/player/profile" className="admin-link-button" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><BilingualText value={bi('Edit Profile Preview', 'معاينة تعديل الملف الشخصي')} /></Link>
-          <Link to="/player/documents" className="admin-link-button" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><BilingualText value={bi('View Documents', 'عرض المستندات')} /></Link>
-        </div>
-      </section>
-    </div>
-  );
+  const { player, sport, group } = usePlayerSession(); const coach = demoCoaches.find(item => item.groupIds.includes(player.groupId ?? '')); const branch = getBranch(coach?.branchIds[0]);
+  return <div className="player-page"><header className="profile-hero"><PlayerPortrait player={player} size="medium"/><div><span><BilingualText value={bi('Athlete profile','ملف الرياضي')}/></span><h1>{player.nameEn}<b lang="ar" dir="rtl">{player.nameAr}</b></h1><p>{player.id}</p></div><span className="profile-status"><ShieldCheck/><BilingualText value={player.status}/></span></header><div className="profile-grid"><ProfileSection icon={IdCard} title={bi('Identity','الهوية')}><Field label={bi('English name','الاسم بالإنجليزية')}>{player.nameEn}</Field><Field label={bi('Arabic name','الاسم بالعربية')}><span lang="ar" dir="rtl">{player.nameAr}</span></Field><Field label={bi('Player ID','رقم اللاعب')}>{player.id}</Field><Field label={bi('Age','العمر')}>{player.age ?? '—'}</Field><Field label={bi('Birth date','تاريخ الميلاد')}>{player.dateOfBirth ?? '—'}</Field></ProfileSection><ProfileSection icon={Activity} title={bi('Sports profile','الملف الرياضي')}><Field label={bi('Sport','الرياضة')}><BilingualText value={sport?.name ?? bi('Unavailable','غير متاحة')}/></Field><Field label={bi('Level','المستوى')}><BilingualText value={player.level}/></Field></ProfileSection><ProfileSection icon={UsersRound} title={bi('Training context','سياق التدريب')}><Field label={bi('Group','المجموعة')}><BilingualText value={group?.name ?? bi('Unavailable','غير متاحة')}/></Field><Field label={bi('Coach','المدرب')}><BilingualText value={coach ? bi(coach.nameEn.replace(' Preview',''),coach.nameAr.replace(' تجريبي','')) : bi('To be confirmed','قيد التأكيد')}/></Field><Field label={bi('Branch','الفرع')}><BilingualText value={branch?.name ?? bi('To be confirmed','قيد التأكيد')}/></Field></ProfileSection><ProfileSection icon={Contact} title={bi('Contact','التواصل')}><Field label={bi('Contact details','بيانات التواصل')}>—</Field></ProfileSection><ProfileSection icon={ShieldCheck} title={bi('Membership','العضوية')}><Field label={bi('Membership record','سجل العضوية')}><BilingualText value={bi('Awaiting verified source','بانتظار مصدر موثق')}/></Field></ProfileSection></div></div>;
 }

@@ -2,7 +2,7 @@ import type { Coach } from '../../domain/contracts';
 
 export const demoCoaches: Coach[] = [
   {
-    id: 'coach-preview-01',
+    id: 'coach-demo-01',
     nameEn: 'Coach Preview 01',
     nameAr: 'مدرب تجريبي 01',
     sportIds: ['football'],
@@ -14,7 +14,7 @@ export const demoCoaches: Coach[] = [
     status: 'active',
   },
   {
-    id: 'coach-preview-02',
+    id: 'coach-demo-02',
     nameEn: 'Coach Preview 02',
     nameAr: 'مدرب تجريبي 02',
     sportIds: ['football'],
@@ -26,7 +26,7 @@ export const demoCoaches: Coach[] = [
     status: 'active',
   },
   {
-    id: 'coach-preview-03',
+    id: 'coach-demo-03',
     nameEn: 'Coach Preview 03',
     nameAr: 'مدرب تجريبي 03',
     sportIds: ['swimming'],
@@ -38,7 +38,7 @@ export const demoCoaches: Coach[] = [
     status: 'active',
   },
   {
-    id: 'coach-preview-04',
+    id: 'coach-demo-04',
     nameEn: 'Coach Preview 04',
     nameAr: 'مدرب تجريبي 04',
     sportIds: ['football'],
@@ -50,7 +50,7 @@ export const demoCoaches: Coach[] = [
     status: 'active',
   },
   {
-    id: 'coach-preview-05',
+    id: 'coach-demo-05',
     nameEn: 'Coach Preview 05',
     nameAr: 'مدرب تجريبي 05',
     sportIds: ['basketball'],
@@ -62,7 +62,7 @@ export const demoCoaches: Coach[] = [
     status: 'active',
   },
   {
-    id: 'coach-preview-06',
+    id: 'coach-demo-06',
     nameEn: 'Coach Preview 06',
     nameAr: 'مدرب تجريبي 06',
     sportIds: ['tennis'],
@@ -74,7 +74,7 @@ export const demoCoaches: Coach[] = [
     status: 'active',
   },
   {
-    id: 'coach-preview-07',
+    id: 'coach-demo-07',
     nameEn: 'Coach Preview 07',
     nameAr: 'مدرب تجريبي 07',
     sportIds: ['gymnastics'],
@@ -86,7 +86,7 @@ export const demoCoaches: Coach[] = [
     status: 'active',
   },
   {
-    id: 'coach-preview-08',
+    id: 'coach-demo-08',
     nameEn: 'Coach Preview 08',
     nameAr: 'مدرب تجريبي 08',
     sportIds: ['martial-arts'],
@@ -98,7 +98,7 @@ export const demoCoaches: Coach[] = [
     status: 'active',
   },
   {
-    id: 'coach-preview-09',
+    id: 'coach-demo-09',
     nameEn: 'Coach Preview 09',
     nameAr: 'مدرب تجريبي 09',
     sportIds: ['swimming'],
@@ -110,7 +110,7 @@ export const demoCoaches: Coach[] = [
     status: 'active',
   },
   {
-    id: 'coach-preview-10',
+    id: 'coach-demo-10',
     nameEn: 'Coach Preview 10',
     nameAr: 'مدرب تجريبي 10',
     sportIds: ['tennis'],
